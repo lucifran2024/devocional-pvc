@@ -112,9 +112,31 @@ export default function PlanoLeituraPage() {
 
     // Carregar passagem do dia
     useEffect(() => {
-        const data = getPassagemDoDia(dataHoje);
-        setPassagem(data);
-        setLoading(false);
+        async function loadPassagem() {
+            setLoading(true);
+            try {
+                // Tenta buscar do Storage primeiro (mais atualizado)
+                const { getPassagemFromStorage } = await import('@/lib/supabase');
+                const dataStorage = await getPassagemFromStorage(dataHoje);
+
+                if (dataStorage) {
+                    setPassagem(dataStorage);
+                } else {
+                    // Fallback para local se falhar ou não encontrar
+                    console.log('⚠️ Fallback para dados locais');
+                    const dataLocal = getPassagemDoDia(dataHoje);
+                    setPassagem(dataLocal);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar passagem:', error);
+                // Último recurso
+                const dataLocal = getPassagemDoDia(dataHoje);
+                setPassagem(dataLocal);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadPassagem();
     }, [dataHoje]);
 
     // Scroll automático no chat

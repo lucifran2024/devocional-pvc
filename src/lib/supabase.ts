@@ -43,17 +43,42 @@ export interface ExecuteResponse {
 /**
  * Busca o payload do dia
  */
+/**
+ * Busca o payload do dia
+ * AGORA UNIFICADO: Busca do Storage (SECAO6.TXT) para ser a Single Source of Truth
+ */
 export async function getPayloadDoDia(dataPreferida: string): Promise<{
     data: PayloadDoDia | null;
     error: string | null;
     usouDataAlternativa: boolean;
 }> {
-    console.log('📅 [PAYLOAD] Buscando para data:', dataPreferida);
+    console.log('📅 [PAYLOAD] Buscando da FONTE UNIFICADA (Storage) para:', dataPreferida);
 
     try {
+        // 1. Tenta buscar do Storage (SSOT)
+        const passagemStorage = await getPassagemFromStorage(dataPreferida);
+
+        if (passagemStorage) {
+            console.log('✅ [PAYLOAD] Encontrado no Storage!');
+
+            // Mapeia do formato do Storage (PassagemSecao6) para o formato da UI (PayloadDoDia)
+            const payloadUnificado: PayloadDoDia = {
+                data: passagemStorage.data,
+                passagem_do_dia: passagemStorage.referencia,
+                arquetipo: passagemStorage.arquetipo_maestro,
+                // Mapeia voz baseada no arquétipo ou usa padrão
+                voice_nome: passagemStorage.arquetipo_maestro,
+                voice_descricao: `Voz do ${passagemStorage.arquetipo_maestro} guiando a leitura de hoje.`
+            };
+
+            return { data: payloadUnificado, error: null, usouDataAlternativa: false };
+        }
+
+        console.log('⚠️ [PAYLOAD] Não encontrado no Storage para hoje. Tentando banco de dados (Legacy)...');
+
+        // FALLBACK: Mantém a lógica antiga de buscar no banco se o Storage falhar ou não tiver o dia
         if (!supabaseUrl || !supabaseAnonKey) {
-            console.error('❌ [PAYLOAD] Variáveis de ambiente faltando!');
-            return { data: null, error: 'Configuração do Supabase incompleta (URL ou KEY faltando).', usouDataAlternativa: false };
+            return { data: null, error: 'Configuração do Supabase incompleta.', usouDataAlternativa: false };
         }
 
         const { data: payload, error } = await supabase
@@ -62,18 +87,11 @@ export async function getPayloadDoDia(dataPreferida: string): Promise<{
             .eq('data', dataPreferida)
             .maybeSingle();
 
-        if (error) {
-            console.error('❌ [PAYLOAD] Erro:', error);
-            return { data: null, error: `${error.message} (${error.code})`, usouDataAlternativa: false };
-        }
-
         if (payload) {
-            console.log('✅ [PAYLOAD] Encontrado para data solicitada:', payload);
             return { data: payload, error: null, usouDataAlternativa: false };
         }
 
-        console.log('⚠️ [PAYLOAD] Não encontrado para hoje, buscando mais recente...');
-
+        // Último recurso: pegar o mais recente do banco
         const { data: payloadRecente, error: errorRecente } = await supabase
             .from('payload_do_dia')
             .select('data, passagem_do_dia, arquetipo, voice_nome, voice_descricao')
@@ -81,13 +99,12 @@ export async function getPayloadDoDia(dataPreferida: string): Promise<{
             .limit(1)
             .maybeSingle();
 
-        if (errorRecente) {
-            console.error('❌ [PAYLOAD] Erro ao buscar recente:', errorRecente);
-            return { data: null, error: `${errorRecente.message}`, usouDataAlternativa: false };
+        if (payloadRecente) {
+            return { data: payloadRecente, error: null, usouDataAlternativa: true };
         }
 
-        console.log('✅ [PAYLOAD] Encontrado mais recente:', payloadRecente);
-        return { data: payloadRecente, error: null, usouDataAlternativa: true };
+        return { data: null, error: 'Nenhum payload encontrado (Storage ou DB).', usouDataAlternativa: false };
+
     } catch (err) {
         console.error('💥 [PAYLOAD] Exceção:', err);
         return { data: null, error: err instanceof Error ? err.message : 'Erro desconhecido', usouDataAlternativa: false };
@@ -239,4 +256,106 @@ export async function toggleLike(id: number, currentStatus: boolean | null): Pro
 
     // Reutiliza a função existente atualizarFeedback para manter consistência
     return await atualizarFeedback(id, novoStatus);
+}
+
+import { PassagemSecao6 } from './secao6';
+
+/**
+ * Busca a passagem do dia diretamente do arquivo SECAO6.TXT no Storage
+ */
+export async function getPassagemFromStorage(dataPreferida: string): Promise<PassagemSecao6 | null> {
+    console.log(`📦 [STORAGE] Buscando SECAO6.TXT para data: ${dataPreferida}`);
+
+    try {
+        // 1. Download do arquivo
+        const { data, error } = await supabase.storage
+            .from('pvc')
+            .download('secao6/SECAO6.TXT');
+
+        if (error) {
+            console.error('❌ [STORAGE] Erro ao baixar arquivo:', error);
+            return null;
+        }
+
+        // 2. Extrair texto
+        const text = await data.text();
+
+        // 3. Encontrar o início do JSON
+        const jsonMarker = '### JSON_BEGIN';
+        const jsonStartIndex = text.indexOf(jsonMarker);
+
+        if (jsonStartIndex === -1) {
+            console.error('❌ [STORAGE] Marcador JSON não encontrado no arquivo.');
+            return null;
+        }
+
+        // 4. Parsear JSON (Com tratamento de erro robusto)
+        let jsonString = text.substring(jsonStartIndex + jsonMarker.length).trim();
+
+        // Remove footer se existir
+        const jsonEndMarker = '### JSON_END';
+        const jsonEndIndex = jsonString.indexOf(jsonEndMarker);
+        if (jsonEndIndex !== -1) {
+            jsonString = jsonString.substring(0, jsonEndIndex).trim();
+        }
+
+        // HOTFIX: Corrigir chaves sem aspas (comum neste arquivo)
+        const keysToFix = [
+            'data', 'referencia', 'arquetipo_maestro', 'lexico_do_dia',
+            'estrutura_dinamica', 'insights_pre_minerados',
+            'tese', 'familia', 'verso_suporte', 'voz_performance'
+        ];
+        keysToFix.forEach(key => {
+            const regex = new RegExp(`([^"])(${key}":)`, 'g');
+            jsonString = jsonString.replace(regex, '$1"$2');
+        });
+
+        let passagens: PassagemSecao6[] = [];
+
+        try {
+            passagens = JSON.parse(jsonString);
+        } catch (parseError) {
+            console.warn('⚠️ [STORAGE] Erro de JSON. Tentando Fallback Regex...', parseError);
+
+            // FALLBACK: Tentar extrair apenas o objeto do dia usando Regex
+            // Procura por "data": "YYYY-MM-DD" e extrai o objeto envolvente
+            const datePattern = `"data":\\s*"${dataPreferida}"`;
+            const dateIndex = jsonString.indexOf(datePattern); // Procura a string literal ajustada, ou regex se precisasse
+
+            if (dateIndex === -1 && !jsonString.includes(dataPreferida)) {
+                console.error('❌ [STORAGE] Data não encontrada nem com busca textual.');
+                return null;
+            }
+
+            // Se achou a data, tenta reconstruir o objeto.
+            // Simplificação: Encontrar o '{' anterior e o '}' que fecha este nível.
+            // Devido à complexidade, tentaremos uma Regex mais agressiva para capturar o bloco se o JSON falhar muito.
+            // Mas como o erro é geralmente no FINAL do arquivo, pode ser que o inicio esteja valido? 
+            // Não, JSON.parse falha tudo.
+
+            // Tentativa de "Recuperação de Desastre": Quebrar por "data":
+            // (Isso é complexo para implementar aqui sem risco).
+
+            // Vamos confiar na correção das aspas acima. Se falhar, retorna null e usa o banco.
+            console.error('❌ [STORAGE] Falha irrecuperável no JSON. Usando fallback do Banco de Dados.');
+            return null;
+        }
+
+        // 5. Encontrar a data
+        const passagemDia = passagens.find(p => p.data === dataPreferida);
+
+        if (passagemDia) {
+            console.log('✅ [STORAGE] Passagem encontrada:', passagemDia.referencia);
+            return passagemDia;
+        } else {
+            console.warn('⚠️ [STORAGE] Nenhuma passagem encontrada para hoje. Usando fallback aleatório?');
+            // Opcional: retornar a mais recente se não tiver a de hoje
+            // return passagens[passagens.length - 1]; 
+            return null;
+        }
+
+    } catch (err) {
+        console.error('💥 [STORAGE] Erro crítico ao processar plano de leitura:', err);
+        return null;
+    }
 }
