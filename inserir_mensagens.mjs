@@ -1,7 +1,6 @@
 // =====================================================
-// SCRIPT PARA INSERIR SUAS MENSAGENS FAVORITAS
-// =====================================================
-// 20 MODELOS DA SUA GALERIA
+// SCRIPT PARA INSERIR NOVAS MENSAGENS (9 EXEMPLOS)
+// Modos ativos: MODO_1, MODO_1.2, MODO_1.3, MODO_1.4, MODO_1.9
 // Execute: node inserir_mensagens.mjs
 // =====================================================
 
@@ -19,237 +18,193 @@ envFile.split('\n').forEach(line => {
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 // =====================================================
-// 📝 GALERIA COMPLETA - 20 MODELOS
+// 📝 9 NOVOS EXEMPLOS (Modos ativos)
 // =====================================================
 
 const MINHAS_MENSAGENS = [
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 01",
-        texto: `**PARECE QUE ACABOU, NÉ?**
-MAS DEUS AINDA ESTÁ ESCREVENDO O FINAL DESSA HISTÓRIA. 🕊️
-
-A esperança não é fingir que tudo está bem — é crer que Deus está agindo, mesmo quando nada faz sentido.
-
-Quando tudo parece perdido, lembre-se: as promessas de Deus não têm prazo de validade. 💬
-
-Ele continua sendo fiel, mesmo quando você não entende o processo.`
+        modo_id: "MODO_1.9",  // Direto ao Ponto
+        passagem: "Neemias - Visão",
+        texto: `Enquanto alguns zombavam, Neemias construía. Visão de Deus não se discute, se obedece.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 02",
-        texto: `**TOME O HÁBITO DE ACORDAR FELIZ, NÃO IMPORTA O QUE VOCÊ ESTEJA PASSANDO.**
+        modo_id: "MODO_1",  // Devocional Completo
+        passagem: "1 Tessalonicenses 5:18",
+        texto: `**COMECE AGRADECENDO. DEUS JÁ ESTÁ AGINDO.**
 
-A VIDA PODERIA SER MELHOR, MAS TAMBÉM PODERIA SER MUITO PIOR.
+Começo o ano com o coração grato.
+Não porque tudo foi fácil,
+mas porque Deus foi fiel em cada detalhe.
 
-SEMPRE ORE E SEJA GRATO.`
+Grato pelas orações respondidas,
+pelas que ainda estão em silêncio
+e até pelas lágrimas que me ensinaram a confiar.
+
+A gratidão não ignora a dor,
+ela reconhece a presença de Deus no processo.
+
+"Em tudo, dai graças." — 1 Tessalonicenses 5:18
+
+Que este ano comece assim:
+com menos reclamação e mais fé,
+menos pressa e mais confiança,
+menos medo e mais gratidão.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 03",
-        texto: `**E SE TUDO DER ERRADO… VOCÊ AINDA CONSEGUIRIA ADORAR?**
+        modo_id: "MODO_1",  // Devocional Completo
+        passagem: "Romanos 12:2 / Salmos 51:10",
+        texto: `**RENOVA-ME, SENHOR... PORQUE EU JÁ NÃO QUERO SER IGUAL.**
 
-Há dias em que a oliveira mente — quando nada parece dar certo, quando as portas se fecham e o coração se pergunta: 'Deus, até quando?'
+Chega um momento em que a alma cansa de repetir os mesmos erros.
+O coração clama por mudança, não de aparência, mas de natureza.
 
-Mas é nesses dias que a fé verdadeira se revela.
+A Bíblia diz:
+"E não vos conformeis com este mundo, mas transformai-vos pela renovação da vossa mente" (Romanos 12:2).
 
-Alegrar-se em Deus não é negar a dor, é escolher confiar mesmo quando não se vê saída.
+Renovação dói, porque Deus não remenda — Ele transforma.
+O que Ele renova, Ele alinha.
+O que Ele toca, Ele muda.
 
-Quem confia, adora. E quem adora no deserto, vê o milagre nascer onde ninguém esperava.`
+Se hoje você sente esse clamor no peito, não ignore.
+É o Espírito Santo chamando você para uma vida mais profunda, mais santa, mais parecida com Jesus.
+
+"Cria em mim, ó Deus, um coração puro e renova dentro de mim um espírito reto" (Salmos 51:10).`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 04",
-        texto: `**NEM TODA LÁGRIMA É SINAL DE FRAQUEZA… ÀS VEZES, É A ORAÇÃO QUE NÃO ENCONTROU PALAVRAS.**
+        modo_id: "MODO_1",  // Devocional Completo
+        passagem: "Isaías 43:19",
+        texto: `**DEVOCIONAL DO DIA**
+Segunda-feira, 29 de dezembro
 
-Há lágrimas que ninguém vê, mas Deus coleciona cada uma delas.
+**ÚLTIMA SEGUNDA-FEIRA DO ANO PROFÉTICO**
 
-Ele não ignora tua dor, nem se esquece do que você enfrenta no silêncio.
+Antes de Deus abrir um novo ciclo, Ele encerra processos.
 
-Enquanto o mundo te julga por chorar, o céu te chama de guerreiro(a) — porque ainda que chorando, você continua crendo.
+Esta não é apenas mais uma segunda-feira.
+É a última segunda-feira do ano profético — um dia de fechamentos, ajustes e alinhamentos. Deus não vira páginas sem antes tratar o coração.
 
-Deus não desperdiça dor. Cada lágrima tem propósito, cada desabafo tem ouvinte.
+Talvez você entre neste dia cansado, ferido ou confuso...
+mas saiba: Deus não desperdiça nenhuma estação.
 
-O que hoje te faz chorar, amanhã será o testemunho que te fará sorrir.`
+O que não deu certo foi aprendizado.
+O que doeu foi preparação.
+O que terminou abriu espaço para o novo.
+
+"Eis que faço coisa nova; porventura não a percebeis?" (Isaías 43:19)
+
+Hoje é dia de soltar pesos, perdoar, se arrepender, agradecer e confiar.
+Não leve para o novo ano o que Deus já encerrou.
+
+Entre leve. Entre curado. Entre alinhado.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 05",
-        texto: `**NEM SEMPRE O PERDÃO RECONSTRÓI O QUE FOI QUEBRADO… MAS ELE LIBERTA O SEU CORAÇÃO PARA SEGUIR EM PAZ.**
+        modo_id: "MODO_1.2",  // Estrutura Profética
+        passagem: "Isaías 52:12",
+        texto: `**PROFETIZE SOBRE ESSA SEMANA**
 
-Perdoar não significa que tudo será como antes, mas que podemos continuar em frente sem carregar o peso da dor.
+Eu profetizo que Deus vai alinhar o que estava fora do lugar,
+vai acalmar o que te tirava a paz
+e vai abrir portas que você já tinha parado de orar, mas o céu não esqueceu.
 
-Jesus nos ensinou a perdoar porque Ele sabia que o rancor prende, mas o perdão cura.
+"O Senhor irá à tua frente e será tua retaguarda." (Isaías 52:12)
 
-Quando você decide liberar perdão, o primeiro a ser curado é você.`
+**Esta semana:**
+O cansaço não vai te parar
+A dúvida não vai te governar
+O medo não vai ter a última palavra
+
+O céu já liberou direção, provisão e discernimento.
+Você não entra nesses dias sozinho(a).
+Deus já foi na frente.
+
+**Declare hoje:**
+"Senhor, eu recebo essa semana como resposta, crescimento e amadurecimento."`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 06",
-        texto: `**VOCÊ JÁ SENTIU UM AMOR QUE TE ESCOLHE MESMO QUANDO VOCÊ ERRA?**
+        modo_id: "MODO_1.4",  // Fato Histórico / Confronto
+        passagem: "Tiago 3:16",
+        texto: `**NEM TUDO É BATALHA ESPIRITUAL.**
+ÀS VEZES É SÓ EGO FERIDO, AMBIÇÃO DESCONTROLADA E DISPUTA POR TERRITÓRIO.
 
-Esse é o amor de Deus.
+Nem todo conflito é ataque do inferno.
+Algumas guerras nascem quando o dinheiro fala mais alto, quando o orgulho grita, e quando o "eu" quer sentar no trono.
 
-Um amor que não depende do seu desempenho, mas da graça.
+A Bíblia é clara:
+"Pois onde há inveja e sentimento faccioso, aí há confusão e toda espécie de coisas ruins." (Tiago 3:16 – NAA)
 
-Hoje, esse amor ainda te busca, te perdoa e te oferece vida eterna.
+Antes de amarrar demônios, Deus nos chama a examinar o coração.
+Antes de gritar "é espiritual", o Espírito Santo pergunta:
+isso é guerra espiritual... ou é falta de renúncia?
 
-Não fuja do amor que já te encontrou.`
+Discernimento também é maturidade espiritual.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 07",
-        texto: `**HAVERÁ UM TEMPO EM QUE SUAS LÁGRIMAS CAIRÃO, NÃO POR CAUSA DE PROBLEMAS…**
+        modo_id: "MODO_1",  // Devocional Completo
+        passagem: "Mateus 6:15",
+        texto: `**DEVOCIONAL DO DIA**
+Quarta, 07 de janeiro
 
-MAS PORQUE DEUS RESPONDEU ÀS SUAS ORAÇÕES.`
+**A FALTA DE PERDÃO NÃO PRENDE QUEM TE FERIU. PRENDE VOCÊ.**
+
+Muita gente ora, jejua e canta...
+mas carrega no coração algo que Deus já pediu para soltar.
+
+A falta de perdão vira peso, vira silêncio espiritual, vira oração que não flui.
+
+Jesus foi direto:
+"Se vocês não perdoarem, também o Pai celestial não lhes perdoará." (Mateus 6:15)
+
+Perdoar não é concordar. Não é esquecer.
+É decidir não continuar preso ao passado.
+
+Enquanto você segura a mágoa,
+o inimigo constrói fortalezas no coração.
+Mas quando você libera perdão,
+Deus libera cura.
+
+O perdão não muda o que aconteceu, mas muda o que acontece dentro de você.
+
+Hoje, escolha soltar.
+Não por eles.
+Mas por você — e pela sua comunhão com Deus.
+
+Perdoe. Seja livre.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 08",
-        texto: `**NUNCA SE ENVERGONHE DE NADA QUE VOCÊ PASSOU.**
+        modo_id: "MODO_1",  // Devocional Completo
+        passagem: "Mateus 4:17",
+        texto: `**NÃO É O FIM DO MUNDO... É O CHAMADO DE DEUS.**
 
-O QUE PODE SER 'FOFOCA' PARA ELES, É UM 'TESTEMUNHO' PARA VOCÊ E AGRADEÇA A DEUS POR TUDO.`
+"Arrependei-vos, porque está próximo o Reino dos Céus." (Mateus 4:17)
+
+Jesus não gritou essa frase para assustar pessoas,
+mas para acordar corações.
+
+Arrependimento não é vergonha.
+É coragem.
+É admitir: "Desse jeito não dá mais."
+
+Muita gente acha que arrependimento é perder liberdade,
+quando na verdade é o começo da verdadeira vida.
+
+O Reino de Deus não se aproxima para condenar,
+mas para restaurar, curar e reconciliar.
+
+Enquanto há tempo, há graça.
+Enquanto há fôlego, há oportunidade.
+
+Hoje ainda é dia de voltar.`
     },
     {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 09",
-        texto: `**Gratidão, Senhor, por este novo dia que está iniciando.**
+        modo_id: "MODO_1.9",  // Direto ao Ponto
+        passagem: "Neemias 2:18",
+        texto: `Não cheguei até aqui por força, nem por capacidade humana.
 
-Guia-me com Tua sabedoria, me livra de todo mal e renova meu espírito com Tua paz.
+Foi a boa mão do Senhor que me levantou, me conduziu em meio às lutas e me posicionou neste tempo.
 
-Que eu saiba ser luz na vida de quem me cerca e tenha força para vencer as adversidades.
+Se estou de pé, é porque Deus me sustentou.
 
-Amém! ❤️‍🔥`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 10",
-        texto: `**Deus, abençoa essa nova semana que começa.**
-
-Que eu tenha sabedoria para fazer as escolhas certas, fé para seguir mesmo sem entender tudo e serenidade para descansar em Ti.
-
-Que nenhum desafio roube minha paz e que eu sinta Tua presença guiando cada passo.
-
-Que seja uma semana abençoada, produtiva e cheia da Tua luz. Amém! ❤️‍🔥`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 11",
-        texto: `**Bom dia Deus!**
-
-Pai amado, eu entrego o meu dia em Tuas mãos, guia cada passo meu, livra-me de todo mal, projeta o meu lar, abençoa a minha vida e a minha família.`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 12",
-        texto: `**Bom dia, Deus!**
-
-Hoje desperto com o coração cheio de fé, gratidão e esperança.
-
-Obrigado, Senhor, por mais um amanhecer, por Tua presença que renova minhas forças e me guia com amor.
-
-Que este dia seja abençoado, cheio de paz, propósito e Tua luz em cada passo.`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 13",
-        texto: `**Hoje é um novo capítulo, uma nova oportunidade, um novo começo.**
-
-Seja leve, confie no processo, faça o seu melhor e deixe a vida surpreender você.
-
-Hoje é dia de atrair o que te faz bem, de liberar o que já não serve e de escolher ser feliz.
-
-Que Deus cuide dos seus passos, te proteja de todo mal e te guie para caminhos de vitória.
-
-Que hoje seja especial, produtivo e cheio de coisas boas! Amém! ❤️‍🔥`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 14",
-        texto: `Deus nos vê.
-Deus nos ouve.
-Deus nos entende.
-Deus nos protege.
-Deus nos sustenta.
-Deus nos consola.
-Deus nos dá paz.
-Deus nos fortalece.
-Deus cuida de nós.`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 15",
-        texto: `**Oração da Manhã:**
-
-Não canse de pedir a Deus a direção certa, porque nem tudo que a terra aplaude o céu aprova. Às vezes, o caminho que parece bonito aos olhos do mundo é o mesmo que pode desviar o coração do que é essencial. Por isso, antes de agir, ore, espere e confie. Deus sempre mostra o que é verdadeiro.
-
-**Palavra da Manhã:**
-
-A fé é o fio que te mantém firme quando tudo ao redor parece desabar.
-Ela não precisa ver o milagre apenas crer que Deus já está agindo.`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 16",
-        texto: `**PAI, ENTREGAMOS A NOSSA SEMANA EM TUAS MÃOS.**
-
-FAZ O QUE FOR MELHOR PARA NÓS.
-
-AMÉM!`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 17",
-        texto: `**Teus sentimentos vão mentir para você… a Bíblia, não.**`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 18",
-        texto: `**VOCÊ JÁ PERCEBEU QUE DEUS ESTÁ MOLDANDO A SUA VIDA, MESMO QUANDO PARECE DOLOROSO?**
-
-Ser barro nas mãos de Deus significa se render ao processo.
-
-O oleiro não descarta o barro imperfeito, Ele refaz, molda, trabalha até que se torne um vaso de honra.
-
-Muitas vezes não entendemos os apertos, as pressões ou os recomeços, mas tudo faz parte da obra do Oleiro.
-
-👉 O barro sozinho não tem forma.
-👉 O barro sozinho não tem valor.
-👉 Mas nas mãos de Deus, o barro se torna vaso que carrega a glória d'Ele.
-
-Hoje, declare: 'Senhor, continua me moldando, eu sou Teu.'`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 19",
-        texto: `**NEM TODO MUNDO É FILHO DE DEUS… MAS TODO AQUELE QUE RECEBE JESUS, É CHAMADO FILHO AMADO DO PAI.**
-
-Nem todos entendem, mas ser filho de Deus não é sobre religião, é sobre relação.
-
-Não é sobre o que fazemos, mas sobre quem recebemos: Jesus.
-
-Quando abrimos o coração para Ele, o céu deixa de ser apenas um destino e se torna nosso lar.
-
-Deus não nos adotou por compaixão, mas por amor eterno.
-
-Em Cristo, deixamos de ser apenas criaturas — e nos tornamos filhos amados. 💛`
-    },
-    {
-        modo_id: "MODO_1",
-        passagem: "Galeria M25 - Modelo 20",
-        texto: `**O MEDO GRITA, MAS DEUS FALA MAIS ALTO. E QUANDO ELE FALA, O MEDO PERDE FORÇA.**
-
-Todos nós enfrentamos dias em que o medo tenta nos paralisar — medo do amanhã, da perda, do fracasso.
-
-Mas o medo é só uma sombra diante da luz de um Deus que nunca perde o controle.
-
-Davi também teve medo. Mas ele descobriu um segredo: quando o coração treme, é hora de confiar ainda mais.
-
-Porque fé não é ausência de medo — é decidir acreditar, mesmo com o medo presente.
-
-Quando você coloca seus medos nas mãos de Deus, Ele os transforma em testemunho.
-
-A tempestade não vai te afogar; vai te ensinar a caminhar sobre as águas.`
+O que Ele começou, Ele mesmo fará prosperar.`
     }
 ];
 
@@ -258,14 +213,14 @@ A tempestade não vai te afogar; vai te ensinar a caminhar sobre as águas.`
 // =====================================================
 
 async function inserirMensagens() {
-    console.log('\n🙏 Iniciando inserção de 20 mensagens da Galeria M25...\n');
+    console.log('\n🙏 Inserindo 9 novas mensagens de exemplo...\n');
 
     let sucesso = 0;
     let erro = 0;
 
     for (let i = 0; i < MINHAS_MENSAGENS.length; i++) {
         const msg = MINHAS_MENSAGENS[i];
-        console.log(`📝 [${i + 1}/20] Inserindo Modelo ${i + 1}...`);
+        console.log(`📝 [${i + 1}/9] ${msg.modo_id} - ${msg.passagem.substring(0, 30)}...`);
 
         const { data, error } = await supabase
             .from('historico_geracoes')
@@ -289,7 +244,7 @@ async function inserirMensagens() {
     }
 
     console.log('\n=============================================');
-    console.log(`✅ Sucesso: ${sucesso} mensagens inseridas`);
+    console.log(`✅ Sucesso: ${sucesso} mensagens`);
     console.log(`❌ Erros: ${erro}`);
     console.log('=============================================\n');
 }
