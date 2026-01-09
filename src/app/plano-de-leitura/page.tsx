@@ -869,8 +869,7 @@ Digite **MENU** para continuar estudando.`;
     // ===========================================
 
     return (
-        <main className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
-            <CosmicBackground />
+        <CosmicBackground className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
 
             {/* Navbar Placeholder (or Back Button) */}
             <div className="max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
@@ -1066,6 +1065,6 @@ Digite **MENU** para continuar estudando.`;
                     </div>
                 )}
             </div>
-        </main>
+        </CosmicBackground>
     );
 }

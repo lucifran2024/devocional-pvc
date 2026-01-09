@@ -11,7 +11,7 @@ async function listBucketFiles() {
     const { data, error } = await supabase
         .storage
         .from('pvc')
-        .list(); // list root of bucket
+        .list('base'); // list base folder
 
     if (error) {
         console.error("Error listing files:", error);
