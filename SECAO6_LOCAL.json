@@ -1,0 +1,388 @@
+[
+  {
+    "data": "2025-12-31",
+    "referencia": "Eclesiastes 7-9",
+    "arquetipo_maestro": "Sábio",
+    "lexico_do_dia": ["fim", "paciência", "alegria", "sabedoria", "morte", "justiça", "tempo", "acaso"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O fim das coisas traz uma perspectiva que o início não tem.",
+        "familia": "Sabedoria",
+        "verso_suporte": "Ec 7:8",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "Aproveite a vida com alegria, pois é um presente de Deus.",
+        "familia": "Gratidao",
+        "verso_suporte": "Ec 9:7",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "Tudo o que vier à mão para fazer, faça com toda a sua força.",
+        "familia": "Trabalho",
+        "verso_suporte": "Ec 9:10",
+        "voz_performance": "Profeta" 
+      }
+    ]
+  },
+  {
+    "data": "2026-01-01",
+    "referencia": "Eclesiastes 10-12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": ["sabedoria", "tolice", "trabalho", "juventude", "criador", "vaidade", "conclusão", "temor"],
+    "estrutura_dinamica": ["VersoPrimeiro", "OraçãoCurtíssima", "FraseImpacto", "MiniThread3"],
+    "insights_pre_minerados": [
+      {
+        "tese": "A tolice derruba a sabedoria como mosca morta no perfume.",
+        "familia": "Teologia",
+        "verso_suporte": "Ec 10:1",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "Lembrar-se do Criador na juventude.",
+        "familia": "Aplicacao",
+        "verso_suporte": "Ec 12:1",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "Tudo é vaidade, temer a Deus é a conclusão.",
+        "familia": "Teologia",
+        "verso_suporte": "Ec 12:13",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "O trabalho é incerto, mas plantar traz colheita.",
+        "familia": "Teologia",
+        "verso_suporte": "Ec 11:6",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A velhice é como dias maus sem prazer.",
+        "familia": "Tensao",
+        "verso_suporte": "Ec 12:1-5",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A liderança discerne sabedoria da tolice.",
+        "familia": "Lideranca",
+        "verso_suporte": "Ec 10:2",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-02",
+    "referencia": "Cantares 1-4",
+    "arquetipo_maestro": "Poeta",
+    "lexico_do_dia": ["amor", "beijo", "fragrância", "amado", "beleza", "jardim", "lírio", "pomba"],
+    "estrutura_dinamica": ["VersoPrimeiro", "OraçãoCurtíssima", "FraseImpacto", "MiniThread3"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O amor é melhor que o vinho, fragrante como perfume.",
+        "familia": "Teologia",
+        "verso_suporte": "Ct 1:2-3",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A amada é bela como lírio entre espinhos.",
+        "familia": "Cristologico",
+        "verso_suporte": "Ct 2:2",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "O amado é como macieira entre árvores.",
+        "familia": "Teologia",
+        "verso_suporte": "Ct 2:3",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "O jardim da amada é fonte selada.",
+        "familia": "Aplicacao",
+        "verso_suporte": "Ct 4:12",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "O amor desperta quando quer.",
+        "familia": "Tensao",
+        "verso_suporte": "Ct 2:7",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A liderança exalta a beleza do amor.",
+        "familia": "Lideranca",
+        "verso_suporte": "Ct 4:1-7",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-03",
+    "referencia": "Cantares 5-8",
+    "arquetipo_maestro": "Poeta",
+    "lexico_do_dia": ["amado", "beleza", "jardim", "frutos", "amor", "ciúme", "paz", "vinha"],
+    "estrutura_dinamica": ["VersoPrimeiro", "OraçãoCurtíssima", "FraseImpacto", "MiniThread3"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O amado é belo e desejável entre dez mil.",
+        "familia": "Teologia",
+        "verso_suporte": "Ct 5:10-16",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "O jardim do amor produz frutos doces.",
+        "familia": "Aplicacao",
+        "verso_suporte": "Ct 7:11-13",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "O amor é forte como a morte, ciúme como o Sheol.",
+        "familia": "Teologia",
+        "verso_suporte": "Ct 8:6",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A paz do amor não pode ser comprada.",
+        "familia": "Teologia",
+        "verso_suporte": "Ct 8:7",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "A vinha do amor é guardada com cuidado.",
+        "familia": "Tensao",
+        "verso_suporte": "Ct 8:12",
+        "voz_performance": "Estrategista"
+      },
+      {
+        "tese": "A liderança celebra o amor como selo no coração.",
+        "familia": "Lideranca",
+        "verso_suporte": "Ct 8:6",
+        "voz_performance": "Poeta"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-04",
+    "referencia": "Isaías 1-3",
+    "arquetipo_maestro": "Profeta",
+    "lexico_do_dia": ["rebelião", "juízo", "justiça", "Sião", "espada", "paz", "visão", "idolatria"],
+    "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+    "insights_pre_minerados": [
+      {
+        "tese": "A rebelião de Israel provoca juízo divino.",
+        "familia": "Tensao",
+        "verso_suporte": "Is 1:2-4",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "Deus deseja justiça, não sacrifícios vazios.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 1:11-17",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "Sião será redimida com justiça.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 1:27",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "Espadas virarão relhas de arado em paz.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 2:4",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A idolatria leva à humilhação.",
+        "familia": "Tensao",
+        "verso_suporte": "Is 2:17-18",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A liderança corrupta causa ruína.",
+        "familia": "Lideranca",
+        "verso_suporte": "Is 3:12",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-05",
+    "referencia": "Isaías 4-6",
+    "arquetipo_maestro": "Profeta",
+    "lexico_do_dia": ["ramo", "glória", "vinha", "juízo", "santo", "serafim", "visão", "chamado"],
+    "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O Ramo do Senhor será belo e glorioso.",
+        "familia": "Cristologico",
+        "verso_suporte": "Is 4:2",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A vinha de Deus é julgada por frutos ruins.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 5:1-7",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "Ai dos que chamam mal de bem.",
+        "familia": "Tensao",
+        "verso_suporte": "Is 5:20",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "A visão de Isaías do Santo, Santo, Santo.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 6:3",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "O chamado de Isaías: Eis-me aqui.",
+        "familia": "Aplicacao",
+        "verso_suporte": "Is 6:8",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A liderança profética denuncia injustiça.",
+        "familia": "Lideranca",
+        "verso_suporte": "Is 5:8",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-06",
+    "referencia": "Isaías 7-9",
+    "arquetipo_maestro": "Profeta",
+    "lexico_do_dia": ["sinal", "Emanuel", "virgem", "assíria", "luz", "Galileia", "criança", "governo"],
+    "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O sinal de Emanuel: Deus conosco.",
+        "familia": "Cristologico",
+        "verso_suporte": "Is 7:14",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A luz brilha na Galileia das nações.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 9:1-2",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "Uma criança nos nasceu, o governo sobre Seus ombros.",
+        "familia": "Cristologico",
+        "verso_suporte": "Is 9:6",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "A Assíria é instrumento de juízo.",
+        "familia": "Tensao",
+        "verso_suporte": "Is 7:17",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "Confiar em Deus evita o medo dos inimigos.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 8:12-13",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "A liderança rejeita alianças humanas.",
+        "familia": "Lideranca",
+        "verso_suporte": "Is 7:4-9",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-07",
+    "referencia": "Isaías 10-12",
+    "arquetipo_maestro": "Profeta",
+    "lexico_do_dia": ["assíria", "juízo", "remanescente", "ramo", "Jessé", "paz", "conhecimento", "louvor"],
+    "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+    "insights_pre_minerados": [
+      {
+        "tese": "A Assíria é vara da ira de Deus.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 10:5",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "O remanescente de Israel retornará a Deus.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 10:20-21",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "O Ramo de Jessé julgará com justiça.",
+        "familia": "Cristologico",
+        "verso_suporte": "Is 11:1-4",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "Lobo habitará com cordeiro em paz.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 11:6",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "Louvor a Deus pela salvação.",
+        "familia": "Aplicacao",
+        "verso_suporte": "Is 12:1-2",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "A liderança do Messias traz conhecimento de Deus.",
+        "familia": "Lideranca",
+        "verso_suporte": "Is 11:9",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  },
+  {
+    "data": "2026-01-08",
+    "referencia": "Isaías 13-15",
+    "arquetipo_maestro": "Profeta",
+    "lexico_do_dia": ["Babilônia", "juízo", "dia do Senhor", "estrelas", "Moabe", "lamento", "orgulho", "destruição"],
+    "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+    "insights_pre_minerados": [
+      {
+        "tese": "O dia do Senhor traz juízo sobre Babilônia.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 13:6-9",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "As estrelas não darão luz no juízo.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 13:10",
+        "voz_performance": "Poeta"
+      },
+      {
+        "tese": "Moabe lamenta sua destruição.",
+        "familia": "Tensao",
+        "verso_suporte": "Is 15:1-2",
+        "voz_performance": "Conselheiro"
+      },
+      {
+        "tese": "O orgulho de Babilônia é humilhado.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 14:12-15",
+        "voz_performance": "Mestre"
+      },
+      {
+        "tese": "Deus destrói os ímpios como palha.",
+        "familia": "Teologia",
+        "verso_suporte": "Is 14:22-23",
+        "voz_performance": "Profeta"
+      },
+      {
+        "tese": "A liderança profética anuncia ruína às nações.",
+        "familia": "Lideranca",
+        "verso_suporte": "Is 13:1",
+        "voz_performance": "Estrategista"
+      }
+    ]
+  }
+]

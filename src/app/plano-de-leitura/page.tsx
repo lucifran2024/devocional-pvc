@@ -1,0 +1,1011 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import {
+    Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
+    ChevronRight, RotateCcw, GraduationCap, Clock, Search,
+    Globe, Rocket, Zap, Building, MessageSquare, ClipboardList, ArrowRight
+} from 'lucide-react';
+import { getDataHoje } from '@/lib/supabase';
+import { getPassagemDoDia, getTeseCentral, type PassagemSecao6 } from '@/lib/secao6';
+import { CosmicHeader } from '@/components/ui/CosmicHeader';
+import { CosmicBackground } from '@/components/ui/CosmicBackground';
+
+// ===========================================
+// TIPOS
+// ===========================================
+
+interface ChatMessage {
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: Date;
+}
+
+type MenuOption = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | null;
+
+// ===========================================
+// MENU OPTIONS CONFIG
+// ===========================================
+
+const MENU_OPTIONS = [
+    { id: '1', icon: Book, label: 'Ler Passagem Comentada', desc: 'texto bíblico em telas + explicações.' },
+    { id: '2', icon: Clock, label: 'Linha do Tempo', desc: 'personagens, cenário e sequência dos fatos.' },
+    { id: '3', icon: Search, label: 'Estudo Profundo', desc: 'teologia, palavras-chave e simbolismos.' },
+    { id: '4', icon: Globe, label: 'Contexto Histórico', desc: 'cultura, geografia e costumes.' },
+    { id: '5', icon: Rocket, label: 'Aplicação Prática', desc: 'como viver isso nas próximas 24–48h.' },
+    { id: '6', icon: Zap, label: 'Síntese Completa', desc: 'visão panorâmica e resumo executivo da passagem.' },
+    { id: '7', icon: Building, label: 'Exposição Detalhada', desc: 'análise verso a verso ou em blocos, com profundidade teológica.' },
+    { id: '8', icon: MessageSquare, label: 'Chat Pastoral', desc: 'tirar dúvidas e aprofundar meu entendimento sobre a passagem.' },
+    { id: '9', icon: ClipboardList, label: 'Revisão & Quiz', desc: 'perguntas para testar se entendi bem a passagem.' },
+] as const;
+
+// ===========================================
+// COMPONENTES
+// ===========================================
+
+function MenuCard({ option, onClick, disabled }: {
+    option: typeof MENU_OPTIONS[number];
+    onClick: () => void;
+    disabled: boolean;
+}) {
+    const Icon = option.icon;
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className="group w-full text-left p-5 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:border-blue-500/50 hover:bg-white/[0.07] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed stellar-card shadow-lg hover:shadow-blue-500/10"
+        >
+            <div className="flex items-start gap-4">
+                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300 shadow-inner">
+                    <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-black tracking-widest text-blue-500/50 group-hover:text-blue-400 transition-colors uppercase">{option.id}</span>
+                        <h3 className="font-black text-white text-sm tracking-tight">{option.label}</h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed group-hover:text-slate-300 transition-colors">{option.desc}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-blue-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-2" />
+            </div>
+        </button>
+    );
+}
+
+function ChatBubble({ message }: { message: ChatMessage }) {
+    const isUser = message.role === 'user';
+    return (
+        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-divine`}>
+            <div className={`
+                max-w-[85%] rounded-[1.5rem] px-6 py-4 shadow-2xl relative group
+                ${isUser
+                    ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-br-none shadow-blue-900/40 border border-white/10'
+                    : 'bg-white/[0.03] text-slate-100 rounded-bl-none border border-white/10 backdrop-blur-3xl'
+                }
+            `}>
+                {!isUser && (
+                    <div className="absolute top-0 left-0 w-20 h-20 bg-blue-500/5 rounded-full blur-2xl -ml-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                )}
+                <div className="text-sm whitespace-pre-wrap leading-[1.7] tracking-tight relative z-10 font-medium">
+                    {message.content}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ===========================================
+// PÁGINA PRINCIPAL
+// ===========================================
+
+export default function PlanoLeituraPage() {
+    const [passagem, setPassagem] = useState<PassagemSecao6 | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeOption, setActiveOption] = useState<MenuOption>(null);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [inputValue, setInputValue] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const dataHoje = getDataHoje();
+
+    // Carregar passagem do dia
+    useEffect(() => {
+        const data = getPassagemDoDia(dataHoje);
+        setPassagem(data);
+        setLoading(false);
+    }, [dataHoje]);
+
+    // Scroll automático no chat
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    // Formatar data
+    const formatarDataExtenso = (dataStr: string) => {
+        return new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
+    // Gerar resposta do menu inicial
+    const gerarRespostaMenuInicial = (): string => {
+        if (!passagem) return 'Preparando ambiente de estudo...';
+
+        return `Olá! Sou seu Mentor Bíblico. 🌌
+        
+Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
+
+---
+
+Escolha uma das opções abaixo ou digite o número correspondente:
+
+1. 📖 **Ler Passagem Comentada**
+2. 🧭 **Linha do Tempo**
+3. 🔍 **Estudo Profundo**
+4. 🌍 **Contexto Histórico**
+5. 🚀 **Aplicação Prática**
+6. ⚡ **Síntese Completa**
+7. 🏛️ **Exposição Detalhada**
+8. 💬 **Chat Pastoral**
+9. 📝 **Revisão & Quiz**
+
+Estou pronto para guiá-lo nesta jornada espiritual.`;
+    };
+
+    // Processar comando do usuário
+    const processarComando = async (comando: string) => {
+        const cmdLower = comando.toLowerCase().trim();
+
+        // Comandos de navegação
+        if (['menu', 'voltar', 'voltar ao menu'].includes(cmdLower)) {
+            setActiveOption(null);
+            return gerarRespostaMenuInicial();
+        }
+
+        // Números do menu
+        const numMatch = cmdLower.match(/^[1-9]$/);
+        if (numMatch) {
+            const optionId = numMatch[0] as MenuOption;
+            setActiveOption(optionId);
+            return await gerarRespostaOpcao(optionId);
+        }
+
+        // Se está em chat pastoral (opção 8), processar como pergunta
+        if (activeOption === '8') {
+            return await processarChatPastoral(comando);
+        }
+
+        // Comando continuar
+        if (['continuar', 'próximo', 'proximo', 'seguir', 'leia mais'].includes(cmdLower)) {
+            return await processarContinuar();
+        }
+
+        // Comando não reconhecido
+        return `Não entendi o comando. Digite um número de **1 a 9** ou **MENU** para ver as opções.`;
+    };
+
+    // Gerar resposta para cada opção
+    const gerarRespostaOpcao = async (opcao: MenuOption): Promise<string> => {
+        if (!passagem) return 'Passagem não carregada.';
+
+        switch (opcao) {
+            case '1':
+                return gerarLeituraGuiada();
+            case '2':
+                return gerarLinhaTempo();
+            case '3':
+                return gerarEstudoProfundo();
+            case '4':
+                return gerarContextoHistorico();
+            case '5':
+                return gerarAplicacaoPratica();
+            case '6':
+                return gerarSinteseCompleta();
+            case '7':
+                return gerarExposicaoDetalhada();
+            case '8':
+                return `💬 **CHAT PASTORAL ATIVADO**
+
+Agora estamos em modo de conversa direta sobre a passagem de hoje: **${passagem.referencia}**.
+
+Você pode me perguntar:
+• Dúvidas de interpretação ("o que esse versículo quer dizer?")
+• Perguntas de estrutura ("como essa parte se conecta com o resto?")
+• Aplicações pessoais ("como eu posso viver isso?")
+• Conexões bíblicas ("existe paralelo em outro lugar?")
+
+Faça sua pergunta, e vamos explorar juntos!
+
+---
+Digite **MENU** para voltar às opções.`;
+            case '9':
+                return gerarQuiz();
+            default:
+                return 'Opção não reconhecida.';
+        }
+    };
+
+    // Opção 1: Leitura Guiada
+    const gerarLeituraGuiada = (): string => {
+        if (!passagem) return '';
+
+        return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+📍 *Parte 1 de 3*
+
+---
+
+**Isaías 13:1-9** (NVI)
+
+**1.** Sentença contra Babilônia, que Isaías, filho de Amoz, recebeu em visão.
+**2.** Levantem uma bandeira no alto de um monte árido, gritem aos guerreiros; façam sinais para que eles entrem pelos portões da nobreza.
+**3.** Eu mesmo dei ordens aos meus consagrados e convoquei os meus guerreiros para executarem a minha ira, os que se alegram com a minha exaltação.
+**4.** Ouçam! Um barulho nas montanhas, como o de uma imensa multidão! Ouçam! Um tumulto de reinos, nações reunidas! O Senhor dos Exércitos está passando em revista um exército para a guerra.
+**5.** Eles vêm de terras distantes, dos confins dos céus: o Senhor e os instrumentos da sua ira, para destruírem toda a terra.
+**6.** Gemam, pois o dia do Senhor está perto; ele vem como uma destruição do Todo-Poderoso.
+**7.** Por causa disso, todas as mãos desfalecerão, e todos os corações desmaiarão de medo.
+**8.** O pavor se apoderará deles; dores e angústias os dominarão; contorcerão como mulher em trabalho de parto. Olharão espantados uns para os outros, seus rostos ardendo como chamas.
+**9.** Vejam! O dia do Senhor está chegando, dia cruel, de ira e grande furor, para tornar em desolação a terra e destruir os seus pecadores.
+
+---
+
+🔍 **CONTEXTO & EXPLICAÇÃO**
+
+• **O que está acontecendo:** Isaías recebe uma profecia contra a poderosa Babilônia.
+• **Contexto:** Babilônia era símbolo de poder humano e orgulho – representava tudo que desafia a Deus.
+• **Significado:** O "dia do Senhor" aponta para o juízo divino sobre a arrogância humana. Deus usa nações para cumprir seus propósitos.
+
+---
+Digite **CONTINUAR** para seguir para os próximos versículos.
+Ou **MENU** para voltar.`;
+    };
+
+    // Opção 2: Linha do Tempo
+    const gerarLinhaTempo = (): string => {
+        if (!passagem) return '';
+
+        return `🧭 **LINHA DO TEMPO: ${passagem.referencia}**
+
+---
+
+**📍 PERSONAGENS PRINCIPAIS**
+
+• **Isaías** — O profeta, porta-voz de Deus, filho de Amoz
+• **Babilônia** — A nação poderosa e orgulhosa (representação do mal)
+• **Moabe** — Reino vizinho de Israel, também sob juízo
+• **O Senhor dos Exércitos** — Deus como comandante supremo
+
+---
+
+**🏛️ CENÁRIO**
+
+• **Época:** ~740-700 a.C., durante o reinado de reis de Judá
+• **Local:** Profecia dada em Judá, sobre nações vizinhas
+• **Clima emocional:** Tensão apocalíptica, juízo iminente, advertência severa
+
+---
+
+**📜 SEQUÊNCIA DOS FATOS**
+
+1. **Cap. 13:** Anúncio do Dia do Senhor contra Babilônia
+2. **Cap. 14:1-23:** Queda do rei da Babilônia (o "astro brilhante")
+3. **Cap. 14:24-27:** Juízo contra a Assíria
+4. **Cap. 14:28-32:** Profecia contra os filisteus
+5. **Cap. 15:** Lamento sobre a destruição de Moabe
+
+---
+
+**⚔️ CONFLITO E RESOLUÇÃO**
+
+• **Conflito:** O orgulho das nações desafia a soberania de Deus
+• **Tensão:** Como o mal pode prosperar enquanto os justos sofrem?
+• **Resolução:** O Dia do Senhor trará justiça — nenhum poder humano permanece
+
+---
+
+**✝️ ONDE CRISTO APARECE?**
+
+A queda do "astro brilhante" (Is 14:12) prefigura a vitória de Cristo sobre Satanás. Jesus é o verdadeiro Rei que derrota todo orgulho e estabelece Seu reino eterno.
+
+---
+Digite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
+    };
+
+    // Opção 3: Estudo Profundo
+    const gerarEstudoProfundo = (): string => {
+        if (!passagem) return '';
+
+        return `🔍 **ESTUDO PROFUNDO: ${passagem.referencia}**
+
+---
+
+**📚 PALAVRAS-CHAVE**
+
+${passagem.lexico_do_dia.map(p => `• **${p}**`).join('\n')}
+
+---
+
+**🎓 TERMOS TEOLÓGICOS**
+
+**1. "O Dia do Senhor" (Yom YHWH)**
+Expressão profética para o momento em que Deus intervém diretamente na história para julgar o mal e salvar seu povo. Não é um dia de 24 horas, mas um período de juízo divino.
+
+**2. "Babilônia"**
+Mais que uma cidade, representa o sistema mundial em oposição a Deus. No Apocalipse, "Babilônia" simboliza toda forma de idolatria e orgulho humano (Ap 17-18).
+
+---
+
+**🔗 PARALELOS BÍBLICOS**
+
+• **Is 13:10** → **Mt 24:29** — Jesus cita Isaías ao falar do fim dos tempos
+• **Is 14:12-15** → **Lc 10:18** — "Vi Satanás caindo do céu como um relâmpago"
+
+---
+
+**❓ PERGUNTAS TEOLÓGICAS**
+
+**1. O que isso revela sobre Deus?**
+Deus é soberano sobre todas as nações. Nenhum poder humano, por maior que seja, escapa do seu juízo. Ele é justo e não deixa o mal impune.
+
+**2. O que revela sobre o coração humano?**
+O orgulho é a raiz de todo pecado. Babilônia queria "subir acima das estrelas" — a ambição de ser Deus. Este é o pecado original repetido.
+
+---
+
+**⚠️ O QUE NÃO SIGNIFICA**
+
+• ❌ Não é uma previsão literal sobre o atual país do Iraque
+• ❌ Não significa que Deus é cruel — o juízo é consequência do pecado
+• ❌ Não quer dizer que devemos temer o fim do mundo constantemente
+
+---
+Digite outro **NÚMERO** ou **MENU** para voltar.`;
+    };
+
+    // Opção 4: Contexto Histórico
+    const gerarContextoHistorico = (): string => {
+        if (!passagem) return '';
+
+        return `🌍 **CONTEXTO HISTÓRICO: ${passagem.referencia}**
+
+---
+
+**🗺️ GEOGRAFIA**
+
+• **Babilônia:** Localizada na Mesopotâmia (atual Iraque), entre os rios Tigre e Eufrates
+• **Moabe:** A leste do Mar Morto, região montanhosa
+• **Distância de Jerusalém:** ~900km até Babilônia, ~80km até Moabe
+
+---
+
+**👑 CENÁRIO POLÍTICO**
+
+• **Época:** Século VIII a.C.
+• **Judá:** Reino do sul, ainda independente mas sob ameaça
+• **Assíria:** Superpotência dominante na época de Isaías
+• **Babilônia:** Ainda subordinada à Assíria, mas profetizada como futura conquistadora
+
+---
+
+**🏛️ ESTRUTURA SOCIAL**
+
+• **Profecias contra nações:** Prática comum dos profetas (também em Amós, Ezequiel)
+• **Função:** Mostrar que Deus é Senhor de TODAS as nações, não só de Israel
+• **Audiência:** Os israelitas, para ensinar sobre a soberania divina
+
+---
+
+**📿 COSTUMES E RELIGIÃO**
+
+• **Babilônia:** Famosa pelos zigurates e adoração a Marduk
+• **Moabe:** Adoravam Quemós, com sacrifícios de crianças
+• **Israel:** Chamado a ser separado dessas práticas pagãs
+
+---
+
+**💡 POR QUE FAZ SENTIDO PARA OS PRIMEIROS LEITORES?**
+
+Os israelitas viviam sob constante ameaça de impérios maiores. Ouvir que Deus julgaria até a poderosa Babilônia trazia:
+1. **Consolo:** Deus vê a injustiça e agirá
+2. **Advertência:** Israel também será julgado se pecar
+3. **Esperança:** O Senhor está no controle da história
+
+---
+
+**🔄 CONEXÃO COM HOJE**
+
+Assim como Babilônia representava o poder mundano, hoje enfrentamos "babilônias" modernas: sistemas de orgulho, consumismo, e ideologias que desafiam Deus. A mensagem permanece: nenhum poder humano prevalece contra o Senhor.
+
+---
+Digite outro **NÚMERO** ou **MENU** para voltar.`;
+    };
+
+    // Opção 5: Aplicação Prática
+    const gerarAplicacaoPratica = (): string => {
+        if (!passagem) return '';
+
+        return `🚀 **APLICAÇÃO PRÁTICA: ${passagem.referencia}**
+
+---
+
+**O que posso viver nas próximas 24–48h?**
+
+---
+
+**1. 🏠 EM CASA: Examinar meu orgulho**
+
+O rei de Babilônia caiu por querer "subir acima das estrelas". 
+
+**Ação concreta:** Hoje, identifique uma área onde você se sente "superior" a alguém (família, cônjuge, filhos). Peça perdão internamente e demonstre humildade com um ato de serviço (lavar a louça, ouvir sem interromper).
+
+---
+
+**2. 💼 NO TRABALHO: Confiar na soberania de Deus**
+
+Isaías mostra que até impérios caem quando Deus decide. Nenhum chefe, empresa ou crise econômica está acima do Senhor.
+
+**Ação concreta:** Se você está ansioso com o trabalho, ore especificamente: "Senhor, Tu és o Senhor dos Exércitos, também sobre minha carreira. Ajuda-me a confiar."
+
+---
+
+**3. 💭 NO CORAÇÃO: Abandonar o "astro brilhante" interno**
+
+Todos temos a tentação de querer brilhar mais que os outros. 
+
+**Ação concreta:** Quando receber um elogio hoje, mentalmente redirecione a glória a Deus. Diga internamente: "Obrigado, Senhor, por usar alguém tão falho quanto eu."
+
+---
+
+**⚠️ O QUE EVITAR**
+
+• ❌ Não use o texto para julgar outras nações ou pessoas
+• ❌ Não tenha medo paralisante do juízo — a graça de Cristo nos cobre
+• ❌ Não leia como curiosidade apocalíptica, mas como convite à humildade
+
+---
+
+**🙏 ORAÇÃO SUGERIDA**
+
+*"Senhor, Tu resististe ao orgulho de Babilônia. Resiste também ao meu. Mostra-me onde estou querendo 'subir acima das estrelas' e me dá a graça de descer como Jesus desceu. Amém."*
+
+---
+Digite outro **NÚMERO** ou **MENU** para voltar.`;
+    };
+
+    // Opção 6: Síntese Completa
+    const gerarSinteseCompleta = (): string => {
+        if (!passagem) return '';
+
+        const insights = passagem.insights_pre_minerados;
+
+        return `⚡ **SÍNTESE COMPLETA: ${passagem.referencia}**
+
+---
+
+**🎯 A GRANDE IDEIA**
+
+> **${insights[0]?.tese || 'O Dia do Senhor revela que nenhum poder humano permanece diante da soberania divina.'}**
+
+---
+
+**📋 PONTOS-CHAVE**
+
+${insights.map((i, idx) => `${idx + 1}. **${i.familia}:** ${i.tese} *(${i.verso_suporte})*`).join('\n')}
+
+---
+
+**🔚 DESFECHO**
+
+A tensão entre o orgulho humano e a soberania de Deus se resolve no **Dia do Senhor**:
+- Babilônia cai — o orgulho é humilhado
+- Moabe lamenta — o juízo é inevitável
+- Mas há esperança implícita — quem se humilha diante de Deus encontra graça
+
+---
+
+**💎 RESUMO EXECUTIVO (para quem tem 30 segundos)**
+
+Isaías 13-15 profetiza contra nações orgulhosas. **Babilônia**, símbolo do poder humano, cairá no "Dia do Senhor". **Moabe** também será destruída. A mensagem central: **nenhum império resiste a Deus**. Para nós hoje: humildade diante do Senhor é o único caminho seguro.
+
+---
+
+**✝️ CONEXÃO COM O EVANGELHO**
+
+Cristo tomou sobre si o juízo que merecíamos. O "Dia do Senhor" que seria nossa condenação tornou-se, pela cruz, nosso dia de salvação.
+
+---
+Digite outro **NÚMERO** ou **MENU** para voltar.`;
+    };
+
+    // Opção 7: Exposição Detalhada
+    const gerarExposicaoDetalhada = (): string => {
+        if (!passagem) return '';
+
+        return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
+📍 *Bloco 1 de 3: Isaías 13 — O Dia do Senhor contra Babilônia*
+
+---
+
+**VERSÍCULOS 1-5: O Exército Divino**
+
+> "Sentença contra Babilônia, que Isaías, filho de Amoz, recebeu em visão."
+
+**Sentido original:** A palavra "sentença" (hebr. *massa*) significa "peso/fardo". Isaías carrega uma mensagem pesada de juízo. Babilônia, embora ainda não seja a superpotência que será em 586 a.C., já representa o orgulho humano.
+
+**Conexão bíblica:** Este padrão de "sentença contra nações" aparece em Amós 1-2 e Ezequiel 25-32. Deus julga todas as nações, não apenas Israel.
+
+**Apontando para Cristo:** Jesus é o verdadeiro "Senhor dos Exércitos" (Mt 26:53). Ele poderia convocar legiões de anjos, mas escolheu a cruz.
+
+---
+
+**VERSÍCULOS 6-9: O Dia Terrível**
+
+> "Gemam, pois o dia do Senhor está perto; ele vem como uma destruição do Todo-Poderoso."
+
+**Sentido original:** O "Dia do Senhor" (Yom YHWH) é o motivo central dos profetas. É quando Deus invade a história para acertar as contas.
+
+**Conexão bíblica:** Joel 2:1, Amós 5:18, Sofonias 1:14 — todos ecoam este tema. O NT o conecta à volta de Cristo (1 Ts 5:2).
+
+**Apontando para Cristo:** Na cruz, Jesus enfrentou o "Dia do Senhor" em nosso lugar. O terror que deveria nos destruir caiu sobre Ele.
+
+---
+
+**VERSÍCULOS 10-16: Sinais Cósmicos**
+
+> "As estrelas e constelações dos céus não darão sua luz."
+
+**Sentido original:** Linguagem apocalíptica para descrever a magnitude do juízo. Não é literal, mas poética — o universo reage diante de Deus.
+
+**Conexão bíblica:** Jesus usa estas imagens em Mateus 24:29 ao falar do fim dos tempos.
+
+---
+
+Digite **CONTINUAR** para o próximo bloco (Is 14: A Queda do Rei).
+Ou **MENU** para voltar.`;
+    };
+
+    // Opção 9: Quiz
+    const gerarQuiz = (): string => {
+        if (!passagem) return '';
+
+        return `📝 **REVISÃO & QUIZ: ${passagem.referencia}**
+
+---
+
+Agora é você que fala! Responda por escrito aqui ou pense/responda em voz alta. Se você escrever, eu consigo te dar feedback.
+
+---
+
+**PERGUNTA 1 — Compreensão**
+
+> Qual nação é o principal alvo da profecia em Isaías 13?
+
+*(Pense antes de responder...)*
+
+---
+
+**PERGUNTA 2 — Interpretação**
+
+> O que o "Dia do Senhor" ensina sobre o caráter de Deus?
+
+*Dica: pense em justiça, soberania, santidade...*
+
+---
+
+**PERGUNTA 3 — Aplicação Pessoal**
+
+> Em que área da sua vida você pode estar agindo como "Babilônia" — com orgulho ou auto-suficiência?
+
+*Seja honesto consigo mesmo...*
+
+---
+
+**PERGUNTA 4 — Conexão Bíblica**
+
+> Isaías 14:12 fala de alguém que queria "subir acima das estrelas". Jesus disse algo parecido sobre Satanás. Você lembra onde?
+
+*Dica: Lucas 10...*
+
+---
+
+**PERGUNTA 5 — Síntese**
+
+> Se você tivesse que resumir Isaías 13-15 em UMA frase para um amigo, o que diria?
+
+---
+
+📬 **Escreva suas respostas abaixo!**
+Eu te darei feedback. Ou digite **MENU** para voltar às opções.`;
+    };
+
+    // Processar pergunta do chat pastoral
+    const processarChatPastoral = async (pergunta: string): Promise<string> => {
+        if (!passagem) return 'Passagem não carregada.';
+
+        // Simulação de resposta pastoral inteligente baseada no contexto
+        // Em produção, isso seria uma chamada para a Edge Function com IA
+
+        const perguntaLower = pergunta.toLowerCase();
+
+        if (perguntaLower.includes('por que') || perguntaLower.includes('porque')) {
+            return `Ótima pergunta! 
+
+Baseado em **${passagem.referencia}**, posso te ajudar a entender...
+
+${passagem.insights_pre_minerados.slice(0, 2).map(i => `• **${i.verso_suporte}:** ${i.tese}`).join('\n')}
+
+O texto nos ensina que Deus é soberano sobre todas as nações. A Babilônia, por mais poderosa que fosse, não estava fora do alcance do juízo divino.
+
+---
+
+Faz sentido para você? Quer que aprofunde mais algum ponto?`;
+        }
+
+        if (perguntaLower.includes('como aplicar') || perguntaLower.includes('como viver')) {
+            return `Essa é uma pergunta muito prática!
+
+De **${passagem.referencia}**, podemos extrair aplicações diretas:
+
+1. **Humildade:** O orgulho de Babilônia foi sua ruína. Onde você pode praticar humildade hoje?
+
+2. **Confiança:** Deus está no controle — mesmo quando nações parecem invencíveis. Você pode descansar nisso.
+
+3. **Vigilância:** O "Dia do Senhor" veio para Babilônia. Estamos vivendo de forma que nos preparamos para encontrar nosso Senhor?
+
+---
+
+Qual dessas aplicações ressoa mais com você hoje?`;
+        }
+
+        // Resposta genérica
+        return `Obrigado por compartilhar essa reflexão sobre **${passagem.referencia}**!
+
+Deixa eu te ajudar a pensar nisso à luz do texto...
+
+O profeta Isaías nos mostra que:
+${passagem.insights_pre_minerados[0] ? `• ${passagem.insights_pre_minerados[0].tese}` : ''}
+
+A passagem de hoje nos confronta com a soberania de Deus sobre TODAS as nações e circunstâncias.
+
+---
+
+Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os versículos ${passagem.insights_pre_minerados[0]?.verso_suporte || '13:1-9'}.`;
+    };
+
+    // Processar comando CONTINUAR
+    const processarContinuar = async (): Promise<string> => {
+        if (!passagem) return 'Passagem não carregada.';
+
+        if (activeOption === '1') {
+            return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+📍 *Parte 2 de 3*
+
+---
+
+**Isaías 13:10-22** (NVI)
+
+**10.** As estrelas e constelações dos céus não darão sua luz. O sol ficará escuro ao nascer e a lua não fará brilhar a sua luz.
+**11.** Castigarei o mundo por causa da sua maldade e os ímpios por causa da sua iniquidade. Porei fim à arrogância dos altivos e humilharei o orgulho dos cruéis.
+**12.** Tornarei os homens mais raros do que o ouro puro, mais raros do que o ouro de Ofir.
+**13.** Por isso farei tremer os céus; e a terra será sacudida do seu lugar na ira do Senhor dos Exércitos, no dia da sua ardente ira.
+
+...
+
+**19.** Babilônia, a joia dos reinos, glória e orgulho dos caldeus, será como Sodoma e Gomorra quando Deus as destruiu.
+**20.** Nunca mais será habitada, ninguém viverá nela por todas as gerações.
+
+---
+
+🔍 **CONTEXTO & EXPLICAÇÃO**
+
+• **O que está acontecendo:** Descrição apocalíptica do juízo — até os astros "se apagam" diante de Deus.
+• **Contexto:** Linguagem poética para mostrar a magnitude do evento; o cosmos reage ao juízo.
+• **Significado:** O orgulho será humilhado. Babilônia, a "jóia", se tornará ruína como Sodoma.
+
+---
+Digite **CONTINUAR** para os últimos versículos.
+Ou **MENU** para voltar.`;
+        }
+
+        if (activeOption === '7') {
+            return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
+📍 *Bloco 2 de 3: Isaías 14 — A Queda do "Astro Brilhante"*
+
+---
+
+**VERSÍCULOS 12-15: O Orgulho Fatal**
+
+> "Como você caiu dos céus, ó estrela da manhã, filho da alvorada!"
+
+**Sentido original:** O "astro brilhante" (hebr. *helel*) refere-se ao rei de Babilônia. A imagem é de alguém que queria ser como Deus e caiu.
+
+**Conexão bíblica:** Jesus em Lucas 10:18: "Eu vi Satanás caindo do céu como um relâmpago." A queda do rei babilônico prefigura a queda do próprio inimigo.
+
+**Apontando para Cristo:** Enquanto Lúcifer/Babilônia subiu e caiu, Cristo desceu e foi exaltado (Fp 2:5-11). O caminho de Deus é a humildade.
+
+---
+
+**OS "CINCO EU VOU" (v.13-14)**
+
+1. "Subirei aos céus"
+2. "Erguerei meu trono acima das estrelas"
+3. "Sentarei no monte da assembleia"
+4. "Subirei acima das nuvens"
+5. "Serei como o Altíssimo"
+
+**Significado:** Cada "eu vou" representa um degrau de orgulho. O pecado original foi querer "ser como Deus" (Gn 3:5).
+
+---
+
+Digite **CONTINUAR** para o bloco final (Isaías 15: Moabe).
+Ou **MENU** para voltar.`;
+        }
+
+        return `✅ **LEITURA CONCLUÍDA!**
+
+---
+
+💎 **Resumo de Ouro:** Deus é soberano sobre todas as nações. O orgulho humano sempre será humilhado, mas há graça para os humildes.
+
+🙏 **Sugestão de Oração:**
+
+*"Senhor, obrigado por me lembrar que Tu estás no controle. Que eu não seja como Babilônia, buscando minha própria glória. Ajuda-me a viver com humildade, confiando na Tua soberania. Em nome de Jesus. Amém."*
+
+---
+Digite **MENU** para continuar estudando.`;
+    };
+
+    // Enviar mensagem (Lógica central)
+    const submitMessage = async (text: string) => {
+        if (!text.trim() || isProcessing) return;
+
+        const userMessage: ChatMessage = {
+            role: 'user',
+            content: text.trim(),
+            timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setInputValue('');
+        setIsProcessing(true);
+
+        try {
+            const resposta = await processarComando(userMessage.content);
+
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: resposta,
+                timestamp: new Date()
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            const errorMessage: ChatMessage = {
+                role: 'assistant',
+                content: 'Desculpe, ocorreu um erro. Tente novamente.',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Handler do Input de Texto
+    const handleSend = () => {
+        submitMessage(inputValue);
+    };
+
+    // Handler dos Botões de Ação Rápida
+    const handleQuickAction = (action: string) => {
+        submitMessage(action);
+    };
+
+    // Selecionar opção do menu visual
+    const handleMenuClick = async (optionId: string) => {
+        const userMessage: ChatMessage = {
+            role: 'user',
+            content: optionId,
+            timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setIsProcessing(true);
+
+        try {
+            const resposta = await processarComando(optionId);
+
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: resposta,
+                timestamp: new Date()
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Iniciar com mensagem de boas-vindas
+    useEffect(() => {
+        if (!loading && passagem && messages.length === 0) {
+            const welcomeMessage: ChatMessage = {
+                role: 'assistant',
+                content: gerarRespostaMenuInicial(),
+                timestamp: new Date()
+            };
+            setMessages([welcomeMessage]);
+        }
+    }, [loading, passagem]);
+
+    // ===========================================
+    // RENDER
+    // ===========================================
+
+    return (
+        <CosmicBackground className="flex flex-col h-screen">
+
+            {/* HEADER */}
+            <CosmicHeader variant="navbar" sticky className="border-b border-white/5 shadow-2xl">
+                <div className="max-w-5xl mx-auto px-6 w-full flex flex-col justify-center h-full">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-5">
+                            <Link href="/" className="p-3 bg-white/[0.03] hover:bg-white/[0.08] hover:scale-110 active:scale-95 rounded-2xl border border-white/5 transition-all text-slate-400 hover:text-white">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1">
+                                    <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                                        <GraduationCap className="w-5 h-5 text-emerald-400" />
+                                    </div>
+                                    <h1 className="font-black text-xl text-white tracking-tighter">Mentor Bíblico</h1>
+                                </div>
+                                {!loading && passagem && (
+                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest pl-9">
+                                        {passagem.referencia} • {formatarDataExtenso(dataHoje)}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {activeOption && (
+                            <button
+                                onClick={() => {
+                                    setActiveOption(null);
+                                    handleMenuClick('menu');
+                                }}
+                                className="flex items-center gap-2.5 px-5 py-2.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all text-white active:scale-95"
+                            >
+                                <RotateCcw className="w-4 h-4 text-indigo-400" />
+                                Reiniciar Menu
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Tese Central */}
+                    {!loading && passagem && (
+                        <div className="mt-4 p-3 px-5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-[1.25rem] backdrop-blur-3xl animate-divine relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.02] to-transparent"></div>
+                            <div className="flex items-center gap-3 relative z-10">
+                                <Sparkles className="w-4 h-4 text-emerald-400/50 group-hover:text-emerald-400 transition-colors" />
+                                <p className="text-[12px] text-slate-300 leading-relaxed font-medium">
+                                    <span className="font-black text-emerald-400/80 mr-1.5">INSIGHT DO DIA:</span> {getTeseCentral(passagem)}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </CosmicHeader>
+
+            {/* CHAT AREA */}
+            <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-5xl mx-auto">
+                <div className="flex-1 overflow-y-auto px-6 py-8 md:py-12 scroll-smooth custom-scrollbar">
+                    <div className="max-w-4xl mx-auto space-y-8">
+
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                                <Loader2 className="w-10 h-10 animate-spin text-indigo-500/50" />
+                                <p className="text-slate-500 text-sm font-medium animate-pulse">Invocando mentoria...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-8">
+                                {messages.map((msg, idx) => (
+                                    <ChatBubble key={idx} message={msg} />
+                                ))}
+
+                                {isProcessing && (
+                                    <div className="flex justify-start animate-divine">
+                                        <div className="bg-white/[0.03] rounded-[1.5rem] rounded-bl-none px-6 py-4 border border-white/5 backdrop-blur-3xl shadow-2xl">
+                                            <div className="flex gap-1.5 Items-center">
+                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div ref={chatEndRef} />
+                            </div>
+                        )}
+
+                        {/* Menu Visual */}
+                        {!activeOption && messages.length <= 1 && !loading && (
+                            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-5 animate-divine">
+                                {MENU_OPTIONS.map((option, idx) => (
+                                    <div key={option.id} style={{ animationDelay: `${idx * 100}ms` }} className="animate-divine">
+                                        <MenuCard
+                                            option={option}
+                                            onClick={() => handleMenuClick(option.id)}
+                                            disabled={isProcessing}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </main>
+
+            {/* QUICK ACTIONS & INPUT AREA */}
+            <footer className="flex-shrink-0 border-t border-white/[0.05] bg-[#020617]/95 backdrop-blur-3xl py-6 md:py-8">
+                <div className="max-w-5xl mx-auto px-6">
+
+                    {/* Botões de Ação Rápida */}
+                    <div className="flex gap-4 mb-5 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
+                        {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content.includes('CONTINUAR') && (
+                            <button
+                                onClick={() => handleQuickAction('Continuar')}
+                                disabled={isProcessing}
+                                className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-[2rem] text-sm font-black tracking-wider shadow-2xl shadow-blue-900/40 transition-all active:scale-95 whitespace-nowrap"
+                            >
+                                CONTINUAR JORNADA <ArrowRight className="w-5 h-5 group-hover:translate-x-1" />
+                            </button>
+                        )}
+
+                        {activeOption && (
+                            <button
+                                onClick={() => handleQuickAction('Menu')}
+                                disabled={isProcessing}
+                                className="flex items-center gap-3 px-8 py-3 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 hover:text-white rounded-[2rem] text-[11px] font-black tracking-widest uppercase border border-white/10 transition-all active:scale-95 whitespace-nowrap"
+                            >
+                                <RotateCcw className="w-4 h-4 text-indigo-400" />
+                                Voltar ao Menu
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-4 relative">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-[2.5rem] blur-xl opacity-0 focus-within:opacity-100 transition-opacity pointer-events-none"></div>
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder="Pergunte algo ao Mentor..."
+                            disabled={isProcessing || loading}
+                            className="flex-1 bg-white/[0.02] border border-white/[0.08] focus:border-indigo-500/50 rounded-[2rem] px-8 py-5 text-base placeholder-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 disabled:opacity-50 transition-all backdrop-blur-3xl text-white"
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={!inputValue.trim() || isProcessing || loading}
+                            className="p-5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/5 disabled:text-slate-700 rounded-full transition-all shadow-2xl shadow-indigo-900/20 active:scale-90"
+                        >
+                            {isProcessing ? (
+                                <Loader2 className="w-6 h-6 animate-spin text-white" />
+                            ) : (
+                                <Send className="w-6 h-6 text-white" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </footer>
+
+        </CosmicBackground>
+    );
+}
