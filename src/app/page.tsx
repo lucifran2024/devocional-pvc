@@ -242,12 +242,14 @@ export default function DashboardPage() {
             disabled={true}
           />
 
-          {/* Card 6: Biblioteca (Em breve) */}
+          {/* Card 6: Biblioteca (Bíblia) */}
           <DashboardCard
-            title="Biblioteca Sagrada"
-            desc="Acervo teológico e devocionais clássicos."
+            href="/biblioteca"
+            title="Bíblia Sagrada"
+            desc="Leia a Palavra de Deus com navegação simples."
             icon={Star}
-            disabled={true}
+            accentColor="text-purple-400"
+            badge="NOVO"
           />
 
         </div>
