@@ -18,6 +18,7 @@ import {
 } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import ReactMarkdown from 'react-markdown';
 
 // ============================================
 // COMPONENTES (PREMIUM COSMIC STYLE)
@@ -371,7 +372,7 @@ export default function GeradorPage() {
                                             prose-strong:text-white prose-strong:font-black
                                             prose-blockquote:border-l-[6px] prose-blockquote:border-amber-600 prose-blockquote:bg-amber-950/20 prose-blockquote:py-6 prose-blockquote:px-10 prose-blockquote:not-italic prose-blockquote:rounded-[1.5rem] prose-blockquote:shadow-inner">
                                             <div className="whitespace-pre-wrap relative z-10 tracking-tight font-medium">
-                                                {resultado.texto}
+                                                <ReactMarkdown>{resultado.texto}</ReactMarkdown>
                                             </div>
                                         </article>
                                     </div>

@@ -11,6 +11,7 @@ import { getDataHoje } from '@/lib/supabase';
 import { getPassagemDoDia, getTeseCentral, type PassagemSecao6 } from '@/lib/secao6';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import ReactMarkdown from 'react-markdown';
 
 // ===========================================
 // TIPOS
@@ -86,8 +87,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
                     : 'glass-panel text-slate-100 rounded-bl-none'
                 }
             `}>
-                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
-                    {message.content}
+                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 max-w-none">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
             </div>
         </div>
