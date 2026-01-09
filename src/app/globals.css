@@ -1,127 +1,156 @@
 @import "tailwindcss";
 
 :root {
+  /* Core Palette - Deep Cosmic */
   --background: #020617;
-  /* Deepest Navy/Space */
+  /* Slate 950/Black blend */
   --foreground: #f8fafc;
   /* Slate 50 */
-  --sidebar-bg: #0f172a;
-  /* Slate 900 */
-  --border: rgba(255, 255, 255, 0.1);
-  --accent: #6366f1;
-  /* Indigo 500 */
 
-  --card-bg: rgba(15, 23, 42, 0.6);
-  --card-hover: rgba(30, 41, 59, 0.8);
+  /* Accent Colors - Premium */
+  --gold-primary: #F59E0B;
+  /* Amber 500 */
+  --gold-light: #FCD34D;
+  /* Amber 300 */
+  --gold-dark: #B45309;
+  /* Amber 700 */
 
-  /* Divine Palette */
-  --divine-gold: #fbbf24;
-  --divine-blue: #38bdf8;
-  --divine-purple: #a855f7;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.03);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-sidebar: var(--sidebar-bg);
-  --color-border-color: var(--border);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --color-gold-primary: var(--gold-primary);
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
+  --animate-slide-up: slideUp 0.5s ease-out forwards;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body {
-  height: 100%;
-}
-
+/* Base Setup */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Visual Overhaul: Removed blue global gradient, kept only subtle gold top hint */
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+  background-attachment: fixed;
 }
 
-/* Minimalist Scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
-  transition: background 0.3s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.6);
-}
-
-/* Premium Utilities */
-.glass-panel {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.stellar-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.stellar-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-5px);
-  /* Shadow REMOVED per user request */
-  box-shadow: none;
-}
-
-.divine-halo {
-  /* Text Shadow REMOVED per user request */
-  text-shadow: none;
-}
-
-.noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
-  pointer-events: none;
-}
-
-/* Typography */
-.tracking-divine {
+/* Premium Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: -0.02em;
 }
 
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--gold-light) 50%, var(--gold-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.glass-card {
+  position: relative;
+  /* Visual Overhaul: Added Blue Tint to Cards only */
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.20) 0%, rgba(30, 58, 138, 0.05) 100%);
+  border: 1px solid rgba(80, 100, 200, 0.15);
+  /* Slightly blueish border */
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  /* Gold hint on hover */
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.30) 0%, rgba(30, 58, 138, 0.10) 100%);
+  transform: translateY(-2px);
+}
+
+/* Button Styles */
+.btn-premium {
+  background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
+  color: white;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-premium:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 /* Animations */
-@keyframes fadeInScale {
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.98) translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
-.animate-divine {
-  animation: fadeInScale 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-enter {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

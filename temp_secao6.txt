@@ -1,4 +1,4 @@
---- START OF FILE SECAO6.TXT ---
+﻿--- START OF FILE SECAO6.TXT ---
 # SSOT — PLANO DE LEITURA BÍBLICA 
 # Este arquivo é um teste controlado para validar o match da PVC §10.1.
 

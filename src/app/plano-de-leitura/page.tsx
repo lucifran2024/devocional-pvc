@@ -41,10 +41,10 @@ const MENU_OPTIONS = [
 ] as const;
 
 // ===========================================
-// COMPONENTES
+// COMPONENTES PREMIUM
 // ===========================================
 
-function MenuCard({ option, onClick, disabled }: {
+function PremiumOptionCard({ option, onClick, disabled }: {
     option: typeof MENU_OPTIONS[number];
     onClick: () => void;
     disabled: boolean;
@@ -54,20 +54,22 @@ function MenuCard({ option, onClick, disabled }: {
         <button
             onClick={onClick}
             disabled={disabled}
-            className="group w-full text-left p-5 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:border-blue-500/50 hover:bg-white/[0.07] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed stellar-card shadow-lg hover:shadow-blue-500/10"
+            className="group relative w-full text-left p-6 rounded-2xl glass-card hover:bg-white/[0.02] disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
         >
-            <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300 shadow-inner">
-                    <Icon className="w-5 h-5" />
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Icon className="w-24 h-24 -mr-8 -mt-8 text-white rotate-12" />
+            </div>
+
+            <div className="flex items-center justify-between z-10">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-[#FCD34D] group-hover:scale-110 transition-transform duration-300">
+                    <Icon className="w-6 h-6" />
                 </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[10px] font-black tracking-widest text-blue-500/50 group-hover:text-blue-400 transition-colors uppercase">{option.id}</span>
-                        <h3 className="font-black text-white text-sm tracking-tight">{option.label}</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed group-hover:text-slate-300 transition-colors">{option.desc}</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-blue-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-2" />
+                <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">OPÇÃO {option.id}</span>
+            </div>
+
+            <div className="z-10">
+                <h3 className="font-bold text-white text-lg mb-1 group-hover:text-[#FCD34D] transition-colors">{option.label}</h3>
+                <p className="text-sm text-slate-400 group-hover:text-slate-300 leading-relaxed">{option.desc}</p>
             </div>
         </button>
     );
@@ -76,18 +78,15 @@ function MenuCard({ option, onClick, disabled }: {
 function ChatBubble({ message }: { message: ChatMessage }) {
     const isUser = message.role === 'user';
     return (
-        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-divine`}>
+        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-enter mb-6`}>
             <div className={`
-                max-w-[85%] rounded-[1.5rem] px-6 py-4 shadow-2xl relative group
+                max-w-[85%] rounded-2xl px-6 py-4 relative
                 ${isUser
-                    ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-br-none shadow-blue-900/40 border border-white/10'
-                    : 'bg-white/[0.03] text-slate-100 rounded-bl-none border border-white/10 backdrop-blur-3xl'
+                    ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-br-none shadow-lg shadow-amber-900/20'
+                    : 'glass-panel text-slate-100 rounded-bl-none'
                 }
             `}>
-                {!isUser && (
-                    <div className="absolute top-0 left-0 w-20 h-20 bg-blue-500/5 rounded-full blur-2xl -ml-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                )}
-                <div className="text-sm whitespace-pre-wrap leading-[1.7] tracking-tight relative z-10 font-medium">
+                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     {message.content}
                 </div>
             </div>
@@ -870,164 +869,203 @@ Digite **MENU** para continuar estudando.`;
     // ===========================================
 
     return (
-        <CosmicBackground className="flex flex-col h-screen">
+        <main className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
+            <CosmicBackground />
 
-            {/* HEADER */}
-            <CosmicHeader variant="navbar" sticky className="border-b border-white/5 shadow-2xl">
-                <div className="max-w-5xl mx-auto px-6 w-full flex flex-col justify-center h-full">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                            <Link href="/" className="p-3 bg-white/[0.03] hover:bg-white/[0.08] hover:scale-110 active:scale-95 rounded-2xl border border-white/5 transition-all text-slate-400 hover:text-white">
-                                <ArrowLeft className="w-5 h-5" />
-                            </Link>
-                            <div>
-                                <div className="flex items-center gap-2.5 mb-1">
-                                    <div className="p-1.5 bg-emerald-500/10 rounded-lg">
-                                        <GraduationCap className="w-5 h-5 text-emerald-400" />
+            {/* Navbar Placeholder (or Back Button) */}
+            <div className="max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
+                <Link href="/" className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    Voltar ao Dashboard
+                </Link>
+                <div className="flex gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-xs text-slate-400 font-mono tracking-widest">ONLINE</span>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 z-10 relative">
+
+                {/* Header Section */}
+                <div className="text-center mb-16 animate-enter">
+                    <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold tracking-[0.2em] mb-4">
+                        MODO MENTOR
+                    </span>
+                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                        Plano de <span className="text-gradient-gold">Leitura</span>
+                    </h1>
+                    <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                        Mergulhe nas Escrituras com profundidade, contexto e aplicação prática.
+                    </p>
+                </div>
+
+                {!activeOption ? (
+                    // -------------------------------------------
+                    // VISTA INICIAL (MENU GRID)
+                    // -------------------------------------------
+                    <div className="animate-enter" style={{ animationDelay: '0.1s' }}>
+
+                        {/* Daily Passage Card (Hero) */}
+                        <div className="glass-panel rounded-3xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 border-amber-500/20 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none"></div>
+
+                            <div className="flex-1 text-center md:text-left z-10">
+                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">PASSAGEM DE HOJE ({formatarDataExtenso(dataHoje)})</h2>
+
+                                {loading ? (
+                                    <div className="h-12 w-64 bg-white/5 rounded animate-pulse"></div>
+                                ) : passagem ? (
+                                    <div className="space-y-2">
+                                        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tight">{passagem.referencia}</h3>
+                                        <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3">
+                                            <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
+                                                Arquétipo: <span className="text-amber-400 font-bold">{passagem.arquetipo_maestro}</span>
+                                            </span>
+                                            <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
+                                                Tema: {passagem.insights_pre_minerados[0]?.tese.substring(0, 40)}...
+                                            </span>
+                                        </div>
                                     </div>
-                                    <h1 className="font-black text-xl text-white tracking-tighter">Mentor Bíblico</h1>
-                                </div>
-                                {!loading && passagem && (
-                                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest pl-9">
-                                        {passagem.referencia} • {formatarDataExtenso(dataHoje)}
-                                    </p>
+                                ) : (
+                                    <div className="text-red-400 bg-red-500/10 px-4 py-2 rounded-lg border border-red-500/20 inline-block">
+                                        Passagem não encontrada para hoje. Verifique o Storage.
+                                    </div>
                                 )}
                             </div>
+
+                            <div className="z-10">
+                                <button className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 shadow-amber-500/20 text-lg">
+                                    <Book className="w-5 h-5" />
+                                    Começar Leitura
+                                </button>
+                            </div>
                         </div>
 
-                        {activeOption && (
-                            <button
-                                onClick={() => {
-                                    setActiveOption(null);
-                                    handleMenuClick('menu');
-                                }}
-                                className="flex items-center gap-2.5 px-5 py-2.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all text-white active:scale-95"
-                            >
-                                <RotateCcw className="w-4 h-4 text-indigo-400" />
-                                Reiniciar Menu
-                            </button>
-                        )}
+                        {/* Options Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {MENU_OPTIONS.map((option) => (
+                                <PremiumOptionCard
+                                    key={option.id}
+                                    option={option}
+                                    disabled={loading || !passagem}
+                                    onClick={() => {
+                                        if (passagem) {
+                                            setActiveOption(option.id as MenuOption);
+                                            // Adiciona mensagem inicial do usuário (simulada) e resposta do sistema
+                                            const opcaoTexto = option.label;
+                                            setMessages([
+                                                { role: 'user', content: `Quero ver: ${opcaoTexto}`, timestamp: new Date() },
+                                                // A resposta virá via useEffect ou chamada direta?
+                                                // Na lógica original, chamávamos gerarRespostaOpcao
+                                            ]);
+
+                                            // Pequeno delay para efeito "pensando"
+                                            setIsProcessing(true);
+                                            setTimeout(async () => {
+                                                const resp = await gerarRespostaOpcao(option.id as MenuOption);
+                                                setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
+                                                setIsProcessing(false);
+                                            }, 600);
+                                        }
+                                    }}
+                                />
+                            ))}
+                        </div>
                     </div>
+                ) : (
+                    // -------------------------------------------
+                    // VISTA CHAT (INTERATIVA)
+                    // -------------------------------------------
+                    <div className="max-w-4xl mx-auto animate-enter">
+                        <div className="glass-panel rounded-3xl min-h-[70vh] flex flex-col relative overflow-hidden border-amber-500/20">
 
-                    {/* Tese Central */}
-                    {!loading && passagem && (
-                        <div className="mt-4 p-3 px-5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-[1.25rem] backdrop-blur-3xl animate-divine relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/[0.02] to-transparent"></div>
-                            <div className="flex items-center gap-3 relative z-10">
-                                <Sparkles className="w-4 h-4 text-emerald-400/50 group-hover:text-emerald-400 transition-colors" />
-                                <p className="text-[12px] text-slate-300 leading-relaxed font-medium">
-                                    <span className="font-black text-emerald-400/80 mr-1.5">INSIGHT DO DIA:</span> {getTeseCentral(passagem)}
-                                </p>
+                            {/* Chat Header */}
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md sticky top-0 z-20">
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setActiveOption(null)}
+                                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
+                                    >
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                    <div>
+                                        <h2 className="font-bold text-white text-lg">
+                                            {MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                        </h2>
+                                        <p className="text-xs text-slate-400">
+                                            {passagem?.referencia} • {passagem?.arquetipo_maestro}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="p-2 bg-amber-500/10 rounded-full">
+                                    <Sparkles className="w-5 h-5 text-amber-400" />
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            </CosmicHeader>
 
-            {/* CHAT AREA */}
-            <main className="flex-1 overflow-hidden relative flex flex-col w-full max-w-5xl mx-auto">
-                <div className="flex-1 overflow-y-auto px-6 py-8 md:py-12 scroll-smooth custom-scrollbar">
-                    <div className="max-w-4xl mx-auto space-y-8">
-
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-32 space-y-4">
-                                <Loader2 className="w-10 h-10 animate-spin text-indigo-500/50" />
-                                <p className="text-slate-500 text-sm font-medium animate-pulse">Invocando mentoria...</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-8">
+                            {/* Messages Area */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 {messages.map((msg, idx) => (
                                     <ChatBubble key={idx} message={msg} />
                                 ))}
 
                                 {isProcessing && (
-                                    <div className="flex justify-start animate-divine">
-                                        <div className="bg-white/[0.03] rounded-[1.5rem] rounded-bl-none px-6 py-4 border border-white/5 backdrop-blur-3xl shadow-2xl">
-                                            <div className="flex gap-1.5 Items-center">
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></div>
-                                            </div>
+                                    <div className="flex justify-start animate-pulse">
+                                        <div className="glass-panel px-6 py-4 rounded-2xl rounded-bl-none flex items-center gap-3">
+                                            <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                                            <span className="text-sm text-slate-400">O Mentor está escrevendo...</span>
                                         </div>
                                     </div>
                                 )}
-
                                 <div ref={chatEndRef} />
                             </div>
-                        )}
 
-                        {/* Menu Visual */}
-                        {!activeOption && messages.length <= 1 && !loading && (
-                            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-5 animate-divine">
-                                {MENU_OPTIONS.map((option, idx) => (
-                                    <div key={option.id} style={{ animationDelay: `${idx * 100}ms` }} className="animate-divine">
-                                        <MenuCard
-                                            option={option}
-                                            onClick={() => handleMenuClick(option.id)}
+                            {/* Input Area (Só aparece para opções interativas ou para "Continuar") */}
+                            <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        submitMessage(inputValue);
+                                    }}
+                                    className="relative flex gap-2"
+                                >
+                                    {activeOption !== '8' && activeOption !== '9' ? (
+                                        // Botões de ação rápida para modos de leitura
+                                        <button
+                                            type="button"
+                                            onClick={() => submitMessage('Continuar')}
+                                            className="w-full btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
                                             disabled={isProcessing}
-                                        />
-                                    </div>
-                                ))}
+                                        >
+                                            <ArrowRight className="w-5 h-5" />
+                                            Continuar Leitura
+                                        </button>
+                                    ) : (
+                                        // Input de texto para Chat/Quiz
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={(e) => setInputValue(e.target.value)}
+                                                placeholder={activeOption === '8' ? "Faça uma pergunta sobre a passagem..." : "Digite sua resposta..."}
+                                                disabled={isProcessing}
+                                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={!inputValue.trim() || isProcessing}
+                                                className="btn-premium px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <Send className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    )}
+                                </form>
                             </div>
-                        )}
+
+                        </div>
                     </div>
-                </div>
-            </main>
-
-            {/* QUICK ACTIONS & INPUT AREA */}
-            <footer className="flex-shrink-0 border-t border-white/[0.05] bg-[#020617]/95 backdrop-blur-3xl py-6 md:py-8">
-                <div className="max-w-5xl mx-auto px-6">
-
-                    {/* Botões de Ação Rápida */}
-                    <div className="flex gap-4 mb-5 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
-                        {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content.includes('CONTINUAR') && (
-                            <button
-                                onClick={() => handleQuickAction('Continuar')}
-                                disabled={isProcessing}
-                                className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-[2rem] text-sm font-black tracking-wider shadow-2xl shadow-blue-900/40 transition-all active:scale-95 whitespace-nowrap"
-                            >
-                                CONTINUAR JORNADA <ArrowRight className="w-5 h-5 group-hover:translate-x-1" />
-                            </button>
-                        )}
-
-                        {activeOption && (
-                            <button
-                                onClick={() => handleQuickAction('Menu')}
-                                disabled={isProcessing}
-                                className="flex items-center gap-3 px-8 py-3 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 hover:text-white rounded-[2rem] text-[11px] font-black tracking-widest uppercase border border-white/10 transition-all active:scale-95 whitespace-nowrap"
-                            >
-                                <RotateCcw className="w-4 h-4 text-indigo-400" />
-                                Voltar ao Menu
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-4 relative">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-[2.5rem] blur-xl opacity-0 focus-within:opacity-100 transition-opacity pointer-events-none"></div>
-                        <input
-                            type="text"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder="Pergunte algo ao Mentor..."
-                            disabled={isProcessing || loading}
-                            className="flex-1 bg-white/[0.02] border border-white/[0.08] focus:border-indigo-500/50 rounded-[2rem] px-8 py-5 text-base placeholder-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 disabled:opacity-50 transition-all backdrop-blur-3xl text-white"
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={!inputValue.trim() || isProcessing || loading}
-                            className="p-5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/5 disabled:text-slate-700 rounded-full transition-all shadow-2xl shadow-indigo-900/20 active:scale-90"
-                        >
-                            {isProcessing ? (
-                                <Loader2 className="w-6 h-6 animate-spin text-white" />
-                            ) : (
-                                <Send className="w-6 h-6 text-white" />
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </footer>
-
-        </CosmicBackground>
+                )}
+            </div>
+        </main>
     );
 }

@@ -21,6 +21,33 @@ export interface PassagemSecao6 {
 // Dados embutidos do SECAO6_LOCAL.json (necessário para client-side)
 const SECAO6_DATA: PassagemSecao6[] = [
     {
+        "data": "2026-01-09",
+        "referencia": "Isaías 16-18",
+        "arquetipo_maestro": "O Refúgio em Sião",
+        "lexico_do_dia": ["Justiça", "Trono", "Moabe", "Damasco", "Etiópia", "Poda", "Sinal"],
+        "estrutura_dinamica": ["FraseImpacto", "VersoPrimeiro", "MiniThread3", "InsightPílula"],
+        "insights_pre_minerados": [
+            {
+                "tese": "Busca refugio no trono estabelecido em benignidade.",
+                "familia": "Teologia",
+                "verso_suporte": "Is 16:5",
+                "voz_performance": "Profeta"
+            },
+            {
+                "tese": "Damasco deixará de ser cidade e será um montão de ruínas.",
+                "familia": "Profecia",
+                "verso_suporte": "Is 17:1",
+                "voz_performance": "Sentinela"
+            },
+            {
+                "tese": "Naquele dia o homem atentará para o seu Criador.",
+                "familia": "Esperança",
+                "verso_suporte": "Is 17:7",
+                "voz_performance": "Conselheiro"
+            }
+        ]
+    },
+    {
         "data": "2026-01-08",
         "referencia": "Isaías 13-15",
         "arquetipo_maestro": "Profeta",

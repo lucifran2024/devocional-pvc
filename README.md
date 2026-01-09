@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Devocional PVC - Project Context
 
-## Getting Started
+## Project Overview
+Devocional PVC is a daily devotional application built with Next.js, Tailwind CSS, and Supabase. It uses a "Cosmic Glass" aesthetic to provide a premium spiritual experience.
+The app fetches daily Bible readings and AI-generated devotional content.
 
-First, run the development server:
+## Key Links
+- **Vercel Deployment**: [https://devocional-pvc.vercel.app](https://devocional-pvc.vercel.app)
+- **Supabase Project**: [https://supabase.com/dashboard/project/tayopwdelkmelgmrtnoa](https://supabase.com/dashboard/project/tayopwdelkmelgmrtnoa)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Core Features & Implementation Details
+- **Daily Payload**: The content is served via Supabase.
+  - **Table**: `leitura_do_dia` (Base table for daily readings).
+  - **View**: `payload_do_dia` (Aggregated view used by the frontend).
+- **Edge Functions**: The `/execute` function handles heavy logic.
+  - It now reads source material (e.g., `Conhecimento_Compilado_Essencial.v1.4.txt` and `BANCO_DE_OURO_EXEMPLOS.txt`) directly from **Supabase Storage** to generate context-aware responses.
+- **Frontend**: Next.js App Router.
+  - `src/app/page.tsx`: Dashboard with "Palavra do Dia" and tools grid.
+  - `src/app/gerador/page.tsx`: AI devotional generator interface.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Troubleshooting Notes
+- **Payload Updates**: Daily content must exist in `leitura_do_dia`. If missing, the app may fall back to the most recent available date.
+- **Startup**: Run with `npm run dev`. Ensure `.env.local` contains valid Supabase keys.
+- **Hydration**: Uses `suppressHydrationWarning` in `layout.tsx` to handle client/server mismatches.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+Additional project docs and "knowledge memories" are located in the `docs/` folder (if created) or root directory. The AI assistant can read files here to understand broader context.

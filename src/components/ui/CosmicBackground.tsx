@@ -23,12 +23,11 @@ export function CosmicBackground({
             {/* 3. Noise Texture */}
             <div className="absolute inset-0 noise-overlay z-0 pointer-events-none"></div>
 
-            {/* 4. Glow Effects (Orbs) */}
+            {/* 4. Glow Effects (Orbs) - REMOVED FOR CLEAN LOOK */}
             {showOrbs && (
                 <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-                    <div className="absolute top-[-15%] right-[-10%] w-[800px] h-[800px] bg-amber-500/[0.03] blur-[140px] rounded-full mix-blend-screen animate-pulse-slow"></div>
-                    <div className="absolute top-[20%] left-[-15%] w-[600px] h-[600px] bg-blue-500/[0.05] blur-[120px] rounded-full mix-blend-screen animate-pulse-slow delay-700"></div>
-                    <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] bg-purple-500/[0.03] blur-[100px] rounded-full mix-blend-screen animate-pulse-slow delay-1000"></div>
+                    {/* Keep only subtle gold hint if needed, or remove all for deep black */}
+                    <div className="absolute top-[-15%] right-[-10%] w-[800px] h-[800px] bg-amber-500/[0.02] blur-[140px] rounded-full mix-blend-screen animate-pulse-slow"></div>
                 </div>
             )}
 
