@@ -106,6 +106,8 @@ export default function PlanoLeituraPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);  // Track reading progress
+    const currentPageRef = useRef(1);  // Ref for immediate access
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
@@ -186,6 +188,8 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         // Comandos de navegação
         if (['menu', 'voltar', 'voltar ao menu'].includes(cmdLower)) {
             setActiveOption(null);
+            setCurrentPage(1);
+            currentPageRef.current = 1;  // Reset ref too
             return gerarRespostaMenuInicial();
         }
 
@@ -194,6 +198,8 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         if (numMatch) {
             const optionId = numMatch[0] as MenuOption;
             setActiveOption(optionId);
+            setCurrentPage(1);
+            currentPageRef.current = 1;  // Reset ref too
             return await gerarRespostaOpcao(optionId);
         }
 
@@ -277,9 +283,17 @@ Digite **MENU** para voltar às opções.`;
 
 🔍 **CONTEXTO & EXPLICAÇÃO**
 
-• **O que está acontecendo:** Isaías recebe uma profecia contra a poderosa Babilônia.
-• **Contexto:** Babilônia era símbolo de poder humano e orgulho – representava tudo que desafia a Deus.
-• **Significado:** O "dia do Senhor" aponta para o juízo divino sobre a arrogância humana. Deus usa nações para cumprir seus propósitos.
+📜 **Cenário Histórico:** 
+Isaías profetiza por volta de 740-700 a.C., quando Babilônia ainda não era o império dominante. Deus mostra a Isaías o que aconteceria mais de 100 anos depois — a queda do maior império da Terra!
+
+🎯 **O que está acontecendo:**
+Deus convoca Suas "tropas" — os medos e persas — para executar juízo sobre Babilônia. O "Dia do Senhor" é um termo profético para momentos de intervenção divina direta na história.
+
+💡 **Por que isso importa HOJE:**
+Babilônia representa todo sistema de orgulho humano que desafia a Deus. O princípio permanece: todo poder que se levanta contra Deus será humilhado. Impérios passam, mas a Palavra permanece.
+
+🙏 **Para Refletir:**
+*"Existe alguma 'Babilônia' na minha vida — áreas onde confio mais em mim do que em Deus?"*
 
 ---
 Digite **CONTINUAR** para seguir para os próximos versículos.
@@ -702,8 +716,16 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
     const processarContinuar = async (): Promise<string> => {
         if (!passagem) return 'Passagem não carregada.';
 
+        const page = currentPageRef.current;  // Use ref for immediate value
+        console.log('🔄 processarContinuar - activeOption:', activeOption, 'currentPage (ref):', page);
+
+        // OPÇÃO 1: LEITURA GUIADA
         if (activeOption === '1') {
-            return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+            console.log('📖 Opção 1 - Página atual:', page);
+            if (page === 1) {
+                currentPageRef.current = 2;
+                setCurrentPage(2);
+                return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
 📍 *Parte 2 de 3*
 
 ---
@@ -724,17 +746,88 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
 
 🔍 **CONTEXTO & EXPLICAÇÃO**
 
-• **O que está acontecendo:** Descrição apocalíptica do juízo — até os astros "se apagam" diante de Deus.
-• **Contexto:** Linguagem poética para mostrar a magnitude do evento; o cosmos reage ao juízo.
-• **Significado:** O orgulho será humilhado. Babilônia, a "jóia", se tornará ruína como Sodoma.
+📜 **Linguagem Apocalíptica:**
+Quando a Bíblia diz que "estrelas não darão luz" e "o sol escurecerá", não é literal — é linguagem poética para descrever eventos de proporção cósmica. O universo inteiro "reage" quando Deus age!
+
+🎯 **O Juízo Descrito:**
+Deus compara Babilônia a Sodoma e Gomorra (v.19). Aquela que era "joia dos reinos" viraria deserto. A história confirma: Babilônia hoje é ruína arqueológica no Iraque.
+
+💡 **Por que isso importa HOJE:**
+O orgulho tem data de validade. Impérios, carreiras, relacionamentos — tudo que é construído sobre arrogância, Deus humilha. O que é construído sobre humildade, permanece.
+
+🙏 **Para Refletir:**
+*"Estou construindo minha vida sobre fundamentos que vão durar, ou sobre 'areias' de orgulho próprio?"*
 
 ---
 Digite **CONTINUAR** para os últimos versículos.
 Ou **MENU** para voltar.`;
+            }
+
+            if (page === 2) {
+                currentPageRef.current = 3;
+                setCurrentPage(3);
+                return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+📍 *Parte 3 de 3*
+
+---
+
+**Isaías 14:12-17** (NVI) — A Queda do Rei da Babilônia
+
+**12.** Como você caiu dos céus, ó estrela da manhã, filho da alvorada! Como foi atirado à terra, você, que debilitava as nações!
+**13.** Você, que dizia no seu coração: "Subirei aos céus; erguerei o meu trono acima das estrelas de Deus; eu me assentarei no monte da assembleia, no ponto mais elevado do monte santo."
+**14.** "Subirei mais alto que as mais altas nuvens; serei como o Altíssimo."
+**15.** Mas às profundezas do Sheol você será levado, irá ao fundo do abismo!
+**16.** Os que o virem ficarão olhando para você, e refletindo sobre o seu destino, perguntarão: "É este o homem que fez a terra tremer e que abalou reinos?"
+**17.** "O homem que transformou o mundo num deserto, que arrasou as suas cidades e nunca deixou os prisioneiros voltarem para casa?"
+
+---
+
+🔍 **CONTEXTO & EXPLICAÇÃO**
+
+📜 **Quem é o "Astro Brilhante"?**
+O termo hebraico *helel* (traduzido como "Lúcifer" em latim) refere-se ao rei de Babilônia. Ele queria "subir aos céus" — ser como Deus. O texto usa ironia: quem queria subir, desceu ao Sheol (mundo dos mortos).
+
+🎯 **Os 5 "Eu Vou" do Orgulho (v.13-14):**
+1. "Subirei aos céus" — ambição sem limites
+2. "Erguerei meu trono" — busca por poder
+3. "Sentarei no monte da assembleia" — usurpar o lugar de Deus
+4. "Subirei acima das nuvens" — não aceitar limites
+5. "Serei como o Altíssimo" — o pecado original (Gn 3:5)
+
+💡 **Por que isso importa HOJE:**
+Esse padrão de orgulho se repete. Toda vez que dizemos "eu vou fazer do meu jeito" sem consultar Deus, repetimos os passos do rei de Babilônia. O caminho de Cristo é o oposto: Ele desceu, e por isso foi exaltado (Fp 2:5-11).
+
+🙏 **Para Refletir:**
+*"Em quais áreas da minha vida estou tentando 'subir' por conta própria, sem depender de Deus?"*
+
+---
+Digite **CONTINUAR** para finalizar a leitura.
+Ou **MENU** para voltar.`;
+            }
+
+            // currentPage >= 3 - Leitura concluída
+            return `✅ **LEITURA CONCLUÍDA!**
+
+---
+
+📖 **Você completou a leitura de ${passagem.referencia}!**
+
+💎 **Resumo de Ouro:** Deus é soberano sobre todas as nações. O orgulho humano sempre será humilhado, mas há graça para os humildes.
+
+🙏 **Sugestão de Oração:**
+
+*"Senhor, obrigado por me lembrar que Tu estás no controle. Que eu não seja como Babilônia, buscando minha própria glória. Ajuda-me a viver com humildade, confiando na Tua soberania. Em nome de Jesus. Amém."*
+
+---
+Digite **MENU** para voltar e explorar outras opções.`;
         }
 
+        // OPÇÃO 7: EXPOSIÇÃO DETALHADA
         if (activeOption === '7') {
-            return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
+            if (page === 1) {
+                currentPageRef.current = 2;
+                setCurrentPage(2);
+                return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
 📍 *Bloco 2 de 3: Isaías 14 — A Queda do "Astro Brilhante"*
 
 ---
@@ -765,8 +858,60 @@ Ou **MENU** para voltar.`;
 
 Digite **CONTINUAR** para o bloco final (Isaías 15: Moabe).
 Ou **MENU** para voltar.`;
+            }
+
+            if (page === 2) {
+                currentPageRef.current = 3;
+                setCurrentPage(3);
+                return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
+📍 *Bloco 3 de 3: Isaías 15 — O Lamento sobre Moabe*
+
+---
+
+**VERSÍCULOS 1-5: A Destruição de Moabe**
+
+> "Sentença contra Moabe: Numa noite Ar de Moabe foi arrasada, foi destruída!"
+
+**Sentido original:** Moabe era uma nação vizinha de Israel, descendente de Ló. Apesar do parentesco, Moabe frequentemente se opunha a Israel.
+
+**Conexão bíblica:** Rute era moabita — do povo que agora recebe juízo. Deus age em justiça, mas também em graça individual.
+
+**Apontando para Cristo:** Assim como Rute encontrou graça em Israel, nós, sendo "estrangeiros", encontramos graça em Cristo.
+
+---
+
+**O LAMENTO (v.5)**
+
+> "O meu coração clama por Moabe..."
+
+Isaías não celebra a destruição — ele lamenta. O profeta tem compaixão mesmo pelo inimigo.
+
+**Aplicação:** Deus julga, mas não se alegra na destruição do ímpio (Ez 33:11). Devemos ter a mesma postura.
+
+---
+
+Digite **CONTINUAR** para finalizar.
+Ou **MENU** para voltar.`;
+            }
+
+            // Bloco final
+            return `✅ **EXPOSIÇÃO CONCLUÍDA!**
+
+---
+
+📖 **Você completou a exposição detalhada de ${passagem.referencia}!**
+
+💎 **Resumo de Ouro:** Os capítulos 13-15 de Isaías mostram Deus como Juiz de todas as nações. Babilônia e Moabe representam todo poder humano que desafia a Deus.
+
+🙏 **Sugestão de Oração:**
+
+*"Senhor, que eu nunca me esqueça de que Tu estás no trono. Dá-me um coração humilde e compassivo, mesmo diante dos que me perseguem. Em nome de Jesus. Amém."*
+
+---
+Digite **MENU** para continuar estudando.`;
         }
 
+        // Para outras opções, mostra mensagem de conclusão
         return `✅ **LEITURA CONCLUÍDA!**
 
 ---
