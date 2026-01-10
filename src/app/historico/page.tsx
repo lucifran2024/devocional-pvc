@@ -202,46 +202,57 @@ export default function HistoricoPage() {
                             <div className="bg-[#020617] w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col pt-0 animate-in fade-in zoom-in-95 duration-500 border border-white/10 relative z-10" onClick={e => e.stopPropagation()}>
 
                                 {/* Modal Header */}
-                                <div className="p-10 md:p-14 bg-gradient-to-br from-[#0f172a] to-[#020617] text-white shrink-0 relative overflow-hidden border-b border-white/5">
+                                <div className="p-6 md:p-10 bg-gradient-to-br from-[#0f172a] to-[#020617] text-white shrink-0 relative overflow-hidden border-b border-white/5">
                                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] -mr-32 -mt-32"></div>
 
                                     <div className="relative z-10 flex items-start justify-between">
-                                        <div>
-                                            <div className="inline-flex items-center gap-3 mb-6 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                                <Calendar className="w-4 h-4 text-indigo-500" />
-                                                {formatData(expandedItem.created_at)}
+                                        <div className="flex-1 pr-4">
+                                            {/* Adjusted: Smaller Title & Tighter Spacing */}
+                                            <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-divine divine-halo italic uppercase leading-tight">{expandedItem.modo_id}</h2>
+
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                    <Calendar className="w-3 h-3 text-indigo-500" />
+                                                    {formatData(expandedItem.created_at)}
+                                                </div>
+
+                                                <p className="text-indigo-300 font-bold flex items-center gap-2 text-xs md:text-sm uppercase tracking-widest leading-relaxed">
+                                                    <Quote className="w-4 h-4 opacity-40 shrink-0" /> {expandedItem.passagem}
+                                                </p>
                                             </div>
-                                            <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-divine divine-halo italic uppercase">{expandedItem.modo_id}</h2>
-                                            <p className="text-indigo-300 font-bold flex items-center gap-3 text-sm md:text-lg pl-1 uppercase tracking-widest">
-                                                <Quote className="w-5 h-5 opacity-40" /> {expandedItem.passagem}
-                                            </p>
                                         </div>
-                                        <button onClick={() => setExpandedItem(null)} className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-[1.5rem] transition-all active:scale-90">
-                                            <X className="w-6 h-6" />
+                                        <button onClick={() => setExpandedItem(null)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all active:scale-90 shrink-0">
+                                            <X className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Modal Content */}
-                                <div className="flex-1 overflow-y-auto p-10 md:p-20 custom-scrollbar bg-[#020617]">
-                                    <article className="prose prose-lg prose-invert max-w-none 
+                                {/* Modal Content - Pulled Up & Tighter Text */}
+                                <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-4 md:pt-6 custom-scrollbar bg-[#020617]">
+                                    <div className="prose prose-lg prose-invert max-w-none 
                                     prose-headings:text-indigo-200 prose-headings:font-black
-                                    prose-p:text-slate-300 prose-p:leading-[1.8] prose-p:text-xl
-                                    prose-blockquote:border-l-[6px] prose-blockquote:border-indigo-600 prose-blockquote:bg-indigo-950/20 prose-blockquote:py-8 prose-blockquote:px-12 prose-blockquote:rounded-[2rem] prose-blockquote:not-italic">
-                                        <ReactMarkdown>{expandedItem.resultado_texto}</ReactMarkdown>
-                                    </article>
+                                    prose-blockquote:border-l-[4px] prose-blockquote:border-indigo-600 prose-blockquote:bg-indigo-950/20 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-xl prose-blockquote:not-italic prose-blockquote:my-4">
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ node, ...props }) => <p className="mb-6 leading-relaxed text-slate-300 text-lg" {...props} />,
+                                                hr: ({ node, ...props }) => <hr className="my-12 border-white/10 border-t-2" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="text-indigo-200 font-bold" {...props} />,
+                                                li: ({ node, ...props }) => <li className="text-slate-300 my-2" {...props} />
+                                            }}
+                                        >
+                                            {expandedItem.resultado_texto}
+                                        </ReactMarkdown>
+                                    </div>
                                 </div>
 
                                 {/* Modal Footer */}
-                                <div className="p-8 md:p-10 bg-[#020617] border-t border-white/5 flex flex-wrap items-center justify-between gap-6 shrink-0">
-                                    <button className="flex items-center gap-3 px-8 py-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 rounded-[2rem] text-slate-400 hover:text-white transition-all text-xs font-black uppercase tracking-widest">
-                                        <Share2 className="w-5 h-5" /> Compartilhar Insight
-                                    </button>
+                                <div className="p-8 md:p-10 bg-[#020617] border-t border-white/5 flex flex-wrap items-center justify-center gap-6 shrink-0">
+                                    {/* Removed Share Button */}
                                     <button
                                         onClick={(e) => {
                                             if (expandedItem) handleToggleLike(expandedItem, e);
                                         }}
-                                        className={`flex items-center gap-4 px-12 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] shadow-2xl ${expandedItem.aprovado
+                                        className={`flex items-center gap-4 px-12 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] shadow-2xl w-full md:w-auto justify-center ${expandedItem.aprovado
                                             ? 'bg-rose-600 text-white shadow-rose-900/40 ring-2 ring-white/20'
                                             : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                                             }`}
