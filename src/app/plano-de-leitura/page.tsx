@@ -78,16 +78,28 @@ function PremiumOptionCard({ option, onClick, disabled }: {
 
 function ChatBubble({ message }: { message: ChatMessage }) {
     const isUser = message.role === 'user';
+
+    // Mensagens do assistente ocupam a tela toda (como a Biblioteca)
+    if (!isUser) {
+        return (
+            <div className="animate-enter mb-6">
+                <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                    {/* Glow effect */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                    <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Mensagens do usuário mantêm o estilo de bolha
     return (
-        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-enter mb-6`}>
-            <div className={`
-                max-w-[85%] rounded-2xl px-6 py-4 relative
-                ${isUser
-                    ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-br-none shadow-lg shadow-amber-900/20'
-                    : 'glass-panel text-slate-100 rounded-bl-none'
-                }
-            `}>
-                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 max-w-none">
+        <div className="flex justify-end animate-enter mb-6">
+            <div className="max-w-[85%] rounded-2xl px-6 py-4 bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-br-none shadow-lg shadow-amber-900/20">
+                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
             </div>
