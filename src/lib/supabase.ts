@@ -258,6 +258,31 @@ export async function toggleLike(id: number, currentStatus: boolean | null): Pro
     return await atualizarFeedback(id, novoStatus);
 }
 
+/**
+ * Deleta um item do histórico de gerações
+ */
+export async function deleteHistoricoItem(id: number): Promise<boolean> {
+    console.log(`🗑️ [DELETE] Deletando item ID ${id}`);
+
+    try {
+        const { error } = await supabase
+            .from('historico_geracoes')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [DELETE] Erro ao deletar:', error);
+            return false;
+        }
+
+        console.log('✅ [DELETE] Sucesso!');
+        return true;
+    } catch (err) {
+        console.error('💥 [DELETE] Exceção:', err);
+        return false;
+    }
+}
+
 import { PassagemSecao6 } from './secao6';
 
 /**

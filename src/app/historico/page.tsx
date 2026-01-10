@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate } from 'lucide-react';
+import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getHistorico, toggleLike } from '@/lib/supabase';
+import { getHistorico, toggleLike, deleteHistoricoItem } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
@@ -23,6 +23,7 @@ export default function HistoricoPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'favorites'>('all');
     const [expandedItem, setExpandedItem] = useState<HistoricoItem | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     // Carregar dados
     const fetchData = async () => {
@@ -66,6 +67,33 @@ export default function HistoricoPage() {
             // Reverte se falhar
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, aprovado: !newStatus } : i));
         }
+    };
+
+    // Handler de Delete
+    const handleDelete = async (item: HistoricoItem, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // Confirmação
+        if (!confirm(`Excluir esta memória?\n\n"${item.passagem}"\n\nEsta ação não pode ser desfeita.`)) {
+            return;
+        }
+
+        setDeletingId(item.id);
+
+        const success = await deleteHistoricoItem(item.id);
+
+        if (success) {
+            // Remove da lista local
+            setItems(prev => prev.filter(i => i.id !== item.id));
+            // Fecha modal se estiver aberto neste item
+            if (expandedItem?.id === item.id) {
+                setExpandedItem(null);
+            }
+        } else {
+            alert('Erro ao excluir. Tente novamente.');
+        }
+
+        setDeletingId(null);
     };
 
     return (
@@ -163,12 +191,26 @@ export default function HistoricoPage() {
                                                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
                                                 {formatData(item.created_at)}
                                             </div>
-                                            <button
-                                                onClick={(e) => handleToggleLike(item, e)}
-                                                className={`p-3 rounded-2xl transition-all duration-500 ${item.aprovado ? 'bg-rose-500 border border-rose-400 shadow-lg shadow-rose-900/40 text-white' : 'bg-white/[0.03] border border-white/5 text-slate-600 hover:text-white hover:border-rose-500/50'}`}
-                                            >
-                                                <Heart className={`w-5 h-5 ${item.aprovado ? 'fill-current' : ''}`} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => handleDelete(item, e)}
+                                                    disabled={deletingId === item.id}
+                                                    className="p-3 rounded-2xl transition-all duration-500 bg-white/[0.03] border border-white/5 text-slate-600 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50"
+                                                    title="Excluir memória"
+                                                >
+                                                    {deletingId === item.id ? (
+                                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-5 h-5" />
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleToggleLike(item, e)}
+                                                    className={`p-3 rounded-2xl transition-all duration-500 ${item.aprovado ? 'bg-rose-500 border border-rose-400 shadow-lg shadow-rose-900/40 text-white' : 'bg-white/[0.03] border border-white/5 text-slate-600 hover:text-white hover:border-rose-500/50'}`}
+                                                >
+                                                    <Heart className={`w-5 h-5 ${item.aprovado ? 'fill-current' : ''}`} />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="mb-6">
@@ -246,13 +288,29 @@ export default function HistoricoPage() {
                                 </div>
 
                                 {/* Modal Footer */}
-                                <div className="p-8 md:p-10 bg-[#020617] border-t border-white/5 flex flex-wrap items-center justify-center gap-6 shrink-0">
-                                    {/* Removed Share Button */}
+                                <div className="p-8 md:p-10 bg-[#020617] border-t border-white/5 flex flex-wrap items-center justify-center gap-4 shrink-0">
+                                    {/* Delete Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            if (expandedItem) handleDelete(expandedItem, e);
+                                        }}
+                                        disabled={deletingId === expandedItem.id}
+                                        className="flex items-center gap-3 px-8 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] bg-white/5 text-slate-400 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 border border-white/10 disabled:opacity-50"
+                                    >
+                                        {deletingId === expandedItem.id ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="w-5 h-5" />
+                                        )}
+                                        Excluir
+                                    </button>
+
+                                    {/* Like Button */}
                                     <button
                                         onClick={(e) => {
                                             if (expandedItem) handleToggleLike(expandedItem, e);
                                         }}
-                                        className={`flex items-center gap-4 px-12 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] shadow-2xl w-full md:w-auto justify-center ${expandedItem.aprovado
+                                        className={`flex items-center gap-4 px-12 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] shadow-2xl ${expandedItem.aprovado
                                             ? 'bg-rose-600 text-white shadow-rose-900/40 ring-2 ring-white/20'
                                             : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                                             }`}
