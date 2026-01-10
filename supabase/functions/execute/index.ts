@@ -21,6 +21,45 @@ Deno.serve(async (req) => {
       throw new Error("Faltam dados obrigatórios: modo_id ou data.");
     }
 
+    // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
+
+    const listaLentes = [
+      "SOBERANIA E REINO: Use termos como trono, cetro, governo, decreto, império, súdito, lealdade. Deus é o Rei, nós somos os servos. O controle é dEle.",
+      "ANATOMIA DA ALMA: Foque no corpo e sentidos. Olhos (visão/cegueira), ouvidos (surdez), coração (duro/carne), joelhos (rendição), mãos (obras), fôlego.",
+      "LUZ E NAVEGAÇÃO: Use contrastes de clareza/escuridão, rota, norte, abismo, farol, estrela da manhã, sombra, passos, caminho, neblina.",
+      "JUGO E DESCANSO: Use metáforas de peso, fardo, alívio, cansaço, correntes, liberdade, escravidão, soltar a bagagem.",
+      "CONSTRUÇÃO E ALICERCE: Fale sobre fundações, ruínas, edificar, porta, muros, 'casa interior', estrutura que balança, rocha x areia.",
+      "AGRICULTURA BÍBLICA: Sementes, frutos, poda, raízes, terra seca, chuva, colheita, tempo de plantio, estações."
+    ];
+
+    const listaTemperaturas = [
+      "DEVOCIONAL E ÍNTIMO: Comece ou termine falando diretamente com Deus (como uma oração). Tom de sussurro, reverência e entrega ('Eis-me aqui').",
+      "SAPIENCIAL E PRÁTICO: Foco em decisões. 'Não faça isso, faça aquilo'. Tom de conselho de pai para filho. Focado em sabedoria para a segunda-feira.",
+      "PROFÉTICO E DENÚNCIA: Aponte o dedo para um ídolo escondido (orgulho, vaidade, controle). Tom mais firme, urgente, 'acorde enquanto é tempo'.",
+      "CONSOLADOR E PASTORAL: Foco na dor, no cansaço e na graça. Use palavras como 'calma', 'respire', 'Ele sabe', 'Ele viu'. Acolha o ferido."
+    ];
+
+    // Sorteio
+    const lenteSorteada = listaLentes[Math.floor(Math.random() * listaLentes.length)];
+    const temperaturaSorteada = listaTemperaturas[Math.floor(Math.random() * listaTemperaturas.length)];
+
+    console.log(`[VARIABILIDADE] Lente: ${lenteSorteada} | Temp: ${temperaturaSorteada}`);
+
+    const instrucaoVariabilidade = `
+\n\n=== [AJUSTE FINO DE TOM - PRIORIDADE MAXIMA] ===
+ATENÇÃO: Você recebeu uma "Lente" (${lenteSorteada}) e uma "Temperatura" (${temperaturaSorteada}).
+MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
+
+1. NÃO force a metáfora em todas as frases. Isso deixa o texto robótico.
+2. Use a lente apenas como um "perfume" ou "inspiração de fundo".
+3. Se a metáfora travar a leitura ou parecer artificial, DESCARTE-A e priorize uma linguagem humana, fluida e pastoral.
+4. O objetivo é tocar o coração, não impressionar com vocabulário técnico.
+5. SEJA SIMPLES. Fale como um pastor conversando na mesa, não como um poeta acadêmico.
+==================================================\n
+`;
+
+    // --- FIM DA LÓGICA DE VARIABILIDADE ---
+
     // 3. Inicializar Supabase
     // IMPORTANTE: Certifique-se de ter setado as Secrets no painel!
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -149,6 +188,9 @@ ${conhecimentoCompilado}
 
 ### [BANCO_DE_OURO]
 ${bancoDeOuro}
+
+### [PERSONALIDADE_DINAMICA]
+${instrucaoVariabilidade}
 
 ### [INSTRUCOES_MODO]
 ${modoTexto}
