@@ -226,12 +226,14 @@ export default function DashboardPage() {
             accentColor="text-amber-400"
           />
 
-          {/* Card 4: Chat (Em breve) */}
+          {/* Card 4: Chat Pastoral */}
           <DashboardCard
+            href="/chat"
             title="Chat Pastoral"
             desc="Converse com um mentor virtual sobre suas dúvidas."
             icon={MessageSquare}
-            disabled={true}
+            accentColor="text-cyan-400"
+            badge="NOVO"
           />
 
           {/* Card 5: Diário (Em breve) */}
