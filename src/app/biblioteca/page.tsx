@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, Search } from 'lucide-react';
+import { Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X, ArrowRight } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
 // Lista de livros da Bíblia
@@ -83,12 +83,19 @@ interface Versiculo {
 }
 
 export default function BibliotecaPage() {
-    const [livroSelecionado, setLivroSelecionado] = useState(LIVROS_BIBLIA[0]);
-    const [capitulo, setCapitulo] = useState(1);
+    // Estado principal de leitura (só atualiza quando o usuário Confirma a seleção)
+    const [livroAtual, setLivroAtual] = useState(LIVROS_BIBLIA[0]);
+    const [capituloAtual, setCapituloAtual] = useState(1);
+
+    // Conteúdo e UI
     const [versiculos, setVersiculos] = useState<Versiculo[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [mostrarLivros, setMostrarLivros] = useState(false);
+    const [modalAberto, setModalAberto] = useState(false);
+
+    // Estado temporário para o Modal de Seleção
+    const [faseSelecao, setFaseSelecao] = useState<'livros' | 'capitulos'>('livros');
+    const [livroSelecionadoTemp, setLivroSelecionadoTemp] = useState(LIVROS_BIBLIA[0]);
 
     // Buscar capítulo da API
     const buscarCapitulo = async (livro: string, cap: number) => {
@@ -148,34 +155,52 @@ export default function BibliotecaPage() {
                 { verse: 5, text: 'E Deus chamou à luz Dia, e às trevas chamou Noite. E foi a tarde e a manhã, o dia primeiro.' },
             ]);
             // Não mostrar erro, usar fallback silencioso
-            // setError('Não foi possível carregar o texto. Usando versão offline.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Carregar capítulo quando mudar seleção
+    // Efeito para carregar o capítulo quando livro/capítulo atual mudar (e APENAS quando mudar o atual)
     useEffect(() => {
-        buscarCapitulo(livroSelecionado.abrev, capitulo);
-    }, [livroSelecionado, capitulo]);
+        buscarCapitulo(livroAtual.abrev, capituloAtual);
+    }, [livroAtual, capituloAtual]);
 
-    // Navegação de capítulos
+    // Navegação de capítulos rápida (setas da barra)
     const irParaProximo = () => {
-        if (capitulo < livroSelecionado.capitulos) {
-            setCapitulo(capitulo + 1);
+        if (capituloAtual < livroAtual.capitulos) {
+            setCapituloAtual(capituloAtual + 1);
         }
     };
 
     const irParaAnterior = () => {
-        if (capitulo > 1) {
-            setCapitulo(capitulo - 1);
+        if (capituloAtual > 1) {
+            setCapituloAtual(capituloAtual - 1);
         }
     };
 
-    const selecionarLivro = (livro: typeof LIVROS_BIBLIA[0]) => {
-        setLivroSelecionado(livro);
-        setCapitulo(1);
-        setMostrarLivros(false);
+    // --- Lógica do Modal de Seleção ---
+
+    const abrirModal = () => {
+        // Ao abrir, reseta para o estado atual
+        setLivroSelecionadoTemp(livroAtual);
+        setFaseSelecao('livros');
+        setModalAberto(true);
+    };
+
+    const selecionarLivroTemp = (livro: typeof LIVROS_BIBLIA[0]) => {
+        setLivroSelecionadoTemp(livro);
+        setFaseSelecao('capitulos'); // Avança para a próxima etapa, sem fechar nem atualizar o principal
+    };
+
+    const confirmarSelecao = (cap: number) => {
+        // O usuário escolheu o capítulo, AGORA atualizamos o estado principal
+        setLivroAtual(livroSelecionadoTemp);
+        setCapituloAtual(cap);
+        setModalAberto(false);
+    };
+
+    const voltarParaLivros = () => {
+        setFaseSelecao('livros');
     };
 
     return (
@@ -200,38 +225,40 @@ export default function BibliotecaPage() {
                 </div>
             </header>
 
-            {/* Seletor de Livro e Capítulo */}
+            {/* Barra de Controle (Sticky) */}
             <div className="sticky top-[65px] z-40 bg-black/60 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
 
-                    {/* Botão Livro */}
+                    {/* Botão de Seleção Principal */}
                     <button
-                        onClick={() => setMostrarLivros(!mostrarLivros)}
-                        className="flex-1 glass-panel px-4 py-3 rounded-xl text-left hover:bg-white/10 transition-colors"
+                        onClick={abrirModal}
+                        className="flex-1 glass-panel px-4 py-3 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors group"
                     >
-                        <div className="text-xs text-slate-400 mb-1">Livro</div>
-                        <div className="text-white font-bold">{livroSelecionado.nome}</div>
+                        <div className="text-left">
+                            <div className="text-xs text-slate-400 mb-1 group-hover:text-amber-400 transition-colors">Leitura Atual</div>
+                            <div className="text-white font-bold text-lg flex items-center gap-2">
+                                {livroAtual.nome} {capituloAtual}
+                                <ChevronRight className="w-4 h-4 text-slate-500" />
+                            </div>
+                        </div>
                     </button>
 
-                    {/* Navegação de Capítulos */}
+                    {/* Botões de Navegação Rápida */}
                     <div className="flex items-center gap-2">
                         <button
                             onClick={irParaAnterior}
-                            disabled={capitulo <= 1}
-                            className="p-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                            disabled={capituloAtual <= 1}
+                            className="p-4 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                            aria-label="Capítulo Anterior"
                         >
                             <ChevronLeft className="w-5 h-5 text-white" />
                         </button>
 
-                        <div className="glass-panel px-4 py-3 rounded-xl min-w-[80px] text-center">
-                            <div className="text-xs text-slate-400">Cap.</div>
-                            <div className="text-white font-bold">{capitulo}</div>
-                        </div>
-
                         <button
                             onClick={irParaProximo}
-                            disabled={capitulo >= livroSelecionado.capitulos}
-                            className="p-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                            disabled={capituloAtual >= livroAtual.capitulos}
+                            className="p-4 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                            aria-label="Próximo Capítulo"
                         >
                             <ChevronRight className="w-5 h-5 text-white" />
                         </button>
@@ -239,107 +266,148 @@ export default function BibliotecaPage() {
                 </div>
             </div>
 
-            {/* Modal de Seleção de Livro */}
-            {mostrarLivros && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="glass-panel rounded-2xl max-w-md w-full max-h-[70vh] overflow-hidden">
-                        <div className="p-4 border-b border-white/10">
-                            <h3 className="text-lg font-bold text-white">Selecionar Livro</h3>
-                        </div>
-                        <div className="overflow-y-auto max-h-[calc(70vh-80px)] p-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                {LIVROS_BIBLIA.map((livro, index) => (
-                                    <button
-                                        key={livro.abrev}
-                                        onClick={() => selecionarLivro(livro)}
-                                        className={`p-3 rounded-xl text-left transition-all ${livro.abrev === livroSelecionado.abrev
-                                            ? 'bg-amber-500/20 border border-amber-500/50 text-amber-400'
-                                            : 'bg-white/5 hover:bg-white/10 text-slate-300'
-                                            }`}
-                                    >
-                                        <div className="font-medium text-sm truncate">{livro.nome}</div>
-                                        <div className="text-xs text-slate-500">{livro.capitulos} cap.</div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="p-4 border-t border-white/10">
+            {/* --- MODAL DE SELEÇÃO --- */}
+            {modalAberto && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="glass-panel rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col overflow-hidden border border-white/10 shadow-2xl">
+
+                        {/* Header do Modal */}
+                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                            {faseSelecao === 'capitulos' ? (
+                                <button
+                                    onClick={voltarParaLivros}
+                                    className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium px-2 py-1 rounded hover:bg-white/5"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Voltar
+                                </button>
+                            ) : (
+                                <div className="w-16"></div> // Espaçador para manter o título centralizado
+                            )}
+
+                            <h3 className="text-lg font-bold text-white">
+                                {faseSelecao === 'livros' ? 'Escolha o Livro' : `Capítulos de ${livroSelecionadoTemp.nome}`}
+                            </h3>
+
                             <button
-                                onClick={() => setMostrarLivros(false)}
-                                className="w-full py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
+                                onClick={() => setModalAberto(false)}
+                                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                             >
-                                Fechar
+                                <X className="w-5 h-5" />
                             </button>
+                        </div>
+
+                        {/* Conteúdo do Modal (Scrollável) */}
+                        <div className="overflow-y-auto flex-1 p-2">
+
+                            {/* FASE 1: LISTA DE LIVROS */}
+                            {faseSelecao === 'livros' && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2">
+                                    {LIVROS_BIBLIA.map((livro) => (
+                                        <button
+                                            key={livro.abrev}
+                                            onClick={() => selecionarLivroTemp(livro)}
+                                            className={`p-3 rounded-xl text-left transition-all border ${livro.abrev === livroSelecionadoTemp.abrev
+                                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                                                : 'bg-white/5 border-transparent hover:bg-white/10 text-slate-300'
+                                                }`}
+                                        >
+                                            <div className="font-bold text-sm truncate">{livro.nome}</div>
+                                            <div className="text-xs text-slate-500 mt-1">{livro.capitulos} caps</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* FASE 2: GRID DE CAPÍTULOS */}
+                            {faseSelecao === 'capitulos' && (
+                                <div className="p-2">
+                                    <div className="grid grid-cols-5 sm:grid-cols-6 gap-3">
+                                        {Array.from({ length: livroSelecionadoTemp.capitulos }, (_, i) => i + 1).map((cap) => (
+                                            <button
+                                                key={cap}
+                                                onClick={() => confirmarSelecao(cap)}
+                                                className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold transition-all border ${(livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual)
+                                                    ? 'bg-amber-500 text-black border-amber-400'
+                                                    : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/20 hover:border-white/20'
+                                                    }`}
+                                            >
+                                                {cap}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Conteúdo - Versículos */}
+            {/* Conteúdo Principal - Texto Bíblico */}
             <main className="max-w-4xl mx-auto px-4 py-8">
-                {/* Título do Capítulo */}
-                <h1 className="text-3xl md:text-4xl font-black text-white mb-8 text-center">
-                    {livroSelecionado.nome} <span className="text-amber-400">{capitulo}</span>
+                {/* Título */}
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-8 text-center tracking-tight">
+                    {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
                 </h1>
 
-                {/* Loading */}
+                {/* Loading State */}
                 {loading && (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
+                        <p className="text-slate-400 animate-pulse">Carregando escrituras...</p>
                     </div>
                 )}
 
-                {/* Erro */}
+                {/* Error State */}
                 {error && !loading && (
-                    <div className="glass-panel rounded-xl p-6 text-center">
-                        <p className="text-red-400 mb-4">{error}</p>
+                    <div className="glass-panel rounded-xl p-8 text-center max-w-md mx-auto border border-red-500/30 bg-red-500/10">
+                        <p className="text-red-300 mb-6 text-lg">{error}</p>
                         <button
-                            onClick={() => buscarCapitulo(livroSelecionado.abrev, capitulo)}
-                            className="px-6 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                            onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)}
+                            className="px-8 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-colors"
                         >
                             Tentar Novamente
                         </button>
                     </div>
                 )}
 
-                {/* Versículos */}
+                {/* Texto dos Versículos */}
                 {!loading && !error && versiculos.length > 0 && (
-                    <div className="glass-panel rounded-2xl p-6 md:p-8">
-                        <div className="space-y-4 text-lg leading-relaxed text-slate-200">
+                    <div className="glass-panel rounded-2xl p-6 md:p-10 relative overflow-hidden">
+                        {/* Glow effect */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                        <div className="space-y-6 text-xl md:text-2xl leading-relaxed text-slate-200 font-serif">
                             {versiculos.map((v) => (
-                                <p key={v.verse} className="hover:bg-white/5 rounded-lg px-2 py-1 -mx-2 transition-colors">
-                                    <span className="text-amber-400 font-bold text-sm mr-2 align-super">
-                                        {v.verse}
-                                    </span>
-                                    {v.text}
-                                </p>
+                                <div key={v.verse} className="relative pl-4 hover:bg-white/5 rounded-lg -ml-4 p-2 transition-colors group/verse">
+                                    <p>
+                                        <sup className="text-xs text-amber-400 font-bold mr-2 select-none opacity-60 group-hover/verse:opacity-100">{v.verse}</sup>
+                                        {v.text}
+                                    </p>
+                                </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* Navegação Inferior */}
-                <div className="flex justify-between items-center mt-8 gap-4">
+                {/* Navegação Inferior de Rodapé */}
+                <div className="flex justify-between items-center mt-12 gap-4">
                     <button
                         onClick={irParaAnterior}
-                        disabled={capitulo <= 1}
-                        className="flex items-center gap-2 px-6 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                        disabled={capituloAtual <= 1}
+                        className="flex items-center gap-3 px-6 py-4 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors group"
                     >
-                        <ChevronLeft className="w-5 h-5" />
-                        <span>Anterior</span>
+                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                        <span className="font-medium">Capítulo Anterior</span>
                     </button>
-
-                    <span className="text-slate-500 text-sm">
-                        {capitulo} / {livroSelecionado.capitulos}
-                    </span>
 
                     <button
                         onClick={irParaProximo}
-                        disabled={capitulo >= livroSelecionado.capitulos}
-                        className="flex items-center gap-2 px-6 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors"
+                        disabled={capituloAtual >= livroAtual.capitulos}
+                        className="flex items-center gap-3 px-6 py-4 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors group"
                     >
-                        <span>Próximo</span>
-                        <ChevronRight className="w-5 h-5" />
+                        <span className="font-medium">Próximo Capítulo</span>
+                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </main>
