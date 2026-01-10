@@ -306,8 +306,14 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
             'tese', 'familia', 'verso_suporte', 'voz_performance'
         ];
         keysToFix.forEach(key => {
-            const regex = new RegExp(`([^"])(${key}":)`, 'g');
-            jsonString = jsonString.replace(regex, '$1"$2');
+            // Caso 1: chave sem aspas NO MEIO de linha (ex: `  { tese": `)
+            // Procura por: não-aspa + chave + aspa + dois-pontos
+            const regexMid = new RegExp(`([^"\\w])(${key})":`, 'g');
+            jsonString = jsonString.replace(regexMid, '$1"$2":');
+
+            // Caso 2: chave sem aspas NO INÍCIO de linha (ex: `\ntese": ` ou apenas `tese": `)
+            const regexStart = new RegExp(`(^|\\r?\\n)(${key})":`, 'gm');
+            jsonString = jsonString.replace(regexStart, '$1"$2":');
         });
 
         let passagens: PassagemSecao6[] = [];
@@ -315,29 +321,99 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
         try {
             passagens = JSON.parse(jsonString);
         } catch (parseError) {
-            console.warn('⚠️ [STORAGE] Erro de JSON. Tentando Fallback Regex...', parseError);
+            console.warn('⚠️ [STORAGE] Erro de JSON completo. Tentando extrair passagem específica...', parseError);
 
-            // FALLBACK: Tentar extrair apenas o objeto do dia usando Regex
-            // Procura por "data": "YYYY-MM-DD" e extrai o objeto envolvente
-            const datePattern = `"data":\\s*"${dataPreferida}"`;
-            const dateIndex = jsonString.indexOf(datePattern); // Procura a string literal ajustada, ou regex se precisasse
+            // FALLBACK ROBUSTO: Extrair apenas a passagem do dia específica
+            // O arquivo tem problemas estruturais (objetos não fechados entre passagens)
+            // Então vamos procurar pelo padrão da data e extrair os campos manualmente
 
-            if (dateIndex === -1 && !jsonString.includes(dataPreferida)) {
-                console.error('❌ [STORAGE] Data não encontrada nem com busca textual.');
+            const dataPattern = `"data": "${dataPreferida}"`;
+            const dataIndex = jsonString.indexOf(dataPattern);
+
+            if (dataIndex === -1) {
+                console.error('❌ [STORAGE] Data não encontrada:', dataPreferida);
                 return null;
             }
 
-            // Se achou a data, tenta reconstruir o objeto.
-            // Simplificação: Encontrar o '{' anterior e o '}' que fecha este nível.
-            // Devido à complexidade, tentaremos uma Regex mais agressiva para capturar o bloco se o JSON falhar muito.
-            // Mas como o erro é geralmente no FINAL do arquivo, pode ser que o inicio esteja valido? 
-            // Não, JSON.parse falha tudo.
+            console.log('📍 [STORAGE] Data encontrada na posição:', dataIndex);
 
-            // Tentativa de "Recuperação de Desastre": Quebrar por "data":
-            // (Isso é complexo para implementar aqui sem risco).
+            // Encontrar o início do objeto (o { anterior)
+            let objStart = dataIndex;
+            for (let i = dataIndex; i >= 0; i--) {
+                if (jsonString[i] === '{') {
+                    objStart = i;
+                    break;
+                }
+            }
 
-            // Vamos confiar na correção das aspas acima. Se falhar, retorna null e usa o banco.
-            console.error('❌ [STORAGE] Falha irrecuperável no JSON. Usando fallback do Banco de Dados.');
+            // Extrair campos um por um usando regex
+            const extractField = (fieldName: string, startPos: number): string | null => {
+                const pattern = new RegExp(`"${fieldName}":\\s*"([^"]+)"`, 'g');
+                pattern.lastIndex = startPos;
+                const match = pattern.exec(jsonString);
+                return match ? match[1] : null;
+            };
+
+            const extractArray = (fieldName: string, startPos: number): string[] => {
+                const pattern = new RegExp(`"${fieldName}":\\s*\\[([^\\]]+)\\]`, 'g');
+                pattern.lastIndex = startPos;
+                const match = pattern.exec(jsonString);
+                if (!match) return [];
+                // Parse array items
+                const items = match[1].match(/"([^"]+)"/g);
+                return items ? items.map(s => s.replace(/"/g, '')) : [];
+            };
+
+            // Encontrar onde a próxima passagem começa (para limitar a busca)
+            const nextDataPattern = /"data":\s*"\d{4}-\d{2}-\d{2}"/g;
+            nextDataPattern.lastIndex = dataIndex + dataPattern.length;
+            const nextMatch = nextDataPattern.exec(jsonString);
+            const searchEnd = nextMatch ? nextMatch.index : jsonString.length;
+
+            // Extrair campos
+            const referencia = extractField('referencia', objStart);
+            const arquetipo = extractField('arquetipo_maestro', objStart);
+            const lexico = extractArray('lexico_do_dia', objStart);
+
+            // Extrair insights (mais complexo)
+            const insightsStart = jsonString.indexOf('"insights_pre_minerados"', objStart);
+            const insights: any[] = [];
+
+            if (insightsStart !== -1 && insightsStart < searchEnd) {
+                // Procurar por cada insight dentro deste bloco
+                const insightPattern = /"tese":\s*"([^"]+)"/g;
+                insightPattern.lastIndex = insightsStart;
+                let insightMatch;
+
+                while ((insightMatch = insightPattern.exec(jsonString)) !== null) {
+                    if (insightMatch.index > searchEnd) break;
+
+                    const tese = insightMatch[1];
+                    const familia = extractField('familia', insightMatch.index) || 'Teologia';
+                    const verso = extractField('verso_suporte', insightMatch.index) || '';
+                    const voz = extractField('voz_performance', insightMatch.index) || 'Profeta';
+
+                    insights.push({ tese, familia, verso_suporte: verso, voz_performance: voz });
+                }
+            }
+
+            if (referencia) {
+                console.log('✅ [STORAGE] Passagem extraída via fallback:', referencia);
+                return {
+                    data: dataPreferida,
+                    referencia,
+                    arquetipo_maestro: arquetipo || 'Profeta',
+                    lexico_do_dia: lexico,
+                    insights_pre_minerados: insights.length > 0 ? insights : [{
+                        tese: 'Estudo bíblico guiado.',
+                        familia: 'Teologia',
+                        verso_suporte: referencia,
+                        voz_performance: 'Profeta'
+                    }]
+                };
+            }
+
+            console.error('❌ [STORAGE] Falha ao extrair passagem via fallback.');
             return null;
         }
 
