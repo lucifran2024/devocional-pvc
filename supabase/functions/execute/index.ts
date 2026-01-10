@@ -167,18 +167,25 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     }
 
     // 8. Montar Prompt
+    // ORDEM OTIMIZADA: Modo primeiro (prioridade), depois contexto e referências
     const promptFinal = `
 ### [AGENT_START]
 ${agentStart}
 
-### [MEMORIA_ESTILO]
-${memoria}
+### [INSTRUCOES_MODO] (PRIORIDADE MÁXIMA - SIGA ESTAS INSTRUÇÕES)
+${modoTexto}
+
+### [PERSONALIDADE_DINAMICA]
+${instrucaoVariabilidade}
 
 ### [DADOS_DO_DIA]
 DATA: ${payload.data}
 PASSAGEM: ${payload.passagem_do_dia}
 ARQUETIPO: ${payload.arquetipo}
 VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
+
+### [MEMORIA_ESTILO]
+${memoria}
 
 ### [BASE_DE_REGRAS]
 ${baseRegras}
@@ -188,12 +195,6 @@ ${conhecimentoCompilado}
 
 ### [BANCO_DE_OURO]
 ${bancoDeOuro}
-
-### [PERSONALIDADE_DINAMICA]
-${instrucaoVariabilidade}
-
-### [INSTRUCOES_MODO]
-${modoTexto}
 `;
 
     // 9. Chamar Gemini
