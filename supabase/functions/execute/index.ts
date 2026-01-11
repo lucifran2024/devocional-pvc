@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRelevantContext } from './rag-helper.ts';
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
+import { getContextoTemporal } from './date-helper.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
 const corsHeaders = {
@@ -44,6 +45,10 @@ Deno.serve(async (req) => {
     // Sorteio
     const lenteSorteada = listaLentes[Math.floor(Math.random() * listaLentes.length)];
     const temperaturaSorteada = listaTemperaturas[Math.floor(Math.random() * listaTemperaturas.length)];
+
+    // Contexto Temporal (Novo!)
+    const contextoTemporal = getContextoTemporal(data);
+    console.log(`📅 [DATA] ${contextoTemporal}`);
 
     console.log(`[VARIABILIDADE] Lente: ${lenteSorteada} | Temp: ${temperaturaSorteada}`);
 
@@ -186,6 +191,9 @@ DATA: ${payload.data}
 PASSAGEM: ${payload.passagem_do_dia}
 ARQUETIPO: ${payload.arquetipo}
 VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
+
+### [MOMENTO_E_DATA] (Contexto Temporal)
+${contextoTemporal}
 
 ### [MEMORIA_ESTILO]
 ${memoria}
