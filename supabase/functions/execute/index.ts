@@ -198,9 +198,9 @@ ${bancoDeOuro}
 `;
 
     // 9. Chamar Gemini
-    console.log("🤖 Chamando Gemini...");
-    // Alterado para gemini-flash-latest (melhor suporte Free Tier)
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`, {
+    console.log("🤖 Chamando Gemini 3 Flash...");
+    // Tentando gemini-3-flash-preview
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
