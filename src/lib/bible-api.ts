@@ -159,7 +159,12 @@ export async function buscarCapitulo(livroId: number, capitulo: number): Promise
         if (Array.isArray(data)) {
             return data.map((v: { verse: number; text: string }) => ({
                 verse: v.verse,
+                // Remove tags HTML como <br> que a API retorna
                 text: v.text
+                    .replace(/<br\s*\/?>/gi, ' ')  // Substitui <br> por espaço
+                    .replace(/<[^>]+>/g, '')       // Remove outras tags HTML
+                    .replace(/\s+/g, ' ')          // Normaliza espaços múltiplos
+                    .trim()
             }));
         }
         return [];
