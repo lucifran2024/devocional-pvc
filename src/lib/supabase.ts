@@ -265,7 +265,25 @@ export async function deleteHistoricoItem(id: number): Promise<boolean> {
     console.log(`🗑️ [DELETE] Deletando item ID ${id}`);
 
     try {
-        const { error } = await supabase
+        // Primeiro, verifica se o item existe
+        const { data: existingItem, error: checkError } = await supabase
+            .from('historico_geracoes')
+            .select('id')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (checkError) {
+            console.error('❌ [DELETE] Erro ao verificar item:', checkError);
+            return false;
+        }
+
+        if (!existingItem) {
+            console.warn('⚠️ [DELETE] Item não encontrado (já deletado?):', id);
+            return true; // Considera sucesso se já não existe
+        }
+
+        // Executa o delete
+        const { error, count } = await supabase
             .from('historico_geracoes')
             .delete()
             .eq('id', id);
@@ -275,7 +293,24 @@ export async function deleteHistoricoItem(id: number): Promise<boolean> {
             return false;
         }
 
-        console.log('✅ [DELETE] Sucesso!');
+        // Verifica se realmente deletou (para garantir que RLS não bloqueou silenciosamente)
+        const { data: stillExists, error: verifyError } = await supabase
+            .from('historico_geracoes')
+            .select('id')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (verifyError) {
+            console.error('❌ [DELETE] Erro ao verificar exclusão:', verifyError);
+            return false;
+        }
+
+        if (stillExists) {
+            console.error('❌ [DELETE] Item ainda existe! Possível bloqueio de RLS:', id);
+            return false;
+        }
+
+        console.log('✅ [DELETE] Sucesso! Item removido permanentemente.');
         return true;
     } catch (err) {
         console.error('💥 [DELETE] Exceção:', err);
