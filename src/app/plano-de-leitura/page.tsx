@@ -12,6 +12,7 @@ import { getPassagemDoDia, getTeseCentral, type PassagemSecao6 } from '@/lib/sec
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import ReactMarkdown from 'react-markdown';
+import { buscarPassagem, formatarVersiculosParte, type Versiculo } from '@/lib/bible-api';
 
 // ===========================================
 // TIPOS
@@ -120,6 +121,7 @@ export default function PlanoLeituraPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);  // Track reading progress
     const currentPageRef = useRef(1);  // Ref for immediate access
+    const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
@@ -152,6 +154,22 @@ export default function PlanoLeituraPage() {
         }
         loadPassagem();
     }, [dataHoje]);
+
+    // Carregar texto bíblico da API quando a passagem estiver disponível
+    useEffect(() => {
+        async function loadBibleText() {
+            if (passagem?.referencia) {
+                console.log('📖 Carregando texto bíblico para:', passagem.referencia);
+                const data = await buscarPassagem(passagem.referencia);
+                if (data) {
+                    setBibleData(data);
+                    console.log('✅ Carregados', data.versiculos.length, 'versículos');
+                }
+            }
+        }
+        loadBibleText();
+    }, [passagem?.referencia]);
+
 
     // Scroll automático no chat
     useEffect(() => {
@@ -274,38 +292,31 @@ Digite **MENU** para voltar às opções.`;
     const gerarLeituraGuiada = (): string => {
         if (!passagem) return '';
 
+        // Usa os versículos da API se disponíveis
+        const versiculosTexto = bibleData
+            ? formatarVersiculosParte(bibleData.versiculos, 0, 10)
+            : '(Carregando versículos...)';
+
+        const lexico = passagem.lexico_do_dia?.[0];
+        const insight = passagem.insights_pre_minerados?.[0];
+
         return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
-📍 *Parte 1 de 3*
+📍 *Parte 1 de ${bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3}*
 
 ---
 
-**Isaías 13:1-9** (NVI)
-
-**1.** Sentença contra Babilônia, que Isaías, filho de Amoz, recebeu em visão.
-**2.** Levantem uma bandeira no alto de um monte árido, gritem aos guerreiros; façam sinais para que eles entrem pelos portões da nobreza.
-**3.** Eu mesmo dei ordens aos meus consagrados e convoquei os meus guerreiros para executarem a minha ira, os que se alegram com a minha exaltação.
-**4.** Ouçam! Um barulho nas montanhas, como o de uma imensa multidão! Ouçam! Um tumulto de reinos, nações reunidas! O Senhor dos Exércitos está passando em revista um exército para a guerra.
-**5.** Eles vêm de terras distantes, dos confins dos céus: o Senhor e os instrumentos da sua ira, para destruírem toda a terra.
-**6.** Gemam, pois o dia do Senhor está perto; ele vem como uma destruição do Todo-Poderoso.
-**7.** Por causa disso, todas as mãos desfalecerão, e todos os corações desmaiarão de medo.
-**8.** O pavor se apoderará deles; dores e angústias os dominarão; contorcerão como mulher em trabalho de parto. Olharão espantados uns para os outros, seus rostos ardendo como chamas.
-**9.** Vejam! O dia do Senhor está chegando, dia cruel, de ira e grande furor, para tornar em desolação a terra e destruir os seus pecadores.
+${versiculosTexto}
 
 ---
 
 🔍 **CONTEXTO & EXPLICAÇÃO**
 
-📜 **Cenário Histórico:** 
-Isaías profetiza por volta de 740-700 a.C., quando Babilônia ainda não era o império dominante. Deus mostra a Isaías o que aconteceria mais de 100 anos depois — a queda do maior império da Terra!
+${lexico ? `📖 **Palavra-chave:** ${lexico}` : ''}
 
-🎯 **O que está acontecendo:**
-Deus convoca Suas "tropas" — os medos e persas — para executar juízo sobre Babilônia. O "Dia do Senhor" é um termo profético para momentos de intervenção divina direta na história.
-
-💡 **Por que isso importa HOJE:**
-Babilônia representa todo sistema de orgulho humano que desafia a Deus. O princípio permanece: todo poder que se levanta contra Deus será humilhado. Impérios passam, mas a Palavra permanece.
+${insight ? `🎯 **Destaque:** ${insight.tese || 'Este texto nos convida à reflexão profunda.'}` : '🎯 **Destaque:** Medite nesta Palavra hoje.'}
 
 🙏 **Para Refletir:**
-*"Existe alguma 'Babilônia' na minha vida — áreas onde confio mais em mim do que em Deus?"*
+*"Como este texto pode transformar minha forma de pensar e agir hoje?"*
 
 ---
 Digite **CONTINUAR** para seguir para os próximos versículos.
@@ -737,38 +748,33 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
             if (page === 1) {
                 currentPageRef.current = 2;
                 setCurrentPage(2);
+
+                // Usa versículos dinâmicos do bibleData (posições 10-19)
+                const versiculosParte2 = bibleData
+                    ? formatarVersiculosParte(bibleData.versiculos, 10, 10)
+                    : '(Carregando versículos...)';
+
+                const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
+                const insight = passagem.insights_pre_minerados?.[1] || passagem.insights_pre_minerados?.[0];
+
                 return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
-📍 *Parte 2 de 3*
+📍 *Parte 2 de ${totalPartes}*
 
 ---
 
-**Isaías 13:10-22** (NVI)
-
-**10.** As estrelas e constelações dos céus não darão sua luz. O sol ficará escuro ao nascer e a lua não fará brilhar a sua luz.
-**11.** Castigarei o mundo por causa da sua maldade e os ímpios por causa da sua iniquidade. Porei fim à arrogância dos altivos e humilharei o orgulho dos cruéis.
-**12.** Tornarei os homens mais raros do que o ouro puro, mais raros do que o ouro de Ofir.
-**13.** Por isso farei tremer os céus; e a terra será sacudida do seu lugar na ira do Senhor dos Exércitos, no dia da sua ardente ira.
-
-...
-
-**19.** Babilônia, a joia dos reinos, glória e orgulho dos caldeus, será como Sodoma e Gomorra quando Deus as destruiu.
-**20.** Nunca mais será habitada, ninguém viverá nela por todas as gerações.
+${versiculosParte2}
 
 ---
 
 🔍 **CONTEXTO & EXPLICAÇÃO**
 
-📜 **Linguagem Apocalíptica:**
-Quando a Bíblia diz que "estrelas não darão luz" e "o sol escurecerá", não é literal — é linguagem poética para descrever eventos de proporção cósmica. O universo inteiro "reage" quando Deus age!
-
-🎯 **O Juízo Descrito:**
-Deus compara Babilônia a Sodoma e Gomorra (v.19). Aquela que era "joia dos reinos" viraria deserto. A história confirma: Babilônia hoje é ruína arqueológica no Iraque.
+${insight ? `🎯 **Destaque:** ${insight.tese}` : '🎯 **Destaque:** Continue meditando nesta Palavra.'}
 
 💡 **Por que isso importa HOJE:**
-O orgulho tem data de validade. Impérios, carreiras, relacionamentos — tudo que é construído sobre arrogância, Deus humilha. O que é construído sobre humildade, permanece.
+O orgulho tem data de validade. Tudo que é construído sobre arrogância, Deus humilha. O que é construído sobre humildade, permanece.
 
 🙏 **Para Refletir:**
-*"Estou construindo minha vida sobre fundamentos que vão durar, ou sobre 'areias' de orgulho próprio?"*
+*"Em que área da minha vida estou confiando mais em mim mesmo do que em Deus?"*
 
 ---
 Digite **CONTINUAR** para os últimos versículos.
@@ -778,39 +784,33 @@ Ou **MENU** para voltar.`;
             if (page === 2) {
                 currentPageRef.current = 3;
                 setCurrentPage(3);
+
+                // Usa versículos dinâmicos do bibleData (posições 20+)
+                const versiculosParte3 = bibleData
+                    ? formatarVersiculosParte(bibleData.versiculos, 20, 10)
+                    : '(Carregando versículos...)';
+
+                const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
+                const insight = passagem.insights_pre_minerados?.[2] || passagem.insights_pre_minerados?.[0];
+
                 return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
-📍 *Parte 3 de 3*
+📍 *Parte 3 de ${totalPartes}*
 
 ---
 
-**Isaías 14:12-17** (NVI) — A Queda do Rei da Babilônia
-
-**12.** Como você caiu dos céus, ó estrela da manhã, filho da alvorada! Como foi atirado à terra, você, que debilitava as nações!
-**13.** Você, que dizia no seu coração: "Subirei aos céus; erguerei o meu trono acima das estrelas de Deus; eu me assentarei no monte da assembleia, no ponto mais elevado do monte santo."
-**14.** "Subirei mais alto que as mais altas nuvens; serei como o Altíssimo."
-**15.** Mas às profundezas do Sheol você será levado, irá ao fundo do abismo!
-**16.** Os que o virem ficarão olhando para você, e refletindo sobre o seu destino, perguntarão: "É este o homem que fez a terra tremer e que abalou reinos?"
-**17.** "O homem que transformou o mundo num deserto, que arrasou as suas cidades e nunca deixou os prisioneiros voltarem para casa?"
+${versiculosParte3}
 
 ---
 
 🔍 **CONTEXTO & EXPLICAÇÃO**
 
-📜 **Quem é o "Astro Brilhante"?**
-O termo hebraico *helel* (traduzido como "Lúcifer" em latim) refere-se ao rei de Babilônia. Ele queria "subir aos céus" — ser como Deus. O texto usa ironia: quem queria subir, desceu ao Sheol (mundo dos mortos).
-
-🎯 **Os 5 "Eu Vou" do Orgulho (v.13-14):**
-1. "Subirei aos céus" — ambição sem limites
-2. "Erguerei meu trono" — busca por poder
-3. "Sentarei no monte da assembleia" — usurpar o lugar de Deus
-4. "Subirei acima das nuvens" — não aceitar limites
-5. "Serei como o Altíssimo" — o pecado original (Gn 3:5)
+${insight ? `🎯 **Destaque:** ${insight.tese}` : '🎯 **Destaque:** Medite profundamente nesta passagem.'}
 
 💡 **Por que isso importa HOJE:**
-Esse padrão de orgulho se repete. Toda vez que dizemos "eu vou fazer do meu jeito" sem consultar Deus, repetimos os passos do rei de Babilônia. O caminho de Cristo é o oposto: Ele desceu, e por isso foi exaltado (Fp 2:5-11).
+O caminho de Cristo é o oposto do orgulho: Ele desceu, e por isso foi exaltado (Fp 2:5-11). Quando nos humilhamos diante de Deus, encontramos verdadeira exaltação.
 
 🙏 **Para Refletir:**
-*"Em quais áreas da minha vida estou tentando 'subir' por conta própria, sem depender de Deus?"*
+*"Estou disposto a descer para que Deus me exalte no tempo certo?"*
 
 ---
 Digite **CONTINUAR** para finalizar a leitura.

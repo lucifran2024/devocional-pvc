@@ -199,7 +199,7 @@ ${bancoDeOuro}
 
     // 9. Chamar Gemini
     console.log("🤖 Chamando Gemini 3 Flash...");
-    // Tentando gemini-3-flash-preview
+    // Usando gemini-3-flash-preview (Pro não está disponível para esta key)
     const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
