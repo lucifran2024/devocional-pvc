@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRelevantContext } from './rag-helper.ts';
+import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
 const corsHeaders = {
@@ -196,24 +197,81 @@ ${memoria}
 ${ragContext}
 `;
 
-    // 9. Chamar Gemini
-    console.log("🤖 Chamando Gemini 3 Flash...");
-    // Usando gemini-3-flash-preview (Pro não está disponível para esta key)
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptFinal }] }]
-      })
-    });
+    // 9. Chamar Gemini com Function Calling Loop
+    console.log("🤖 Chamando Gemini 3 Flash (com Tools)...");
 
-    const aiData = await aiResponse.json();
-    if (aiData.error) {
-      console.error("Erro Gemini:", aiData.error);
-      throw new Error(`Erro na IA (${aiData.error.code}): ${aiData.error.message}`);
+    // Preparar mensagem inicial
+    let messages = [{ role: 'user', parts: [{ text: promptFinal }] }];
+
+    async function callGeminiAPI(msgs: any[]) {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: msgs,
+          tools: BIBLE_TOOLS_DEFINITION
+        })
+      });
+      return await resp.json();
     }
 
-    const resultadoFinal = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "IA não gerou texto.";
+    // Primeira chamada
+    let aiData = await callGeminiAPI(messages);
+
+    if (aiData.error) {
+      console.error("Erro Gemini Inicial:", aiData.error);
+      throw new Error(`Erro na IA: ${aiData.error.message}`);
+    }
+
+    let candidate = aiData.candidates?.[0];
+    let firstPart = candidate?.content?.parts?.[0];
+    let resultadoFinal = "IA falhou em gerar texto.";
+
+    // Loop de Function Calling (Máximo 2 voltas para evitar loop infinito)
+    if (firstPart?.functionCall) {
+      const fnName = firstPart.functionCall.name;
+      const fnArgs = firstPart.functionCall.args;
+
+      console.log(`🛠️ IA pediu ferramenta: ${fnName}`, fnArgs);
+
+      // Executa a ferramenta
+      let toolResultText = "";
+      if (fnName === 'consultar_versiculo') {
+        toolResultText = await consultarVersiculo(fnArgs.referencia);
+      } else {
+        toolResultText = "Ferramenta desconhecida.";
+      }
+
+      // Adiciona a chamada e o resultado ao histórico
+      messages.push({
+        role: 'model',
+        parts: [firstPart] // A parte com functionCall
+      });
+
+      messages.push({
+        role: 'function',
+        parts: [{
+          functionResponse: {
+            name: fnName,
+            response: { content: toolResultText }
+          }
+        }]
+      });
+
+      // Segunda chamada (Com a resposta da ferramenta)
+      console.log("🔄 Retornando resultado da tool para IA...");
+      aiData = await callGeminiAPI(messages);
+
+      // Pega resposta final
+      const finalPart = aiData.candidates?.[0]?.content?.parts?.[0];
+      if (finalPart?.text) {
+        resultadoFinal = finalPart.text;
+      }
+
+    } else if (firstPart?.text) {
+      // Resposta direta sem chamar tool
+      resultadoFinal = firstPart.text;
+    }
 
     // 10. Salvar e Retornar
     // Alterado para select().single() para pegar o ID gerado
