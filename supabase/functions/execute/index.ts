@@ -219,8 +219,9 @@ ${ragContext}
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      // Usando versão específica 001 para estabilidade
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${geminiKey}`, {
+      // Usando gemini-3-flash-preview conforme solicitado pelo usuário
+      // Note: pode ser instável ou requer v1beta
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
