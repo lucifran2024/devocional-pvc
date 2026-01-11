@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getRelevantContext } from './rag-helper.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
 const corsHeaders = {
@@ -115,11 +116,8 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
       return await file.text();
     }
 
-    const [agentStart, baseRegras, conhecimentoCompilado, bancoDeOuro, modoTexto] = await Promise.all([
+    const [agentStart, modoTexto] = await Promise.all([
       downloadFile("agent_start/AGENT_START.txt"),
-      downloadFile("base/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"),
-      downloadFile("base/Conhecimento_Compilado_Essencial.v1.4.txt"),
-      downloadFile("base/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt"),
       downloadFile(modoRow.storage_path) // ex: modos/MODO_1.txt
     ]);
 
@@ -149,6 +147,10 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
         deepContext += `\n\n### INSIGHTS PRÉ-MINERADOS (Teologia e Profundidade):\nUse estes insights como base para a profundidade teológica, expandindo-os:\n${JSON.stringify(deepData.insights_pre_minerados, null, 2)}`;
       }
     }
+
+    // 7.1 BUSCA CONTEXTUAL RAG (Novo Cérebro)
+    console.log("🧠 Buscando contexto RAG...");
+    const ragContext = await getRelevantContext(supabase, payload.passagem_do_dia, modoRow.titulo);
 
     // 7. Contexto de Memória (Histórico)
     const { data: historico } = await supabase
@@ -187,14 +189,11 @@ VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
 ### [MEMORIA_ESTILO]
 ${memoria}
 
-### [BASE_DE_REGRAS]
-${baseRegras}
+### [MEMORIA_ESTILO]
+${memoria}
 
-### [CONHECIMENTO_COMPILADO]
-${conhecimentoCompilado}
-
-### [BANCO_DE_OURO]
-${bancoDeOuro}
+### [CONHECIMENTO_E_REGRAS_RELEVANTES]
+${ragContext}
 `;
 
     // 9. Chamar Gemini

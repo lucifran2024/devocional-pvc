@@ -4,11 +4,35 @@
 // =====================================================
 
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+
+// Tenta ler .env.local
+try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    if (fs.existsSync(envPath)) {
+        console.log('📄 Lendo permissões de .env.local...');
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const lines = content.split(/\r?\n/);
+        for (const line of lines) {
+            const match = line.match(/^([^=]+)=(.*)$/);
+            if (match) {
+                const key = match[1].trim();
+                const value = match[2].trim().replace(/^["']|["']$/g, '');
+                if (!process.env[key]) {
+                    process.env[key] = value;
+                }
+            }
+        }
+    }
+} catch (e) {
+    console.log('⚠️ Erro ao ler .env.local (pode prosseguir se variáveis estiverem no sistema):', e.message);
+}
 
 // Configuração
-const SUPABASE_URL = 'https://tayopwdelkmelgmrtnoa.supabase.co';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'sb_secret_wuhtFrma935c00_pq8h1xQ_dkNTQPeX';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tayopwdelkmelgmrtnoa.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'sb_secret_wuhtFrma935c00_pq8h1xQ_dkNTQPeX';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY || process.env.GOOGLE_API_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -194,9 +218,10 @@ async function main() {
 
     // Lista documentos para indexar
     const documentsToIndex = [
-        { bucket: 'pvc', path: 'modos/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt', name: 'base_conhecimento' },
-        { bucket: 'pvc', path: 'modos/Conhecimento_Compilado_Essencial.v1.4.txt', name: 'conhecimento_essencial' },
-        { bucket: 'pvc', path: 'modos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt', name: 'banco_ouro_exemplos' },
+        { bucket: 'pvc', path: 'base/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt', name: 'base_conhecimento' },
+        { bucket: 'pvc', path: 'base/Conhecimento_Compilado_Essencial.v1.4.txt', name: 'conhecimento_essencial' },
+        // Tentativa de localização do Banco de Ouro (se falhar, ignorar)
+        { bucket: 'pvc', path: 'base/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt', name: 'banco_ouro_exemplos' },
     ];
 
     console.log('📚 Documentos a indexar:');
