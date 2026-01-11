@@ -162,9 +162,8 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     // 7. Contexto de Memória (Histórico)
     const { data: historico } = await supabase
       .from("historico_geracoes")
-      .select("passagem, resultado_texto")
-      .eq("modo_id", modo_id)
-      .eq("aprovado", true)
+      .select("passagem, resultado_texto, aprovado")
+      .order("aprovado", { ascending: false, nullsLast: true })
       .order("created_at", { ascending: false })
       .limit(5);
 
