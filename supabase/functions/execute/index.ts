@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRelevantContext } from './rag-helper.ts';
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
+import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { getContextoTemporal } from './date-helper.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
@@ -211,13 +212,19 @@ ${ragContext}
     // Preparar mensagem inicial
     let messages = [{ role: 'user', parts: [{ text: promptFinal }] }];
 
+    // COMBINA TODAS AS TOOLS
+    const ALL_TOOLS = [
+      ...BIBLE_TOOLS_DEFINITION[0].function_declarations,
+      ...RSS_TOOLS_DEFINITION[0].function_declarations
+    ];
+
     async function callGeminiAPI(msgs: any[]) {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: msgs,
-          tools: BIBLE_TOOLS_DEFINITION
+          tools: [{ function_declarations: ALL_TOOLS }]
         })
       });
       return await resp.json();
@@ -246,8 +253,11 @@ ${ragContext}
       let toolResultText = "";
       if (fnName === 'consultar_versiculo') {
         toolResultText = await consultarVersiculo(fnArgs.referencia);
+      } else if (fnName === 'consultar_devocional_externo') {
+        toolResultText = await consultarRSS(fnArgs.fonte);
       } else {
-        toolResultText = "Ferramenta desconhecida.";
+        console.warn("Ferramenta desconhecida chamada:", fnName);
+        toolResultText = "Ferramenta desconhecida ou não implementada.";
       }
 
       // Adiciona a chamada e o resultado ao histórico
