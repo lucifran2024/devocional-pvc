@@ -234,11 +234,19 @@ ${modoTexto}
 ### [REGRAS_DE_ESTILO] ⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
 
 🚫 PROIBIDO (NÃO USE):
-- Palavras: "norte", "rota", "Farol", "neblina", "bússola" (exceto se estiver no versículo)
+- Palavras/termos: "norte", "rota", "Farol", "neblina", "bússola" (exceto se no versículo)
+- METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
 - Frases longas e poéticas rebuscadas
-- Tom distante ("a gente", "nós")
+- Tom distante ("a gente", "nós") - USE SEMPRE "você"
 - Clichês de auto-ajuda
 - Versículo jogado no final sem explicação
+
+🎯 TOM PASTORAL SIMPLES:
+- Fale como um pastor experiente conversando com alguém na sala da igreja
+- Seja DIRETO, não poético
+- Use linguagem do dia a dia, não rebuscada
+- Confronte com amor, mas sem rodeios
+- Menos metáforas, mais verdade crua
 
 ✅ OBRIGATÓRIO (SEMPRE USE):
 
