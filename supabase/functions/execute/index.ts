@@ -159,6 +159,13 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     console.log("🧠 Buscando contexto RAG...");
     const ragContext = await getRelevantContext(supabase, payload.passagem_do_dia, modoRow.titulo);
 
+    // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
+    console.log("📡 Consultando devocional externo (obrigatório)...");
+    const fontesDisponiveis = ['ultimato', 'pao_diario', 'voltemos', 'spurgeon'] as const;
+    const fonteSorteada = fontesDisponiveis[Math.floor(Math.random() * fontesDisponiveis.length)];
+    const devocionalExterno = await consultarRSS(fonteSorteada);
+    console.log(`✅ Devocional externo obtido de: ${fonteSorteada}`);
+
     // 7. Contexto de Memória (Histórico)
     const { data: historico } = await supabase
       .from("historico_geracoes")
@@ -200,6 +207,9 @@ ${memoria}
 
 ### [MEMORIA_ESTILO]
 ${memoria}
+
+### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
+${devocionalExterno}
 
 ### [CONHECIMENTO_E_REGRAS_RELEVANTES]
 ${ragContext}
