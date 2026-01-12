@@ -31,8 +31,8 @@ Deno.serve(async (req) => {
     if (modo_id === 'devocional_externo') {
       console.log(`📡 [MODO ESPECIAL] Devocional Externo - fonte: ${fonte_rss}`);
 
-      const fontesValidas = ['ultimato', 'pao_diario', 'voltemos', 'spurgeon'];
-      const fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'pao_diario';
+      const fontesValidas = ['voltemos', 'bible_gateway', 'ligonier', 'desiring_god'];
+      const fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'voltemos';
 
       const conteudoExterno = await consultarRSS(fonteEscolhida);
 
