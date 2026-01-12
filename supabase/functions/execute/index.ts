@@ -182,16 +182,16 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     }
 
     // 8. Montar Prompt
-    // ORDEM OTIMIZADA: Modo primeiro (prioridade), depois contexto e referências
+    // HIERARQUIA OTIMIZADA v2:
+    // 1. MODO primeiro (máxima atenção no início)
+    // 2. Contexto e dados no meio
+    // 3. PERSONALIDADE_DINAMICA no final (memória recente)
     const promptFinal = `
-### [AGENT_START]
-${agentStart}
-
-### [INSTRUCOES_MODO] (PRIORIDADE MÁXIMA - SIGA ESTAS INSTRUÇÕES)
+### [INSTRUCOES_MODO] ⭐ PRIORIDADE MÁXIMA - SIGA ESTAS INSTRUÇÕES PRIMEIRO
 ${modoTexto}
 
-### [PERSONALIDADE_DINAMICA]
-${instrucaoVariabilidade}
+### [AGENT_START] (Regras Gerais do Agente)
+${agentStart}
 
 ### [DADOS_DO_DIA]
 DATA: ${payload.data}
@@ -202,17 +202,17 @@ VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
 
-### [MEMORIA_ESTILO]
-${memoria}
-
-### [MEMORIA_ESTILO]
-${memoria}
+### [CONHECIMENTO_E_REGRAS_RELEVANTES] (via RAG)
+${ragContext}
 
 ### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
 ${devocionalExterno}
 
-### [CONHECIMENTO_E_REGRAS_RELEVANTES]
-${ragContext}
+### [MEMORIA_ESTILO] (Exemplos Aprovados - Aprenda o Tom)
+${memoria}
+
+### [PERSONALIDADE_DINAMICA] ⭐ AJUSTE FINAL DE TOM
+${instrucaoVariabilidade}
 `;
 
     // 9. Chamar Gemini com Function Calling Loop
