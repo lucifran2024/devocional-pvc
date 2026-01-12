@@ -12,8 +12,8 @@ export const RSS_TOOLS_DEFINITION = [{
             properties: {
                 fonte: {
                     type: "string",
-                    description: "Fonte do devocional. Opções: 'voltemos', 'bible_gateway', 'ligonier', 'desiring_god'",
-                    enum: ["voltemos", "bible_gateway", "ligonier", "desiring_god"]
+                    description: "Fonte do devocional. Opções: 'voltemos', 'bible_gateway', 'desiring_god', 'grace_to_you'",
+                    enum: ["voltemos", "bible_gateway", "desiring_god", "grace_to_you"]
                 }
             },
             required: ["fonte"]
@@ -27,10 +27,10 @@ const FEEDS = {
     'voltemos': 'https://voltemosaoevangelho.com/blog/feed/',
     // Bible Gateway - Versículo do Dia (ATOM format)
     'bible_gateway': 'https://www.biblegateway.com/votd/get/?format=atom&version=ARC',
-    // Ligonier Ministries - Tabletalk Daily Devotional
-    'ligonier': 'https://www.ligonier.org/learn/devotionals/feed',
-    // Desiring God - Daily Devotionals
-    'desiring_god': 'https://www.desiringgod.org/labs/feed.rss'
+    // Desiring God - Solid Joys Daily Devotional (John Piper)
+    'desiring_god': 'https://feeds.desiringgod.org/solid-joys',
+    // Grace to You - Daily Devotional (John MacArthur)
+    'grace_to_you': 'https://www.gty.org/blog/rss'
 };
 
 export async function consultarRSS(fonte: string): Promise<string> {
@@ -100,9 +100,44 @@ export async function consultarRSS(fonte: string): Promise<string> {
 }
 
 function cleanText(text: string): string {
-    return text
-        .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') // Remove CDATA
-        .replace(/<[^>]+>/g, ' ') // Remove HTML tags
-        .replace(/\s+/g, ' ') // Normaliza espaços
-        .trim();
+    return decodeHtmlEntities(
+        text
+            .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1') // Remove CDATA
+            .replace(/<[^>]+>/g, ' ') // Remove HTML tags
+            .replace(/\s+/g, ' ') // Normaliza espaços
+            .trim()
+    );
+}
+
+// Decodifica entidades HTML comuns
+function decodeHtmlEntities(text: string): string {
+    const entities: { [key: string]: string } = {
+        '&quot;': '"',
+        '&apos;': "'",
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&nbsp;': ' ',
+        '&ldquo;': '"',
+        '&rdquo;': '"',
+        '&lsquo;': "'",
+        '&rsquo;': "'",
+        '&mdash;': '—',
+        '&ndash;': '–',
+        '&hellip;': '…',
+        '&#39;': "'",
+        '&#34;': '"',
+    };
+
+    // Substitui entidades nomeadas
+    let result = text;
+    for (const [entity, char] of Object.entries(entities)) {
+        result = result.replace(new RegExp(entity, 'g'), char);
+    }
+
+    // Substitui entidades numéricas (&#123; ou &#x7B;)
+    result = result.replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+    result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+    return result;
 }

@@ -33,18 +33,18 @@ const FONTES = [
         borderColor: 'border-amber-500/20'
     },
     {
-        id: 'ligonier',
-        nome: 'Ligonier (Tabletalk)',
-        desc: 'Devocional diário do ministério de R.C. Sproul.',
+        id: 'desiring_god',
+        nome: 'Solid Joys (John Piper)',
+        desc: 'Devocional diário do Desiring God.',
         icon: Church,
         color: 'text-purple-400',
         bgColor: 'bg-purple-500/10',
         borderColor: 'border-purple-500/20'
     },
     {
-        id: 'desiring_god',
-        nome: 'Desiring God',
-        desc: 'Reflexões diárias do ministério de John Piper.',
+        id: 'grace_to_you',
+        nome: 'Grace to You',
+        desc: 'Blog do ministério de John MacArthur.',
         icon: Newspaper,
         color: 'text-blue-400',
         bgColor: 'bg-blue-500/10',
