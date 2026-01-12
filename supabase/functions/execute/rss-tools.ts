@@ -28,7 +28,7 @@ const FEEDS = {
     // Bible Gateway - Versículo do Dia (ATOM format)
     'bible_gateway': 'https://www.biblegateway.com/votd/get/?format=atom&version=ARC',
     // Desiring God - Solid Joys Daily Devotional (John Piper)
-    'desiring_god': 'https://feeds.desiringgod.org/solid-joys',
+    'desiring_god': 'https://feed.desiringgod.org/solidjoys',
     // Grace to You - Daily Devotional (John MacArthur)
     'grace_to_you': 'https://www.gty.org/blog/rss'
 };
