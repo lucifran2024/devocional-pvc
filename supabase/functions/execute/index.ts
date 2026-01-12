@@ -191,7 +191,7 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
 
     // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
     console.log("📡 Consultando devocional externo (obrigatório)...");
-    const fontesDisponiveis = ['ultimato', 'pao_diario', 'voltemos', 'spurgeon'] as const;
+    const fontesDisponiveis = ['voltemos', 'bible_gateway'] as const;
     const fonteSorteada = fontesDisponiveis[Math.floor(Math.random() * fontesDisponiveis.length)];
     const devocionalExterno = await consultarRSS(fonteSorteada);
     console.log(`✅ Devocional externo obtido de: ${fonteSorteada}`);
