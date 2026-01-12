@@ -236,7 +236,17 @@ export default function DashboardPage() {
             badge="NOVO"
           />
 
-          {/* Card 5: Diário (Em breve) */}
+          {/* Card 5: Devocional Externo */}
+          <DashboardCard
+            href="/devocional-externo"
+            title="Devocional Externo"
+            desc="Leia devocionais de sites cristãos renomados, direto da fonte."
+            icon={Heart}
+            accentColor="text-rose-400"
+            badge="ORIGINAL"
+          />
+
+          {/* Card 6: Diário (Em breve) */}
           <DashboardCard
             title="Diário de Orações"
             desc="Registre seus propósitos e respostas de oração."
