@@ -31,24 +31,6 @@ const FONTES = [
         color: 'text-amber-400',
         bgColor: 'bg-amber-500/10',
         borderColor: 'border-amber-500/20'
-    },
-    {
-        id: 'desiring_god',
-        nome: 'Solid Joys (John Piper)',
-        desc: 'Devocional diário do Desiring God.',
-        icon: Church,
-        color: 'text-purple-400',
-        bgColor: 'bg-purple-500/10',
-        borderColor: 'border-purple-500/20'
-    },
-    {
-        id: 'grace_to_you',
-        nome: 'Grace to You',
-        desc: 'Blog do ministério de John MacArthur.',
-        icon: Newspaper,
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/20'
     }
 ];
 

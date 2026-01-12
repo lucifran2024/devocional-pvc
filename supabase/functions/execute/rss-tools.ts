@@ -12,8 +12,8 @@ export const RSS_TOOLS_DEFINITION = [{
             properties: {
                 fonte: {
                     type: "string",
-                    description: "Fonte do devocional. Opções: 'voltemos', 'bible_gateway', 'desiring_god', 'grace_to_you'",
-                    enum: ["voltemos", "bible_gateway", "desiring_god", "grace_to_you"]
+                    description: "Fonte do devocional. Opções: 'voltemos', 'bible_gateway'",
+                    enum: ["voltemos", "bible_gateway"]
                 }
             },
             required: ["fonte"]
@@ -21,16 +21,12 @@ export const RSS_TOOLS_DEFINITION = [{
     }]
 }];
 
-// FEEDS ATUALIZADOS - Fontes que realmente contêm devocionais
+// FEEDS - Apenas fontes funcionais
 const FEEDS = {
     // Voltemos ao Evangelho - Conteúdo reformado (FUNCIONANDO)
     'voltemos': 'https://voltemosaoevangelho.com/blog/feed/',
-    // Bible Gateway - Versículo do Dia (ATOM format)
-    'bible_gateway': 'https://www.biblegateway.com/votd/get/?format=atom&version=ARC',
-    // Desiring God - Solid Joys Daily Devotional (John Piper)
-    'desiring_god': 'https://feed.desiringgod.org/solidjoys',
-    // Grace to You - Daily Devotional (John MacArthur)
-    'grace_to_you': 'https://www.gty.org/blog/rss'
+    // Bible Gateway - Versículo do Dia (FUNCIONANDO)
+    'bible_gateway': 'https://www.biblegateway.com/votd/get/?format=atom&version=ARC'
 };
 
 export async function consultarRSS(fonte: string): Promise<string> {
