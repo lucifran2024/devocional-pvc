@@ -15,24 +15,6 @@ import ReactMarkdown from 'react-markdown';
 // ============================================
 const FONTES = [
     {
-        id: 'pao_diario',
-        nome: 'Pão Diário',
-        desc: 'Devocional diário com reflexões práticas para o cotidiano.',
-        icon: BookOpen,
-        color: 'text-amber-400',
-        bgColor: 'bg-amber-500/10',
-        borderColor: 'border-amber-500/20'
-    },
-    {
-        id: 'ultimato',
-        nome: 'Ultimato',
-        desc: 'Jornalismo cristão com profundidade teológica.',
-        icon: Newspaper,
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/20'
-    },
-    {
         id: 'voltemos',
         nome: 'Voltemos ao Evangelho',
         desc: 'Conteúdo reformado e centrado em Cristo.',
@@ -42,13 +24,31 @@ const FONTES = [
         borderColor: 'border-emerald-500/20'
     },
     {
-        id: 'spurgeon',
-        nome: 'C.H. Spurgeon',
-        desc: 'Sermões clássicos do Príncipe dos Pregadores.',
+        id: 'bible_gateway',
+        nome: 'Bible Gateway',
+        desc: 'Versículo do dia com tradução ARC.',
+        icon: BookOpen,
+        color: 'text-amber-400',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20'
+    },
+    {
+        id: 'ligonier',
+        nome: 'Ligonier (Tabletalk)',
+        desc: 'Devocional diário do ministério de R.C. Sproul.',
         icon: Church,
         color: 'text-purple-400',
         bgColor: 'bg-purple-500/10',
         borderColor: 'border-purple-500/20'
+    },
+    {
+        id: 'desiring_god',
+        nome: 'Desiring God',
+        desc: 'Reflexões diárias do ministério de John Piper.',
+        icon: Newspaper,
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-500/10',
+        borderColor: 'border-blue-500/20'
     }
 ];
 

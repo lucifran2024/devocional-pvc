@@ -6,14 +6,14 @@
 export const RSS_TOOLS_DEFINITION = [{
     function_declarations: [{
         name: "consultar_devocional_externo",
-        description: "Consulta o devocional do dia de sites cristãos renomados (Ultimato, Pão Diário, Voltemos ao Evangelho, Spurgeon). Use para comparar temas ou buscar inspiração sobre o assunto do dia.",
+        description: "Consulta o devocional do dia de sites cristãos renomados. Use para comparar temas ou buscar inspiração sobre o assunto do dia.",
         parameters: {
             type: "object",
             properties: {
                 fonte: {
                     type: "string",
-                    description: "Fonte do devocional. Opções: 'ultimato', 'pao_diario', 'voltemos', 'spurgeon'",
-                    enum: ["ultimato", "pao_diario", "voltemos", "spurgeon"]
+                    description: "Fonte do devocional. Opções: 'voltemos', 'bible_gateway', 'ligonier', 'desiring_god'",
+                    enum: ["voltemos", "bible_gateway", "ligonier", "desiring_god"]
                 }
             },
             required: ["fonte"]
@@ -21,11 +21,16 @@ export const RSS_TOOLS_DEFINITION = [{
     }]
 }];
 
+// FEEDS ATUALIZADOS - Fontes que realmente contêm devocionais
 const FEEDS = {
-    'ultimato': 'https://www.ultimato.com.br/feed',
-    'pao_diario': 'https://paodiario.org/feed/',
+    // Voltemos ao Evangelho - Conteúdo reformado (FUNCIONANDO)
     'voltemos': 'https://voltemosaoevangelho.com/blog/feed/',
-    'spurgeon': 'https://spurgeon.org/feed/'
+    // Bible Gateway - Versículo do Dia (ATOM format)
+    'bible_gateway': 'https://www.biblegateway.com/votd/get/?format=atom&version=ARC',
+    // Ligonier Ministries - Tabletalk Daily Devotional
+    'ligonier': 'https://www.ligonier.org/learn/devotionals/feed',
+    // Desiring God - Daily Devotionals
+    'desiring_god': 'https://www.desiringgod.org/labs/feed.rss'
 };
 
 export async function consultarRSS(fonte: string): Promise<string> {
@@ -40,29 +45,53 @@ export async function consultarRSS(fonte: string): Promise<string> {
 
         const xml = await response.text();
 
-        // Parser XML "Rustico" (Regex) para evitar dependências pesadas
-        // Busca o primeiro <item>
-        const itemMatch = xml.match(/<item>([\s\S]*?)<\/item>/i);
-        if (!itemMatch) return "Nenhum item encontrado no feed.";
+        // Detecta se é ATOM ou RSS
+        const isAtom = xml.includes('<feed') || xml.includes('<entry');
 
-        const itemContent = itemMatch[1];
+        let title = "Sem título";
+        let content = "Sem conteúdo";
 
-        const titleMatch = itemContent.match(/<title>([\s\S]*?)<\/title>/i);
-        // Remove CDATA se existir
-        const title = titleMatch ? cleanText(titleMatch[1]) : "Sem título";
+        if (isAtom) {
+            // Parser ATOM (usado pelo Bible Gateway)
+            const entryMatch = xml.match(/<entry>([\s\S]*?)<\/entry>/i);
+            if (entryMatch) {
+                const entryContent = entryMatch[1];
+                const titleMatch = entryContent.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+                title = titleMatch ? cleanText(titleMatch[1]) : "Sem título";
 
-        // Tenta pegar content:encoded ou description
-        let contentMatch = itemContent.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/i);
-        if (!contentMatch) {
-            contentMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/i);
+                // ATOM usa <content> ou <summary>
+                let contentMatch = entryContent.match(/<content[^>]*>([\s\S]*?)<\/content>/i);
+                if (!contentMatch) {
+                    contentMatch = entryContent.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+                }
+                content = contentMatch ? cleanText(contentMatch[1]) : "Sem conteúdo";
+            }
+        } else {
+            // Parser RSS tradicional
+            const itemMatch = xml.match(/<item>([\s\S]*?)<\/item>/i);
+            if (itemMatch) {
+                const itemContent = itemMatch[1];
+
+                const titleMatch = itemContent.match(/<title>([\s\S]*?)<\/title>/i);
+                title = titleMatch ? cleanText(titleMatch[1]) : "Sem título";
+
+                // Tenta pegar content:encoded ou description
+                let contentMatch = itemContent.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/i);
+                if (!contentMatch) {
+                    contentMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/i);
+                }
+                content = contentMatch ? cleanText(contentMatch[1]) : "Sem conteúdo";
+            }
         }
 
-        const content = contentMatch ? cleanText(contentMatch[1]) : "Sem conteúdo";
+        if (content === "Sem conteúdo") {
+            return `FONTE: ${fonte.toUpperCase()}\nTÍTULO: ${title}\nNenhum devocional encontrado no feed.`;
+        }
 
-        // Limita tamanho para economizar tokens (max 1000 chars)
-        const contentResumo = content.substring(0, 1000) + (content.length > 1000 ? "..." : "");
+        // Limita tamanho (max 2000 chars para devocionais externos)
+        const contentResumo = content.substring(0, 2000) + (content.length > 2000 ? "..." : "");
 
-        return `FONTE: ${fonte.toUpperCase()}\nTÍTULO: ${title}\nRESUMO: ${contentResumo}`;
+        return `FONTE: ${fonte.toUpperCase()}\nTÍTULO: ${title}\n\n${contentResumo}`;
 
     } catch (e: any) {
         console.error("Erro RSS:", e);
