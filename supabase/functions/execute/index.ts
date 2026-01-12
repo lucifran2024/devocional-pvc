@@ -231,6 +231,58 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
 ### [INSTRUCOES_MODO] ⭐ PRIORIDADE MÁXIMA - SIGA ESTAS INSTRUÇÕES PRIMEIRO
 ${modoTexto}
 
+### [REGRAS_DE_ESTILO] ⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
+
+🚫 PROIBIDO (NÃO USE):
+- Palavras: "norte", "rota", "Farol", "neblina", "bússola" (exceto se estiver no versículo)
+- Frases longas e poéticas rebuscadas
+- Tom distante ("a gente", "nós")
+- Clichês de auto-ajuda
+- Versículo jogado no final sem explicação
+
+✅ OBRIGATÓRIO (SEMPRE USE):
+
+1. TÍTULO: Provocativo, em CAIXA ALTA, máximo 15 palavras
+   - CERTO: "A FALTA DE PERDÃO NÃO PRENDE QUEM TE FERIU. PRENDE VOCÊ."
+   - ERRADO: "O fim da neblina"
+
+2. FRASES CURTAS E PUNCHY:
+   - CERTO: "Arrependimento não é vergonha. É coragem."
+   - ERRADO: "Quando a neblina do luto invade a casa..."
+
+3. CONTRASTES (não é X, é Y / menos X, mais Y):
+   - CERTO: "Perdoar não é concordar. Não é esquecer. É decidir não continuar preso."
+   - ERRADO: "O perdão é importante para a cura"
+
+4. TOM DIRETO com "você" e "hoje":
+   - CERTO: "Enquanto você segura a mágoa, o inimigo constrói fortalezas."
+   - ERRADO: "Quando a gente tateia as paredes..."
+
+5. DECLARAÇÕES PROFÉTICAS (lista de "não vai"):
+   - CERTO: "O cansaço não vai te parar. A dúvida não vai te governar. O medo não vai ter a última palavra."
+
+6. PROFUNDIDADE TEOLÓGICA:
+   - Explique o contexto histórico do versículo (o que Israel vivia)
+   - Conecte com a passagem do dia
+   - Use termos bíblicos quando relevante
+
+7. EXEGESE DO VERSÍCULO:
+   - Não apenas cite, EXPLIQUE o que o texto significa
+   - CERTO: "Jesus foi direto: 'Se vocês não perdoarem...' Perdoar não é concordar..."
+   - ERRADO: Apenas colocar o versículo entre aspas
+
+8. FECHAMENTO COM IMPERATIVO CLARO:
+   - CERTO: "Perdoe. Seja livre." / "Hoje, escolha soltar."
+   - ERRADO: "Peça a Deus força para continuar"
+
+📐 ESTRUTURA IDEAL:
+1. Título provocativo (CAPS)
+2. Abertura com afirmação forte
+3. Desenvolvimento com contrastes e explicação
+4. Versículo como PROVA (no meio, não no final)
+5. Aplicação direta com "você"
+6. Fechamento imperativo
+
 ### [AGENT_START] (Regras Gerais do Agente)
 ${agentStart}
 
