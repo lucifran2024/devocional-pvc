@@ -18,12 +18,42 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data } = await req.json();
-    console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}`);
+    const { modo_id, data, fonte_rss } = await req.json();
+    console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
 
     if (!modo_id || !data) {
       throw new Error("Faltam dados obrigatórios: modo_id ou data.");
     }
+
+    // ========================================
+    // MODO ESPECIAL: DEVOCIONAL EXTERNO (BYPASS IA)
+    // ========================================
+    if (modo_id === 'devocional_externo') {
+      console.log(`📡 [MODO ESPECIAL] Devocional Externo - fonte: ${fonte_rss}`);
+
+      const fontesValidas = ['ultimato', 'pao_diario', 'voltemos', 'spurgeon'];
+      const fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'pao_diario';
+
+      const conteudoExterno = await consultarRSS(fonteEscolhida);
+
+      console.log(`✅ Devocional externo obtido de: ${fonteEscolhida}`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: conteudoExterno,
+          fonte: fonteEscolhida,
+          tipo: 'devocional_externo'
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+    // ========================================
+    // FIM DO MODO ESPECIAL
+    // ========================================
 
     // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
 
