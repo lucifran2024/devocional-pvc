@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getRelevantContext } from './rag-helper.ts';
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
+import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
@@ -103,6 +104,7 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    const bibleApiKey = Deno.env.get("BIBLE_API_KEY"); // Opcional - para API.Bible
 
     if (!supabaseUrl || !serviceKey || !geminiKey) {
       throw new Error("Variáveis de ambiente (Secrets) não configuradas no Supabase: SUPABASE_URL, SERVICE_ROLE_KEY ou GEMINI_API_KEY.");
@@ -190,11 +192,20 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     const ragContext = await getRelevantContext(supabase, payload.passagem_do_dia, modoRow.titulo);
 
     // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
-    console.log("📡 Consultando devocional externo (obrigatório)...");
-    const fontesDisponiveis = ['voltemos', 'bible_gateway'] as const;
-    const fonteSorteada = fontesDisponiveis[Math.floor(Math.random() * fontesDisponiveis.length)];
-    const devocionalExterno = await consultarRSS(fonteSorteada);
-    console.log(`✅ Devocional externo obtido de: ${fonteSorteada}`);
+    console.log("� Consultando devocional externo...");
+    let devocionalExterno: string;
+
+    if (bibleApiKey) {
+      // Usa Bible API (preferencial)
+      devocionalExterno = await consultarBibleAPI(bibleApiKey, data);
+      console.log("✅ Devocional obtido via API.Bible");
+    } else {
+      // Fallback para RSS se não tiver API Key
+      const fontesDisponiveis = ['voltemos', 'bible_gateway'] as const;
+      const fonteSorteada = fontesDisponiveis[Math.floor(Math.random() * fontesDisponiveis.length)];
+      devocionalExterno = await consultarRSS(fonteSorteada);
+      console.log(`✅ Devocional externo obtido via RSS: ${fonteSorteada}`);
+    }
 
     // 7. Contexto de Memória (Histórico)
     const { data: historico } = await supabase
