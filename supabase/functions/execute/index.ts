@@ -4,6 +4,7 @@ import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
+import { formatVoiceSection } from './voice-selector.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
 const corsHeaders = {
@@ -223,10 +224,12 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     }
 
     // 8. Montar Prompt
-    // HIERARQUIA OTIMIZADA v2:
-    // 1. MODO primeiro (máxima atenção no início)
-    // 2. Contexto e dados no meio
-    // 3. PERSONALIDADE_DINAMICA no final (memória recente)
+    // HIERARQUIA v3 (Atualizada):
+    // 1. MEMORIA_ESTILO primeiro (aprenda com favoritas)
+    // 2. REGRAS_DE_ESTILO (proibições e obrigações)
+    // 3. DADOS_DO_DIA + MOMENTO_E_DATA (contexto)
+    // 4. INSTRUCOES_MODO + AGENT_START
+    // 5. RAG + DEVOCIONAL_EXTERNO + PERSONALIDADE_DINAMICA
     const promptFinal = `
 ### [MEMORIA_ESTILO] ⭐⭐⭐ MÁXIMA PRIORIDADE - APRENDA ESTE ESTILO
 Estes são exemplos APROVADOS de mensagens que funcionaram muito bem. 
@@ -307,6 +310,8 @@ VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
 
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
+
+${formatVoiceSection(payload.passagem_do_dia)}
 
 ### [INSTRUCOES_MODO] Instruções Específicas do Modo
 ${modoTexto}
