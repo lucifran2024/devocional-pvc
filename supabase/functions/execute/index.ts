@@ -238,6 +238,7 @@ ${memoria}
 🚫 PROIBIDO (NÃO USE):
 - Palavras/termos: "norte", "rota", "Farol", "neblina", "bússola" (exceto se no versículo)
 - METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
+- RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", "Sua resposta:", "Faça isso:", "Reflexão:", "Oração:". O texto deve fluir naturalmente SEM marcadores.
 - Frases longas e poéticas rebuscadas
 - Tom distante ("a gente", "nós") - USE SEMPRE "você"
 - Clichês de auto-ajuda
