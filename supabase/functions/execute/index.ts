@@ -228,8 +228,10 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     // 2. Contexto e dados no meio
     // 3. PERSONALIDADE_DINAMICA no final (memória recente)
     const promptFinal = `
-### [INSTRUCOES_MODO] ⭐ PRIORIDADE MÁXIMA - SIGA ESTAS INSTRUÇÕES PRIMEIRO
-${modoTexto}
+### [MEMORIA_ESTILO] ⭐⭐⭐ MÁXIMA PRIORIDADE - APRENDA ESTE ESTILO
+Estes são exemplos APROVADOS de mensagens que funcionaram muito bem. 
+IMITE o tom, estrutura e profundidade destas mensagens:
+${memoria}
 
 ### [REGRAS_DE_ESTILO] ⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
 
@@ -291,6 +293,9 @@ ${modoTexto}
 5. Aplicação direta com "você"
 6. Fechamento imperativo
 
+### [INSTRUCOES_MODO] ⭐ Instruções Específicas do Modo
+${modoTexto}
+
 ### [AGENT_START] (Regras Gerais do Agente)
 ${agentStart}
 
@@ -308,9 +313,6 @@ ${ragContext}
 
 ### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
 ${devocionalExterno}
-
-### [MEMORIA_ESTILO] (Exemplos Aprovados - Aprenda o Tom)
-${memoria}
 
 ### [PERSONALIDADE_DINAMICA] ⭐ AJUSTE FINAL DE TOM
 ${instrucaoVariabilidade}
