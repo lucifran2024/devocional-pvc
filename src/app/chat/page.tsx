@@ -105,8 +105,8 @@ Fique à vontade para perguntar qualquer coisa! 🙏`,
         setError(null);
 
         try {
-            // Chama a Edge Function com o modo chat_pastoral
-            const response = await executarModo('chat_pastoral', getDataHoje());
+            // Chama a Edge Function com o modo chat_pastoral E a pergunta do usuário
+            const response = await executarModo('chat_pastoral', getDataHoje(), userMessage.content);
 
             if (!response.ok) {
                 throw new Error(response.error || 'Erro ao processar resposta');

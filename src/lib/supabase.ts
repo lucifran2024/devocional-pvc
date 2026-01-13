@@ -150,15 +150,17 @@ export async function getModos(): Promise<{ data: Modo[]; error: string | null }
 
 /**
  * Executa um modo chamando a Edge Function
+ * @param pergunta - Opcional, usado para chat interativo
  */
-export async function executarModo(modo_id: string, data: string): Promise<ExecuteResponse> {
+export async function executarModo(modo_id: string, data: string, pergunta?: string): Promise<ExecuteResponse> {
     console.log('🚀 [EXECUTE] Chamando Edge Function VIA CLIENTE (invoke)');
     console.log('🚀 [EXECUTE] modo_id:', modo_id);
     console.log('🚀 [EXECUTE] data:', data);
+    if (pergunta) console.log('🚀 [EXECUTE] pergunta:', pergunta.substring(0, 50) + '...');
 
     try {
         const { data: resultData, error } = await supabase.functions.invoke('execute', {
-            body: { modo_id, data }
+            body: { modo_id, data, pergunta }
         });
 
         if (error) {

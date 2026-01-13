@@ -20,8 +20,9 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
+    if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
 
     if (!modo_id || !data) {
       throw new Error("Faltam dados obrigatórios: modo_id ou data.");
@@ -327,6 +328,17 @@ ${devocionalExterno}
 
 ### [PERSONALIDADE_DINAMICA] ⭐ AJUSTE FINAL DE TOM
 ${instrucaoVariabilidade}
+
+${pergunta ? `
+### [PERGUNTA_DO_USUARIO] 🗣️ RESPONDA ESTA PERGUNTA
+O usuário está em um chat interativo e fez a seguinte pergunta:
+
+"${pergunta}"
+
+IMPORTANTE: Responda DIRETAMENTE esta pergunta de forma pastoral e acolhedora.
+Use a passagem do dia como base, mas foque em responder o que o usuário perguntou.
+Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
+` : ''}
 `;
 
     // 9. Chamar Gemini com Function Calling Loop
