@@ -287,36 +287,36 @@ export default function HistoricoPage() {
                                     </div>
                                 </div>
 
-                                {/* Modal Footer */}
-                                <div className="p-8 md:p-10 bg-[#020617] border-t border-white/5 flex flex-wrap items-center justify-center gap-4 shrink-0">
-                                    {/* Delete Button */}
+                                {/* Modal Footer - Compact Icons Only */}
+                                <div className="p-4 md:p-6 bg-[#020617] border-t border-white/5 flex items-center justify-center gap-3 shrink-0">
+                                    {/* Delete Button - Icon Only */}
                                     <button
                                         onClick={(e) => {
                                             if (expandedItem) handleDelete(expandedItem, e);
                                         }}
                                         disabled={deletingId === expandedItem.id}
-                                        className="flex items-center gap-3 px-8 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] bg-white/5 text-slate-400 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 border border-white/10 disabled:opacity-50"
+                                        className="p-3 rounded-xl transition-all bg-white/5 text-slate-500 hover:bg-red-500/20 hover:text-red-400 border border-white/10 disabled:opacity-50"
+                                        title="Excluir memória"
                                     >
                                         {deletingId === expandedItem.id ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 className="w-4 h-4" />
                                         )}
-                                        Excluir
                                     </button>
 
-                                    {/* Like Button */}
+                                    {/* Like Button - Icon Only */}
                                     <button
                                         onClick={(e) => {
                                             if (expandedItem) handleToggleLike(expandedItem, e);
                                         }}
-                                        className={`flex items-center gap-4 px-12 py-5 rounded-[2.5rem] transition-all font-black text-sm uppercase tracking-[0.15em] shadow-2xl ${expandedItem.aprovado
-                                            ? 'bg-rose-600 text-white shadow-rose-900/40 ring-2 ring-white/20'
-                                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                                        className={`p-3 rounded-xl transition-all ${expandedItem.aprovado
+                                            ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40'
+                                            : 'bg-white/5 text-slate-500 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10'
                                             }`}
+                                        title={expandedItem.aprovado ? 'Remover dos favoritos' : 'Salvar como favorito'}
                                     >
-                                        <Heart className={`w-5 h-5 ${expandedItem.aprovado ? 'fill-white' : ''}`} />
-                                        {expandedItem.aprovado ? 'Memória Salva' : 'Salvar Memória'}
+                                        <Heart className={`w-4 h-4 ${expandedItem.aprovado ? 'fill-white' : ''}`} />
                                     </button>
                                 </div>
                             </div>
