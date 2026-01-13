@@ -105,7 +105,7 @@ export async function getRelevantContext(
     supabaseClient: any,
     passagem: string,
     modoId: string,
-    maxChunks: number = 5
+    maxChunks: number = 10
 ): Promise<string> {
     // Cria uma query combinando passagem e modo
     const query = `${passagem} ${modoId} devocional cristão bíblia`;
