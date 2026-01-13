@@ -250,6 +250,11 @@ ${memoria}
 - Confronte com amor, mas sem rodeios
 - Menos metáforas, mais verdade crua
 
+📅 CONTEXTO DO DIA (OBRIGATÓRIO):
+- SEMPRE mencione o DIA DA SEMANA quando relevante (ex: "nesta segunda-feira", "o peso desta semana")
+- Use o MOMENTO_E_DATA para contextualizar (segunda = início de semana, sexta = fim de expediente, domingo = culto)
+- Conecte a mensagem com a REALIDADE do dia do leitor
+
 ✅ OBRIGATÓRIO (SEMPRE USE):
 
 1. TÍTULO: Provocativo, em CAIXA ALTA, máximo 15 palavras
