@@ -293,13 +293,7 @@ ${memoria}
 5. Aplicação direta com "você"
 6. Fechamento imperativo
 
-### [INSTRUCOES_MODO] ⭐ Instruções Específicas do Modo
-${modoTexto}
-
-### [AGENT_START] (Regras Gerais do Agente)
-${agentStart}
-
-### [DADOS_DO_DIA]
+### [DADOS_DO_DIA] ⭐ Contexto da Leitura
 DATA: ${payload.data}
 PASSAGEM: ${payload.passagem_do_dia}
 ARQUETIPO: ${payload.arquetipo}
@@ -307,6 +301,12 @@ VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
 
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
+
+### [INSTRUCOES_MODO] Instruções Específicas do Modo
+${modoTexto}
+
+### [AGENT_START] (Regras Gerais do Agente)
+${agentStart}
 
 ### [CONHECIMENTO_E_REGRAS_RELEVANTES] (via RAG)
 ${ragContext}
