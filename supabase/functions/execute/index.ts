@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
     const listaLentes = [
       "SOBERANIA E REINO: Use termos como trono, cetro, governo, decreto, império, súdito, lealdade. Deus é o Rei, nós somos os servos. O controle é dEle.",
       "ANATOMIA DA ALMA: Foque no corpo e sentidos. Olhos (visão/cegueira), ouvidos (surdez), coração (duro/carne), joelhos (rendição), mãos (obras), fôlego.",
-      "LUZ E NAVEGAÇÃO: Use contrastes de clareza/escuridão, rota, norte, abismo, farol, estrela da manhã, sombra, passos, caminho, neblina.",
+      "LUZ E CLAREZA: Use contrastes de clareza/escuridão, caminho, passo, direção, sombra, aurora, amanhecer. Evite: norte, farol, rota, neblina, bússola.",
       "JUGO E DESCANSO: Use metáforas de peso, fardo, alívio, cansaço, correntes, liberdade, escravidão, soltar a bagagem.",
       "CONSTRUÇÃO E ALICERCE: Fale sobre fundações, ruínas, edificar, porta, muros, 'casa interior', estrutura que balança, rocha x areia.",
-      "AGRICULTURA BÍBLICA: Sementes, frutos, poda, raízes, terra seca, chuva, colheita, tempo de plantio, estações."
+      "BATALHA E VITÓRIA: Use termos como luta, armadura, escudo, espada, fortaleza, refúgio, guerra invisível, resistência, conquista."
     ];
 
     const listaTemperaturas = [
