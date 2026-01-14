@@ -64,45 +64,55 @@ Deno.serve(async (req) => {
     // 1. SORTEIO DO ARQUÉTIPO (CAMALEÃO)
     const arquetipoSorteado = getArchetype(data);
 
-    const listaLentes = [
-      "SOBERANIA E REINO: Use termos como trono, cetro, governo, decreto, império, súdito, lealdade. Deus é o Rei, nós somos os servos. O controle é dEle.",
-      "ANATOMIA DA ALMA: Foque no corpo e sentidos. Olhos (visão/cegueira), ouvidos (surdez), coração (duro/carne), joelhos (rendição), mãos (obras), fôlego.",
-      "LUZ E CLAREZA: Use contrastes de clareza/escuridão, caminho, passo, direção, sombra, aurora, amanhecer. Evite: norte, farol, rota, neblina, bússola.",
-      "JUGO E DESCANSO: Use metáforas de peso, fardo, alívio, cansaço, correntes, liberdade, escravidão, soltar a bagagem.",
-      "CONSTRUÇÃO E ALICERCE: Fale sobre fundações, ruínas, edificar, porta, muros, 'casa interior', estrutura que balança, rocha x areia.",
-      "BATALHA E VITÓRIA: Use termos como luta, armadura, escudo, espada, fortaleza, refúgio, guerra invisível, resistência, conquista."
+    // 2. CALEIDOSCÓPIO DE ÂNGULOS (NOVO SISTEMA DE NUANCE)
+    const listaAngulos = [
+      "ÂNGULO 1: O ESPELHO MODERNO (Tradução Cultural) - O que fazer: Traduza a metáfora bíblica para hoje. Exemplo: Em vez de falar de 'carros de guerra', fale de 'status' e 'influência'. Em vez de 'leprosos', fale de 'excluídos'.",
+      "ÂNGULO 2: A RAIZ HISTÓRICA (Respeito ao Texto) - O que fazer: Mantenha os termos originais (Sião, Egito, Pastor, Ovelha), mas extraia uma lição profunda. Exemplo: 'Assim como Israel desceu ao Egito, nós voltamos aos velhos hábitos.'",
+      "ÂNGULO 3: O RAIO-X EMOCIONAL (Foco na Alma) - O que fazer: Ignore o cenário externo e fale só do sentimento. Exemplo: Não fale de guerra nem de boleto. Fale de Medo, Ansiedade, Paz e Esperança. Foque no interior.",
+      "ÂNGULO 4: A LENTE DE JESUS (Cristocêntrico) - O que fazer: Conecte esse texto antigo diretamente a Jesus ou à Graça. Mostre como Cristo resolve esse problema."
     ];
 
     const listaTemperaturas = [
-      "DEVOCIONAL E ÍNTIMO: Comece ou termine falando diretamente com Deus (como uma oração). Tom de sussurro, reverência e entrega ('Eis-me aqui').",
-      "SAPIENCIAL E PRÁTICO: Foco em decisões. 'Não faça isso, faça aquilo'. Tom de conselho de pai para filho. Focado em sabedoria para a segunda-feira.",
-      "PROFÉTICO E DENÚNCIA: Aponte o dedo para um ídolo escondido (orgulho, vaidade, controle). Tom mais firme, urgente, 'acorde enquanto é tempo'.",
-      "CONSOLADOR E PASTORAL: Foco na dor, no cansaço e na graça. Use palavras como 'calma', 'respire', 'Ele sabe', 'Ele viu'. Acolha o ferido."
+      "DEVOCIONAL E ÍNTIMO: Tom de oração, sussurro e entrega.",
+      "SAPIENCIAL E PRÁTICO: Tom de conselho, decisão e ação ('segunda-feira').",
+      "PROFÉTICO E DENÚNCIA: Tom firme, urgente, apontando ídolos.",
+      "CONSOLADOR E PASTORAL: Tom de graça, acolhimento e respiro."
     ];
 
     // Sorteio
-    const lenteSorteada = listaLentes[Math.floor(Math.random() * listaLentes.length)];
+    const anguloSorteado = listaAngulos[Math.floor(Math.random() * listaAngulos.length)];
     const temperaturaSorteada = listaTemperaturas[Math.floor(Math.random() * listaTemperaturas.length)];
 
     // Contexto Temporal (Novo!)
     const contextoTemporal = getContextoTemporal(data);
     console.log(`📅 [DATA] ${contextoTemporal}`);
 
-    console.log(`[VARIABILIDADE] Lente: ${lenteSorteada} | Temp: ${temperaturaSorteada} | Arq: ${arquetipoSorteado.id}`);
+    console.log(`[VARIABILIDADE] Ângulo: ${anguloSorteado} | Temp: ${temperaturaSorteada} | Arq: ${arquetipoSorteado.id}`);
 
     const instrucaoVariabilidade = `
-\n\n=== [AJUSTE FINO DE TOM - PRIORIDADE MAXIMA] ===
-ATENÇÃO: Você recebeu uma "Lente" (${lenteSorteada}), uma "Temperatura" (${temperaturaSorteada}) e um "Arquétipo" (${arquetipoSorteado.nome}).
+\n\n=== [SISTEMA CALEIDOSCÓPIO - NUANCE INFINITA] ===
+ATENÇÃO: Para evitar repetição, você deve observar este texto através de um ÂNGULO ESPECÍFICO.
+Não use sempre a mesma fórmula. 
 
-REGRA DE COMBINAÇÃO HÍBRIDA:
-1. O ARQUÉTIPO (${arquetipoSorteado.nome}) define a ESTRUTURA e a FORMA da mensagem. (Siga os passos dele).
-2. A LENTE define o vocabulário e o "perfume".
-3. A TEMPERATURA define o calor emocional.
+🎲 SEU ÂNGULO SORTEADO PARA ESTA EXECUÇÃO:
+${anguloSorteado}
 
-SE HOUVER CONFLITO, O ARQUÉTIPO VENCE NO FORMATO DA MENSAGEM.
-(Ex: Se o Arquétipo for "TREINADOR" mas a Temperatura for "CONSOLADOR", seja um Treinador que encoraja, mas ainda mande fazer algo).
+🌡️ SUA TEMPERATURA EMOCIONAL:
+${temperaturaSorteada}
 
-A NATURALIDADE VENCE TUDO. Não force metáforas.
+👤 SEU ARQUÉTIPO ESTRUTURAL:
+${arquetipoSorteado.nome}
+
+⚠️ INSTRUÇÃO DE MIXAGEM (CRUCIAL):
+1. O ÂNGULO define "DO QUE" você fala (se é do Egito, se é da Ansiedade, ou se é de Status). Obedeça o ângulo sorteado para esta execução.
+2. A TEMPERATURA define "COMO" você fala (se está orando, aconselhando ou exortando).
+3. O ARQUÉTIPO define a ESTRUTURA (o esqueleto do texto).
+
+REGRAS FINAIS DE NUANCE:
+- Se o ângulo for "RAIZ HISTÓRICA", use os termos bíblicos (Egito, Tenda).
+- Se o ângulo for "ESPELHO MODERNO", é PROIBIDO usar termos arcaicos. Traduza tudo para vida urbana atual.
+- Se o ângulo for "RAIO-X EMOCIONAL", foque apenas no sentimento humano.
+- Varie. Surpreenda. Não seja robótico.
 ==================================================\n
 `;
 
