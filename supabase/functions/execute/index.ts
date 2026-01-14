@@ -5,6 +5,7 @@ import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
 import { formatVoiceSection } from './voice-selector.ts';
+import { getArchetype, formatArchetypeSection } from './archetype-selector.ts';
 
 // 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
 const corsHeaders = {
@@ -60,6 +61,9 @@ Deno.serve(async (req) => {
 
     // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
 
+    // 1. SORTEIO DO ARQUÉTIPO (CAMALEÃO)
+    const arquetipoSorteado = getArchetype(data);
+
     const listaLentes = [
       "SOBERANIA E REINO: Use termos como trono, cetro, governo, decreto, império, súdito, lealdade. Deus é o Rei, nós somos os servos. O controle é dEle.",
       "ANATOMIA DA ALMA: Foque no corpo e sentidos. Olhos (visão/cegueira), ouvidos (surdez), coração (duro/carne), joelhos (rendição), mãos (obras), fôlego.",
@@ -84,18 +88,21 @@ Deno.serve(async (req) => {
     const contextoTemporal = getContextoTemporal(data);
     console.log(`📅 [DATA] ${contextoTemporal}`);
 
-    console.log(`[VARIABILIDADE] Lente: ${lenteSorteada} | Temp: ${temperaturaSorteada}`);
+    console.log(`[VARIABILIDADE] Lente: ${lenteSorteada} | Temp: ${temperaturaSorteada} | Arq: ${arquetipoSorteado.id}`);
 
     const instrucaoVariabilidade = `
 \n\n=== [AJUSTE FINO DE TOM - PRIORIDADE MAXIMA] ===
-ATENÇÃO: Você recebeu uma "Lente" (${lenteSorteada}) e uma "Temperatura" (${temperaturaSorteada}).
-MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
+ATENÇÃO: Você recebeu uma "Lente" (${lenteSorteada}), uma "Temperatura" (${temperaturaSorteada}) e um "Arquétipo" (${arquetipoSorteado.nome}).
 
-1. NÃO force a metáfora em todas as frases. Isso deixa o texto robótico.
-2. Use a lente apenas como um "perfume" ou "inspiração de fundo".
-3. Se a metáfora travar a leitura ou parecer artificial, DESCARTE-A e priorize uma linguagem humana, fluida e pastoral.
-4. O objetivo é tocar o coração, não impressionar com vocabulário técnico.
-5. SEJA SIMPLES. Fale como um pastor conversando na mesa, não como um poeta acadêmico.
+REGRA DE COMBINAÇÃO HÍBRIDA:
+1. O ARQUÉTIPO (${arquetipoSorteado.nome}) define a ESTRUTURA e a FORMA da mensagem. (Siga os passos dele).
+2. A LENTE define o vocabulário e o "perfume".
+3. A TEMPERATURA define o calor emocional.
+
+SE HOUVER CONFLITO, O ARQUÉTIPO VENCE NO FORMATO DA MENSAGEM.
+(Ex: Se o Arquétipo for "TREINADOR" mas a Temperatura for "CONSOLADOR", seja um Treinador que encoraja, mas ainda mande fazer algo).
+
+A NATURALIDADE VENCE TUDO. Não force metáforas.
 ==================================================\n
 `;
 
@@ -194,7 +201,7 @@ MAS A REGRA DE OURO É: A NATURALIDADE VENCE A METÁFORA.
     const ragContext = await getRelevantContext(supabase, payload.passagem_do_dia, modoRow.titulo);
 
     // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
-    console.log("� Consultando devocional externo...");
+    console.log(" Consultando devocional externo...");
     let devocionalExterno: string;
 
     if (bibleApiKey) {
@@ -314,6 +321,8 @@ ${deepContext}
 ${contextoTemporal}
 
 ${formatVoiceSection(payload.passagem_do_dia)}
+
+${formatArchetypeSection(arquetipoSorteado)}
 
 ### [INSTRUCOES_MODO] Instruções Específicas do Modo
 ${modoTexto}
