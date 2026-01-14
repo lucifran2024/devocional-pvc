@@ -251,7 +251,7 @@ ${memoria}
 - METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
 - RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", "Sua resposta:", "Faça isso:", "Reflexão:", "Oração:". O texto deve fluir naturalmente SEM marcadores.
 - Frases longas e poéticas rebuscadas
-- Tom distante ("a gente", "nós") - USE SEMPRE "você"
+
 - Clichês de auto-ajuda
 - Versículo jogado no final sem explicação
 
@@ -281,7 +281,7 @@ ${memoria}
    - CERTO: "Perdoar não é concordar. Não é esquecer. É decidir não continuar preso."
    - ERRADO: "O perdão é importante para a cura"
 
-4. TOM DIRETO com "você" e "hoje":
+4. TOM DIRETO E PESSOAL:
    - CERTO: "Enquanto você segura a mágoa, o inimigo constrói fortalezas."
    - ERRADO: "Quando a gente tateia as paredes..."
 
@@ -364,9 +364,9 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      // Usando gemini-3-flash-preview conforme solicitado pelo usuário
-      // Note: pode ser instável ou requer v1beta
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`, {
+      // Usando gemini-3-pro-preview conforme solicitado pelo usuário
+      // Note: pode ser mais lento, mas tem maior raciocínio
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
