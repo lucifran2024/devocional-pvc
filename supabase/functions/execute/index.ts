@@ -308,6 +308,7 @@ DATA: ${payload.data}
 PASSAGEM: ${payload.passagem_do_dia}
 ARQUETIPO: ${payload.arquetipo}
 VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
+${deepContext}
 
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
