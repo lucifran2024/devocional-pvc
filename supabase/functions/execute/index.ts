@@ -89,9 +89,28 @@ Deno.serve(async (req) => {
 
     console.log(`[VARIABILIDADE] Ângulo: ${anguloSorteado} | Temp: ${temperaturaSorteada} | Arq: ${arquetipoSorteado.id}`);
 
+    // Limpeza de códgo duplicado
+
+    // LÓGICA DE PROIBIÇÃO DINÂMICA (TRAVA DE VOCABULÁRIO)
+    let proibicaoExtra = "";
+    if (anguloSorteado.includes("ESPELHO MODERNO")) {
+      proibicaoExtra = `
+⚠️ PROIBIÇÃO ESTRITA(MODO MODERNO ATIVADO):
+Neste ângulo, você está PROIBIDO de usar as palavras: Egito, Faraó, Carros, Cavalos, Assíria, Babilônia, Tenda, Espada.
+Você DEVE substituir por termos equivalentes da vida atual:
+    - Egito -> Sistema / Mundo / Atalho fácil
+      - Carros / Cavalos -> Recursos / Status / Tecnologia / Influência
+      - Espada -> Palavras / Ações / Defesa
+      - Faraó -> O Chefe / O Dono da Bola / A Pressão
+        - Assíria -> O Inimigo / A Crise / A Ansiedade
+
+SE VOCÊ USAR "EGITO" OU "CAVALOS" NESTE MODO, A GERAÇÃO FALHARÁ.TRADUZA TUDO.
+`;
+    }
+
     const instrucaoVariabilidade = `
-\n\n=== [SISTEMA CALEIDOSCÓPIO - NUANCE INFINITA] ===
-ATENÇÃO: Para evitar repetição, você deve observar este texto através de um ÂNGULO ESPECÍFICO.
+    \n\n === [SISTEMA CALEIDOSCÓPIO - NUANCE INFINITA] ===
+      ATENÇÃO: Para evitar repetição, você deve observar este texto através de um ÂNGULO ESPECÍFICO.
 Não use sempre a mesma fórmula. 
 
 🎲 SEU ÂNGULO SORTEADO PARA ESTA EXECUÇÃO:
@@ -103,16 +122,18 @@ ${temperaturaSorteada}
 👤 SEU ARQUÉTIPO ESTRUTURAL:
 ${arquetipoSorteado.nome}
 
-⚠️ INSTRUÇÃO DE MIXAGEM (CRUCIAL):
-1. O ÂNGULO define "DO QUE" você fala (se é do Egito, se é da Ansiedade, ou se é de Status). Obedeça o ângulo sorteado para esta execução.
-2. A TEMPERATURA define "COMO" você fala (se está orando, aconselhando ou exortando).
-3. O ARQUÉTIPO define a ESTRUTURA (o esqueleto do texto).
+${proibicaoExtra}
+
+⚠️ INSTRUÇÃO DE MIXAGEM(CRUCIAL):
+    1. O ÂNGULO define "DO QUE" você fala(se é do Egito, se é da Ansiedade, ou se é de Status).Obedeça o ângulo sorteado para esta execução.
+2. A TEMPERATURA define "COMO" você fala(se está orando, aconselhando ou exortando).
+3. O ARQUÉTIPO define a ESTRUTURA(o esqueleto do texto).
 
 REGRAS FINAIS DE NUANCE:
-- Se o ângulo for "RAIZ HISTÓRICA", use os termos bíblicos (Egito, Tenda).
-- Se o ângulo for "ESPELHO MODERNO", é PROIBIDO usar termos arcaicos. Traduza tudo para vida urbana atual.
+- Se o ângulo for "RAIZ HISTÓRICA", use os termos bíblicos(Egito, Tenda).
+- Se o ângulo for "ESPELHO MODERNO", obedeça a PROIBIÇÃO acima.Traduza tudo para vida urbana atual.
 - Se o ângulo for "RAIO-X EMOCIONAL", foque apenas no sentimento humano.
-- Varie. Surpreenda. Não seja robótico.
+- Varie.Surpreenda.Não seja robótico.
 ==================================================\n
 `;
 
@@ -250,7 +271,7 @@ REGRAS FINAIS DE NUANCE:
     // 5. RAG + DEVOCIONAL_EXTERNO + PERSONALIDADE_DINAMICA
     const promptFinal = `
 ### [MEMORIA_ESTILO] ⭐⭐⭐ MÁXIMA PRIORIDADE - APRENDA ESTE ESTILO
-Estes são exemplos APROVADOS de mensagens que funcionaram muito bem. 
+Estes são exemplos APROVADOS de mensagens que funcionaram muito bem.
 IMITE o tom, estrutura e profundidade destas mensagens:
 ${memoria}
 
