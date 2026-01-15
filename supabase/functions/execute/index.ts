@@ -13,6 +13,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// =====================================================
+// CACHE GLOBAL - Arquivos de conhecimento (não mudam)
+// Evita baixar ~500KB+ em cada requisição
+// =====================================================
+let cachedBaseConhecimento: string | null = null;
+let cachedConhecimentoCompilado: string | null = null;
+let cachedBancoOuroExemplos: string | null = null;
+let cacheTimestamp: number | null = null;
+const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora de cache
+
 Deno.serve(async (req) => {
   // Tratamento de pre-flight request (OPTIONS)
   if (req.method === 'OPTIONS') {
@@ -195,17 +205,41 @@ REGRAS FINAIS DE NUANCE:
       return await file.text();
     }
 
-    // INJEÇÃO DE CONTEXTO TOTAL (Não RAG!) - Baixa TODOS os arquivos INTEIROS
+    // INJEÇÃO DE CONTEXTO TOTAL - Baixa arquivos INTEIROS (com CACHE)
     // Isso garante que a IA tenha acesso a TODAS as regras e proibições
-    const [agentStart, modoTexto, baseConhecimentoCompleta, conhecimentoCompilado, bancoOuroExemplos] = await Promise.all([
+
+    // Arquivos que mudam por requisição (sem cache)
+    const [agentStart, modoTexto] = await Promise.all([
       downloadFile("agent_start/AGENT_START.txt"),
-      downloadFile(modoRow.storage_path), // ex: modos/MODO_1.txt
-      downloadFile("base_conhecimento/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"), // ARQUIVO INTEIRO!
-      downloadFile("conhecimento_essencial/Conhecimento_Compilado_Essencial.v1.4.txt"), // COMPILADO INTEIRO!
-      downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt") // EXEMPLOS INTEIROS!
+      downloadFile(modoRow.storage_path) // ex: modos/MODO_1.txt
     ]);
 
-    console.log(`📚 Contexto Total carregado: Base=${baseConhecimentoCompleta.length}, Compilado=${conhecimentoCompilado.length}, Ouro=${bancoOuroExemplos.length} chars`);
+    // Arquivos de conhecimento (COM CACHE - não mudam frequentemente)
+    const agora = Date.now();
+    const cacheExpirado = !cacheTimestamp || (agora - cacheTimestamp) > CACHE_TTL_MS;
+
+    if (cacheExpirado || !cachedBaseConhecimento) {
+      console.log("📥 [CACHE] Baixando arquivos de conhecimento (cache expirado ou vazio)...");
+
+      const [base, compilado, ouro] = await Promise.all([
+        downloadFile("base_conhecimento/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"),
+        downloadFile("conhecimento_essencial/Conhecimento_Compilado_Essencial.v1.4.txt"),
+        downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
+      ]);
+
+      cachedBaseConhecimento = base;
+      cachedConhecimentoCompilado = compilado;
+      cachedBancoOuroExemplos = ouro;
+      cacheTimestamp = agora;
+
+      console.log(`📚 [CACHE] Arquivos carregados e cacheados: Base=${base.length}, Compilado=${compilado.length}, Ouro=${ouro.length} chars`);
+    } else {
+      console.log("⚡ [CACHE] Usando arquivos de conhecimento do cache (rápido!)");
+    }
+
+    const baseConhecimentoCompleta = cachedBaseConhecimento!;
+    const conhecimentoCompilado = cachedConhecimentoCompilado!;
+    const bancoOuroExemplos = cachedBancoOuroExemplos!;
 
     if (!modoTexto) {
       throw new Error(`O arquivo do modo (${modoRow.storage_path}) está vazio ou não existe no Storage.`);
@@ -276,7 +310,7 @@ REGRAS FINAIS DE NUANCE:
     // 2. REGRAS_DE_ESTILO (proibições e obrigações)
     // 3. DADOS_DO_DIA + MOMENTO_E_DATA (contexto)
     // 4. INSTRUCOES_MODO + AGENT_START
-    // 5. RAG + DEVOCIONAL_EXTERNO + PERSONALIDADE_DINAMICA
+    // 5. CONHECIMENTO_COMPLETO + DEVOCIONAL_EXTERNO + PERSONALIDADE_DINAMICA
     const promptFinal = `
 ### [MEMORIA_ESTILO] ⭐⭐⭐ MÁXIMA PRIORIDADE - APRENDA ESTE ESTILO
 Estes são exemplos APROVADOS de mensagens que funcionaram muito bem.
