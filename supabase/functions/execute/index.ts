@@ -107,58 +107,14 @@ Deno.serve(async (req) => {
     };
 
     // =====================================================
-    // SISTEMA ANTI-REPETIÇÃO (DNA POR DIA)
-    // Consulta últimos 5 dias para evitar repetir ângulos
+    // SORTEIO INICIAL (será refinado pelo sistema anti-repetição após init do Supabase)
     // =====================================================
-    console.log("🧬 [DNA] Consultando histórico dos últimos 5 dias...");
+    let anguloSorteado = listaAngulos[Math.floor(Math.random() * listaAngulos.length)];
+    let temperaturaSorteada = listaTemperaturas[Math.floor(Math.random() * listaTemperaturas.length)];
 
-    const { data: dnaRecente } = await supabase
-      .from("historico_geracoes")
-      .select("data_referencia, dna_geracao")
-      .not("dna_geracao", "is", null)
-      .lt("data_referencia", data) // Só dias ANTERIORES ao atual
-      .order("data_referencia", { ascending: false })
-      .limit(20); // Pega mais para filtrar por data única
-
-    // Extrair datas únicas (últimos 5 dias)
-    const diasUnicos = [...new Set(dnaRecente?.map(d => d.data_referencia) || [])].slice(0, 5);
-    const angulosUsados = dnaRecente
-      ?.filter(d => diasUnicos.includes(d.data_referencia))
-      ?.map(d => d.dna_geracao?.angulo)
-      ?.filter(Boolean) || [];
-    const temperaturasUsadas = dnaRecente
-      ?.filter(d => diasUnicos.includes(d.data_referencia))
-      ?.map(d => d.dna_geracao?.temperatura)
-      ?.filter(Boolean) || [];
-
-    console.log(`🧬 [DNA] Dias com histórico: ${diasUnicos.length}`);
-    console.log(`🧬 [DNA] Ângulos já usados: ${angulosUsados.join(", ") || "nenhum"}`);
-    console.log(`🧬 [DNA] Temperaturas já usadas: ${temperaturasUsadas.join(", ") || "nenhuma"}`);
-
-    // Filtrar ângulos disponíveis (prioridade: passagem > anti-repetição)
-    const angulosDisponiveis = listaAngulos.filter(a =>
-      !angulosUsados.includes(extrairIdAngulo(a))
-    );
-    const temperaturasDisponiveis = listaTemperaturas.filter(t =>
-      !temperaturasUsadas.includes(extrairIdTemperatura(t))
-    );
-
-    // Se esgotou opções, usar pool completo (passagem vence)
-    const poolAngulos = angulosDisponiveis.length > 0 ? angulosDisponiveis : listaAngulos;
-    const poolTemperaturas = temperaturasDisponiveis.length > 0 ? temperaturasDisponiveis : listaTemperaturas;
-
-    // Sorteio com filtro anti-repetição
-    const anguloSorteado = poolAngulos[Math.floor(Math.random() * poolAngulos.length)];
-    const temperaturaSorteada = poolTemperaturas[Math.floor(Math.random() * poolTemperaturas.length)];
-
-    // Contexto Temporal (Novo!)
+    // Contexto Temporal
     const contextoTemporal = getContextoTemporal(data);
     console.log(`📅 [DATA] ${contextoTemporal}`);
-
-    console.log(`🎲 [VARIABILIDADE] Ângulo: ${extrairIdAngulo(anguloSorteado)} | Temp: ${extrairIdTemperatura(temperaturaSorteada)} | Arq: ${arquetipoSorteado.id}`);
-    if (angulosDisponiveis.length < listaAngulos.length) {
-      console.log(`✅ [ANTI-REP] Filtrou ${listaAngulos.length - angulosDisponiveis.length} ângulos já usados`);
-    }
 
     // Limpeza de códgo duplicado
 
@@ -222,6 +178,53 @@ REGRAS FINAIS DE NUANCE:
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // =====================================================
+    // SISTEMA ANTI-REPETIÇÃO (DNA POR DIA)
+    // Consulta últimos 5 dias para evitar repetir ângulos
+    // =====================================================
+    console.log("🧬 [DNA] Consultando histórico dos últimos 5 dias...");
+
+    const { data: dnaRecente } = await supabase
+      .from("historico_geracoes")
+      .select("data_referencia, dna_geracao")
+      .not("dna_geracao", "is", null)
+      .lt("data_referencia", data) // Só dias ANTERIORES ao atual
+      .order("data_referencia", { ascending: false })
+      .limit(20);
+
+    // Extrair datas únicas (últimos 5 dias)
+    const diasUnicos = [...new Set(dnaRecente?.map(d => d.data_referencia) || [])].slice(0, 5);
+    const angulosUsados = dnaRecente
+      ?.filter(d => diasUnicos.includes(d.data_referencia))
+      ?.map(d => d.dna_geracao?.angulo)
+      ?.filter(Boolean) || [];
+    const temperaturasUsadas = dnaRecente
+      ?.filter(d => diasUnicos.includes(d.data_referencia))
+      ?.map(d => d.dna_geracao?.temperatura)
+      ?.filter(Boolean) || [];
+
+    console.log(`🧬 [DNA] Dias com histórico: ${diasUnicos.length}`);
+    console.log(`🧬 [DNA] Ângulos já usados: ${angulosUsados.join(", ") || "nenhum"}`);
+
+    // Refinar sorteio com base no histórico
+    const angulosDisponiveis = listaAngulos.filter(a =>
+      !angulosUsados.includes(extrairIdAngulo(a))
+    );
+    const temperaturasDisponiveis = listaTemperaturas.filter(t =>
+      !temperaturasUsadas.includes(extrairIdTemperatura(t))
+    );
+
+    // Se esgotou opções, usar pool completo (passagem vence)
+    if (angulosDisponiveis.length > 0) {
+      anguloSorteado = angulosDisponiveis[Math.floor(Math.random() * angulosDisponiveis.length)];
+      console.log(`✅ [ANTI-REP] Filtrou ${listaAngulos.length - angulosDisponiveis.length} ângulos já usados`);
+    }
+    if (temperaturasDisponiveis.length > 0) {
+      temperaturaSorteada = temperaturasDisponiveis[Math.floor(Math.random() * temperaturasDisponiveis.length)];
+    }
+
+    console.log(`🎲 [VARIABILIDADE] Ângulo: ${extrairIdAngulo(anguloSorteado)} | Temp: ${extrairIdTemperatura(temperaturaSorteada)} | Arq: ${arquetipoSorteado.id}`);
 
     // 4. Buscar LEITURA (Usando a VIEW para evitar erro de nome de coluna)
     // Se não achar o dia 07, vai dar erro aqui.
