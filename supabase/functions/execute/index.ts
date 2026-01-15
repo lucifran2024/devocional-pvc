@@ -305,14 +305,49 @@ REGRAS FINAIS DE NUANCE:
     }
 
     // 8. Montar Prompt
-    // HIERARQUIA v3 (Atualizada):
-    // 1. MEMORIA_ESTILO primeiro (aprenda com favoritas)
-    // 2. REGRAS_DE_ESTILO (proibições e obrigações)
-    // 3. DADOS_DO_DIA + MOMENTO_E_DATA (contexto)
-    // 4. INSTRUCOES_MODO + AGENT_START
-    // 5. CONHECIMENTO_COMPLETO + DEVOCIONAL_EXTERNO + PERSONALIDADE_DINAMICA
+    // HIERARQUIA v4 (CORRIGIDA - Janeiro 2026):
+    // 1. PASSAGEM_DO_DIA (SSOT - Fonte de Verdade)
+    // 2. BASE_UNIFICADA (Regras e Proibições)
+    // 3. CCE (Conhecimento Compilado - Repertório)
+    // 4. MODO (Instruções Específicas)
+    // 5. Exemplos e Ajustes Finais
     const promptFinal = `
-### [MEMORIA_ESTILO] ⭐⭐⭐ MÁXIMA PRIORIDADE - APRENDA ESTE ESTILO
+### [PASSAGEM_DO_DIA] ⭐⭐⭐ FONTE DE VERDADE ABSOLUTA (SSOT)
+Esta é a passagem bíblica do dia. TODO o conteúdo deve ser derivado EXCLUSIVAMENTE deste texto.
+DATA: ${payload.data}
+PASSAGEM: ${payload.passagem_do_dia}
+${deepContext}
+
+### [MOMENTO_E_DATA] (Contexto Temporal)
+${contextoTemporal}
+
+### [CONHECIMENTO_E_REGRAS_COMPLETO] ⭐⭐⭐ BASE UNIFICADA (2ª PRIORIDADE)
+ATENÇÃO: Este é o arquivo de conhecimento INTEIRO. Contém TODAS as regras, proibições e diretrizes.
+Leia TODAS as regras antes de escrever. Em caso de conflito, esta BASE vence qualquer outro arquivo.
+${baseConhecimentoCompleta}
+
+### [CONHECIMENTO_COMPILADO_ESSENCIAL] ⭐⭐ CCE (3ª PRIORIDADE - Repertório)
+Catálogo de temas, metáforas e aplicações. Use para enriquecer, mas a BASE vence em conflitos.
+${conhecimentoCompilado}
+
+### [BANCO_DE_OURO_EXEMPLOS] ⭐ EXEMPLOS DE ESTILO (Referência)
+Use estes exemplos como referência de qualidade e estilo, NÃO copie literalmente:
+${bancoOuroExemplos}
+
+### [INSTRUCOES_MODO] ⭐ MODO ATIVO (4ª PRIORIDADE)
+Instruções específicas do modo selecionado. A BASE e CCE têm precedência sobre o MODO.
+${modoTexto}
+
+### [AGENT_START] (Regras Gerais do Agente)
+${agentStart}
+
+### [ARQUETIPO_E_VOZ] Ajustes de Tom
+ARQUETIPO: ${payload.arquetipo}
+VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
+${formatVoiceSection(payload.passagem_do_dia)}
+${formatArchetypeSection(arquetipoSorteado)}
+
+### [MEMORIA_ESTILO] ⭐⭐⭐ APRENDA ESTE ESTILO
 Estes são exemplos APROVADOS de mensagens que funcionaram muito bem.
 IMITE o tom, estrutura e profundidade destas mensagens:
 ${memoria}
@@ -324,7 +359,6 @@ ${memoria}
 - METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
 - RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", "Sua resposta:", "Faça isso:", "Reflexão:", "Oração:". O texto deve fluir naturalmente SEM marcadores.
 - Frases longas e poéticas rebuscadas
-
 - Clichês de auto-ajuda
 - Versículo jogado no final sem explicação
 
@@ -383,37 +417,6 @@ ${memoria}
 5. Aplicação direta com "você"
 6. Fechamento imperativo
 
-### [DADOS_DO_DIA] ⭐ Contexto da Leitura
-DATA: ${payload.data}
-PASSAGEM: ${payload.passagem_do_dia}
-ARQUETIPO: ${payload.arquetipo}
-VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
-${deepContext}
-
-### [MOMENTO_E_DATA] (Contexto Temporal)
-${contextoTemporal}
-
-${formatVoiceSection(payload.passagem_do_dia)}
-
-${formatArchetypeSection(arquetipoSorteado)}
-
-### [INSTRUCOES_MODO] Instruções Específicas do Modo
-${modoTexto}
-
-### [AGENT_START] (Regras Gerais do Agente)
-${agentStart}
-
-### [CONHECIMENTO_E_REGRAS_COMPLETO] ⭐⭐⭐ BASE UNIFICADA COMPLETA
-ATENÇÃO: Este é o arquivo de conhecimento INTEIRO. Leia TODAS as regras e proibições antes de escrever.
-${baseConhecimentoCompleta}
-
-### [CONHECIMENTO_COMPILADO_ESSENCIAL] ⭐⭐ COMPILADO DE REGRAS
-${conhecimentoCompilado}
-
-### [BANCO_DE_OURO_EXEMPLOS] ⭐ EXEMPLOS APROVADOS
-Use estes exemplos como referência de qualidade e estilo:
-${bancoOuroExemplos}
-
 ### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
 ${devocionalExterno}
 
@@ -431,6 +434,7 @@ Use a passagem do dia como base, mas foque em responder o que o usuário pergunt
 Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
 ` : ''}
 `;
+
 
     // 9. Chamar Gemini com Function Calling Loop
     console.log("🤖 Chamando Gemini 3 Flash (com Tools)...");
