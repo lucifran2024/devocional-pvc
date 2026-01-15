@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getRelevantContext } from './rag-helper.ts';
+// RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
@@ -195,10 +195,17 @@ REGRAS FINAIS DE NUANCE:
       return await file.text();
     }
 
-    const [agentStart, modoTexto] = await Promise.all([
+    // INJEÇÃO DE CONTEXTO TOTAL (Não RAG!) - Baixa TODOS os arquivos INTEIROS
+    // Isso garante que a IA tenha acesso a TODAS as regras e proibições
+    const [agentStart, modoTexto, baseConhecimentoCompleta, conhecimentoCompilado, bancoOuroExemplos] = await Promise.all([
       downloadFile("agent_start/AGENT_START.txt"),
-      downloadFile(modoRow.storage_path) // ex: modos/MODO_1.txt
+      downloadFile(modoRow.storage_path), // ex: modos/MODO_1.txt
+      downloadFile("base_conhecimento/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"), // ARQUIVO INTEIRO!
+      downloadFile("conhecimento_essencial/Conhecimento_Compilado_Essencial.v1.4.txt"), // COMPILADO INTEIRO!
+      downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt") // EXEMPLOS INTEIROS!
     ]);
+
+    console.log(`📚 Contexto Total carregado: Base=${baseConhecimentoCompleta.length}, Compilado=${conhecimentoCompilado.length}, Ouro=${bancoOuroExemplos.length} chars`);
 
     if (!modoTexto) {
       throw new Error(`O arquivo do modo (${modoRow.storage_path}) está vazio ou não existe no Storage.`);
@@ -227,9 +234,10 @@ REGRAS FINAIS DE NUANCE:
       }
     }
 
-    // 7.1 BUSCA CONTEXTUAL RAG (Novo Cérebro)
-    console.log("🧠 Buscando contexto RAG...");
-    const ragContext = await getRelevantContext(supabase, payload.passagem_do_dia, modoRow.titulo);
+    // 7.1 CONTEXTO TOTAL (SEM RAG!) - Arquivo inteiro já foi baixado acima
+    // MOTIVO: RAG poderia "esquecer" regras importantes como "PROIBIDO teologia da troca"
+    // Com injeção total, a IA sempre lê TODAS as regras antes de escrever
+    console.log("📖 Usando CONTEXTO TOTAL (sem fragmentação RAG)");
 
     // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
     console.log(" Consultando devocional externo...");
@@ -361,8 +369,16 @@ ${modoTexto}
 ### [AGENT_START] (Regras Gerais do Agente)
 ${agentStart}
 
-### [CONHECIMENTO_E_REGRAS_RELEVANTES] (via RAG)
-${ragContext}
+### [CONHECIMENTO_E_REGRAS_COMPLETO] ⭐⭐⭐ BASE UNIFICADA COMPLETA
+ATENÇÃO: Este é o arquivo de conhecimento INTEIRO. Leia TODAS as regras e proibições antes de escrever.
+${baseConhecimentoCompleta}
+
+### [CONHECIMENTO_COMPILADO_ESSENCIAL] ⭐⭐ COMPILADO DE REGRAS
+${conhecimentoCompilado}
+
+### [BANCO_DE_OURO_EXEMPLOS] ⭐ EXEMPLOS APROVADOS
+Use estes exemplos como referência de qualidade e estilo:
+${bancoOuroExemplos}
 
 ### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
 ${devocionalExterno}
