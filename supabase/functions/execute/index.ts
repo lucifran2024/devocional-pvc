@@ -89,15 +89,76 @@ Deno.serve(async (req) => {
       "CONSOLADOR E PASTORAL: Tom de graça, acolhimento e respiro."
     ];
 
-    // Sorteio
-    const anguloSorteado = listaAngulos[Math.floor(Math.random() * listaAngulos.length)];
-    const temperaturaSorteada = listaTemperaturas[Math.floor(Math.random() * listaTemperaturas.length)];
+    // Helpers para extrair IDs dos ângulos/temperaturas
+    const extrairIdAngulo = (angulo: string): string => {
+      if (angulo.includes("ESPELHO MODERNO")) return "ESPELHO_MODERNO";
+      if (angulo.includes("RAIZ HISTÓRICA")) return "RAIZ_HISTORICA";
+      if (angulo.includes("RAIO-X EMOCIONAL")) return "RAIO_X_EMOCIONAL";
+      if (angulo.includes("LENTE DE JESUS")) return "LENTE_DE_JESUS";
+      return "DESCONHECIDO";
+    };
+
+    const extrairIdTemperatura = (temp: string): string => {
+      if (temp.includes("DEVOCIONAL")) return "DEVOCIONAL";
+      if (temp.includes("SAPIENCIAL")) return "SAPIENCIAL";
+      if (temp.includes("PROFÉTICO")) return "PROFETICO";
+      if (temp.includes("CONSOLADOR")) return "CONSOLADOR";
+      return "DESCONHECIDO";
+    };
+
+    // =====================================================
+    // SISTEMA ANTI-REPETIÇÃO (DNA POR DIA)
+    // Consulta últimos 5 dias para evitar repetir ângulos
+    // =====================================================
+    console.log("🧬 [DNA] Consultando histórico dos últimos 5 dias...");
+
+    const { data: dnaRecente } = await supabase
+      .from("historico_geracoes")
+      .select("data_referencia, dna_geracao")
+      .not("dna_geracao", "is", null)
+      .lt("data_referencia", data) // Só dias ANTERIORES ao atual
+      .order("data_referencia", { ascending: false })
+      .limit(20); // Pega mais para filtrar por data única
+
+    // Extrair datas únicas (últimos 5 dias)
+    const diasUnicos = [...new Set(dnaRecente?.map(d => d.data_referencia) || [])].slice(0, 5);
+    const angulosUsados = dnaRecente
+      ?.filter(d => diasUnicos.includes(d.data_referencia))
+      ?.map(d => d.dna_geracao?.angulo)
+      ?.filter(Boolean) || [];
+    const temperaturasUsadas = dnaRecente
+      ?.filter(d => diasUnicos.includes(d.data_referencia))
+      ?.map(d => d.dna_geracao?.temperatura)
+      ?.filter(Boolean) || [];
+
+    console.log(`🧬 [DNA] Dias com histórico: ${diasUnicos.length}`);
+    console.log(`🧬 [DNA] Ângulos já usados: ${angulosUsados.join(", ") || "nenhum"}`);
+    console.log(`🧬 [DNA] Temperaturas já usadas: ${temperaturasUsadas.join(", ") || "nenhuma"}`);
+
+    // Filtrar ângulos disponíveis (prioridade: passagem > anti-repetição)
+    const angulosDisponiveis = listaAngulos.filter(a =>
+      !angulosUsados.includes(extrairIdAngulo(a))
+    );
+    const temperaturasDisponiveis = listaTemperaturas.filter(t =>
+      !temperaturasUsadas.includes(extrairIdTemperatura(t))
+    );
+
+    // Se esgotou opções, usar pool completo (passagem vence)
+    const poolAngulos = angulosDisponiveis.length > 0 ? angulosDisponiveis : listaAngulos;
+    const poolTemperaturas = temperaturasDisponiveis.length > 0 ? temperaturasDisponiveis : listaTemperaturas;
+
+    // Sorteio com filtro anti-repetição
+    const anguloSorteado = poolAngulos[Math.floor(Math.random() * poolAngulos.length)];
+    const temperaturaSorteada = poolTemperaturas[Math.floor(Math.random() * poolTemperaturas.length)];
 
     // Contexto Temporal (Novo!)
     const contextoTemporal = getContextoTemporal(data);
     console.log(`📅 [DATA] ${contextoTemporal}`);
 
-    console.log(`[VARIABILIDADE] Ângulo: ${anguloSorteado} | Temp: ${temperaturaSorteada} | Arq: ${arquetipoSorteado.id}`);
+    console.log(`🎲 [VARIABILIDADE] Ângulo: ${extrairIdAngulo(anguloSorteado)} | Temp: ${extrairIdTemperatura(temperaturaSorteada)} | Arq: ${arquetipoSorteado.id}`);
+    if (angulosDisponiveis.length < listaAngulos.length) {
+      console.log(`✅ [ANTI-REP] Filtrou ${listaAngulos.length - angulosDisponiveis.length} ângulos já usados`);
+    }
 
     // Limpeza de códgo duplicado
 
@@ -354,13 +415,21 @@ ${memoria}
 
 ### [REGRAS_DE_ESTILO] ⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
 
-🚫 PROIBIDO (NÃO USE):
+� LIMITE DE TAMANHO (CRÍTICO):
+- MÁXIMO 150 palavras por mensagem (corpo + fechamento)
+- Corpo do devocional: MÁXIMO 120 palavras
+- Se ultrapassar: CORTAR e simplificar
+- Menos texto = mais lido. Seja CONCISO.
+
+�🚫 PROIBIDO (NÃO USE):
+- TEXTOS LONGOS: Cada devocional deve ser CURTO e IMPACTANTE
 - Palavras/termos: "norte", "rota", "Farol", "neblina", "bússola" (exceto se no versículo)
 - METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
 - RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", "Sua resposta:", "Faça isso:", "Reflexão:", "Oração:". O texto deve fluir naturalmente SEM marcadores.
 - Frases longas e poéticas rebuscadas
 - Clichês de auto-ajuda
 - Versículo jogado no final sem explicação
+
 
 🎯 TOM PASTORAL SIMPLES:
 - Fale como um pastor experiente conversando com alguém na sala da igreja
@@ -525,13 +594,24 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
 
     // 10. Salvar e Retornar
     // Alterado para select().single() para pegar o ID gerado
+    // DNA da geração atual (para anti-repetição)
+    const dnaAtual = {
+      angulo: extrairIdAngulo(anguloSorteado),
+      temperatura: extrairIdTemperatura(temperaturaSorteada),
+      arquetipo: arquetipoSorteado.id,
+      data_ref: data
+    };
+
     const { data: insertData, error: insertError } = await supabase.from("historico_geracoes").insert({
       modo_id,
       data_referencia: data,
       passagem: payload.passagem_do_dia,
       resultado_texto: resultadoFinal,
-      aprovado: false // Default false, aguardando "Like" do usuário para favoritar
+      aprovado: false, // Default false, aguardando "Like" do usuário para favoritar
+      dna_geracao: dnaAtual // Salva DNA para anti-repetição
     }).select("id").single();
+
+    console.log(`🧬 [DNA] Salvo: ${JSON.stringify(dnaAtual)}`);
 
     if (insertError) {
       console.error("Erro ao salvar histórico:", insertError);
