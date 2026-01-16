@@ -353,41 +353,97 @@ REGRAS FINAIS DE NUANCE:
       console.log(`✅ Devocional externo obtido via RSS: ${fonteSorteada}`);
     }
 
-    // 7. Contexto de Memória (Favoritos Individuais + Histórico Antigo)
-    // Combina AMBAS as fontes para dar mais exemplos à IA
+    // 7. Contexto de Memória (SORTEIO INTELIGENTE COM DIVERSIDADE)
+    // Busca TODOS os favoritos e sorteia 1 de cada categoria para máxima diversidade
 
-    // 7a. Favoritos individuais (nova tabela)
-    const { data: favoritosIndividuais } = await supabase
+    // 7a. Busca TODOS os favoritos individuais
+    const { data: todosFavoritos } = await supabase
       .from("favoritos_mensagens")
-      .select("texto_msg, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5);
+      .select("texto_msg, created_at");
 
-    // 7b. Histórico antigo (favoritos de lote)
-    const { data: historicoAntigo } = await supabase
-      .from("historico_geracoes")
-      .select("passagem, resultado_texto, aprovado")
-      .eq("aprovado", true)
-      .order("created_at", { ascending: false })
-      .limit(3);
+    // 7b. Função para detectar categoria do texto
+    const detectarCategoria = (texto: string): string => {
+      const textoLower = texto.toLowerCase();
 
-    // Combina as duas fontes
-    let memoriaPartes: string[] = [];
+      // Oração - detecta padrões de oração
+      if (textoLower.includes("senhor,") || textoLower.includes("pai,") ||
+        textoLower.includes("amém") || textoLower.includes("te peço")) {
+        return "ORACAO";
+      }
 
-    if (favoritosIndividuais && favoritosIndividuais.length > 0) {
-      const partesIndividuais = favoritosIndividuais.map((f: any, idx: number) =>
-        `-- ⭐ Favorito Individual ${idx + 1}:\n${f.texto_msg.substring(0, 350)}...`
-      );
-      memoriaPartes.push(...partesIndividuais);
-      console.log(`⭐ [FAVORITOS] Carregados ${favoritosIndividuais.length} favoritos individuais`);
+      // Staccato - frases curtas, muitas quebras de linha
+      const linhas = texto.split("\n").filter(l => l.trim().length > 0);
+      const mediaCaracteresPorLinha = texto.length / linhas.length;
+      if (linhas.length >= 5 && mediaCaracteresPorLinha < 80) {
+        return "STACCATO";
+      }
+
+      // Lista - detecta bullets ou numeração
+      if (texto.includes("•") || texto.includes("1.") || texto.includes("- ")) {
+        return "LISTA";
+      }
+
+      // Micro - texto muito curto
+      if (texto.length < 300) {
+        return "MICRO";
+      }
+
+      // Narrativo - padrão
+      return "NARRATIVO";
+    };
+
+    // 7c. Agrupa por categoria
+    const porCategoria: Record<string, any[]> = {
+      ORACAO: [],
+      STACCATO: [],
+      LISTA: [],
+      MICRO: [],
+      NARRATIVO: []
+    };
+
+    if (todosFavoritos && todosFavoritos.length > 0) {
+      todosFavoritos.forEach((f: any) => {
+        const cat = detectarCategoria(f.texto_msg);
+        porCategoria[cat].push(f);
+      });
     }
 
-    if (historicoAntigo && historicoAntigo.length > 0) {
-      const partesAntigo = historicoAntigo.map((h: any) =>
-        `-- 📜 Histórico Aprovado (${h.passagem}):\n${h.resultado_texto.substring(0, 250)}...`
-      );
-      memoriaPartes.push(...partesAntigo);
-      console.log(`📜 [HISTORICO] Carregados ${historicoAntigo.length} favoritos do histórico antigo`);
+    // 7d. Sorteia 1-2 de cada categoria (máximo 8 total)
+    let memoriaPartes: string[] = [];
+    const categorias = Object.keys(porCategoria);
+
+    for (const cat of categorias) {
+      const favoritos = porCategoria[cat];
+      if (favoritos.length > 0) {
+        // Sorteia aleatoriamente
+        const sorteados = favoritos
+          .sort(() => Math.random() - 0.5)
+          .slice(0, cat === "NARRATIVO" ? 2 : 1); // 2 narrativos, 1 de cada outro
+
+        sorteados.forEach((f: any) => {
+          memoriaPartes.push(`-- ⭐ [${cat}] Exemplo:\n${f.texto_msg.substring(0, 350)}...`);
+        });
+      }
+    }
+
+    console.log(`🎲 [FAVORITOS] Sorteio diversificado: ${memoriaPartes.length} exemplos de ${categorias.length} categorias`);
+
+    // 7e. Se não tiver favoritos individuais, usa histórico antigo
+    if (memoriaPartes.length === 0) {
+      const { data: historicoAntigo } = await supabase
+        .from("historico_geracoes")
+        .select("passagem, resultado_texto, aprovado")
+        .eq("aprovado", true)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (historicoAntigo && historicoAntigo.length > 0) {
+        const partesAntigo = historicoAntigo.map((h: any) =>
+          `-- 📜 Histórico Aprovado (${h.passagem}):\n${h.resultado_texto.substring(0, 250)}...`
+        );
+        memoriaPartes.push(...partesAntigo);
+        console.log(`📜 [HISTORICO] Fallback: ${historicoAntigo.length} favoritos antigos`);
+      }
     }
 
     const memoria = memoriaPartes.length > 0
