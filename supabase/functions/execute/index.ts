@@ -408,17 +408,17 @@ REGRAS FINAIS DE NUANCE:
       });
     }
 
-    // 7d. Sorteia 1-2 de cada categoria (máximo 8 total)
+    // 7d. Sorteia 3 de cada categoria (máximo 15 total)
     let memoriaPartes: string[] = [];
     const categorias = Object.keys(porCategoria);
 
     for (const cat of categorias) {
       const favoritos = porCategoria[cat];
       if (favoritos.length > 0) {
-        // Sorteia aleatoriamente
+        // Sorteia aleatoriamente - 3 de cada categoria
         const sorteados = favoritos
           .sort(() => Math.random() - 0.5)
-          .slice(0, cat === "NARRATIVO" ? 2 : 1); // 2 narrativos, 1 de cada outro
+          .slice(0, 3); // 3 de CADA categoria
 
         sorteados.forEach((f: any) => {
           memoriaPartes.push(`-- ⭐ [${cat}] Exemplo:\n${f.texto_msg.substring(0, 350)}...`);
