@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getHistorico, toggleLike, deleteHistoricoItem } from '@/lib/supabase';
+import { getHistorico, toggleLike, deleteHistoricoItem, addFavoritoMensagem, removeFavoritoMensagem, getFavoritosByHistorico } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
@@ -24,6 +24,15 @@ export default function HistoricoPage() {
     const [filter, setFilter] = useState<'all' | 'favorites'>('all');
     const [expandedItem, setExpandedItem] = useState<HistoricoItem | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [favoritosIndividuais, setFavoritosIndividuais] = useState<number[]>([]);
+
+    // Parsear mensagens individuais do texto (separadas por ---)
+    const parseMensagens = (texto: string): string[] => {
+        if (!texto) return [];
+        // Divide por linhas com apenas --- (separador de mensagens)
+        const partes = texto.split(/\n\s*---\s*\n/);
+        return partes.filter(p => p.trim().length > 0);
+    };
 
     // Carregar dados
     const fetchData = async () => {
@@ -94,6 +103,28 @@ export default function HistoricoPage() {
         }
 
         setDeletingId(null);
+    };
+
+    // Handler para like de mensagem individual
+    const handleToggleMensagemLike = async (historicoId: number, indice: number, texto: string) => {
+        const isFavorito = favoritosIndividuais.includes(indice);
+
+        if (isFavorito) {
+            // Remover
+            setFavoritosIndividuais(prev => prev.filter(i => i !== indice));
+            await removeFavoritoMensagem(historicoId, indice);
+        } else {
+            // Adicionar
+            setFavoritosIndividuais(prev => [...prev, indice]);
+            await addFavoritoMensagem(historicoId, indice, texto);
+        }
+    };
+
+    // Carregar favoritos quando abre o modal
+    const handleOpenModal = async (item: HistoricoItem) => {
+        setExpandedItem(item);
+        const favoritos = await getFavoritosByHistorico(item.id);
+        setFavoritosIndividuais(favoritos);
     };
 
     return (
@@ -181,7 +212,7 @@ export default function HistoricoPage() {
                                     key={item.id}
                                     style={{ animationDelay: `${idx * 50}ms` }}
                                     className="group relative stellar-card rounded-[2.5rem] p-10 border border-white/5 overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] transition-all duration-700 hover:-translate-y-2 cursor-pointer animate-divine"
-                                    onClick={() => setExpandedItem(item)}
+                                    onClick={() => handleOpenModal(item)}
                                 >
                                     <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/[0.03] rounded-bl-[100px] transition-all duration-700 group-hover:bg-indigo-500/[0.07] group-hover:scale-125"></div>
 
@@ -269,21 +300,41 @@ export default function HistoricoPage() {
                                     </div>
                                 </div>
 
-                                {/* Modal Content - Pulled Up & Tighter Text */}
+                                {/* Modal Content - Mensagens Individuais */}
                                 <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-4 md:pt-6 custom-scrollbar bg-[#020617]">
-                                    <div className="prose prose-lg prose-invert max-w-none 
-                                    prose-headings:text-indigo-200 prose-headings:font-black
-                                    prose-blockquote:border-l-[4px] prose-blockquote:border-indigo-600 prose-blockquote:bg-indigo-950/20 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-xl prose-blockquote:not-italic prose-blockquote:my-4">
-                                        <ReactMarkdown
-                                            components={{
-                                                p: ({ node, ...props }) => <p className="mb-6 leading-relaxed text-slate-300 text-lg" {...props} />,
-                                                hr: ({ node, ...props }) => <hr className="my-12 border-white/10 border-t-2" {...props} />,
-                                                strong: ({ node, ...props }) => <strong className="text-indigo-200 font-bold" {...props} />,
-                                                li: ({ node, ...props }) => <li className="text-slate-300 my-2" {...props} />
-                                            }}
-                                        >
-                                            {expandedItem.resultado_texto}
-                                        </ReactMarkdown>
+                                    <div className="space-y-6">
+                                        {parseMensagens(expandedItem.resultado_texto).map((mensagem, idx) => (
+                                            <div key={idx} className="relative group/msg bg-white/[0.02] rounded-2xl p-6 border border-white/5 hover:border-indigo-500/30 transition-all">
+                                                {/* Botão de like individual */}
+                                                <button
+                                                    onClick={() => handleToggleMensagemLike(expandedItem.id, idx, mensagem)}
+                                                    className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${favoritosIndividuais.includes(idx)
+                                                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
+                                                        : 'bg-white/5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover/msg:opacity-100'
+                                                        }`}
+                                                    title={favoritosIndividuais.includes(idx) ? 'Remover dos favoritos' : 'Favoritar esta mensagem'}
+                                                >
+                                                    <Heart className={`w-4 h-4 ${favoritosIndividuais.includes(idx) ? 'fill-current' : ''}`} />
+                                                </button>
+
+                                                {/* Número da mensagem */}
+                                                <div className="absolute top-4 left-4 text-[10px] font-bold text-indigo-500/50 uppercase tracking-widest">
+                                                    Msg {idx + 1}
+                                                </div>
+
+                                                {/* Conteúdo */}
+                                                <div className="pt-6 prose prose-lg prose-invert max-w-none">
+                                                    <ReactMarkdown
+                                                        components={{
+                                                            p: ({ node, ...props }) => <p className="mb-4 leading-relaxed text-slate-300 text-base" {...props} />,
+                                                            strong: ({ node, ...props }) => <strong className="text-indigo-200 font-bold" {...props} />,
+                                                        }}
+                                                    >
+                                                        {mensagem}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 

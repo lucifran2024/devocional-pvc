@@ -497,3 +497,126 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
         return null;
     }
 }
+
+// ===========================================
+// FAVORITOS DE MENSAGENS INDIVIDUAIS
+// ===========================================
+
+export interface FavoritoMensagem {
+    id: number;
+    historico_id: number;
+    indice_msg: number;
+    texto_msg: string;
+    created_at: string;
+}
+
+/**
+ * Adiciona uma mensagem individual aos favoritos
+ */
+export async function addFavoritoMensagem(
+    historicoId: number,
+    indiceMensagem: number,
+    textoMensagem: string
+): Promise<FavoritoMensagem | null> {
+    console.log(`⭐ [FAVORITO] Adicionando mensagem ${indiceMensagem} do histórico ${historicoId}`);
+
+    try {
+        const { data, error } = await supabase
+            .from('favoritos_mensagens')
+            .insert({
+                historico_id: historicoId,
+                indice_msg: indiceMensagem,
+                texto_msg: textoMensagem
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ [FAVORITO] Erro ao adicionar:', error);
+            return null;
+        }
+
+        console.log('✅ [FAVORITO] Adicionado com sucesso:', data.id);
+        return data as FavoritoMensagem;
+    } catch (err) {
+        console.error('💥 [FAVORITO] Exceção:', err);
+        return null;
+    }
+}
+
+/**
+ * Remove uma mensagem individual dos favoritos
+ */
+export async function removeFavoritoMensagem(
+    historicoId: number,
+    indiceMensagem: number
+): Promise<boolean> {
+    console.log(`💔 [FAVORITO] Removendo mensagem ${indiceMensagem} do histórico ${historicoId}`);
+
+    try {
+        const { error } = await supabase
+            .from('favoritos_mensagens')
+            .delete()
+            .eq('historico_id', historicoId)
+            .eq('indice_msg', indiceMensagem);
+
+        if (error) {
+            console.error('❌ [FAVORITO] Erro ao remover:', error);
+            return false;
+        }
+
+        console.log('✅ [FAVORITO] Removido com sucesso');
+        return true;
+    } catch (err) {
+        console.error('💥 [FAVORITO] Exceção:', err);
+        return false;
+    }
+}
+
+/**
+ * Busca todos os favoritos de um histórico específico
+ */
+export async function getFavoritosByHistorico(historicoId: number): Promise<number[]> {
+    try {
+        const { data, error } = await supabase
+            .from('favoritos_mensagens')
+            .select('indice_msg')
+            .eq('historico_id', historicoId);
+
+        if (error) {
+            console.error('❌ [FAVORITO] Erro ao buscar:', error);
+            return [];
+        }
+
+        return data?.map(f => f.indice_msg) || [];
+    } catch (err) {
+        console.error('💥 [FAVORITO] Exceção:', err);
+        return [];
+    }
+}
+
+/**
+ * Busca todos os favoritos individuais (para usar no prompt)
+ */
+export async function getAllFavoritosMensagens(limit: number = 10): Promise<FavoritoMensagem[]> {
+    console.log(`📜 [FAVORITOS] Buscando últimos ${limit} favoritos individuais...`);
+
+    try {
+        const { data, error } = await supabase
+            .from('favoritos_mensagens')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error('❌ [FAVORITOS] Erro ao buscar:', error);
+            return [];
+        }
+
+        console.log(`✅ [FAVORITOS] Encontrados: ${data?.length || 0}`);
+        return data as FavoritoMensagem[];
+    } catch (err) {
+        console.error('💥 [FAVORITOS] Exceção:', err);
+        return [];
+    }
+}
