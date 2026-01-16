@@ -620,3 +620,34 @@ export async function getAllFavoritosMensagens(limit: number = 10): Promise<Favo
         return [];
     }
 }
+
+/**
+ * Adiciona uma mensagem MANUAL aos favoritos (sem vínculo com histórico)
+ * Para quando o usuário quer adicionar texto externo
+ */
+export async function addFavoritoManual(textoMensagem: string): Promise<FavoritoMensagem | null> {
+    console.log(`📝 [FAVORITO MANUAL] Adicionando mensagem de ${textoMensagem.length} caracteres`);
+
+    try {
+        const { data, error } = await supabase
+            .from('favoritos_mensagens')
+            .insert({
+                historico_id: null, // Mensagem manual, sem vínculo
+                indice_msg: 0,      // Índice padrão para manuais
+                texto_msg: textoMensagem
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ [FAVORITO MANUAL] Erro ao adicionar:', error);
+            return null;
+        }
+
+        console.log('✅ [FAVORITO MANUAL] Adicionado com sucesso:', data.id);
+        return data as FavoritoMensagem;
+    } catch (err) {
+        console.error('💥 [FAVORITO MANUAL] Exceção:', err);
+        return null;
+    }
+}

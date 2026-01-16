@@ -246,12 +246,14 @@ export default function DashboardPage() {
             badge="ORIGINAL"
           />
 
-          {/* Card 6: Diário (Em breve) */}
+          {/* Card 6: Diário de Favoritos */}
           <DashboardCard
-            title="Diário de Orações"
-            desc="Registre seus propósitos e respostas de oração."
+            href="/diario"
+            title="Adicionar Favorita"
+            desc="Salve mensagens externas para a IA aprender seu estilo."
             icon={Feather}
-            disabled={true}
+            accentColor="text-amber-400"
+            badge="NOVO"
           />
 
           {/* Card 6: Biblioteca (Bíblia) */}

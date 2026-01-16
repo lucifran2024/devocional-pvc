@@ -7,10 +7,14 @@
 CREATE TABLE IF NOT EXISTS favoritos_mensagens (
     id SERIAL PRIMARY KEY,
     historico_id INTEGER REFERENCES historico_geracoes(id) ON DELETE CASCADE,
-    indice_msg INTEGER NOT NULL,  -- Posição da mensagem no lote (0, 1, 2...)
-    texto_msg TEXT NOT NULL,      -- Texto da mensagem individual
+    indice_msg INTEGER NOT NULL DEFAULT 0,
+    texto_msg TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Permitir NULL em historico_id (para mensagens manuais)
+ALTER TABLE favoritos_mensagens 
+ALTER COLUMN historico_id DROP NOT NULL;
 
 -- Índice para busca rápida por historico_id
 CREATE INDEX IF NOT EXISTS idx_favoritos_historico 
