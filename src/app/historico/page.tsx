@@ -26,12 +26,34 @@ export default function HistoricoPage() {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [favoritosIndividuais, setFavoritosIndividuais] = useState<number[]>([]);
 
-    // Parsear mensagens individuais do texto (separadas por ---)
+    // Parsear mensagens individuais do texto
     const parseMensagens = (texto: string): string[] => {
         if (!texto) return [];
-        // Divide por linhas com apenas --- (separador de mensagens)
-        const partes = texto.split(/\n\s*---\s*\n/);
-        return partes.filter(p => p.trim().length > 0);
+
+        // Tenta diferentes separadores em ordem de prioridade
+
+        // 1. Separador explícito ---
+        if (texto.includes('\n---\n') || texto.includes('\n---') || texto.includes('---\n')) {
+            const partes = texto.split(/\n\s*---\s*\n/);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+
+        // 2. Separador ### (títulos markdown)
+        if (texto.includes('\n###') || texto.includes('\n## ')) {
+            const partes = texto.split(/\n(?=###?\s)/);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+
+        // 3. Separador por título em MAIÚSCULAS (padrão comum das gerações)
+        // Detecta padrões como "TITULO EM MAIUSCULAS" seguido de quebra de linha
+        const upperTitlePattern = /\n\n(?=[A-ZÀ-Ú][A-ZÀ-Ú\s,.!?]{10,})/;
+        if (upperTitlePattern.test(texto)) {
+            const partes = texto.split(upperTitlePattern);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+
+        // 4. Fallback: retorna o texto inteiro como uma única mensagem
+        return [texto];
     };
 
     // Carregar dados
@@ -310,7 +332,7 @@ export default function HistoricoPage() {
                                                     onClick={() => handleToggleMensagemLike(expandedItem.id, idx, mensagem)}
                                                     className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${favoritosIndividuais.includes(idx)
                                                         ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
-                                                        : 'bg-white/5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover/msg:opacity-100'
+                                                        : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
                                                         }`}
                                                     title={favoritosIndividuais.includes(idx) ? 'Remover dos favoritos' : 'Favoritar esta mensagem'}
                                                 >
