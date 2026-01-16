@@ -353,19 +353,35 @@ REGRAS FINAIS DE NUANCE:
       console.log(`✅ Devocional externo obtido via RSS: ${fonteSorteada}`);
     }
 
-    // 7. Contexto de Memória (Histórico)
-    const { data: historico } = await supabase
-      .from("historico_geracoes")
-      .select("passagem, resultado_texto, aprovado")
-      .order("aprovado", { ascending: false, nullsLast: true })
+    // 7. Contexto de Memória (Favoritos Individuais)
+    // Consulta a nova tabela de favoritos de mensagens individuais
+    const { data: favoritosIndividuais } = await supabase
+      .from("favoritos_mensagens")
+      .select("texto_msg, created_at")
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(10);
 
-    let memoria = "Não há histórico aprovado.";
-    if (historico && historico.length > 0) {
-      memoria = historico.map(h =>
-        `-- Exemplo (${h.passagem}):\n${h.resultado_texto.substring(0, 300)}...`
+    let memoria = "Não há favoritos individuais.";
+    if (favoritosIndividuais && favoritosIndividuais.length > 0) {
+      memoria = favoritosIndividuais.map((f: any, idx: number) =>
+        `-- Exemplo Favorito ${idx + 1}:\n${f.texto_msg.substring(0, 400)}...`
       ).join("\n\n");
+      console.log(`⭐ [FAVORITOS] Carregados ${favoritosIndividuais.length} favoritos individuais para memória`);
+    } else {
+      // Fallback: usar histórico antigo se não tiver favoritos individuais
+      const { data: historico } = await supabase
+        .from("historico_geracoes")
+        .select("passagem, resultado_texto, aprovado")
+        .eq("aprovado", true)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (historico && historico.length > 0) {
+        memoria = historico.map((h: any) =>
+          `-- Exemplo (${h.passagem}):\n${h.resultado_texto.substring(0, 300)}...`
+        ).join("\n\n");
+        console.log(`📜 [MEMORIA] Usando ${historico.length} favoritos do histórico antigo (fallback)`);
+      }
     }
 
     // 8. Montar Prompt
