@@ -353,36 +353,46 @@ REGRAS FINAIS DE NUANCE:
       console.log(`✅ Devocional externo obtido via RSS: ${fonteSorteada}`);
     }
 
-    // 7. Contexto de Memória (Favoritos Individuais)
-    // Consulta a nova tabela de favoritos de mensagens individuais
+    // 7. Contexto de Memória (Favoritos Individuais + Histórico Antigo)
+    // Combina AMBAS as fontes para dar mais exemplos à IA
+
+    // 7a. Favoritos individuais (nova tabela)
     const { data: favoritosIndividuais } = await supabase
       .from("favoritos_mensagens")
       .select("texto_msg, created_at")
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(5);
 
-    let memoria = "Não há favoritos individuais.";
+    // 7b. Histórico antigo (favoritos de lote)
+    const { data: historicoAntigo } = await supabase
+      .from("historico_geracoes")
+      .select("passagem, resultado_texto, aprovado")
+      .eq("aprovado", true)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    // Combina as duas fontes
+    let memoriaPartes: string[] = [];
+
     if (favoritosIndividuais && favoritosIndividuais.length > 0) {
-      memoria = favoritosIndividuais.map((f: any, idx: number) =>
-        `-- Exemplo Favorito ${idx + 1}:\n${f.texto_msg.substring(0, 400)}...`
-      ).join("\n\n");
-      console.log(`⭐ [FAVORITOS] Carregados ${favoritosIndividuais.length} favoritos individuais para memória`);
-    } else {
-      // Fallback: usar histórico antigo se não tiver favoritos individuais
-      const { data: historico } = await supabase
-        .from("historico_geracoes")
-        .select("passagem, resultado_texto, aprovado")
-        .eq("aprovado", true)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (historico && historico.length > 0) {
-        memoria = historico.map((h: any) =>
-          `-- Exemplo (${h.passagem}):\n${h.resultado_texto.substring(0, 300)}...`
-        ).join("\n\n");
-        console.log(`📜 [MEMORIA] Usando ${historico.length} favoritos do histórico antigo (fallback)`);
-      }
+      const partesIndividuais = favoritosIndividuais.map((f: any, idx: number) =>
+        `-- ⭐ Favorito Individual ${idx + 1}:\n${f.texto_msg.substring(0, 350)}...`
+      );
+      memoriaPartes.push(...partesIndividuais);
+      console.log(`⭐ [FAVORITOS] Carregados ${favoritosIndividuais.length} favoritos individuais`);
     }
+
+    if (historicoAntigo && historicoAntigo.length > 0) {
+      const partesAntigo = historicoAntigo.map((h: any) =>
+        `-- 📜 Histórico Aprovado (${h.passagem}):\n${h.resultado_texto.substring(0, 250)}...`
+      );
+      memoriaPartes.push(...partesAntigo);
+      console.log(`📜 [HISTORICO] Carregados ${historicoAntigo.length} favoritos do histórico antigo`);
+    }
+
+    const memoria = memoriaPartes.length > 0
+      ? memoriaPartes.join("\n\n")
+      : "Não há favoritos ainda. Gere devocionais e curta suas mensagens preferidas!";
 
     // 8. Montar Prompt
     // HIERARQUIA v4 (CORRIGIDA - Janeiro 2026):
