@@ -273,14 +273,22 @@ REGRAS FINAIS DE NUANCE:
     // Isso garante que a IA tenha acesso a TODAS as regras e proibições
 
     // Arquivos que mudam por requisição (sem cache)
-    // Arquivos que mudam por requisição (sem cache)
+
     const [agentStart, modoTexto] = await Promise.all([
       downloadFile("agent_start/AGENT_START.txt"),
       downloadFile(modoRow.storage_path) // ex: modos/MODO_1.txt
     ]);
 
-    if (!agentStart) throw new Error("CRÍTICO: AGENT_START.txt não encontrado ou vazio.");
-    if (!modoTexto) throw new Error(`CRÍTICO: Arquivo do modo (${modoRow.storage_path}) não encontrado ou vazio.`);
+
+    // Se AGENT_START falhar, usa um fallback simples para não travar
+    const agentStartFinal = agentStart || "Você é um assistente pastoral sábio e acolhedor.";
+
+    // MODO é obrigatório - se falhar, o sistema não sabe o que fazer
+    if (!modoTexto) {
+      // Tenta recuperar do erro sem crashar tudo? Não, modo é essencial.
+      // Mas vamos dar uma mensagem mais clara
+      throw new Error(`CRÍTICO: Arquivo do modo (${modoRow.storage_path}) não encontrado. Verifique se o arquivo existe no Bucket 'pvc'.`);
+    }
 
     // Arquivos de conhecimento (COM CACHE)
     const agora = Date.now();
@@ -295,9 +303,9 @@ REGRAS FINAIS DE NUANCE:
         downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
       ]);
 
-      if (!base) throw new Error("CRÍTICO: BASE_DE_CONHECIMENTO_UNIFICADA não encontrada.");
-      if (!compilado) console.warn("AVISO: Conhecimento Essencial vazio/falhou.");
-      if (!ouro) console.warn("AVISO: Banco de Ouro vazio/falhou.");
+      if (!base) console.warn("⚠️ AVISO: BASE_DE_CONHECIMENTO_UNIFICADA não encontrada ou falhou. Usando vazio.");
+      if (!compilado) console.warn("⚠️ AVISO: Conhecimento Essencial vazio/falhou.");
+      if (!ouro) console.warn("⚠️ AVISO: Banco de Ouro vazio/falhou.");
 
       cachedBaseConhecimento = base || "";
       cachedConhecimentoCompilado = compilado || "";
@@ -562,7 +570,7 @@ ${formatVoiceSection(payload.passagem_do_dia)}
 ${formatArchetypeSection(arquetipoSorteado)}
 
 ### [AGENT_START] (Regras Gerais do Agente)
-${agentStart}
+${agentStartFinal}
 
 ### [CONHECIMENTO_E_REGRAS_COMPLETO] BASE UNIFICADA (Consulta)
 Este é o arquivo de conhecimento completo. Use como referência para dúvidas sobre teologia e vocabulário:
