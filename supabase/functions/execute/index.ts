@@ -131,7 +131,7 @@ Você DEVE substituir por termos equivalentes da vida atual:
       - Faraó -> O Chefe / O Dono da Bola / A Pressão
         - Assíria -> O Inimigo / A Crise / A Ansiedade
 
-SE VOCÊ USAR "EGITO" OU "CAVALOS" NESTE MODO, A GERAÇÃO FALHARÁ.TRADUZA TUDO.
+SE VOCÊ USAR "EGITO" OU "CAVALOS" NESTE MODO, A GERAÇÃO FALHARÁ. TRADUZA TUDO.
 `;
     }
 
@@ -264,7 +264,7 @@ REGRAS FINAIS DE NUANCE:
       const { data: file, error } = await supabase.storage.from(BUCKET).download(path.trim());
       if (error) {
         console.error(`Erro ao baixar arquivo ${path}:`, error);
-        return ""; // Retorna vazio se falhar, para não travar tudo
+        return null;
       }
       return await file.text();
     }
@@ -273,16 +273,20 @@ REGRAS FINAIS DE NUANCE:
     // Isso garante que a IA tenha acesso a TODAS as regras e proibições
 
     // Arquivos que mudam por requisição (sem cache)
+    // Arquivos que mudam por requisição (sem cache)
     const [agentStart, modoTexto] = await Promise.all([
       downloadFile("agent_start/AGENT_START.txt"),
       downloadFile(modoRow.storage_path) // ex: modos/MODO_1.txt
     ]);
 
-    // Arquivos de conhecimento (COM CACHE - não mudam frequentemente)
+    if (!agentStart) throw new Error("CRÍTICO: AGENT_START.txt não encontrado ou vazio.");
+    if (!modoTexto) throw new Error(`CRÍTICO: Arquivo do modo (${modoRow.storage_path}) não encontrado ou vazio.`);
+
+    // Arquivos de conhecimento (COM CACHE)
     const agora = Date.now();
     const cacheExpirado = !cacheTimestamp || (agora - cacheTimestamp) > CACHE_TTL_MS;
 
-    if (cacheExpirado || !cachedBaseConhecimento) {
+    if (cacheExpirado || !cachedBaseConhecimento || !cachedConhecimentoCompilado || !cachedBancoOuroExemplos) {
       console.log("📥 [CACHE] Baixando arquivos de conhecimento (cache expirado ou vazio)...");
 
       const [base, compilado, ouro] = await Promise.all([
@@ -291,12 +295,16 @@ REGRAS FINAIS DE NUANCE:
         downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
       ]);
 
-      cachedBaseConhecimento = base;
-      cachedConhecimentoCompilado = compilado;
-      cachedBancoOuroExemplos = ouro;
+      if (!base) throw new Error("CRÍTICO: BASE_DE_CONHECIMENTO_UNIFICADA não encontrada.");
+      if (!compilado) console.warn("AVISO: Conhecimento Essencial vazio/falhou.");
+      if (!ouro) console.warn("AVISO: Banco de Ouro vazio/falhou.");
+
+      cachedBaseConhecimento = base || "";
+      cachedConhecimentoCompilado = compilado || "";
+      cachedBancoOuroExemplos = ouro || "";
       cacheTimestamp = agora;
 
-      console.log(`📚 [CACHE] Arquivos carregados e cacheados: Base=${base.length}, Compilado=${compilado.length}, Ouro=${ouro.length} chars`);
+      console.log(`📚 [CACHE] Atualizado. Base=${cachedBaseConhecimento.length}`);
     } else {
       console.log("⚡ [CACHE] Usando arquivos de conhecimento do cache (rápido!)");
     }
@@ -304,10 +312,6 @@ REGRAS FINAIS DE NUANCE:
     const baseConhecimentoCompleta = cachedBaseConhecimento!;
     const conhecimentoCompilado = cachedConhecimentoCompilado!;
     const bancoOuroExemplos = cachedBancoOuroExemplos!;
-
-    if (!modoTexto) {
-      throw new Error(`O arquivo do modo (${modoRow.storage_path}) está vazio ou não existe no Storage.`);
-    }
 
     // 2. Buscar dados PROFUNDOS do dia na tabela leitura_do_dia
     // O payload do front pode estar desatualizado (View), então buscamos direto da fonte.
@@ -592,7 +596,7 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     console.log("🤖 Chamando Gemini 3 Flash (com Tools)...");
 
     // Preparar mensagem inicial
-    let messages = [{ role: 'user', parts: [{ text: promptFinal }] }];
+    let messages: any[] = [{ role: 'user', parts: [{ text: promptFinal }] }];
 
     // COMBINA TODAS AS TOOLS
     const ALL_TOOLS = [
@@ -622,57 +626,85 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
       throw new Error(`Erro na IA: ${aiData.error.message}`);
     }
 
-    let candidate = aiData.candidates?.[0];
-    let firstPart = candidate?.content?.parts?.[0];
     let resultadoFinal = "IA falhou em gerar texto.";
 
-    // Loop de Function Calling (Máximo 2 voltas para evitar loop infinito)
-    if (firstPart?.functionCall) {
-      const fnName = firstPart.functionCall.name;
-      const fnArgs = firstPart.functionCall.args;
+    // Loop de Function Calling (Lógica robusta para Múltiplas Chamadas)
+    let turnCount = 0;
+    const MAX_TURNS = 5; // Limite de idas e voltas
 
-      console.log(`🛠️ IA pediu ferramenta: ${fnName}`, fnArgs);
+    while (turnCount < MAX_TURNS) {
+      turnCount++;
+      const firstPart = aiData.candidates?.[0]?.content?.parts?.[0];
 
-      // Executa a ferramenta
-      let toolResultText = "";
-      if (fnName === 'consultar_versiculo') {
-        toolResultText = await consultarVersiculo(fnArgs.referencia);
-      } else if (fnName === 'consultar_devocional_externo') {
-        toolResultText = await consultarRSS(fnArgs.fonte);
-      } else {
-        console.warn("Ferramenta desconhecida chamada:", fnName);
-        toolResultText = "Ferramenta desconhecida ou não implementada.";
+      // Se não houver parte válida, erro
+      if (!firstPart) {
+        throw new Error("Resposta inválida do Gemini (sem conteúdo).");
       }
 
-      // Adiciona a chamada e o resultado ao histórico
-      messages.push({
-        role: 'model',
-        parts: [firstPart] // A parte com functionCall
-      });
+      // Verificação 1: É chamada de ferramenta?
+      if (firstPart.functionCall) {
+        const fnName = firstPart.functionCall.name;
+        const fnArgs = firstPart.functionCall.args;
+        console.log(`🛠️ [Turno ${turnCount}] IA pediu ferramenta: ${fnName}`, JSON.stringify(fnArgs));
 
-      messages.push({
-        role: 'function',
-        parts: [{
-          functionResponse: {
-            name: fnName,
-            response: { content: toolResultText }
+        // Executar ferramenta
+        let toolResultText = "";
+        try {
+          if (fnName === 'consultar_versiculo') {
+            toolResultText = await consultarVersiculo(fnArgs.referencia);
+          } else if (fnName === 'consultar_devocional_externo') {
+            toolResultText = await consultarRSS(fnArgs.fonte);
+          } else {
+            toolResultText = `Erro: Ferramenta '${fnName}' desconhecida.`;
           }
-        }]
-      });
+        } catch (err: any) {
+          toolResultText = `Erro ao executar ferramenta: ${err.message}`;
+        }
 
-      // Segunda chamada (Com a resposta da ferramenta)
-      console.log("🔄 Retornando resultado da tool para IA...");
-      aiData = await callGeminiAPI(messages);
+        // Adiciona histórico da conversa (Request da IA + Resposta da Tool)
+        messages.push({
+          role: 'model',
+          parts: [firstPart] // O 'pedido' da ferramenta
+        });
 
-      // Pega resposta final
-      const finalPart = aiData.candidates?.[0]?.content?.parts?.[0];
-      if (finalPart?.text) {
-        resultadoFinal = finalPart.text;
+        messages.push({
+          role: 'function',
+          parts: [{
+            functionResponse: {
+              name: fnName,
+              response: { content: toolResultText }
+            }
+          }]
+        });
+
+        // Chama IA de novo com o novo contexto
+        console.log(`🔄 [Turno ${turnCount}] Retornando dados para IA...`);
+        aiData = await callGeminiAPI(messages);
+
+        if (aiData.error) {
+          throw new Error(`Erro na IA (Turno ${turnCount}): ${aiData.error.message}`);
+        }
+
+        // LOOP CONTINUA para processar a próxima resposta (pode ser outra tool ou texto final)
+        continue;
       }
 
-    } else if (firstPart?.text) {
-      // Resposta direta sem chamar tool
-      resultadoFinal = firstPart.text;
+      // Verificação 2: É texto final?
+      if (firstPart.text) {
+        resultadoFinal = firstPart.text;
+        console.log(`✅ [Turno ${turnCount}] Resposta final gerada.`);
+        break; // Sai do loop
+      }
+
+      // Se chegou aqui, não é tool nem text (caso raro)
+      console.warn(`⚠️ [Turno ${turnCount}] Resposta estranha:`, firstPart);
+      break;
+    }
+
+    if (turnCount >= MAX_TURNS) {
+      console.warn("⚠️ Atingido limite máximo de turnos de ferramenta.");
+      // Tenta pegar o que tiver ou falhar
+      resultadoFinal = "Erro: Limite de chamadas de ferramenta excedido.";
     }
 
     // 10. Salvar e Retornar
