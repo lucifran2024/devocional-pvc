@@ -298,9 +298,9 @@ REGRAS FINAIS DE NUANCE:
       console.log("📥 [CACHE] Baixando arquivos de conhecimento (cache expirado ou vazio)...");
 
       const [base, compilado, ouro] = await Promise.all([
-        downloadFile("base_conhecimento/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"),
-        downloadFile("conhecimento_essencial/Conhecimento_Compilado_Essencial.v1.4.txt"),
-        downloadFile("banco_ouro_exemplos/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
+        downloadFile("base/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"),
+        downloadFile("base/Conhecimento_Compilado_Essencial.v1.4.txt"),
+        downloadFile("base/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
       ]);
 
       if (!base) console.warn("⚠️ AVISO: BASE_DE_CONHECIMENTO_UNIFICADA não encontrada ou falhou. Usando vazio.");
