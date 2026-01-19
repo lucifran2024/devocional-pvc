@@ -613,7 +613,7 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      // Usando gemini-1.5-flash-latest para garantir a versão mais recente e resolver erro 404
+      // Usando gemini-1.5-flash-latest (Versão Estável da Família Flash)
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
