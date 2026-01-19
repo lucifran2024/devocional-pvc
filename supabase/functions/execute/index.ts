@@ -601,7 +601,7 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
 
 
     // 9. Chamar Gemini com Function Calling Loop
-    console.log("🤖 Chamando Gemini 1.5 Flash (Estável)...");
+    console.log("🤖 Chamando Gemini 1.5 Flash (Latest)...");
 
     // Preparar mensagem inicial
     let messages: any[] = [{ role: 'user', parts: [{ text: promptFinal }] }];
@@ -613,8 +613,8 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      // Usando gemini-1.5-flash (Versão Estável e Rápida)
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      // Usando gemini-1.5-flash-latest para garantir a versão mais recente e resolver erro 404
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
