@@ -615,9 +615,10 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
 
     async function callGeminiAPI(msgs: any[]) {
       const MODEL_NAME = "gemini-1.5-flash"; // Volta para o padrão mais seguro
-      console.log(`🤖 Chamando ${MODEL_NAME} (Tentando chaves API_KEY ou KEY)...`);
+      console.log(`🤖 Chamando ${MODEL_NAME} (Endpoint v1)...`);
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+      // MUDANÇA: Tentando endpoint v1 (Estável) em vez de v1beta
+      const url = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       try {
         const resp = await fetch(url, {
@@ -634,9 +635,9 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
           console.error(`❌ Erro Gemini (Status ${resp.status}):`, errorBody);
 
           // TENTATIVA DE DEBUG: Listar modelos disponíveis
-          console.log("🔍 Tentando listar modelos disponíveis para esta Chave...");
+          console.log("🔍 Tentando listar modelos disponíveis para esta Chave (v1)...");
           try {
-            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`;
+            const listUrl = `https://generativelanguage.googleapis.com/v1/models?key=${geminiKey}`;
             const listResp = await fetch(listUrl);
             const listData = await listResp.json();
             console.log("📋 MODELOS DISPONÍVEIS:", JSON.stringify(listData, null, 2));
