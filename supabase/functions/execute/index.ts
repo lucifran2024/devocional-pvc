@@ -170,7 +170,8 @@ REGRAS FINAIS DE NUANCE:
     // IMPORTANTE: Certifique-se de ter setado as Secrets no painel!
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    // Tenta pegar a chave de duas variáveis possíveis para garantir
+    const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
     const bibleApiKey = Deno.env.get("BIBLE_API_KEY"); // Opcional - para API.Bible
 
     if (!supabaseUrl || !serviceKey || !geminiKey) {
@@ -613,8 +614,8 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      const MODEL_NAME = "gemini-1.5-flash-002"; // Tentativa com versão específica 002
-      console.log(`🤖 Chamando ${MODEL_NAME}...`);
+      const MODEL_NAME = "gemini-1.5-flash"; // Volta para o padrão mais seguro
+      console.log(`🤖 Chamando ${MODEL_NAME} (Tentando chaves API_KEY ou KEY)...`);
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
