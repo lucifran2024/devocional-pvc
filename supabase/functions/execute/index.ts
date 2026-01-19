@@ -613,16 +613,43 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      // Usando gemini-1.5-flash-latest (Versão Estável da Família Flash)
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: msgs,
-          tools: [{ function_declarations: ALL_TOOLS }]
-        })
-      });
-      return await resp.json();
+      const MODEL_NAME = "gemini-1.5-flash-002"; // Tentativa com versão específica 002
+      console.log(`🤖 Chamando ${MODEL_NAME}...`);
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: msgs,
+            tools: [{ function_declarations: ALL_TOOLS }]
+          })
+        });
+
+        if (!resp.ok) {
+          const errorBody = await resp.text();
+          console.error(`❌ Erro Gemini (Status ${resp.status}):`, errorBody);
+
+          // TENTATIVA DE DEBUG: Listar modelos disponíveis
+          console.log("🔍 Tentando listar modelos disponíveis para esta Chave...");
+          try {
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`;
+            const listResp = await fetch(listUrl);
+            const listData = await listResp.json();
+            console.log("📋 MODELOS DISPONÍVEIS:", JSON.stringify(listData, null, 2));
+          } catch (listErr) {
+            console.error("❌ Falha ao listar modelos:", listErr);
+          }
+
+          return { error: { message: `Erro API: ${resp.status} - ${errorBody}` } };
+        }
+
+        return await resp.json();
+      } catch (err: any) {
+        return { error: { message: err.message || "Erro de conexão fetch" } };
+      }
     }
 
     // Primeira chamada
