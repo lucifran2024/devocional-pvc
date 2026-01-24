@@ -45,7 +45,15 @@ export default function HistoricoPage() {
             if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
         }
 
-        // 3. Separador por título em MAIÚSCULAS (padrão comum das gerações)
+        // 3. Separador por P01, P02, P03... (padrão das gerações PVC)
+        // Detecta padrões como "P01 —", "P02 —", etc
+        const pNumberPattern = /\n(?=P\d{2}\s*[—–-]\s*)/;
+        if (pNumberPattern.test(texto)) {
+            const partes = texto.split(pNumberPattern);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+
+        // 4. Separador por título em MAIÚSCULAS (padrão comum das gerações)
         // Detecta padrões como "TITULO EM MAIUSCULAS" seguido de quebra de linha
         const upperTitlePattern = /\n\n(?=[A-ZÀ-Ú][A-ZÀ-Ú\s,.!?]{10,})/;
         if (upperTitlePattern.test(texto)) {
@@ -53,7 +61,7 @@ export default function HistoricoPage() {
             if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
         }
 
-        // 4. Fallback: retorna o texto inteiro como uma única mensagem
+        // 5. Fallback: retorna o texto inteiro como uma única mensagem
         return [texto];
     };
 
