@@ -91,6 +91,35 @@ export default function GeradorPage() {
     const [copiado, setCopiado] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
 
+    // Parsear mensagens individuais do texto
+    const parseMensagens = (texto: string): string[] => {
+        if (!texto) return [];
+        // 1. Separador explícito ---
+        if (texto.includes('\n---\n') || texto.includes('\n---') || texto.includes('---\n')) {
+            const partes = texto.split(/\n\s*---\s*\n/);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+        // 2. Separador ### (títulos markdown)
+        if (texto.includes('\n###') || texto.includes('\n## ')) {
+            const partes = texto.split(/\n(?=###?\s)/);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+        // 3. Separador por P01, P02, P03... (padrão das gerações PVC)
+        const pNumberPattern = /\n(?=P\d{2}\s*[—–-]\s*)/;
+        if (pNumberPattern.test(texto)) {
+            const partes = texto.split(pNumberPattern);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+        // 4. Separador por título em MAIÚSCULAS
+        const upperTitlePattern = /\n\n(?=[A-ZÀ-Ú][A-ZÀ-Ú\s,.!?]{10,})/;
+        if (upperTitlePattern.test(texto)) {
+            const partes = texto.split(upperTitlePattern);
+            if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
+        }
+        // 5. Fallback
+        return [texto];
+    };
+
     const dataHoje = getDataHoje();
 
     // Load Initial Data
@@ -356,28 +385,63 @@ export default function GeradorPage() {
                                             className="group flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] text-xs font-bold text-slate-400 hover:text-white transition-all hover:shadow-xl active:scale-95"
                                         >
                                             {copiado ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:rotate-12 transition-all" />}
-                                            {copiado ? 'Copiado para o Altar' : 'Copiar Revelação'}
+                                            {copiado ? 'Copiado para o Altar' : 'Copiar Tudo'}
                                         </button>
                                     </div>
 
-                                    <div className="glass-panel rounded-[3rem] p-10 md:p-16 shadow-2xl relative group">
-                                        {/* Decorative Icon */}
-                                        <div className="absolute top-10 left-10 text-amber-500/[0.03] pointer-events-none group-hover:text-amber-500/[0.08] transition-colors">
-                                            <Quote className="w-20 h-20 rotate-180" />
-                                        </div>
+                                    {/* Mensagens Individuais em Cards */}
+                                    <div className="space-y-6">
+                                        {parseMensagens(resultado.texto).map((mensagem, idx) => (
+                                            <div key={idx} className="relative group/msg glass-panel rounded-[2rem] p-8 md:p-10 border border-white/5 hover:border-amber-500/30 transition-all">
+                                                {/* Botões: Copiar e Like */}
+                                                <div className="absolute top-6 right-6 flex items-center gap-2">
+                                                    {/* Botão de copiar individual */}
+                                                    <button
+                                                        onClick={async () => {
+                                                            await navigator.clipboard.writeText(mensagem);
+                                                            const btn = document.getElementById(`gen-copy-btn-${idx}`);
+                                                            if (btn) {
+                                                                btn.classList.add('bg-green-500', 'text-white');
+                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-white'), 1500);
+                                                            }
+                                                        }}
+                                                        id={`gen-copy-btn-${idx}`}
+                                                        className="p-2.5 rounded-xl transition-all bg-white/10 text-slate-400 hover:text-amber-400 hover:bg-amber-500/20 border border-white/10"
+                                                        title="Copiar mensagem"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </button>
+                                                    {/* Botão de like individual */}
+                                                    <button
+                                                        onClick={handleToggleLike}
+                                                        className={`p-2.5 rounded-xl transition-all ${isLiked
+                                                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
+                                                            : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
+                                                            }`}
+                                                        title={isLiked ? 'Eternizado' : 'Eternizar mensagem'}
+                                                    >
+                                                        <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+                                                    </button>
+                                                </div>
 
-                                        <article className="prose prose-lg prose-invert max-w-none 
-                                            prose-headings:text-amber-200 prose-headings:font-black prose-headings:tracking-tight
-                                            prose-p:text-slate-300 prose-p:leading-[1.9] prose-p:text-lg
-                                            prose-strong:text-white prose-strong:font-black
-                                            prose-blockquote:border-l-[6px] prose-blockquote:border-amber-600 prose-blockquote:bg-amber-950/20 prose-blockquote:py-6 prose-blockquote:px-10 prose-blockquote:not-italic prose-blockquote:rounded-[1.5rem] prose-blockquote:shadow-inner">
-                                            <div className="whitespace-pre-wrap relative z-10 tracking-tight font-medium">
-                                                <ReactMarkdown>{resultado.texto}</ReactMarkdown>
+                                                {/* Número da mensagem */}
+                                                <div className="absolute top-6 left-6 text-[10px] font-bold text-amber-500/50 uppercase tracking-widest">
+                                                    Msg {idx + 1}
+                                                </div>
+
+                                                {/* Conteúdo */}
+                                                <div className="pt-8 prose prose-lg prose-invert max-w-none
+                                                    prose-headings:text-amber-200 prose-headings:font-black prose-headings:tracking-tight
+                                                    prose-p:text-slate-300 prose-p:leading-[1.9] prose-p:text-base md:prose-p:text-lg
+                                                    prose-strong:text-white prose-strong:font-black
+                                                    prose-blockquote:border-l-4 prose-blockquote:border-amber-600 prose-blockquote:bg-amber-950/20 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:not-italic prose-blockquote:rounded-xl">
+                                                    <ReactMarkdown>{mensagem}</ReactMarkdown>
+                                                </div>
                                             </div>
-                                        </article>
+                                        ))}
                                     </div>
 
-                                    {/* Like Button Area */}
+                                    {/* Botão Eternizar (para todo o lote) */}
                                     <div className="flex items-center justify-center md:justify-end">
                                         <button
                                             onClick={handleToggleLike}
