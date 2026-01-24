@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate, Trash2, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getHistorico, toggleLike, deleteHistoricoItem, addFavoritoMensagem, removeFavoritoMensagem, getFavoritosByHistorico } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
@@ -336,17 +336,36 @@ export default function HistoricoPage() {
                                     <div className="space-y-6">
                                         {parseMensagens(expandedItem.resultado_texto).map((mensagem, idx) => (
                                             <div key={idx} className="relative group/msg bg-white/[0.02] rounded-2xl p-6 border border-white/5 hover:border-indigo-500/30 transition-all">
-                                                {/* Botão de like individual */}
-                                                <button
-                                                    onClick={() => handleToggleMensagemLike(expandedItem.id, idx, mensagem)}
-                                                    className={`absolute top-4 right-4 p-2 rounded-xl transition-all ${favoritosIndividuais.includes(idx)
-                                                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
-                                                        : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
-                                                        }`}
-                                                    title={favoritosIndividuais.includes(idx) ? 'Remover dos favoritos' : 'Favoritar esta mensagem'}
-                                                >
-                                                    <Heart className={`w-4 h-4 ${favoritosIndividuais.includes(idx) ? 'fill-current' : ''}`} />
-                                                </button>
+                                                {/* Botões: Copiar e Like */}
+                                                <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                                                    {/* Botão de copiar */}
+                                                    <button
+                                                        onClick={async () => {
+                                                            await navigator.clipboard.writeText(mensagem);
+                                                            const btn = document.getElementById(`copy-btn-${idx}`);
+                                                            if (btn) {
+                                                                btn.classList.add('bg-green-500', 'text-white');
+                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-white'), 1500);
+                                                            }
+                                                        }}
+                                                        id={`copy-btn-${idx}`}
+                                                        className="p-2 rounded-xl transition-all bg-white/10 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/20 border border-white/10"
+                                                        title="Copiar mensagem"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </button>
+                                                    {/* Botão de like */}
+                                                    <button
+                                                        onClick={() => handleToggleMensagemLike(expandedItem.id, idx, mensagem)}
+                                                        className={`p-2 rounded-xl transition-all ${favoritosIndividuais.includes(idx)
+                                                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
+                                                            : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
+                                                            }`}
+                                                        title={favoritosIndividuais.includes(idx) ? 'Remover dos favoritos' : 'Favoritar esta mensagem'}
+                                                    >
+                                                        <Heart className={`w-4 h-4 ${favoritosIndividuais.includes(idx) ? 'fill-current' : ''}`} />
+                                                    </button>
+                                                </div>
 
                                                 {/* Número da mensagem */}
                                                 <div className="absolute top-4 left-4 text-[10px] font-bold text-indigo-500/50 uppercase tracking-widest">
