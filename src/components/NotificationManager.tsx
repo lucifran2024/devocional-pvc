@@ -52,14 +52,37 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
 
         try {
             const registration = await navigator.serviceWorker.ready;
+
+            // Chave pública VAPID (do env ou hardcoded se necessário no frontend)
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BMk...'; // Substituir pela real ou usar env
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                // Note: In production, use your VAPID public key
-                applicationServerKey: undefined
+                applicationServerKey: vapidPublicKey
             });
 
             console.log('Push subscription:', subscription);
-            // TODO: Send subscription to server
+
+            // Salvar no Supabase
+            const { supabase } = await import('@/lib/supabase');
+
+            // Salva na tabela push_subscriptions
+            // Nota: JSON.stringify(subscription) é necessário pois o objeto subscription tem propriedades no prototype
+            const subJson = JSON.parse(JSON.stringify(subscription));
+
+            const { error } = await supabase
+                .from('push_subscriptions')
+                .insert({
+                    subscription_json: subJson,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.warn('Erro ao salvar push:', error);
+            } else {
+                console.log('✅ Notificações ativadas com sucesso!');
+            }
+
         } catch (err) {
             console.error('Push subscription failed:', err);
         }
