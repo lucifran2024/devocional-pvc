@@ -12,12 +12,21 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:3001',
   'https://devocional-pvc.vercel.app',
+  'https://www.devocional-pvc.vercel.app',
 ];
 
+// Função para verificar se é uma origem válida (incluindo previews do Vercel)
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  // Origens exatas
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Preview URLs do Vercel (pattern: devocional-pvc-*.vercel.app)
+  if (origin.match(/^https:\/\/devocional-pvc(-[a-z0-9]+)?\.vercel\.app$/)) return true;
+  return false;
+}
+
 function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
-    ? origin
-    : ALLOWED_ORIGINS[0];
+  const allowedOrigin = isAllowedOrigin(origin) ? origin! : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
