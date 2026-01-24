@@ -1,27 +1,116 @@
-# Devocional PVC - Project Context
+# Devocional PVC 🙏
 
-## Project Overview
-Devocional PVC is a daily devotional application built with Next.js, Tailwind CSS, and Supabase. It uses a "Cosmic Glass" aesthetic to provide a premium spiritual experience.
-The app fetches daily Bible readings and AI-generated devotional content.
+> Mensagens devocionais diárias geradas por IA com profundidade teológica.
 
-## Key Links
-- **Vercel Deployment**: [https://devocional-pvc.vercel.app](https://devocional-pvc.vercel.app)
-- **Supabase Project**: [https://supabase.com/dashboard/project/tayopwdelkmelgmrtnoa](https://supabase.com/dashboard/project/tayopwdelkmelgmrtnoa)
+## 🚀 Quick Start
 
-## Core Features & Implementation Details
-- **Daily Payload**: The content is served via Supabase.
-  - **Table**: `leitura_do_dia` (Base table for daily readings).
-  - **View**: `payload_do_dia` (Aggregated view used by the frontend).
-- **Edge Functions**: The `/execute` function handles heavy logic.
-  - It now reads source material (e.g., `Conhecimento_Compilado_Essencial.v1.4.txt` and `BANCO_DE_OURO_EXEMPLOS.txt`) directly from **Supabase Storage** to generate context-aware responses.
-- **Frontend**: Next.js App Router.
-  - `src/app/page.tsx`: Dashboard with "Palavra do Dia" and tools grid.
-  - `src/app/gerador/page.tsx`: AI devotional generator interface.
+```bash
+# Instalar dependências
+npm install
 
-## Troubleshooting Notes
-- **Payload Updates**: Daily content must exist in `leitura_do_dia`. If missing, the app may fall back to the most recent available date.
-- **Startup**: Run with `npm run dev`. Ensure `.env.local` contains valid Supabase keys.
-- **Hydration**: Uses `suppressHydrationWarning` in `layout.tsx` to handle client/server mismatches.
+# Rodar em desenvolvimento
+npm run dev
 
-## Documentation
-Additional project docs and "knowledge memories" are located in the `docs/` folder (if created) or root directory. The AI assistant can read files here to understand broader context.
+# Build de produção
+npm run build
+```
+
+## 📦 Stack
+
+| Tecnologia | Versão | Uso |
+|------------|--------|-----|
+| **Next.js** | 16.1+ | Framework React |
+| **React** | 19.2+ | UI Library |
+| **Supabase** | 2.90+ | Backend (DB + Edge Functions) |
+| **Gemini AI** | 3.0 Flash | Geração de conteúdo |
+| **TailwindCSS** | 4.0 | Estilos |
+
+## 📁 Estrutura
+
+```
+devocional-pvc/
+├── src/
+│   ├── app/              # Páginas (Next.js App Router)
+│   │   ├── page.tsx      # Dashboard
+│   │   ├── gerador/      # Gerador de mensagens
+│   │   ├── historico/    # Histórico de gerações
+│   │   ├── chat/         # Chat pastoral
+│   │   └── biblioteca/   # Leitor bíblico
+│   ├── components/       # Componentes React
+│   │   └── ui/           # Componentes de UI
+│   └── lib/              # Lógica de negócio
+│       ├── supabase.ts   # Cliente Supabase
+│       └── bible-api.ts  # API Bíblica
+├── supabase/
+│   └── functions/
+│       └── execute/      # Edge Function principal
+├── public/
+│   ├── manifest.json     # PWA manifest
+│   └── sw.js             # Service Worker
+└── .github/
+    └── workflows/
+        └── deploy.yml    # CI/CD Pipeline
+```
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente
+
+```env
+# .env.local
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+
+# Supabase Edge Function Secrets
+GEMINI_API_KEY=xxx
+BIBLE_API_KEY=xxx (opcional)
+```
+
+### Deploy
+
+O deploy é automatizado via GitHub Actions:
+
+1. **Push para `main`** dispara o workflow
+2. **Lint & Build** são verificados
+3. **Edge Functions** são deployadas no Supabase
+4. **Frontend** é deployado no Vercel
+
+## 📱 PWA
+
+O app é instalável como PWA:
+- **Offline Support**: Cache de páginas estáticas
+- **Push Notifications**: Notificações diárias (configurar server)
+- **Add to Home Screen**: Ícone na tela inicial
+
+## 🧪 Testes
+
+```bash
+# Rodar testes (quando configurados)
+npm test
+
+# Lint
+npm run lint
+```
+
+## 📖 Páginas
+
+| Rota | Descrição |
+|------|-----------|
+| `/` | Dashboard principal |
+| `/gerador` | Gerador de devocionais com IA |
+| `/historico` | Histórico de mensagens geradas |
+| `/chat` | Chat pastoral interativo |
+| `/biblioteca` | Leitor da Bíblia |
+| `/plano-de-leitura` | Plano de leitura bíblica |
+| `/diario` | Adicionar favoritos manuais |
+| `/devocional-externo` | Devocionais de fontes externas |
+
+## 🔒 Segurança
+
+- CORS restritivo (origens específicas)
+- Logs sensíveis removidos
+- Rate limiting (a implementar)
+
+---
+
+**Desenvolvido com ❤️ para a comunidade cristã**

@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   description: "Devocionais diários personalizados com profundidade teológica e inteligência artificial. Transforme sua leitura bíblica em uma experiência espiritual única.",
   keywords: ["devocional", "bíblia", "leitura diária", "espiritualidade", "PVC"],
   authors: [{ name: "Devocional PVC" }],
+  manifest: "/manifest.json",
+  themeColor: "#F59E0B",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "PVC Devocional",
+  },
   openGraph: {
     title: "Devocional PVC | Sua Jornada Espiritual Diária",
     description: "Devocionais diários personalizados com profundidade teológica e inteligência artificial.",

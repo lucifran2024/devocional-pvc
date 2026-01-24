@@ -7,11 +7,23 @@ import { getContextoTemporal } from './date-helper.ts';
 import { formatVoiceSection } from './voice-selector.ts';
 import { getArchetype, formatArchetypeSection } from './archetype-selector.ts';
 
-// 1. Configuração de CORS (Permite localhost:3000, 3001, etc.)
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// 1. Configuração de CORS (RESTRITIVO - apenas origens permitidas)
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://devocional-pvc.vercel.app',
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+    ? origin
+    : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 // =====================================================
 // CACHE GLOBAL - Arquivos de conhecimento (não mudam)
@@ -24,6 +36,10 @@ let cacheTimestamp: number | null = null;
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora de cache
 
 Deno.serve(async (req) => {
+  // Extrair origin para CORS
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Tratamento de pre-flight request (OPTIONS)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
