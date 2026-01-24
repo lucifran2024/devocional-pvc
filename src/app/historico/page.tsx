@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { getHistorico, toggleLike, deleteHistoricoItem, addFavoritoMensagem, removeFavoritoMensagem, getFavoritosByHistorico } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import { ShareButton } from '@/components/ui/ShareButton';
 
 // Tipo inferido da tabela
 interface HistoricoItem {
@@ -362,6 +363,12 @@ export default function HistoricoPage() {
 
                                 {/* Modal Footer - Compact Icons Only */}
                                 <div className="p-4 md:p-6 bg-[#020617] border-t border-white/5 flex items-center justify-center gap-3 shrink-0">
+                                    {/* Share Button */}
+                                    <ShareButton
+                                        text={expandedItem.resultado_texto.substring(0, 300) + '...'}
+                                        title={`Devocional: ${expandedItem.passagem}`}
+                                    />
+
                                     {/* Delete Button - Icon Only */}
                                     <button
                                         onClick={(e) => {

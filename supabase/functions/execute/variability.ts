@@ -3,8 +3,24 @@
  * Gerencia ângulos, temperaturas e arquétipos para evitar repetição
  */
 
+// Tipo para Ângulo
+export interface Angulo {
+    id: string;
+    nome: string;
+    descricao: string;
+    instrucao: string;
+    proibicoes: string[];
+    substituicoes: Record<string, string>;
+}
+
+// Tipo para Temperatura
+export interface Temperatura {
+    id: string;
+    descricao: string;
+}
+
 // Ângulos do Caleidoscópio
-export const ANGULOS = [
+export const ANGULOS: Angulo[] = [
     {
         id: 'ESPELHO_MODERNO',
         nome: 'O ESPELHO MODERNO',
@@ -25,7 +41,7 @@ export const ANGULOS = [
         descricao: 'Respeito ao Texto',
         instrucao: 'Mantenha os termos originais (Sião, Egito, Pastor, Ovelha), mas extraia uma lição profunda. Exemplo: "Assim como Israel desceu ao Egito, nós voltamos aos velhos hábitos."',
         proibicoes: [],
-        substituicoes: {}
+        substituicoes: {} as Record<string, string>
     },
     {
         id: 'RAIO_X_EMOCIONAL',
@@ -33,7 +49,7 @@ export const ANGULOS = [
         descricao: 'Foco na Alma',
         instrucao: 'Ignore o cenário externo e fale só do sentimento. Não fale de guerra nem de boleto. Fale de Medo, Ansiedade, Paz e Esperança. Foque no interior.',
         proibicoes: [],
-        substituicoes: {}
+        substituicoes: {} as Record<string, string>
     },
     {
         id: 'LENTE_DE_JESUS',
@@ -41,33 +57,17 @@ export const ANGULOS = [
         descricao: 'Cristocêntrico',
         instrucao: 'Conecte esse texto antigo diretamente a Jesus ou à Graça. Mostre como Cristo resolve esse problema.',
         proibicoes: [],
-        substituicoes: {}
+        substituicoes: {} as Record<string, string>
     }
 ];
 
 // Temperaturas Emocionais
-export const TEMPERATURAS = [
+export const TEMPERATURAS: Temperatura[] = [
     { id: 'DEVOCIONAL', descricao: 'DEVOCIONAL E ÍNTIMO: Tom de oração, sussurro e entrega.' },
     { id: 'SAPIENCIAL', descricao: 'SAPIENCIAL E PRÁTICO: Tom de conselho, decisão e ação ("segunda-feira").' },
     { id: 'PROFETICO', descricao: 'PROFÉTICO E DENÚNCIA: Tom firme, urgente, apontando ídolos.' },
     { id: 'CONSOLADOR', descricao: 'CONSOLADOR E PASTORAL: Tom de graça, acolhimento e respiro.' }
 ];
-
-// Tipo para Ângulo
-export interface Angulo {
-    id: string;
-    nome: string;
-    descricao: string;
-    instrucao: string;
-    proibicoes: string[];
-    substituicoes: Record<string, string>;
-}
-
-// Tipo para Temperatura
-export interface Temperatura {
-    id: string;
-    descricao: string;
-}
 
 // Tipo para DNA da geração
 export interface DNAGeracao {

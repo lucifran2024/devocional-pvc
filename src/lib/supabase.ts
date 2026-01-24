@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { withRetry, CircuitBreaker } from './retry';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -9,6 +10,9 @@ if (typeof window === 'undefined') {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Circuit breaker para chamadas Edge Function
+const edgeFunctionBreaker = new CircuitBreaker(5, 60000);
 
 // ===========================================
 // TIPOS
