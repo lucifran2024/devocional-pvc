@@ -159,7 +159,7 @@ export default function GeradorPage() {
 
             if (res.ok) {
                 setResultado({ texto: res.resultado, modo: res.modo || modo.titulo, id: res.id });
-                setIsLiked(true); // Novo resultado = auto-aprovado pelo backend
+                setIsLiked(false); // Não auto-curtir - usuário decide
             } else {
                 console.error('Erro no execute:', res.error);
                 if (res.error?.includes('non-2xx')) {
