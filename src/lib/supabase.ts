@@ -627,6 +627,34 @@ export async function getAllFavoritosMensagens(limit: number = 10): Promise<Favo
 }
 
 /**
+ * Busca APENAS os favoritos manuais (Mensagens Externas/Banco de Ouro Manual)
+ * Onde historico_id IS NULL
+ */
+export async function getFavoritosManuais(limit: number = 50): Promise<FavoritoMensagem[]> {
+    console.log(`🏆 [BANCO DE OURO] Buscando mensagens manuais (limit: ${limit})...`);
+
+    try {
+        const { data, error } = await supabase
+            .from('favoritos_mensagens')
+            .select('*')
+            .is('historico_id', null) // Filtro crucial: apenas manuais
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error('❌ [BANCO DE OURO] Erro ao buscar:', error);
+            return [];
+        }
+
+        console.log(`✅ [BANCO DE OURO] Encontrados: ${data?.length || 0}`);
+        return data as FavoritoMensagem[];
+    } catch (err) {
+        console.error('💥 [BANCO DE OURO] Exceção:', err);
+        return [];
+    }
+}
+
+/**
  * Adiciona uma mensagem MANUAL aos favoritos (sem vínculo com histórico)
  * Para quando o usuário quer adicionar texto externo
  */
@@ -654,5 +682,30 @@ export async function addFavoritoManual(textoMensagem: string): Promise<Favorito
     } catch (err) {
         console.error('💥 [FAVORITO MANUAL] Exceção:', err);
         return null;
+    }
+}
+
+/**
+ * Remove um favorito pelo ID primário (útil para manuais e gerais)
+ */
+export async function removeFavoritoById(id: number): Promise<boolean> {
+    console.log(`🗑️ [FAVORITO] Removendo favorito ID ${id}`);
+
+    try {
+        const { error } = await supabase
+            .from('favoritos_mensagens')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [FAVORITO] Erro ao remover por ID:', error);
+            return false;
+        }
+
+        console.log('✅ [FAVORITO] Removido com sucesso');
+        return true;
+    } catch (err) {
+        console.error('💥 [FAVORITO] Exceção:', err);
+        return false;
     }
 }
