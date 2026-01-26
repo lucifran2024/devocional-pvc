@@ -179,6 +179,16 @@ export default function DashboardPage() {
             badge="NOVO"
           />
 
+          {/* Card 7: Banco de Ouro (Favoritos Manuais) */}
+          <DashboardCard
+            href="/favoritos"
+            title="Banco de Ouro"
+            desc="Sua coleção pessoal de mensagens favoritas (Manuais)."
+            icon={Book}
+            accentColor="text-yellow-400"
+            badge="PREMIUM"
+          />
+
           {/* Card 6: Biblioteca (Bíblia) */}
           <DashboardCard
             href="/biblioteca"
