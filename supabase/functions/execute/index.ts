@@ -375,21 +375,9 @@ REGRAS FINAIS DE NUANCE:
     // Com injeção total, a IA sempre lê TODAS as regras antes de escrever
     console.log("📖 Usando CONTEXTO TOTAL (sem fragmentação RAG)");
 
-    // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO
-    console.log(" Consultando devocional externo...");
-    let devocionalExterno: string;
-
-    if (bibleApiKey) {
-      // Usa Bible API (preferencial)
-      devocionalExterno = await consultarBibleAPI(bibleApiKey, data);
-      console.log("✅ Devocional obtido via API.Bible");
-    } else {
-      // Fallback para RSS se não tiver API Key
-      const fontesDisponiveis = ['voltemos', 'bible_gateway'] as const;
-      const fonteSorteada = fontesDisponiveis[Math.floor(Math.random() * fontesDisponiveis.length)];
-      devocionalExterno = await consultarRSS(fonteSorteada);
-      console.log(`✅ Devocional externo obtido via RSS: ${fonteSorteada}`);
-    }
+    // 7.2 CONSULTA OBRIGATÓRIA DE DEVOCIONAL EXTERNO - REMOVIDA (Jan 2026)
+    // O usuário solicitou remover essa dependência para limpar a hierarquia.
+    // O modo "Devocional Externo" standalone continua existindo lá em cima.
 
     // 7. Contexto de Memória (SORTEIO INTELIGENTE COM DIVERSIDADE)
     // Busca TODOS os favoritos e sorteia 1 de cada categoria para máxima diversidade
@@ -505,9 +493,13 @@ ${deepContext}
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
 
-### [MEMORIA_ESTILO] ⭐⭐⭐ APRENDA ESTE ESTILO (ALTA PRIORIDADE)
-Estes são exemplos APROVADOS de mensagens que funcionaram muito bem.
-IMITE o tom, estrutura e profundidade destas mensagens. Esta é sua referência principal de estilo:
+### [MEMORIA_DE_OURO] ⭐⭐⭐⭐⭐ DNA SUPREMO (PRIORIDADE MÁXIMA)
+ATENÇÃO: Estes textos representam a "Voz Real" que o usuário deseja.
+Se houver conflito de estilo entre o MODO e estes EXEMPLOS, OS EXEMPLOS VENCEM.
+O MODO define "O QUE" falar (tópico).
+ESTES EXEMPLOS definem "COMO" falar (tom, ritmo, vocabulário).
+
+IMITE OBSESSIVAMENTE O ESTILO DESTES EXEMPLOS:
 ${memoria}
 
 ### [REGRAS_DE_ESTILO] ⭐⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
@@ -585,8 +577,8 @@ ${memoria}
 ### [PERSONALIDADE_DINAMICA] ⭐⭐⭐ ÂNGULO E TEMPERATURA DO DIA
 ${instrucaoVariabilidade}
 
-### [INSTRUCOES_MODO] ⭐⭐ MODO ATIVO
-Instruções específicas do modo selecionado:
+### [INSTRUCOES_MODO] ⭐ DIRETRIZES TÉCNICAS
+Use estas instruções para estruturar o conteúdo, mas mantenha a VOZ dos exemplos acima a todo custo:
 ${modoTexto}
 
 ### [ARQUETIPO_E_VOZ] Ajustes de Tom
@@ -610,8 +602,6 @@ ${conhecimentoCompilado}
 Use estes exemplos como referência de qualidade e estilo, NÃO copie literalmente:
 ${bancoOuroExemplos}
 
-### [DEVOCIONAL_EXTERNO] (Inspiração do Dia - Use como referência, NÃO copie)
-${devocionalExterno}
 
 ${pergunta ? `
 ### [PERGUNTA_DO_USUARIO] 🗣️ RESPONDA ESTA PERGUNTA
