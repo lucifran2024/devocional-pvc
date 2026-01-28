@@ -82,10 +82,30 @@ export default function FavoritosPage() {
         }
     };
 
+    // Parsear mensagens geradas em array
+    const parsedMessages = generatedResult
+        ? generatedResult
+            .split(/---|\*\*MENSAGEM \d{1,2}/)
+            .map(m => m.trim())
+            .filter(m => m.length > 50) // Remove fragmentos pequenos
+        : [];
+
     const handleCopyResult = async () => {
         if (generatedResult) {
             await navigator.clipboard.writeText(generatedResult);
-            alert('Mensagens copiadas!');
+            alert('Todas as mensagens copiadas!');
+        }
+    };
+
+    const handleCopySingleMsg = async (msg: string, idx: number) => {
+        await navigator.clipboard.writeText(msg);
+        const btn = document.getElementById(`copy-gen-${idx}`);
+        if (btn) {
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="text-green-400 font-bold text-xs">✓</span>';
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+            }, 1500);
         }
     };
 
@@ -136,13 +156,14 @@ export default function FavoritosPage() {
 
                 <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20 flex flex-col space-y-8 py-20">
 
-                    {/* 🆕 RESULTADO DAS MENSAGENS GERADAS */}
-                    {showResult && generatedResult && (
-                        <div className="relative bg-gradient-to-br from-amber-900/30 to-yellow-900/20 backdrop-blur-xl border border-amber-500/30 rounded-[2rem] p-8 animate-divine">
-                            <div className="flex items-center justify-between mb-6">
+                    {/* 🆕 RESULTADO DAS MENSAGENS GERADAS - CARDS INDIVIDUAIS */}
+                    {showResult && parsedMessages.length > 0 && (
+                        <>
+                            {/* Header com botões */}
+                            <div className="flex items-center justify-between mb-4 animate-divine">
                                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-500/20 border border-amber-400/30 rounded-full text-amber-300 text-[10px] font-black uppercase tracking-[0.2em]">
                                     <Sparkles className="w-3.5 h-3.5" />
-                                    10 Mensagens Geradas
+                                    {parsedMessages.length} Mensagens Geradas
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -161,10 +182,33 @@ export default function FavoritosPage() {
                                 </div>
                             </div>
 
-                            <div className="prose prose-invert max-w-none prose-p:text-slate-200 prose-p:leading-relaxed prose-headings:text-amber-200 prose-strong:text-amber-300">
-                                <ReactMarkdown>{generatedResult}</ReactMarkdown>
-                            </div>
-                        </div>
+                            {/* Cards individuais */}
+                            {parsedMessages.map((msg, idx) => (
+                                <div
+                                    key={idx}
+                                    className="group relative bg-gradient-to-br from-amber-900/20 to-yellow-900/10 backdrop-blur-xl border border-amber-500/20 rounded-[2rem] p-6 hover:border-amber-400/40 transition-all duration-500 hover:shadow-[0_0_30px_-10px_rgba(251,191,36,0.2)] animate-divine"
+                                    style={{ animationDelay: `${idx * 50}ms` }}
+                                >
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                                            <Wand2 className="w-3 h-3" />
+                                            Mensagem {idx + 1}
+                                        </div>
+                                        <button
+                                            id={`copy-gen-${idx}`}
+                                            onClick={() => handleCopySingleMsg(msg, idx)}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 transition-all text-xs font-bold uppercase tracking-widest active:scale-95"
+                                        >
+                                            <Copy className="w-3.5 h-3.5" />
+                                            Copiar
+                                        </button>
+                                    </div>
+                                    <div className="prose prose-invert max-w-none prose-p:text-slate-200 prose-p:leading-relaxed prose-headings:text-amber-200 prose-strong:text-amber-300">
+                                        <ReactMarkdown>{msg}</ReactMarkdown>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
                     )}
 
                     {loading ? (
