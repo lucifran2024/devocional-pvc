@@ -146,9 +146,14 @@ Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE 10 NOVAS MENSAGENS** q
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
-5. **NÃO USE PASSAGEM BÍBLICA ESPECÍFICA** — estas são mensagens de inspiração geral
-6. Pode usar versículos genéricos como Salmo 23, João 3:16, etc., se fizer sentido
-7. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas
+5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas
+
+## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
+- **MÍNIMO 4 MENSAGENS** devem incluir um versículo bíblico
+- O versículo pode vir das favoritas OU ser um novo que combine com a mensagem
+- Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
+- Exemplos: "O Senhor é meu pastor, nada me faltará." — Salmo 23:1
+- Distribua os versículos: não coloque todos no início ou no fim
 
 ## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
@@ -166,7 +171,7 @@ Para cada mensagem, use o formato:
 ## MENSAGENS FAVORITAS (DNA BASE):
 ${dnaFavoritas}
 
-## GERE AGORA 10 MENSAGENS NOVAS:
+## GERE AGORA 10 MENSAGENS NOVAS (lembre: mínimo 4 com versículos):
 `;
 
       // 4. Chamar Gemini
