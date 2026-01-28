@@ -90,8 +90,127 @@ Deno.serve(async (req) => {
         }
       );
     }
+
     // ========================================
-    // FIM DO MODO ESPECIAL
+    // MODO ESPECIAL: FAVORITAS (GERA 10 MSG DO DNA)
+    // ========================================
+    if (modo_id === 'modo_favoritas') {
+      console.log(`✨ [MODO FAVORITAS] Gerando 10 mensagens baseadas nas favoritas...`);
+
+      // Inicializar Supabase
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+
+      if (!supabaseUrl || !serviceKey || !geminiKey) {
+        throw new Error("Variáveis de ambiente não configuradas.");
+      }
+
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // 1. Buscar TODAS as favoritas
+      const { data: favoritas, error: favError } = await supabase
+        .from("favoritos_mensagens")
+        .select("texto_msg, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (favError || !favoritas || favoritas.length === 0) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            error: "Nenhuma mensagem favorita encontrada. Adicione favoritas primeiro!"
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+
+      console.log(`📚 [FAVORITAS] Encontradas: ${favoritas.length} mensagens`);
+
+      // 2. Preparar DNA das favoritas (texto completo para análise)
+      const dnaFavoritas = favoritas
+        .map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`)
+        .join("\n\n---\n\n");
+
+      // 3. Prompt interno para gerar 10 mensagens
+      const promptFavoritas = `
+# MODO FAVORITAS — GERADOR DE DNA
+
+Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
+
+## SUA MISSÃO:
+Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE 10 NOVAS MENSAGENS** que capturam o DNA delas.
+
+## REGRAS CRÍTICAS:
+1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
+2. **MISTURE** elementos de diferentes favoritas para criar algo novo
+3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
+4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
+5. **NÃO USE PASSAGEM BÍBLICA ESPECÍFICA** — estas são mensagens de inspiração geral
+6. Pode usar versículos genéricos como Salmo 23, João 3:16, etc., se fizer sentido
+7. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas
+
+## FORMATO DE SAÍDA:
+Para cada mensagem, use o formato:
+
+**MENSAGEM 01 — [TÍTULO EM CAPS]**
+
+[Corpo da mensagem]
+
+---
+
+**MENSAGEM 02 — [TÍTULO EM CAPS]**
+
+...e assim sucessivamente até MENSAGEM 10.
+
+## MENSAGENS FAVORITAS (DNA BASE):
+${dnaFavoritas}
+
+## GERE AGORA 10 MENSAGENS NOVAS:
+`;
+
+      // 4. Chamar Gemini
+      const MODEL_NAME = "gemini-2.0-flash";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: promptFavoritas }] }],
+          generationConfig: {
+            temperature: 0.9, // Mais criativo
+            maxOutputTokens: 4096
+          }
+        })
+      });
+
+      if (!resp.ok) {
+        const errorBody = await resp.text();
+        console.error(`❌ Erro Gemini:`, errorBody);
+        throw new Error(`Erro API Gemini: ${resp.status}`);
+      }
+
+      const aiData = await resp.json();
+      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+
+      console.log(`✅ [MODO FAVORITAS] Geração concluída!`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: resultado,
+          tipo: 'modo_favoritas',
+          total_favoritas: favoritas.length
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+    // ========================================
+    // FIM DO MODO FAVORITAS
     // ========================================
 
     // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
