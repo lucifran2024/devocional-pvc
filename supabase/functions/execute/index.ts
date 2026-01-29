@@ -235,16 +235,23 @@ ${dnaFavoritas}
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      // 1. Buscar Passagem do Dia (usando mesma view que outros modos)
+      // 1. Buscar Passagem do Dia (usando SELECT * como outros modos)
       const dataAlvo = data || new Date().toISOString().split('T')[0];
-      const { data: payloadDia } = await supabase
+      const { data: payloadDia, error: payloadErr } = await supabase
         .from("payload_do_dia")
-        .select("passagem_do_dia, texto")
+        .select("*")
         .eq("data", dataAlvo)
         .maybeSingle();
 
-      const passagemRef = payloadDia?.passagem_do_dia || "Salmo 23:1-6";
+      if (payloadErr) {
+        console.error("Erro ao buscar payload:", payloadErr);
+      }
+
+      // Usar mesmos campos que outros modos
+      const passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "Passagem não encontrada";
       const passagemTexto = payloadDia?.texto || "";
+
+      console.log(`📖 Passagem encontrada: ${passagemRef}`);
 
       // 2. Buscar Favoritas
       const { data: favoritas } = await supabase
@@ -257,10 +264,9 @@ ${dnaFavoritas}
         ? favoritas.map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`).join("\n\n---\n\n")
         : "Não há favoritas ainda.";
 
-      console.log(`📖 Passagem: ${passagemRef}`);
       console.log(`📚 Favoritas: ${favoritas?.length || 0}`);
 
-      // 3. Prompt Híbrido
+      // 3. Prompt Híbrido COM FORMATO PADRÃO
       const promptHibrido = `
 # MODO HÍBRIDO — PASSAGEM DO DIA + DNA FAVORITAS
 
@@ -268,33 +274,37 @@ Você vai gerar **10 MENSAGENS DEVOCIONAIS** que combinam:
 1. A **PASSAGEM DO DIA** como fonte de verdade bíblica
 2. O **DNA DAS FAVORITAS** como estilo e tom de escrita
 
-## PASSAGEM DO DIA (SSOT):
+## PASSAGEM DO DIA (SSOT - Fonte de Verdade):
 **${passagemRef}**
 ${passagemTexto ? `\n"${passagemTexto}"` : ""}
 
-## DNA DAS FAVORITAS (ESTILO):
+## DNA DAS FAVORITAS (ESTILO A IMITAR):
 ${dnaFavoritas}
 
 ## REGRAS CRÍTICAS:
-1. Cada mensagem DEVE conectar com a passagem do dia de alguma forma
+1. Cada mensagem DEVE conectar com a passagem do dia
 2. Use o TOM, RITMO e VOCABULÁRIO das favoritas
-3. Cada mensagem: **80-150 palavras** (curta e impactante)
-4. **MÍNIMO 4 MENSAGENS** devem incluir versículos bíblicos formatados
-5. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
-6. NÃO REPITA a mesma ideia — cada mensagem deve ter um ângulo diferente
+3. **MÍNIMO 4 MENSAGENS** devem ter versículos bíblicos
+4. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
+5. NÃO REPITA a mesma ideia
 
-## FORMATO DE SAÍDA:
-**MENSAGEM 01 — [TÍTULO EM CAPS]**
+## FORMATO DE SAÍDA OBRIGATÓRIO (use EXATAMENTE este template para CADA mensagem):
 
-[Corpo da mensagem]
+📖 Leitura do dia: ${passagemRef}
+
+**{FRASE_DE_IMPACTO}**
+
+{DESENVOLVIMENTO - 2 a 3 parágrafos curtos}
+
+"{VERSO_CHAVE}" ({REFERENCIA})
+
+{APLICACAO - como aplicar hoje}
+
+{FECHAMENTO_CURTO - 1 frase de encerramento}
 
 ---
 
-**MENSAGEM 02 — [TÍTULO EM CAPS]**
-
-...até MENSAGEM 10.
-
-## GERE AGORA 10 MENSAGENS (lembre: baseadas na passagem + estilo das favoritas):
+Gere as 10 mensagens usando o formato acima, separando cada uma por ---
 `;
 
       // 4. Chamar Gemini
