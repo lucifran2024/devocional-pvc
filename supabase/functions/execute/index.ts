@@ -218,7 +218,141 @@ ${dnaFavoritas}
     // FIM DO MODO FAVORITAS
     // ========================================
 
-    // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
+    // ========================================
+    // MODO HÍBRIDO: PASSAGEM DO DIA + FAVORITAS
+    // ========================================
+    if (modo_id === 'modo_hibrido') {
+      console.log(`🔀 [MODO HÍBRIDO] Gerando 10 mensagens: Passagem + Favoritas...`);
+
+      // Inicializar Supabase
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+
+      if (!supabaseUrl || !serviceKey || !geminiKey) {
+        throw new Error("Variáveis de ambiente não configuradas.");
+      }
+
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // 1. Buscar Passagem do Dia
+      const dataAlvo = data || new Date().toISOString().split('T')[0];
+      const { data: payloadDia } = await supabase
+        .from("payload_diario")
+        .select("passagem, passagem_texto")
+        .eq("data", dataAlvo)
+        .single();
+
+      const passagemRef = payloadDia?.passagem || "Salmo 23:1-6";
+      const passagemTexto = payloadDia?.passagem_texto || "";
+
+      // 2. Buscar Favoritas
+      const { data: favoritas } = await supabase
+        .from("favoritos_mensagens")
+        .select("texto_msg")
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      const dnaFavoritas = favoritas?.length
+        ? favoritas.map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`).join("\n\n---\n\n")
+        : "Não há favoritas ainda.";
+
+      console.log(`📖 Passagem: ${passagemRef}`);
+      console.log(`📚 Favoritas: ${favoritas?.length || 0}`);
+
+      // 3. Prompt Híbrido
+      const promptHibrido = `
+# MODO HÍBRIDO — PASSAGEM DO DIA + DNA FAVORITAS
+
+Você vai gerar **10 MENSAGENS DEVOCIONAIS** que combinam:
+1. A **PASSAGEM DO DIA** como fonte de verdade bíblica
+2. O **DNA DAS FAVORITAS** como estilo e tom de escrita
+
+## PASSAGEM DO DIA (SSOT):
+**${passagemRef}**
+${passagemTexto ? `\n"${passagemTexto}"` : ""}
+
+## DNA DAS FAVORITAS (ESTILO):
+${dnaFavoritas}
+
+## REGRAS CRÍTICAS:
+1. Cada mensagem DEVE conectar com a passagem do dia de alguma forma
+2. Use o TOM, RITMO e VOCABULÁRIO das favoritas
+3. Cada mensagem: **80-150 palavras** (curta e impactante)
+4. **MÍNIMO 4 MENSAGENS** devem incluir versículos bíblicos formatados
+5. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
+6. NÃO REPITA a mesma ideia — cada mensagem deve ter um ângulo diferente
+
+## FORMATO DE SAÍDA:
+**MENSAGEM 01 — [TÍTULO EM CAPS]**
+
+[Corpo da mensagem]
+
+---
+
+**MENSAGEM 02 — [TÍTULO EM CAPS]**
+
+...até MENSAGEM 10.
+
+## GERE AGORA 10 MENSAGENS (lembre: baseadas na passagem + estilo das favoritas):
+`;
+
+      // 4. Chamar Gemini
+      const MODEL_NAME = "gemini-2.0-flash";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
+          generationConfig: {
+            temperature: 0.85,
+            maxOutputTokens: 4096
+          }
+        })
+      });
+
+      if (!resp.ok) {
+        const errorBody = await resp.text();
+        console.error(`❌ Erro Gemini:`, errorBody);
+        throw new Error(`Erro API Gemini: ${resp.status}`);
+      }
+
+      const aiData = await resp.json();
+      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+
+      console.log(`✅ [MODO HÍBRIDO] Geração concluída!`);
+
+      // 5. Salvar no histórico
+      const { data: historicoData } = await supabase
+        .from("historico_geracoes")
+        .insert({
+          data: dataAlvo,
+          modo_id: 'modo_hibrido',
+          resultado: resultado,
+          favoritado: false
+        })
+        .select("id")
+        .single();
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: resultado,
+          modo: 'Híbrido (Passagem + Favoritas)',
+          id: historicoData?.id,
+          passagem: passagemRef
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+    // ========================================
+    // FIM DO MODO HÍBRIDO
+    // ========================================    // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
 
     // 1. SORTEIO DO ARQUÉTIPO (CAMALEÃO)
     const arquetipoSorteado = getArchetype(data);
