@@ -266,29 +266,30 @@ ${dnaFavoritas}
 
       console.log(`📚 Favoritas: ${favoritas?.length || 0}`);
 
-      // 3. Prompt Híbrido COM FORMATO PADRÃO
+      // 3. Prompt Híbrido EQUILIBRADO 50/50
       const promptHibrido = `
-# MODO HÍBRIDO — PASSAGEM DO DIA + DNA FAVORITAS
+# MODO HÍBRIDO — EQUILÍBRIO 50/50: PASSAGEM + FAVORITAS
 
-Você vai gerar **10 MENSAGENS DEVOCIONAIS** que combinam:
-1. A **PASSAGEM DO DIA** como fonte de verdade bíblica
-2. O **DNA DAS FAVORITAS** como estilo e tom de escrita
+Você vai gerar **10 MENSAGENS DEVOCIONAIS** que combinam IGUALMENTE:
+- **50% PASSAGEM DO DIA** (tema e conteúdo bíblico)
+- **50% DNA FAVORITAS** (estilo, tom e estrutura)
 
-## PASSAGEM DO DIA (SSOT - Fonte de Verdade):
+⚖️ EQUILÍBRIO OBRIGATÓRIO: Nenhum dos dois domina. A passagem dá o tema, as favoritas dão a voz.
+
+## PASSAGEM DO DIA (50% - TEMA):
 **${passagemRef}**
 ${passagemTexto ? `\n"${passagemTexto}"` : ""}
 
-## DNA DAS FAVORITAS (ESTILO A IMITAR):
+## DNA DAS FAVORITAS (50% - ESTILO):
 ${dnaFavoritas}
 
 ## REGRAS CRÍTICAS:
-1. Cada mensagem DEVE conectar com a passagem do dia
-2. Use o TOM, RITMO e VOCABULÁRIO das favoritas
-3. **MÍNIMO 4 MENSAGENS** devem ter versículos bíblicos
-4. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
-5. NÃO REPITA a mesma ideia
+1. ⚖️ EQUILIBRE: Tema da passagem + Estilo das favoritas (50/50)
+2. **MÍNIMO 4 MENSAGENS** devem ter versículos bíblicos
+3. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
+4. NÃO REPITA a mesma ideia
 
-## FORMATO DE SAÍDA OBRIGATÓRIO (use EXATAMENTE este template para CADA mensagem):
+## FORMATO DE SAÍDA OBRIGATÓRIO:
 
 📖 Leitura do dia: ${passagemRef}
 
@@ -334,17 +335,22 @@ Gere as 10 mensagens usando o formato acima, separando cada uma por ---
 
       console.log(`✅ [MODO HÍBRIDO] Geração concluída!`);
 
-      // 5. Salvar no histórico
-      const { data: historicoData } = await supabase
+      // 5. Salvar no histórico (MESMOS CAMPOS DOS OUTROS MODOS)
+      const { data: historicoData, error: insertError } = await supabase
         .from("historico_geracoes")
         .insert({
-          data: dataAlvo,
           modo_id: 'modo_hibrido',
-          resultado: resultado,
-          favoritado: false
+          data_referencia: dataAlvo,
+          passagem: passagemRef,
+          resultado_texto: resultado,
+          aprovado: false
         })
         .select("id")
         .single();
+
+      if (insertError) {
+        console.error("Erro ao salvar histórico:", insertError);
+      }
 
       return new Response(
         JSON.stringify({
