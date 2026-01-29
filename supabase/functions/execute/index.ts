@@ -235,16 +235,16 @@ ${dnaFavoritas}
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      // 1. Buscar Passagem do Dia
+      // 1. Buscar Passagem do Dia (usando mesma view que outros modos)
       const dataAlvo = data || new Date().toISOString().split('T')[0];
       const { data: payloadDia } = await supabase
-        .from("payload_diario")
-        .select("passagem, passagem_texto")
+        .from("payload_do_dia")
+        .select("passagem_do_dia, texto")
         .eq("data", dataAlvo)
-        .single();
+        .maybeSingle();
 
-      const passagemRef = payloadDia?.passagem || "Salmo 23:1-6";
-      const passagemTexto = payloadDia?.passagem_texto || "";
+      const passagemRef = payloadDia?.passagem_do_dia || "Salmo 23:1-6";
+      const passagemTexto = payloadDia?.texto || "";
 
       // 2. Buscar Favoritas
       const { data: favoritas } = await supabase
