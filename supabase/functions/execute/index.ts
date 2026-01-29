@@ -266,46 +266,41 @@ ${dnaFavoritas}
 
       console.log(`📚 Favoritas: ${favoritas?.length || 0}`);
 
-      // 3. Prompt Híbrido EQUILIBRADO 50/50
+      // 3. Prompt Híbrido EQUILIBRADO 50/50 com FORMATO DINÂMICO
       const promptHibrido = `
 # MODO HÍBRIDO — EQUILÍBRIO 50/50: PASSAGEM + FAVORITAS
 
 Você vai gerar **10 MENSAGENS DEVOCIONAIS** que combinam IGUALMENTE:
 - **50% PASSAGEM DO DIA** (tema e conteúdo bíblico)
-- **50% DNA FAVORITAS** (estilo, tom e estrutura)
-
-⚖️ EQUILÍBRIO OBRIGATÓRIO: Nenhum dos dois domina. A passagem dá o tema, as favoritas dão a voz.
+- **50% DNA FAVORITAS** (estilo, tom, estrutura E FORMATO)
 
 ## PASSAGEM DO DIA (50% - TEMA):
 **${passagemRef}**
 ${passagemTexto ? `\n"${passagemTexto}"` : ""}
 
-## DNA DAS FAVORITAS (50% - ESTILO):
+## DNA DAS FAVORITAS (50% - ESTILO E FORMATO):
 ${dnaFavoritas}
 
 ## REGRAS CRÍTICAS:
-1. ⚖️ EQUILIBRE: Tema da passagem + Estilo das favoritas (50/50)
-2. **MÍNIMO 4 MENSAGENS** devem ter versículos bíblicos
-3. VARIE OS ESTILOS: staccato, narrativo, perguntas reflexivas
-4. NÃO REPITA a mesma ideia
 
-## FORMATO DE SAÍDA OBRIGATÓRIO:
+### OBRIGATÓRIO EM TODAS AS 10 MENSAGENS:
+1. 📖 Começar com: "📖 Leitura do dia: ${passagemRef}"
+2. ⚖️ Equilibrar 50% passagem + 50% estilo das favoritas
 
-📖 Leitura do dia: ${passagemRef}
+### OBRIGATÓRIO EM PELO MENOS 4 MENSAGENS:
+3. Incluir versículo bíblico formatado: "Texto" — Referência
 
-**{FRASE_DE_IMPACTO}**
+### FORMATO DE CADA MENSAGEM:
+4. ⚠️ **IMITE OS FORMATOS DAS FAVORITAS** - NÃO use template fixo!
+5. Se as favoritas usam staccato, use staccato
+6. Se as favoritas usam narrativo, use narrativo
+7. Se as favoritas usam listas, use listas
+8. VARIE os formatos entre as 10 mensagens
 
-{DESENVOLVIMENTO - 2 a 3 parágrafos curtos}
+### SEPARADOR:
+Use --- entre cada mensagem
 
-"{VERSO_CHAVE}" ({REFERENCIA})
-
-{APLICACAO - como aplicar hoje}
-
-{FECHAMENTO_CURTO - 1 frase de encerramento}
-
----
-
-Gere as 10 mensagens usando o formato acima, separando cada uma por ---
+Gere as 10 mensagens agora:
 `;
 
       // 4. Chamar Gemini
