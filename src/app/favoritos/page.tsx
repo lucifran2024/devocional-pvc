@@ -13,6 +13,7 @@ const TEMAS = ['Todos', 'Esperança', 'Fé', 'Amor', 'Gratidão', 'Força', 'Paz
 const TIPOS = ['Todos', 'Versículo', 'Devocional', 'Oração', 'Reflexão'];
 const FORMATOS = ['Todos', 'Staccato', 'Narrativo', 'Lista', 'Pergunta'];
 const QUANTIDADES = [5, 10, 15, 20];
+const DNA_BASE = ['Todas', '5 mais recentes', '10 mais recentes', '15 mais recentes', '5 aleatórias', '10 aleatórias'];
 
 export default function FavoritosPage() {
     const [favoritos, setFavoritos] = useState<FavoritoMensagem[]>([]);
@@ -31,6 +32,7 @@ export default function FavoritosPage() {
     const [filtroTipo, setFiltroTipo] = useState('Todos');
     const [filtroFormato, setFiltroFormato] = useState('Todos');
     const [filtroQuantidade, setFiltroQuantidade] = useState(10);
+    const [filtroDnaBase, setFiltroDnaBase] = useState('Todas');
 
     const loadData = async () => {
         setLoading(true);
@@ -83,7 +85,8 @@ export default function FavoritosPage() {
             tema: filtroTema !== 'Todos' ? filtroTema : undefined,
             tipo: filtroTipo !== 'Todos' ? filtroTipo : undefined,
             formato: filtroFormato !== 'Todos' ? filtroFormato : undefined,
-            quantidade: filtroQuantidade
+            quantidade: filtroQuantidade,
+            dnaBase: filtroDnaBase !== 'Todas' ? filtroDnaBase : undefined
         };
 
         try {
@@ -107,7 +110,7 @@ export default function FavoritosPage() {
     };
 
     // Verifica se algum filtro está ativo
-    const temFiltroAtivo = filtroTema !== 'Todos' || filtroTipo !== 'Todos' || filtroFormato !== 'Todos' || filtroQuantidade !== 10;
+    const temFiltroAtivo = filtroTema !== 'Todos' || filtroTipo !== 'Todos' || filtroFormato !== 'Todos' || filtroQuantidade !== 10 || filtroDnaBase !== 'Todas';
 
     return (
         <CosmicBackground className="font-sans text-slate-100">
@@ -143,8 +146,8 @@ export default function FavoritosPage() {
                                 <button
                                     onClick={() => setShowFilters(!showFilters)}
                                     className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${temFiltroAtivo
-                                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                                            : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                                         }`}
                                 >
                                     <Filter className="w-4 h-4" />
@@ -196,13 +199,25 @@ export default function FavoritosPage() {
 
                                         {/* Quantidade */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Quantidade</label>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Gerar</label>
                                             <select
                                                 value={filtroQuantidade}
                                                 onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
                                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
                                             >
                                                 {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q} mensagens</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* DNA Base */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Base DNA</label>
+                                            <select
+                                                value={filtroDnaBase}
+                                                onChange={(e) => setFiltroDnaBase(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {DNA_BASE.map(d => <option key={d} value={d} className="bg-slate-900">{d}</option>)}
                                             </select>
                                         </div>
                                     </div>
@@ -215,6 +230,7 @@ export default function FavoritosPage() {
                                                 setFiltroTipo('Todos');
                                                 setFiltroFormato('Todos');
                                                 setFiltroQuantidade(10);
+                                                setFiltroDnaBase('Todas');
                                             }}
                                             className="mt-3 text-xs text-amber-400 hover:text-amber-300"
                                         >

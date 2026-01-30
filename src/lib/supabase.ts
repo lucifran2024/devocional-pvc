@@ -204,6 +204,7 @@ export interface FiltrosGeracao {
     tipo?: string;
     formato?: string;
     quantidade?: number;
+    dnaBase?: string;
 }
 
 /**

@@ -128,8 +128,25 @@ Deno.serve(async (req) => {
 
       console.log(`📚 [FAVORITAS] Encontradas: ${favoritas.length} mensagens`);
 
-      // 2. Preparar DNA das favoritas (texto completo para análise)
-      const dnaFavoritas = favoritas
+      // 2. Aplicar filtro DNA Base se especificado
+      let favoritasFiltradas = favoritas;
+      if (filtros?.dnaBase) {
+        const dnaBase = filtros.dnaBase;
+        if (dnaBase.includes('recentes')) {
+          const limite = parseInt(dnaBase.split(' ')[0]) || 10;
+          favoritasFiltradas = favoritas.slice(0, limite);
+          console.log(`🔍 [DNA] Usando ${limite} mais recentes`);
+        } else if (dnaBase.includes('aleatórias')) {
+          const limite = parseInt(dnaBase.split(' ')[0]) || 10;
+          // Embaralha e pega as primeiras
+          const embaralhadas = [...favoritas].sort(() => Math.random() - 0.5);
+          favoritasFiltradas = embaralhadas.slice(0, limite);
+          console.log(`🎲 [DNA] Usando ${limite} aleatórias`);
+        }
+      }
+
+      // 3. Preparar DNA das favoritas (texto completo para análise)
+      const dnaFavoritas = favoritasFiltradas
         .map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`)
         .join("\n\n---\n\n");
 
