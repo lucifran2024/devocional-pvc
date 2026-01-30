@@ -56,9 +56,10 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
+    if (filtros) console.log(`🔍 Filtros:`, filtros);
 
     if (!modo_id || !data) {
       throw new Error("Faltam dados obrigatórios: modo_id ou data.");
@@ -132,28 +133,39 @@ Deno.serve(async (req) => {
         .map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`)
         .join("\n\n---\n\n");
 
-      // 3. Prompt interno para gerar 10 mensagens
+      // 3. Processar filtros
+      const quantidade = filtros?.quantidade || 10;
+      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato);
+
+      // Montar instruções de filtro
+      let instrucoesFiltro = '';
+      if (temFiltros) {
+        instrucoesFiltro = '\n## 🎯 FILTROS APLICADOS (OBRIGATÓRIO):\n';
+        if (filtros.tema) instrucoesFiltro += `- TEMA: Todas mensagens devem ser sobre **${filtros.tema}**\n`;
+        if (filtros.tipo) instrucoesFiltro += `- TIPO: Gere no formato **${filtros.tipo}** (${filtros.tipo === 'Versículo' ? 'foque em versículos bíblicos' : filtros.tipo === 'Oração' ? 'formato de oração/prece' : filtros.tipo === 'Devocional' ? 'reflexão devocional completa' : 'reflexão curta'})\n`;
+        if (filtros.formato) instrucoesFiltro += `- FORMATO: Use estilo **${filtros.formato}** em todas (${filtros.formato === 'Staccato' ? 'frases curtas, impacto' : filtros.formato === 'Narrativo' ? 'texto fluido, história' : filtros.formato === 'Lista' ? 'tópicos numerados' : 'perguntas reflexivas'})\n`;
+      }
+
+      // 4. Prompt interno para gerar mensagens
       const promptFavoritas = `
 # MODO FAVORITAS — GERADOR DE DNA
 
 Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
-Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE 10 NOVAS MENSAGENS** que capturam o DNA delas.
-
+Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
+${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
-5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas
+${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
-- **MÍNIMO 4 MENSAGENS** devem incluir um versículo bíblico
+- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
 - O versículo pode vir das favoritas OU ser um novo que combine com a mensagem
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
-- Exemplos: "O Senhor é meu pastor, nada me faltará." — Salmo 23:1
-- Distribua os versículos: não coloque todos no início ou no fim
 
 ## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
@@ -164,14 +176,12 @@ Para cada mensagem, use o formato:
 
 ---
 
-**MENSAGEM 02 — [TÍTULO EM CAPS]**
-
-...e assim sucessivamente até MENSAGEM 10.
+(continue até MENSAGEM ${quantidade})
 
 ## MENSAGENS FAVORITAS (DNA BASE):
 ${dnaFavoritas}
 
-## GERE AGORA 10 MENSAGENS NOVAS (lembre: mínimo 4 com versículos):
+## GERE AGORA ${quantidade} MENSAGENS NOVAS:
 `;
 
       // 4. Chamar Gemini

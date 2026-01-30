@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getFavoritosManuais, FavoritoMensagem, removeFavoritoById, executarModo, getDataHoje } from '@/lib/supabase';
+import { getFavoritosManuais, FavoritoMensagem, removeFavoritoById, executarModoComFiltros, getDataHoje } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+
+// Opções de filtros
+const TEMAS = ['Todos', 'Esperança', 'Fé', 'Amor', 'Gratidão', 'Força', 'Paz', 'Perseverança'];
+const TIPOS = ['Todos', 'Versículo', 'Devocional', 'Oração', 'Reflexão'];
+const FORMATOS = ['Todos', 'Staccato', 'Narrativo', 'Lista', 'Pergunta'];
+const QUANTIDADES = [5, 10, 15, 20];
 
 export default function FavoritosPage() {
     const [favoritos, setFavoritos] = useState<FavoritoMensagem[]>([]);
@@ -18,6 +24,13 @@ export default function FavoritosPage() {
     const [generating, setGenerating] = useState(false);
     const [generatedResult, setGeneratedResult] = useState<string | null>(null);
     const [showResult, setShowResult] = useState(false);
+
+    // Estados dos filtros
+    const [showFilters, setShowFilters] = useState(false);
+    const [filtroTema, setFiltroTema] = useState('Todos');
+    const [filtroTipo, setFiltroTipo] = useState('Todos');
+    const [filtroFormato, setFiltroFormato] = useState('Todos');
+    const [filtroQuantidade, setFiltroQuantidade] = useState(10);
 
     const loadData = async () => {
         setLoading(true);
@@ -34,7 +47,6 @@ export default function FavoritosPage() {
         loadData();
     }, []);
 
-    // Handler SIMPLES de copiar (sem manipulação DOM)
     const handleCopy = async (texto: string, id: number) => {
         try {
             await navigator.clipboard.writeText(texto);
@@ -57,7 +69,7 @@ export default function FavoritosPage() {
         setDeletingId(null);
     };
 
-    // Handler de geração
+    // Handler de geração COM filtros
     const handleGerar = async () => {
         if (favoritos.length === 0) {
             alert('Adicione favoritas primeiro!');
@@ -65,8 +77,17 @@ export default function FavoritosPage() {
         }
         setGenerating(true);
         setGeneratedResult(null);
+
+        // Monta objeto de filtros (só envia se não for "Todos")
+        const filtros = {
+            tema: filtroTema !== 'Todos' ? filtroTema : undefined,
+            tipo: filtroTipo !== 'Todos' ? filtroTipo : undefined,
+            formato: filtroFormato !== 'Todos' ? filtroFormato : undefined,
+            quantidade: filtroQuantidade
+        };
+
         try {
-            const result = await executarModo('modo_favoritas', getDataHoje());
+            const result = await executarModoComFiltros('modo_favoritas', getDataHoje(), filtros);
             if (result.ok && result.resultado) {
                 setGeneratedResult(result.resultado);
                 setShowResult(true);
@@ -79,12 +100,14 @@ export default function FavoritosPage() {
         setGenerating(false);
     };
 
-    // Parser simples de mensagens
     const parseMessages = (text: string): string[] => {
         if (!text) return [];
         const parts = text.split(/\n\s*---\s*\n/);
         return parts.filter(p => p.trim().length > 0);
     };
+
+    // Verifica se algum filtro está ativo
+    const temFiltroAtivo = filtroTema !== 'Todos' || filtroTipo !== 'Todos' || filtroFormato !== 'Todos' || filtroQuantidade !== 10;
 
     return (
         <CosmicBackground className="font-sans text-slate-100">
@@ -106,15 +129,100 @@ export default function FavoritosPage() {
                                 Minhas <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-amber-500">Favoritas</span>
                             </h1>
 
-                            {/* Botão Gerar */}
-                            <button
-                                onClick={handleGerar}
-                                disabled={generating || favoritos.length === 0}
-                                className="mt-4 flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
-                            >
-                                {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                                {generating ? 'Gerando...' : '✨ Gerar 10 Inspirados'}
-                            </button>
+                            {/* Botões de ação */}
+                            <div className="flex flex-wrap items-center gap-3 mt-4">
+                                <button
+                                    onClick={handleGerar}
+                                    disabled={generating || favoritos.length === 0}
+                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                >
+                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
+                                    {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
+                                </button>
+
+                                <button
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all ${temFiltroAtivo
+                                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                                            : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <Filter className="w-4 h-4" />
+                                    Filtros
+                                    {temFiltroAtivo && <span className="w-2 h-2 bg-amber-400 rounded-full"></span>}
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                                </button>
+                            </div>
+
+                            {/* Painel de Filtros */}
+                            {showFilters && (
+                                <div className="mt-4 p-4 bg-black/40 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {/* Tema */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Tema</label>
+                                            <select
+                                                value={filtroTema}
+                                                onChange={(e) => setFiltroTema(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {TEMAS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Tipo */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Tipo</label>
+                                            <select
+                                                value={filtroTipo}
+                                                onChange={(e) => setFiltroTipo(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {TIPOS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Formato */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Formato</label>
+                                            <select
+                                                value={filtroFormato}
+                                                onChange={(e) => setFiltroFormato(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {FORMATOS.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Quantidade */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Quantidade</label>
+                                            <select
+                                                value={filtroQuantidade}
+                                                onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q} mensagens</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Limpar filtros */}
+                                    {temFiltroAtivo && (
+                                        <button
+                                            onClick={() => {
+                                                setFiltroTema('Todos');
+                                                setFiltroTipo('Todos');
+                                                setFiltroFormato('Todos');
+                                                setFiltroQuantidade(10);
+                                            }}
+                                            className="mt-3 text-xs text-amber-400 hover:text-amber-300"
+                                        >
+                                            ✕ Limpar filtros
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </CosmicHeader>
                 </div>
@@ -125,7 +233,7 @@ export default function FavoritosPage() {
                     {showResult && generatedResult && (
                         <div className="bg-gradient-to-br from-amber-900/20 to-yellow-900/10 border border-amber-500/30 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-amber-400 font-bold text-lg">✨ Mensagens Geradas</h3>
+                                <h3 className="text-amber-400 font-bold text-lg">✨ Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
                                 <button onClick={() => setShowResult(false)} className="p-2 hover:bg-white/10 rounded-lg">
                                     <X className="w-5 h-5 text-slate-400" />
                                 </button>
@@ -198,4 +306,3 @@ export default function FavoritosPage() {
         </CosmicBackground>
     );
 }
-

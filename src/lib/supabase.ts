@@ -198,6 +198,49 @@ export function getDataHoje(): string {
     return hoje.toISOString().split('T')[0];
 }
 
+// Interface para filtros de geração
+export interface FiltrosGeracao {
+    tema?: string;
+    tipo?: string;
+    formato?: string;
+    quantidade?: number;
+}
+
+/**
+ * Executa modo COM filtros opcionais para geração personalizada
+ */
+export async function executarModoComFiltros(
+    modo_id: string,
+    data: string,
+    filtros?: FiltrosGeracao
+): Promise<ExecuteResponse> {
+    console.log('🚀 [EXECUTE] Chamando com filtros:', filtros);
+
+    try {
+        const { data: resultData, error } = await supabase.functions.invoke('execute', {
+            body: { modo_id, data, filtros }
+        });
+
+        if (error) {
+            console.error('❌ [EXECUTE] Erro:', error);
+            const msg = error.context?.message || error.message || 'Erro ao invocar função';
+            throw new Error(msg);
+        }
+
+        console.log('✅ [EXECUTE] Sucesso com filtros');
+        return resultData as ExecuteResponse;
+
+    } catch (error) {
+        console.error('💥 [EXECUTE] Exceção:', error);
+        return {
+            ok: false,
+            modo: modo_id,
+            resultado: '',
+            error: error instanceof Error ? error.message : 'Erro de conexão',
+        };
+    }
+}
+
 /**
  * Atualiza o status de aprovação de uma geração
  */
