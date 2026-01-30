@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
 
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
-      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato);
+      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana);
 
       // Montar instruções de filtro
       let instrucoesFiltro = '';
@@ -161,6 +161,8 @@ Deno.serve(async (req) => {
         if (filtros.tema) instrucoesFiltro += `- TEMA: Todas mensagens devem ser sobre **${filtros.tema}**\n`;
         if (filtros.tipo) instrucoesFiltro += `- TIPO: Gere no formato **${filtros.tipo}** (${filtros.tipo === 'Versículo' ? 'foque em versículos bíblicos' : filtros.tipo === 'Oração' ? 'formato de oração/prece' : filtros.tipo === 'Devocional' ? 'reflexão devocional completa' : 'reflexão curta'})\n`;
         if (filtros.formato) instrucoesFiltro += `- FORMATO: Use estilo **${filtros.formato}** em todas (${filtros.formato === 'Staccato' ? 'frases curtas, impacto' : filtros.formato === 'Narrativo' ? 'texto fluido, história' : filtros.formato === 'Lista' ? 'tópicos numerados' : 'perguntas reflexivas'})\n`;
+        if (filtros.periodo) instrucoesFiltro += `- PERÍODO: COMECE cada mensagem com saudação de **${filtros.periodo}** (ex: "${filtros.periodo}, amado(a)!")\n`;
+        if (filtros.diaSemana) instrucoesFiltro += `- DIA: Mencione que é **${filtros.diaSemana}** nas mensagens (ex: "Neste ${filtros.diaSemana} abençoado...")\n`;
       }
 
       // 4. Prompt interno para gerar mensagens
