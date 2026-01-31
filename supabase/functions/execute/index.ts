@@ -132,16 +132,31 @@ Deno.serve(async (req) => {
       let favoritasFiltradas = favoritas;
       if (filtros?.dnaBase) {
         const dnaBase = filtros.dnaBase;
-        if (dnaBase.includes('recentes')) {
-          const limite = parseInt(dnaBase.split(' ')[0]) || 10;
+        const limite = parseInt(dnaBase.split(' ')[0]) || 10;
+
+        if (dnaBase.includes('primeiras')) {
+          // Primeiras = mais recentes (início da lista ordenada por created_at DESC)
           favoritasFiltradas = favoritas.slice(0, limite);
-          console.log(`🔍 [DNA] Usando ${limite} mais recentes`);
+          console.log(`🔝 [DNA] Usando ${limite} primeiras (mais recentes)`);
+        } else if (dnaBase.includes('últimas')) {
+          // Últimas = mais antigas (final da lista)
+          favoritasFiltradas = favoritas.slice(-limite);
+          console.log(`🔚 [DNA] Usando ${limite} últimas (mais antigas)`);
+        } else if (dnaBase.includes('do meio')) {
+          // Do meio = centro da lista
+          const meio = Math.floor(favoritas.length / 2);
+          const inicio = Math.max(0, meio - Math.floor(limite / 2));
+          favoritasFiltradas = favoritas.slice(inicio, inicio + limite);
+          console.log(`🎯 [DNA] Usando ${limite} do meio (posições ${inicio} a ${inicio + limite})`);
         } else if (dnaBase.includes('aleatórias')) {
-          const limite = parseInt(dnaBase.split(' ')[0]) || 10;
           // Embaralha e pega as primeiras
           const embaralhadas = [...favoritas].sort(() => Math.random() - 0.5);
           favoritasFiltradas = embaralhadas.slice(0, limite);
           console.log(`🎲 [DNA] Usando ${limite} aleatórias`);
+        } else if (dnaBase.includes('recentes')) {
+          // Legado: mesma coisa que primeiras
+          favoritasFiltradas = favoritas.slice(0, limite);
+          console.log(`🔍 [DNA] Usando ${limite} mais recentes`);
         }
       }
 

@@ -13,7 +13,13 @@ const TEMAS = ['Todos', 'Esperança', 'Fé', 'Amor', 'Gratidão', 'Força', 'Paz
 const TIPOS = ['Todos', 'Versículo', 'Devocional', 'Oração', 'Reflexão'];
 const FORMATOS = ['Todos', 'Staccato', 'Narrativo', 'Lista', 'Pergunta'];
 const QUANTIDADES = [5, 10, 15, 20];
-const DNA_BASE = ['Todas', '5 mais recentes', '10 mais recentes', '15 mais recentes', '5 aleatórias', '10 aleatórias'];
+const DNA_BASE = [
+    'Todas',
+    '10 primeiras', '20 primeiras', '30 primeiras',
+    '10 do meio', '20 do meio',
+    '10 últimas', '20 últimas', '30 últimas',
+    '10 aleatórias', '20 aleatórias'
+];
 const PERIODOS = ['Todos', 'Bom Dia', 'Boa Tarde', 'Boa Noite'];
 const DIAS_SEMANA = ['Todos', 'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const MOMENTOS = ['Todos', 'Fim de Semana', 'Começo de Semana', 'Fim do Mês'];
