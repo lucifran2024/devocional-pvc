@@ -16,6 +16,7 @@ const QUANTIDADES = [5, 10, 15, 20];
 const DNA_BASE = ['Todas', '5 mais recentes', '10 mais recentes', '15 mais recentes', '5 aleatórias', '10 aleatórias'];
 const PERIODOS = ['Todos', 'Bom Dia', 'Boa Tarde', 'Boa Noite'];
 const DIAS_SEMANA = ['Todos', 'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const MOMENTOS = ['Todos', 'Fim de Semana', 'Começo de Semana', 'Fim do Mês'];
 
 export default function FavoritosPage() {
     const [favoritos, setFavoritos] = useState<FavoritoMensagem[]>([]);
@@ -37,6 +38,7 @@ export default function FavoritosPage() {
     const [filtroDnaBase, setFiltroDnaBase] = useState('Todas');
     const [filtroPeriodo, setFiltroPeriodo] = useState('Todos');
     const [filtroDia, setFiltroDia] = useState('Todos');
+    const [filtroMomento, setFiltroMomento] = useState('Todos');
 
     const loadData = async () => {
         setLoading(true);
@@ -92,7 +94,8 @@ export default function FavoritosPage() {
             quantidade: filtroQuantidade,
             dnaBase: filtroDnaBase !== 'Todas' ? filtroDnaBase : undefined,
             periodo: filtroPeriodo !== 'Todos' ? filtroPeriodo : undefined,
-            diaSemana: filtroDia !== 'Todos' ? filtroDia : undefined
+            diaSemana: filtroDia !== 'Todos' ? filtroDia : undefined,
+            momento: filtroMomento !== 'Todos' ? filtroMomento : undefined
         };
 
         try {
@@ -116,7 +119,7 @@ export default function FavoritosPage() {
     };
 
     // Verifica se algum filtro está ativo
-    const temFiltroAtivo = filtroTema !== 'Todos' || filtroTipo !== 'Todos' || filtroFormato !== 'Todos' || filtroQuantidade !== 10 || filtroDnaBase !== 'Todas' || filtroPeriodo !== 'Todos' || filtroDia !== 'Todos';
+    const temFiltroAtivo = filtroTema !== 'Todos' || filtroTipo !== 'Todos' || filtroFormato !== 'Todos' || filtroQuantidade !== 10 || filtroDnaBase !== 'Todas' || filtroPeriodo !== 'Todos' || filtroDia !== 'Todos' || filtroMomento !== 'Todos';
 
     return (
         <CosmicBackground className="font-sans text-slate-100">
@@ -250,6 +253,18 @@ export default function FavoritosPage() {
                                                 {DIAS_SEMANA.map(d => <option key={d} value={d} className="bg-slate-900">{d}</option>)}
                                             </select>
                                         </div>
+
+                                        {/* Momento */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1 font-semibold uppercase">Momento</label>
+                                            <select
+                                                value={filtroMomento}
+                                                onChange={(e) => setFiltroMomento(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-amber-500 focus:outline-none"
+                                            >
+                                                {MOMENTOS.map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
 
                                     {/* Limpar filtros */}
@@ -263,6 +278,7 @@ export default function FavoritosPage() {
                                                 setFiltroDnaBase('Todas');
                                                 setFiltroPeriodo('Todos');
                                                 setFiltroDia('Todos');
+                                                setFiltroMomento('Todos');
                                             }}
                                             className="mt-3 text-xs text-amber-400 hover:text-amber-300"
                                         >

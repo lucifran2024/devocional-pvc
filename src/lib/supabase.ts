@@ -207,6 +207,7 @@ export interface FiltrosGeracao {
     dnaBase?: string;
     periodo?: string;
     diaSemana?: string;
+    momento?: string;
 }
 
 /**

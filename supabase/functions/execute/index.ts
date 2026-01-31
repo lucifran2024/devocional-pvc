@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
         .from("favoritos_mensagens")
         .select("texto_msg, created_at")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (favError || !favoritas || favoritas.length === 0) {
         return new Response(
@@ -152,17 +152,45 @@ Deno.serve(async (req) => {
 
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
-      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana);
+      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana || filtros.momento);
 
-      // Montar instruções de filtro
+      // Montar instruções de filtro - MAIS CLARAS E OBRIGATÓRIAS
       let instrucoesFiltro = '';
       if (temFiltros) {
-        instrucoesFiltro = '\n## 🎯 FILTROS APLICADOS (OBRIGATÓRIO):\n';
-        if (filtros.tema) instrucoesFiltro += `- TEMA: Todas mensagens devem ser sobre **${filtros.tema}**\n`;
-        if (filtros.tipo) instrucoesFiltro += `- TIPO: Gere no formato **${filtros.tipo}** (${filtros.tipo === 'Versículo' ? 'foque em versículos bíblicos' : filtros.tipo === 'Oração' ? 'formato de oração/prece' : filtros.tipo === 'Devocional' ? 'reflexão devocional completa' : 'reflexão curta'})\n`;
-        if (filtros.formato) instrucoesFiltro += `- FORMATO: Use estilo **${filtros.formato}** em todas (${filtros.formato === 'Staccato' ? 'frases curtas, impacto' : filtros.formato === 'Narrativo' ? 'texto fluido, história' : filtros.formato === 'Lista' ? 'tópicos numerados' : 'perguntas reflexivas'})\n`;
-        if (filtros.periodo) instrucoesFiltro += `- PERÍODO: COMECE cada mensagem com saudação de **${filtros.periodo}** (ex: "${filtros.periodo}, amado(a)!")\n`;
-        if (filtros.diaSemana) instrucoesFiltro += `- DIA: Mencione que é **${filtros.diaSemana}** nas mensagens (ex: "Neste ${filtros.diaSemana} abençoado...")\n`;
+        instrucoesFiltro = '\n## 🎯 FILTROS OBRIGATÓRIOS (SIGA TODOS SIMULTANEAMENTE):\n';
+        instrucoesFiltro += '> ⚠️ IMPORTANTE: Você DEVE aplicar TODOS os filtros abaixo EM CADA mensagem.\n\n';
+
+        if (filtros.tipo) {
+          const descTipo = filtros.tipo === 'Versículo' ? 'foque em versículos bíblicos com breve reflexão'
+            : filtros.tipo === 'Oração' ? 'escreva como oração/prece falando diretamente com Deus (Senhor, Te peço...)'
+              : filtros.tipo === 'Devocional' ? 'reflexão devocional completa e elaborada'
+                : 'reflexão curta e direta';
+          instrucoesFiltro += `1. **TIPO [${filtros.tipo.toUpperCase()}]**: ${descTipo}\n`;
+        }
+        if (filtros.periodo) {
+          instrucoesFiltro += `2. **SAUDAÇÃO**: COMECE cada mensagem com "${filtros.periodo}" (ex: "${filtros.periodo}, amado(a)!")\n`;
+        }
+        if (filtros.diaSemana) {
+          instrucoesFiltro += `3. **DIA**: Mencione "${filtros.diaSemana}" no texto (ex: "Neste ${filtros.diaSemana}...")\n`;
+        }
+        if (filtros.momento) {
+          const descMomento = filtros.momento === 'Fim de Semana' ? 'mensagem de descanso e renovação para o fim de semana'
+            : filtros.momento === 'Começo de Semana' ? 'mensagem de força e motivação para iniciar a semana'
+              : 'mensagem de gratidão e reflexão sobre o mês que encerra';
+          instrucoesFiltro += `4. **MOMENTO [${filtros.momento.toUpperCase()}]**: ${descMomento}\n`;
+        }
+        if (filtros.tema) {
+          instrucoesFiltro += `5. **TEMA**: Todas mensagens devem abordar "${filtros.tema}"\n`;
+        }
+        if (filtros.formato) {
+          const descFormato = filtros.formato === 'Staccato' ? 'frases curtas, impacto, quebras de linha'
+            : filtros.formato === 'Narrativo' ? 'texto fluido como história'
+              : filtros.formato === 'Lista' ? 'tópicos numerados'
+                : 'use perguntas reflexivas';
+          instrucoesFiltro += `6. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
+        }
+
+        instrucoesFiltro += '\n> Aplique TODOS os filtros acima em CADA mensagem gerada.\n';
       }
 
       // 4. Prompt interno para gerar mensagens
