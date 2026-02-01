@@ -191,7 +191,8 @@ Deno.serve(async (req) => {
         if (filtros.momento) {
           const descMomento = filtros.momento === 'Fim de Semana' ? 'mensagem de descanso e renovação para o fim de semana'
             : filtros.momento === 'Começo de Semana' ? 'mensagem de força e motivação para iniciar a semana'
-              : 'mensagem de gratidão e reflexão sobre o mês que encerra';
+              : filtros.momento === 'Início do Mês' ? 'mensagem de renovação, novos começos e expectativas para o mês que inicia'
+                : 'mensagem de gratidão e reflexão sobre o mês que encerra';
           instrucoesFiltro += `4. **MOMENTO [${filtros.momento.toUpperCase()}]**: ${descMomento}\n`;
         }
         if (filtros.tema) {

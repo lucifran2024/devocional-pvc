@@ -22,7 +22,7 @@ const DNA_BASE = [
 ];
 const PERIODOS = ['Todos', 'Bom Dia', 'Boa Tarde', 'Boa Noite'];
 const DIAS_SEMANA = ['Todos', 'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-const MOMENTOS = ['Todos', 'Fim de Semana', 'Começo de Semana', 'Fim do Mês'];
+const MOMENTOS = ['Todos', 'Fim de Semana', 'Começo de Semana', 'Início do Mês', 'Fim do Mês'];
 
 export default function FavoritosPage() {
     const [favoritos, setFavoritos] = useState<FavoritoMensagem[]>([]);
