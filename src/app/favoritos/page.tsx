@@ -141,6 +141,10 @@ export default function FavoritosPage() {
                                     <Book className="w-3.5 h-3.5" />
                                     Banco de Ouro
                                 </div>
+                                <Link href="/favoritos-beta" className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border border-purple-400/20 rounded-full text-purple-300 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-purple-500/20 transition-all">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    🧪 Testar Beta
+                                </Link>
                             </div>
 
                             <h1 className="text-4xl md:text-7xl font-black tracking-tight text-white mb-6 text-center md:text-left">
