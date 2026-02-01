@@ -205,6 +205,20 @@ Deno.serve(async (req) => {
                 : 'use perguntas reflexivas';
           instrucoesFiltro += `6. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
         }
+        if (filtros.tamanho) {
+          const descTamanho = filtros.tamanho === 'Curto' ? 'máximo 50 palavras, direto ao ponto'
+            : filtros.tamanho === 'Médio' ? 'entre 50-100 palavras, equilibrado'
+              : 'mais de 100 palavras, desenvolvido e profundo';
+          instrucoesFiltro += `7. **TAMANHO [${filtros.tamanho.toUpperCase()}]**: ${descTamanho}\n`;
+        }
+        if (filtros.tom) {
+          const descTom = filtros.tom === 'Alegre' ? 'tom positivo, vibrante, celebrando a vida'
+            : filtros.tom === 'Sereno' ? 'tom calmo, pacífico, reconfortante'
+              : filtros.tom === 'Reflexivo' ? 'tom contemplativo, profundo, questionador'
+                : filtros.tom === 'Motivacional' ? 'tom energético, inspirador, que impulsiona ação'
+                  : 'tom pensativo, meditativo, introspectivo';
+          instrucoesFiltro += `8. **TOM [${filtros.tom.toUpperCase()}]**: ${descTom}\n`;
+        }
 
         instrucoesFiltro += '\n> Aplique TODOS os filtros acima em CADA mensagem gerada.\n';
       }
