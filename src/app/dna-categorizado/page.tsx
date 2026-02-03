@@ -59,12 +59,13 @@ export default function DnaCategorizadoPage() {
     const [filtroTema, setFiltroTema] = useState('');
     const [filtroFormato, setFiltroFormato] = useState('');
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
+    const [filtroMomento, setFiltroMomento] = useState('');
     const [usarDnaBase, setUsarDnaBase] = useState(true);
 
     // Opções de filtros
-    const TEMAS = ['Esperança', 'Fé', 'Amor', 'Perseverança', 'Gratidão', 'Renovação', 'Força', 'Paz', 'Sabedoria', 'Propósito'];
-    const FORMATOS = ['Reflexão curta', 'Devocional completo', 'Oração', 'Versículo comentado', 'Exortação', 'Declaração de fé'];
+    const FORMATOS = ['Curto', 'Médio', 'Longo'];
     const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
+    const MOMENTOS = ['Início da Semana', 'Fim da Semana', 'Início do Mês', 'Fim do Mês'];
 
     const loadData = async () => {
         setLoading(true);
@@ -142,6 +143,7 @@ export default function DnaCategorizadoPage() {
             tema: filtroTema || undefined,
             formato: filtroFormato || undefined,
             periodo: filtroPeriodo || undefined,
+            momento: filtroMomento || undefined,
             usarDnaBase,
         };
 
@@ -273,34 +275,33 @@ export default function DnaCategorizadoPage() {
                                         <Filter className="w-4 h-4 text-violet-400" />
                                         Filtros Avançados de Geração
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        {/* Tema */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {/* Tema - Input livre */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tema</label>
-                                            <select
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tema (livre)</label>
+                                            <input
+                                                type="text"
                                                 value={filtroTema}
                                                 onChange={(e) => setFiltroTema(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
-                                            >
-                                                <option value="" className="bg-slate-900">Qualquer tema</option>
-                                                {TEMAS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
+                                                placeholder="Ex: Esperança, Fé, Gratidão..."
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
+                                            />
                                         </div>
 
                                         {/* Formato */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Formato</label>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tamanho</label>
                                             <select
                                                 value={filtroFormato}
                                                 onChange={(e) => setFiltroFormato(e.target.value)}
                                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer formato</option>
+                                                <option value="" className="bg-slate-900">Qualquer tamanho</option>
                                                 {FORMATOS.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
                                             </select>
                                         </div>
 
-                                        {/* Período */}
+                                        {/* Período do Dia */}
                                         <div>
                                             <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Período do Dia</label>
                                             <select
@@ -310,6 +311,19 @@ export default function DnaCategorizadoPage() {
                                             >
                                                 <option value="" className="bg-slate-900">Qualquer período</option>
                                                 {PERIODOS.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Momento da Semana/Mês */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Momento</label>
+                                            <select
+                                                value={filtroMomento}
+                                                onChange={(e) => setFiltroMomento(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer momento</option>
+                                                {MOMENTOS.map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
                                             </select>
                                         </div>
 
@@ -326,9 +340,9 @@ export default function DnaCategorizadoPage() {
                                     </div>
 
                                     {/* Limpar Filtros */}
-                                    {(filtroTema || filtroFormato || filtroPeriodo) && (
+                                    {(filtroTema || filtroFormato || filtroPeriodo || filtroMomento) && (
                                         <button
-                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); }}
+                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); setFiltroMomento(''); }}
                                             className="mt-3 text-xs text-violet-400 hover:text-violet-300"
                                         >
                                             ✕ Limpar filtros avançados
