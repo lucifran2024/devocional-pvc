@@ -61,6 +61,7 @@ export default function DnaCategorizadoPage() {
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
     const [filtroMomento, setFiltroMomento] = useState('');
     const [usarDnaBase, setUsarDnaBase] = useState(true);
+    const [usarPassagemDia, setUsarPassagemDia] = useState(false);
 
     // Opções de filtros
     const FORMATOS = ['Curto', 'Médio', 'Longo'];
@@ -145,6 +146,7 @@ export default function DnaCategorizadoPage() {
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             usarDnaBase,
+            usarPassagemDia,
         };
 
         try {
@@ -337,6 +339,20 @@ export default function DnaCategorizadoPage() {
                                                 {usarDnaBase ? '✓ Usar DNA Salvo' : '✗ Sem DNA Base'}
                                             </button>
                                         </div>
+
+                                        {/* Passagem do Dia Toggle */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">📖 Passagem do Dia</label>
+                                            <button
+                                                onClick={() => setUsarPassagemDia(!usarPassagemDia)}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${usarPassagemDia ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                            >
+                                                {usarPassagemDia ? '✓ Usar Passagem do Dia' : '✗ Sem Passagem'}
+                                            </button>
+                                            {usarPassagemDia && (
+                                                <p className="text-[10px] text-amber-400/70 mt-1">Formato: Cabeçalho + Título + Corpo c/ Versículo + Fechamento</p>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Limpar Filtros */}
@@ -428,7 +444,7 @@ export default function DnaCategorizadoPage() {
                                                 {copiedId === -i ? '✓ Copiado' : 'Copiar'}
                                             </button>
                                         </div>
-                                        <div className="prose prose-invert prose-sm max-w-none">
+                                        <div className="prose prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                             <ReactMarkdown>{msg}</ReactMarkdown>
                                         </div>
                                     </div>
@@ -483,7 +499,7 @@ export default function DnaCategorizadoPage() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="prose prose-invert max-w-none prose-p:text-slate-300">
+                                    <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                         <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
                                     </div>
                                 </div>
