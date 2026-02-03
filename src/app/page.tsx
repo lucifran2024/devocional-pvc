@@ -10,6 +10,7 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 import { HeroSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { PalavraManha } from '@/components/PalavraManha';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -82,34 +83,19 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* PALAVRA DO DIA */}
-          <div className="animate-enter w-full" style={{ animationDelay: '0.1s' }}>
-            <h2 className="text-amber-500/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-4">
-              Palavra da Manhã
-            </h2>
-
-            {loading ? (
-              <div className="h-20 w-full max-w-2xl bg-white/5 rounded-2xl animate-pulse mx-auto"></div>
-            ) : error ? (
-              <div className="inline-flex items-center gap-2 text-red-400 bg-red-500/10 px-4 py-2 rounded-lg">
-                <AlertTriangle className="w-4 h-4" />
-                <span>{error}</span>
-              </div>
-            ) : (
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 leading-[0.9]">
+          {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
+          <div className="w-full relative z-20">
+            <div className="flex flex-col items-center mb-2">
+              <h2 className="text-amber-500/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1">
+                Palavra da Manhã
+              </h2>
+              {/* Data da Leitura */}
+              <div className="text-[10px] text-slate-500 font-medium uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
                 {payload?.passagem_do_dia || "Leitura Sagrada"}
-              </h1>
-            )}
-
-            {/* Chip Arquétipo */}
-            {!loading && payload && (
-              <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full glass-panel border-amber-500/30 mt-4">
-                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulseshadow"></div>
-                <span className="text-slate-200 text-sm">
-                  Arquétipo: <strong className="text-amber-400">{payload.arquetipo}</strong>
-                </span>
               </div>
-            )}
+            </div>
+
+            <PalavraManha />
           </div>
 
         </div>

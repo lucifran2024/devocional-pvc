@@ -512,7 +512,154 @@ Gere as 10 mensagens agora:
     }
     // ========================================
     // FIM DO MODO HÍBRIDO
-    // ========================================    // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
+    // ========================================    // ========================================
+    // MODO ESPECIAL: PALAVRA DA MANHÃ (AUTO)
+    // ========================================
+    if (modo_id === 'modo_palavra_manha') {
+      console.log(`🌅 [PALAVRA DA MANHÃ] Iniciando geração para ${data}...`);
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+
+      if (!supabaseUrl || !serviceKey || !geminiKey) {
+        throw new Error("Variáveis de ambiente não configuradas.");
+      }
+
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // 1. Determinar Configuração do Dia
+      const dataObj = new Date(data);
+      const diaSemana = dataObj.getUTCDay(); // 0=Domingo, 1=Segunda, ...
+
+      const CONFIG_DIA: Record<number, any> = {
+        1: { dia: 'Segunda', categoria: 'ORACAO', formato: 'Curto', extra: 'Início da Semana' },
+        2: { dia: 'Terça', categoria: 'VERSICULO', formato: 'Médio', extra: '' },
+        3: { dia: 'Quarta', categoria: 'REFLEXAO', formato: 'Médio', extra: '' },
+        4: { dia: 'Quinta', categoria: 'DEVOCIONAL', formato: 'Longo', extra: 'Passagem do Dia' },
+        5: { dia: 'Sexta', categoria: 'EXORTACAO', formato: 'Médio', extra: '' },
+        6: { dia: 'Sábado', categoria: 'MEDITACAO', formato: 'Curto', extra: 'Fim de Semana' },
+        0: { dia: 'Domingo', categoria: 'LOUVOR', formato: 'Médio', extra: 'Fim de Semana' }
+      };
+
+      const config = CONFIG_DIA[diaSemana] || CONFIG_DIA[1];
+      console.log(`📅 Configuração: ${config.dia} | Cat: ${config.categoria} | Fmt: ${config.formato}`);
+
+      // 2. Buscar Passagem do Dia (APENAS SE FOR QUINTA OU CONFIGURADO)
+      let passagemRef = '';
+      let passagemTexto = '';
+
+      if (config.extra === 'Passagem do Dia') {
+        console.log('📖 Buscando Passagem do Dia...');
+        const { data: payloadDia } = await supabase
+          .from("payload_do_dia")
+          .select("*")
+          .eq("data", data)
+          .maybeSingle();
+
+        passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
+        passagemTexto = payloadDia?.texto || "";
+      }
+
+      // 3. Buscar Histórico Recente (Anti-Repetição)
+      // Buscar últimas 3 gerações da palavra da manhã para evitar repetição
+      const { data: historicoRecente } = await supabase
+        .from("palavra_manha_cache")
+        .select("mensagem, categoria")
+        .order("data", { ascending: false })
+        .limit(3);
+
+      const contextoEvitar = historicoRecente?.map(h => `(Evite repetir este tema/estilo): ${h.mensagem.substring(0, 50)}...`).join('\n') || "Nenhum histórico recente.";
+
+      // 4. Buscar Favoritas (DNA BASE)
+      const { data: favoritas } = await supabase
+        .from("favoritos_mensagens")
+        .select("texto_msg")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      const dnaFavoritas = favoritas?.length
+        ? favoritas.map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`).join("\n\n---\n\n")
+        : "Sem favoritas. Use estilo devocional genérico, mas profundo.";
+
+      // 5. Construir Prompt
+      const prompt = `
+# GERADOR PALAVRA DA MANHÃ (MODO AUTOMÁTICO)
+
+## CONTEXTO
+Você é um mentor espiritual gerando a "Palavra da Manhã" para o usuário. 
+Hoje é **${config.dia}**.
+
+## DNA DA ESCRITA (CRUCIAL):
+Baseie-se PLENAMENTE no estilo destas favoritas:
+${dnaFavoritas}
+
+## CONFIGURAÇÃO DE HOJE:
+- **CATEGORIA:** ${config.categoria}
+- **FORMATO:** ${config.formato}
+- **CONTEXTO EXTRA:** ${config.extra}
+${passagemRef ? `- **BASE BÍBLICA OBRIGATÓRIA:** ${passagemRef}\n"${passagemTexto}"` : ''}
+
+## ANTI-REPETIÇÃO (O QUE NÃO FAZER):
+${contextoEvitar}
+
+## INSTRUÇÕES DE GERAÇÃO:
+Gere UMA ÚNICA mensagem que siga estritamente a configuração acima.
+
+1. **Se for ORAÇÃO:** Escreva em primeira pessoa dirigindo-se a Deus.
+2. **Se for VERSÍCULO:** Cite um versículo chave e faça um breve comentário.
+3. **Se for QUINTA (Passagem do Dia):** Explique e aplique a passagem ${passagemRef}.
+4. **Se for INÍCIO SEMANA:** Dê força, ânimo e direção.
+5. **Se for FIM SEMANA:** Dê descanso, paz e gratidão.
+
+## FORMATO DE SAÍDA OBRIGATÓRIO:
+[Título Curto e Impactante em CAIXA ALTA]
+
+[Corpo da Mensagem]
+
+${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : '> "Versículo de apoio" — Ref'}
+
+[Fechamento Breve]
+`;
+
+      // 6. Chamar Gemini
+      const MODEL_NAME = "gemini-2.0-flash";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.85,
+            maxOutputTokens: 2000
+          }
+        })
+      });
+
+      if (!resp.ok) throw new Error(`Erro Gemini: ${resp.status}`);
+
+      const aiData = await resp.json();
+      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
+
+      console.log(`✅ [PALAVRA DA MANHÃ] Gerada com sucesso!`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: resultado,
+          config: config,
+          passagem_usada: passagemRef
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+
+    // --- INICIO DA LÓGICA DE VARIABILIDADE (DNA PVC OFICIAL) ---
 
     // 1. SORTEIO DO ARQUÉTIPO (CAMALEÃO)
     const arquetipoSorteado = getArchetype(data);

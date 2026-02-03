@@ -41,6 +41,16 @@ export interface ExecuteResponse {
     error?: string;
 }
 
+export interface PalavraManhaCache {
+    id: number;
+    data: string;
+    dia_semana: string;
+    categoria: string;
+    formato: string;
+    mensagem: string;
+    passagem_ref?: string;
+}
+
 // ===========================================
 // FUNÇÕES
 // ===========================================
@@ -902,5 +912,77 @@ export async function getCategoriaStats(): Promise<CategoriaStats[]> {
     } catch (err) {
         console.error('💥 [DNA] Exceção:', err);
         return [];
+    }
+}
+
+// ===========================================
+// PALAVRA DA MANHÃ (AUTO)
+// ===========================================
+
+/**
+ * Busca Palavra da Manhã do cache
+ */
+export async function getPalavraManha(data: string): Promise<PalavraManhaCache | null> {
+    const { data: result } = await supabase
+        .from('palavra_manha_cache')
+        .select('*')
+        .eq('data', data)
+        .maybeSingle();
+
+    return result;
+}
+
+/**
+ * Gera Palavra da Manhã via Edge Function
+ */
+export async function gerarPalavraManha(data: string): Promise<{ data: PalavraManhaCache | null; error: string | null }> {
+    try {
+        // 1. Chama Edge Function
+        const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                modo_id: 'modo_palavra_manha',
+                data: data
+            })
+        });
+
+        if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
+
+        const json = await resp.json();
+
+        if (!json.ok || !json.resultado) throw new Error(json.error || 'Erro ao gerar mensagem');
+
+        // 2. Salva no Cache
+        const config = json.config;
+        const novoCache: any = {
+            data: data,
+            dia_semana: config.dia,
+            categoria: config.categoria,
+            formato: config.formato,
+            mensagem: json.resultado,
+            passagem_ref: json.passagem_usada || null
+        };
+
+        const { data: saved, error: saveError } = await supabase
+            .from('palavra_manha_cache')
+            .insert(novoCache)
+            .select('*')
+            .single();
+
+        if (saveError) {
+            console.error('Erro ao salvar cache:', saveError);
+            // Retorna o gerado mesmo se falhar cache
+            return { data: { ...novoCache, id: 0 } as PalavraManhaCache, error: null };
+        }
+
+        return { data: saved, error: null };
+
+    } catch (e) {
+        console.error('Erro gerarPalavraManha:', e);
+        return { data: null, error: e instanceof Error ? e.message : 'Erro desconhecido' };
     }
 }
