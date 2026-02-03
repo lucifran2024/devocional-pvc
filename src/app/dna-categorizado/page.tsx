@@ -54,6 +54,18 @@ export default function DnaCategorizadoPage() {
     const [filtroQuantidade, setFiltroQuantidade] = useState(10);
     const [filtroCategoriaGerar, setFiltroCategoriaGerar] = useState<CategoriaDna | 'todas'>('todas');
 
+    // Filtros Avançados de Geração
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [filtroTema, setFiltroTema] = useState('');
+    const [filtroFormato, setFiltroFormato] = useState('');
+    const [filtroPeriodo, setFiltroPeriodo] = useState('');
+    const [usarDnaBase, setUsarDnaBase] = useState(true);
+
+    // Opções de filtros
+    const TEMAS = ['Esperança', 'Fé', 'Amor', 'Perseverança', 'Gratidão', 'Renovação', 'Força', 'Paz', 'Sabedoria', 'Propósito'];
+    const FORMATOS = ['Reflexão curta', 'Devocional completo', 'Oração', 'Versículo comentado', 'Exortação', 'Declaração de fé'];
+    const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
+
     const loadData = async () => {
         setLoading(true);
         try {
@@ -127,6 +139,10 @@ export default function DnaCategorizadoPage() {
         const filtros = {
             quantidade: filtroQuantidade,
             categoria: filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined,
+            tema: filtroTema || undefined,
+            formato: filtroFormato || undefined,
+            periodo: filtroPeriodo || undefined,
+            usarDnaBase,
         };
 
         try {
@@ -239,7 +255,87 @@ export default function DnaCategorizadoPage() {
                                     <option value="todas" className="bg-slate-900">Todas categorias</option>
                                     {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nome}</option>)}
                                 </select>
+
+                                <button
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                >
+                                    <Filter className="w-4 h-4" />
+                                    Filtros Avançados
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                                </button>
                             </div>
+
+                            {/* FILTROS AVANÇADOS */}
+                            {showAdvancedFilters && (
+                                <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
+                                    <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                                        <Filter className="w-4 h-4 text-violet-400" />
+                                        Filtros Avançados de Geração
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {/* Tema */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tema</label>
+                                            <select
+                                                value={filtroTema}
+                                                onChange={(e) => setFiltroTema(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer tema</option>
+                                                {TEMAS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Formato */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Formato</label>
+                                            <select
+                                                value={filtroFormato}
+                                                onChange={(e) => setFiltroFormato(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer formato</option>
+                                                {FORMATOS.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Período */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Período do Dia</label>
+                                            <select
+                                                value={filtroPeriodo}
+                                                onChange={(e) => setFiltroPeriodo(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer período</option>
+                                                {PERIODOS.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* DNA Base Toggle */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">DNA Base</label>
+                                            <button
+                                                onClick={() => setUsarDnaBase(!usarDnaBase)}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${usarDnaBase ? 'bg-green-500/20 border-green-500/30 text-green-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                            >
+                                                {usarDnaBase ? '✓ Usar DNA Salvo' : '✗ Sem DNA Base'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Limpar Filtros */}
+                                    {(filtroTema || filtroFormato || filtroPeriodo) && (
+                                        <button
+                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); }}
+                                            className="mt-3 text-xs text-violet-400 hover:text-violet-300"
+                                        >
+                                            ✕ Limpar filtros avançados
+                                        </button>
+                                    )}
+                                </div>
+                            )}
 
                             {/* FORM DE ADIÇÃO */}
                             {showAddForm && (
