@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Sparkles, Book, MessageSquare, Heart, Anchor, Feather, Star
+  Calendar, Sparkles, Book, MessageSquare, Heart, Anchor, Feather, Star, Layers
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -189,7 +189,17 @@ export default function DashboardPage() {
             badge="PREMIUM"
           />
 
-          {/* Card 6: Biblioteca (Bíblia) */}
+          {/* Card 8: DNA Categorizado */}
+          <DashboardCard
+            href="/dna-categorizado"
+            title="DNA Categorizado"
+            desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
+            icon={Layers}
+            accentColor="text-violet-400"
+            badge="NOVO"
+          />
+
+          {/* Card 9: Biblioteca (Bíblia) */}
           <DashboardCard
             href="/biblioteca"
             title="Bíblia Sagrada"

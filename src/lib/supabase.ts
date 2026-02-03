@@ -756,3 +756,151 @@ export async function removeFavoritoById(id: number): Promise<boolean> {
         return false;
     }
 }
+
+// ===========================================
+// DNA CATEGORIZADO - Novo Sistema de Categorização
+// ===========================================
+
+export type CategoriaDna = 'devocional' | 'oração' | 'versículo' | 'reflexão' | 'exortação' | 'declaração' | 'outro';
+
+export interface DnaCategorizado {
+    id: number;
+    texto_msg: string;
+    categoria: CategoriaDna;
+    tags: string[];
+    created_at: string;
+}
+
+export interface CategoriaStats {
+    categoria: CategoriaDna;
+    total: number;
+}
+
+/**
+ * Busca DNA categorizado com filtros opcionais
+ */
+export async function getDnaCategorizado(
+    categoria?: CategoriaDna,
+    limit: number = 50
+): Promise<DnaCategorizado[]> {
+    console.log(`🧬 [DNA] Buscando (categoria: ${categoria || 'todas'}, limit: ${limit})...`);
+
+    try {
+        let query = supabase
+            .from('dna_categorizado')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (categoria && categoria !== 'outro') {
+            query = query.eq('categoria', categoria);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('❌ [DNA] Erro ao buscar:', error);
+            return [];
+        }
+
+        console.log(`✅ [DNA] Encontrados: ${data?.length || 0}`);
+        return data as DnaCategorizado[];
+    } catch (err) {
+        console.error('💥 [DNA] Exceção:', err);
+        return [];
+    }
+}
+
+/**
+ * Adiciona nova mensagem ao DNA Categorizado
+ */
+export async function addDnaCategorizado(
+    textoMensagem: string,
+    categoria: CategoriaDna,
+    tags: string[] = []
+): Promise<DnaCategorizado | null> {
+    console.log(`🧬 [DNA] Adicionando mensagem (${categoria}): ${textoMensagem.substring(0, 50)}...`);
+
+    try {
+        const { data, error } = await supabase
+            .from('dna_categorizado')
+            .insert({
+                texto_msg: textoMensagem,
+                categoria,
+                tags
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ [DNA] Erro ao adicionar:', error);
+            return null;
+        }
+
+        console.log('✅ [DNA] Adicionado com sucesso:', data.id);
+        return data as DnaCategorizado;
+    } catch (err) {
+        console.error('💥 [DNA] Exceção:', err);
+        return null;
+    }
+}
+
+/**
+ * Remove um DNA pelo ID
+ */
+export async function removeDnaById(id: number): Promise<boolean> {
+    console.log(`🗑️ [DNA] Removendo ID ${id}`);
+
+    try {
+        const { error } = await supabase
+            .from('dna_categorizado')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [DNA] Erro ao remover:', error);
+            return false;
+        }
+
+        console.log('✅ [DNA] Removido com sucesso');
+        return true;
+    } catch (err) {
+        console.error('💥 [DNA] Exceção:', err);
+        return false;
+    }
+}
+
+/**
+ * Retorna estatísticas por categoria
+ */
+export async function getCategoriaStats(): Promise<CategoriaStats[]> {
+    console.log('📊 [DNA] Buscando estatísticas por categoria...');
+
+    try {
+        const { data, error } = await supabase
+            .from('dna_categorizado')
+            .select('categoria');
+
+        if (error) {
+            console.error('❌ [DNA] Erro ao buscar stats:', error);
+            return [];
+        }
+
+        // Agrupa manualmente (Supabase não suporta GROUP BY direto)
+        const counts: Record<string, number> = {};
+        data?.forEach(item => {
+            counts[item.categoria] = (counts[item.categoria] || 0) + 1;
+        });
+
+        const stats: CategoriaStats[] = Object.entries(counts).map(([cat, total]) => ({
+            categoria: cat as CategoriaDna,
+            total
+        }));
+
+        console.log('✅ [DNA] Stats:', stats);
+        return stats.sort((a, b) => b.total - a.total);
+    } catch (err) {
+        console.error('💥 [DNA] Exceção:', err);
+        return [];
+    }
+}
