@@ -223,36 +223,98 @@ Deno.serve(async (req) => {
         instrucoesFiltro += '\n> Aplique TODOS os filtros acima em CADA mensagem gerada.\n';
       }
 
-      // 4. Prompt interno para gerar mensagens
+      // 4. PASSAGEM DO DIA - Buscar se filtro ativo
+      let passagemDoDia = '';
+      let passagemRef = '';
+      if (filtros?.usarPassagemDia) {
+        console.log('📖 [PASSAGEM] Buscando passagem do dia...');
+        const dataAlvo = data || new Date().toISOString().split('T')[0];
+        const { data: payloadDia, error: payloadErr } = await supabase
+          .from("payload_do_dia")
+          .select("*")
+          .eq("data", dataAlvo)
+          .maybeSingle();
+
+        if (payloadErr) {
+          console.error("Erro ao buscar passagem:", payloadErr);
+        }
+
+        passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
+        passagemDoDia = payloadDia?.texto || "";
+        console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
+      }
+
+      // 5. Prompt interno para gerar mensagens
+      // Se usarPassagemDia, usa formato estruturado
+      const formatoPassagemDoDia = filtros?.usarPassagemDia ? `
+## 📖 PASSAGEM DO DIA:
+**${passagemRef}**
+${passagemDoDia ? `\n"${passagemDoDia}"` : ''}
+
+## ⚠️ FORMATO OBRIGATÓRIO (Passagem do Dia):
+Cada mensagem DEVE seguir esta estrutura:
+
+**📖 LEITURA DO DIA — ${passagemRef}**
+
+**[TÍTULO CRIATIVO EM CAPS]**
+
+[Cabeçalho/Gancho - 1 frase que conecta com o leitor]
+
+[Corpo da mensagem - reflexão sobre a passagem]
+
+> "Versículo chave" — Referência
+
+[Fechamento - aplicação prática ou oração breve]
+
+---
+
+` : '';
+
       const promptFavoritas = `
 # MODO FAVORITAS — GERADOR DE DNA
+${formatoPassagemDoDia ? '\n## 🔀 MODO: FAVORITAS + PASSAGEM DO DIA' : ''}
 
 Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
 Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
-${instrucoesFiltro}
+${formatoPassagemDoDia}${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
 ${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
+${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
 - **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
-- O versículo pode vir das favoritas OU ser um novo que combine com a mensagem
+- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : 'O versículo pode vir das favoritas OU ser um novo que combine com a mensagem'}
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
 
 ## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
+${filtros?.usarPassagemDia ? `
+**📖 LEITURA DO DIA — ${passagemRef}**
 
+**[TÍTULO EM CAPS]**
+
+[Cabeçalho]
+
+[Corpo]
+
+> "Versículo" — Ref
+
+[Fechamento]
+
+---
+` : `
 **MENSAGEM 01 — [TÍTULO EM CAPS]**
 
 [Corpo da mensagem]
 
 ---
-
+`}
 (continue até MENSAGEM ${quantidade})
 
 ## MENSAGENS FAVORITAS (DNA BASE):
