@@ -5,12 +5,23 @@ import Link from 'next/link';
 import { ArrowLeft, Feather, Send, Check, Loader2 } from 'lucide-react';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
-import { addFavoritoManual } from '@/lib/supabase';
+import { addFavoritoUnificado, CategoriaDna } from '@/lib/supabase';
 
 export default function DiarioPage() {
     const [mensagem, setMensagem] = useState('');
+    const [categoria, setCategoria] = useState<CategoriaDna>('outro');
     const [loading, setLoading] = useState(false);
     const [sucesso, setSucesso] = useState(false);
+
+    const CATEGORIAS: { value: CategoriaDna; label: string }[] = [
+        { value: 'devocional', label: '📖 Devocional' },
+        { value: 'oração', label: '🙏 Oração' },
+        { value: 'versículo', label: '📜 Versículo' },
+        { value: 'reflexão', label: '💭 Reflexão' },
+        { value: 'exortação', label: '🔥 Exortação' },
+        { value: 'declaração', label: '✨ Declaração' },
+        { value: 'outro', label: '📝 Outro' }
+    ];
 
     const handleSubmit = async () => {
         if (!mensagem.trim() || loading) return;
@@ -18,11 +29,12 @@ export default function DiarioPage() {
         setLoading(true);
         setSucesso(false);
 
-        const result = await addFavoritoManual(mensagem.trim());
+        const result = await addFavoritoUnificado(mensagem.trim(), categoria);
 
-        if (result) {
+        if (result.favorito || result.dna) {
             setSucesso(true);
             setMensagem('');
+            setCategoria('outro');
             // Reset sucesso após 3s
             setTimeout(() => setSucesso(false), 3000);
         }
@@ -73,6 +85,27 @@ export default function DiarioPage() {
                             className="w-full h-64 bg-white/[0.02] border border-white/10 rounded-2xl p-6 text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all resize-none text-lg leading-relaxed"
                         />
 
+                        {/* Seletor de Categoria */}
+                        <div className="mt-6">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                Categoria
+                            </label>
+                            <select
+                                value={categoria}
+                                onChange={(e) => setCategoria(e.target.value as CategoriaDna)}
+                                className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer"
+                            >
+                                {CATEGORIAS.map((cat) => (
+                                    <option key={cat.value} value={cat.value} className="bg-slate-900">
+                                        {cat.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-600 mt-2">
+                                A mensagem será salva em ambos os bancos: Favoritos e DNA Categorizado
+                            </p>
+                        </div>
+
                         {/* Contador de caracteres */}
                         <div className="flex justify-between items-center mt-4">
                             <span className="text-xs text-slate-600">
@@ -89,10 +122,10 @@ export default function DiarioPage() {
                         onClick={handleSubmit}
                         disabled={loading || mensagem.trim().length < 50}
                         className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${sucesso
-                                ? 'bg-emerald-600 text-white'
-                                : mensagem.trim().length >= 50
-                                    ? 'bg-amber-500 hover:bg-amber-400 text-black'
-                                    : 'bg-white/5 text-slate-600 cursor-not-allowed'
+                            ? 'bg-emerald-600 text-white'
+                            : mensagem.trim().length >= 50
+                                ? 'bg-amber-500 hover:bg-amber-400 text-black'
+                                : 'bg-white/5 text-slate-600 cursor-not-allowed'
                             }`}
                     >
                         {loading ? (

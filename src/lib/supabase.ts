@@ -921,6 +921,28 @@ export async function addDnaCategorizado(
 }
 
 /**
+ * FUNÇÃO UNIFICADA: Adiciona mensagem em AMBAS tabelas
+ * - favoritos_mensagens (sem categoria)
+ * - dna_categorizado (com categoria)
+ */
+export async function addFavoritoUnificado(
+    textoMensagem: string,
+    categoria: CategoriaDna = 'outro',
+    tags: string[] = []
+): Promise<{ favorito: FavoritoMensagem | null; dna: DnaCategorizado | null }> {
+    console.log(`🔗 [UNIFICADO] Adicionando em ambas tabelas (${categoria})`);
+
+    // Insere em paralelo nas duas tabelas
+    const [favorito, dna] = await Promise.all([
+        addFavoritoManual(textoMensagem),
+        addDnaCategorizado(textoMensagem, categoria, tags)
+    ]);
+
+    console.log(`✅ [UNIFICADO] Favorito: ${favorito?.id || 'erro'}, DNA: ${dna?.id || 'erro'}`);
+    return { favorito, dna };
+}
+
+/**
  * Remove um DNA pelo ID
  */
 export async function removeDnaById(id: number): Promise<boolean> {
