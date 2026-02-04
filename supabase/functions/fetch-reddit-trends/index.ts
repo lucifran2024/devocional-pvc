@@ -99,29 +99,36 @@ serve(async (req) => {
         // Slice Top 5
         const topPosts = rawPosts.slice(0, 5);
 
+
         // --- TRADUÇÃO (GEMINI) ---
         let translations: any[] = [];
-        if (GEMINI_KEY && topPosts.length > 0) {
+
+        // Filtrar posts que realmente têm texto para traduzir ou título
+        const measurablePosts = topPosts.filter(p => p.title || p.selftext);
+
+        if (GEMINI_KEY && measurablePosts.length > 0) {
             try {
-                const postsToTranslate = JSON.stringify(topPosts.map((p: any, i: number) => ({
+                const postsToTranslate = JSON.stringify(measurablePosts.map((p: any, i: number) => ({
                     id: i,
                     title: p.title,
-                    text: p.selftext ? p.selftext.substring(0, 1000) : ""
+                    text: p.selftext ? p.selftext.substring(0, 5000) : "Conteúdo externo (Link/Imagem). Leia o título." // Aumentado para 5000
                 })));
 
                 const prompt = `
-                Você é um tradutor teológico experiente.
-                Traduza estes posts do Reddit/RSS para Português do Brasil.
+                ATUE COMO UM TRADUTOR PASTORAL.
+                Sua missão é traduzir estes textos do Reddit para Português do Brasil.
                 
-                DIRETRIZES:
-                1. Mantenha o tom pessoal e testemunhal do autor original.
-                2. Traduza gírias ou contextos culturais para equivalentes brasileiros cristãos.
-                3. Se o texto for muito longo, faça um resumo rico, mantendo a essência espiritual.
-                4. Retorne APENAS JSON: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
+                REGRAS CRITICAS:
+                1. **NÃO RESUMA**. Traduza o texto INTEGRALMENTE. O usuário quer ler tudo.
+                2. Se o texto for "Conteúdo externo...", traduza apenas o título e mantenha essa nota.
+                3. Mantenha o tom emocional, testemunhal e teológico original.
+                4. Converta referências bíblicas para o padrão brasileiro (ex: James -> Tiago).
+                5. Output OBRIGATÓRIO em JSON: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
                 
                 INPUT: ${postsToTranslate}
                 `;
 
+                // Usando gemini-2.0-flash conforme preferência do usuário
                 const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -135,19 +142,28 @@ serve(async (req) => {
                     const js = await geminiResp.json();
                     const txt = js.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (txt) translations = JSON.parse(txt);
+                } else {
+                    console.error('Gemini Error Status:', geminiResp.status);
+                    const err = await geminiResp.text();
+                    console.error('Gemini Error Body:', err);
                 }
             } catch (e) {
                 console.error('Translation Error:', e);
             }
         }
 
-        // Merge Final
+        // Merge Final - Se tradução falhar, usa original com aviso
         const finalPosts = topPosts.map((post: any, index: number) => {
             const t = translations.find((x: any) => x.id === index);
+
+            // Se falhou a tradução, adiciona um prefixo para debug do usuário saber
+            const titleFallback = t ? t.titulo_pt : `(EN) ${post.title}`;
+            const textFallback = t ? t.texto_pt : post.selftext;
+
             return {
                 ...post,
-                titulo_pt: t?.titulo_pt || post.title,
-                texto_pt: t?.texto_pt || post.selftext
+                titulo_pt: titleFallback,
+                texto_pt: textFallback
             };
         });
 
@@ -161,3 +177,4 @@ serve(async (req) => {
         });
     }
 });
+
