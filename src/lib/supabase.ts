@@ -548,9 +548,7 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
             console.log('✅ [STORAGE] Passagem encontrada:', passagemDia.referencia);
             return passagemDia;
         } else {
-            console.warn('⚠️ [STORAGE] Nenhuma passagem encontrada para hoje. Usando fallback aleatório?');
-            // Opcional: retornar a mais recente se não tiver a de hoje
-            // return passagens[passagens.length - 1]; 
+            console.warn('⚠️ [STORAGE] Nenhuma passagem encontrada para hoje no arquivo.');
             return null;
         }
 
@@ -558,6 +556,68 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
         console.error('💥 [STORAGE] Erro crítico ao processar plano de leitura:', err);
         return null;
     }
+}
+
+/**
+ * Busca a passagem do dia do BANCO DE DADOS (Tabela leitura_do_dia)
+ * Fallback robusto quando o Storage falha
+ */
+export async function getPassagemFromDB(dataPreferida: string): Promise<PassagemSecao6 | null> {
+    console.log(`🗄️ [DB] Buscando na tabela leitura_do_dia para data: ${dataPreferida}`);
+
+    try {
+        const { data, error } = await supabase
+            .from('leitura_do_dia')
+            .select('*')
+            .eq('data', dataPreferida)
+            .maybeSingle();
+
+        if (error) {
+            console.error('❌ [DB] Erro ao buscar no banco:', error);
+            return null;
+        }
+
+        if (!data) {
+            console.warn('⚠️ [DB] Nenhuma passagem encontrada no banco.');
+            return null;
+        }
+
+        console.log('✅ [DB] Sucesso! Passagem encontrada:', data.passagem_do_dia);
+
+        // Mapear do formato DB para PassagemSecao6
+        return {
+            data: data.data,
+            referencia: data.passagem_do_dia,
+            arquetipo_maestro: data.arquetipo || 'Profeta',
+            lexico_do_dia: data.lexico_do_dia || [],
+            estrutura_dinamica: [], // Geralmente não persiste no banco salvo se tiver coluna
+            insights_pre_minerados: data.insights_pre_minerados || []
+        };
+
+    } catch (err) {
+        console.error('💥 [DB] Exceção ao buscar no banco:', err);
+        return null;
+    }
+}
+
+/**
+ * Busca a passagem do dia de forma UNIFICADA e ROBUSTA
+ * Ordem: Storage -> DB -> Local (Fallback)
+ */
+import { getPassagemDoDia } from './secao6';
+
+export async function getPassagemUnificada(dataPreferida: string): Promise<PassagemSecao6 | null> {
+    // 1. Storage (SSOT)
+    const fromStorage = await getPassagemFromStorage(dataPreferida);
+    if (fromStorage) return fromStorage;
+
+    // 2. Banco de Dados (Fallback robusto)
+    const fromDB = await getPassagemFromDB(dataPreferida);
+    if (fromDB) return fromDB;
+
+    // 3. Local (Último recurso, dados offline)
+    console.log('⚠️ [UNIFICADO] Fallback para dados locais');
+    return getPassagemDoDia(dataPreferida);
 }
 
 // ===========================================

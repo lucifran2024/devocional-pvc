@@ -131,17 +131,14 @@ export default function PlanoLeituraPage() {
         async function loadPassagem() {
             setLoading(true);
             try {
-                // Tenta buscar do Storage primeiro (mais atualizado)
-                const { getPassagemFromStorage } = await import('@/lib/supabase');
-                const dataStorage = await getPassagemFromStorage(dataHoje);
+                // Busca unificada (Storage -> DB -> Local)
+                const { getPassagemUnificada } = await import('@/lib/supabase');
+                const dados = await getPassagemUnificada(dataHoje);
 
-                if (dataStorage) {
-                    setPassagem(dataStorage);
+                if (dados) {
+                    setPassagem(dados);
                 } else {
-                    // Fallback para local se falhar ou não encontrar
-                    console.log('⚠️ Fallback para dados locais');
-                    const dataLocal = getPassagemDoDia(dataHoje);
-                    setPassagem(dataLocal);
+                    console.error('❌ Falha total ao carregar passagem (Storage, DB e Local falharam)');
                 }
             } catch (error) {
                 console.error('Erro ao carregar passagem:', error);
