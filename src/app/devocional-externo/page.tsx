@@ -37,13 +37,95 @@ const FONTES = [
 // ============================================
 // PÁGINA DEVOCIONAL EXTERNO
 // ============================================
+// ============================================
+// COMPONENTES AUXILIARES
+// ============================================
+
+interface RedditPost {
+    title: string;
+    selftext: string;
+    titulo_pt: string;
+    texto_pt: string;
+    url: string;
+    author: string;
+    score: number;
+    num_comments: number;
+    subreddit: string;
+    created_utc: number;
+}
+
+const RedditCard = ({ post }: { post: RedditPost }) => {
+    const [copiado, setCopiado] = useState(false);
+
+    const handleCopy = () => {
+        const textoFormatado = `🔥 *${post.titulo_pt.toUpperCase()}*\n\n${post.texto_pt}\n\n💬 *Reflexão da Comunidade (${post.subreddit})*\n#Devocional #Reflexão`;
+        navigator.clipboard.writeText(textoFormatado);
+        setCopiado(true);
+        setTimeout(() => setCopiado(false), 2000);
+    };
+
+    return (
+        <div className="glass-panel p-6 rounded-2xl border-white/10 hover:border-amber-500/30 transition-all flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex justify-between items-start gap-4">
+                <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md mb-2 inline-block">
+                        r/{post.subreddit}
+                    </span>
+                    <h3 className="text-lg font-bold text-white leading-tight">
+                        <Link href={post.url} target="_blank" className="hover:text-amber-400 transition-colors">
+                            {post.titulo_pt}
+                        </Link>
+                    </h3>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-400 bg-white/5 px-2 py-1 rounded-lg shrink-0">
+                    <span>👍 {post.score}</span>
+                </div>
+            </div>
+
+            {/* Content Preview */}
+            <div className="text-slate-300 text-sm line-clamp-4 leading-relaxed">
+                {post.texto_pt}
+            </div>
+
+            {/* Footer / Action */}
+            <div className="pt-4 border-t border-white/5 flex justify-between items-center mt-auto">
+                <span className="text-xs text-slate-500">u/{post.author}</span>
+
+                <button
+                    onClick={handleCopy}
+                    className={`
+                        flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
+                        ${copiado ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-amber-500 hover:text-black'}
+                    `}
+                >
+                    {copiado ? 'Copiado!' : 'Copiar para Postar'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ============================================
+// PÁGINA DEVOCIONAL EXTERNO
+// ============================================
 export default function DevocionalExternoPage() {
+    const [tab, setTab] = useState<'fontes' | 'reddit'>('fontes');
+    const [redditMode, setRedditMode] = useState<'trending' | 'passage'>('trending');
+
+    // Estados do Reddit
+    const [redditPosts, setRedditPosts] = useState<RedditPost[]>([]);
+    const [redditLoading, setRedditLoading] = useState(false);
+
+    // Estados das Fontes
     const [fonteAtiva, setFonteAtiva] = useState<string | null>(null);
     const [carregando, setCarregando] = useState(false);
     const [resultado, setResultado] = useState<string | null>(null);
     const [erro, setErro] = useState<string | null>(null);
+
     const dataHoje = getDataHoje();
 
+    // Buscar Devocional RSS (Original)
     const buscarDevocional = async (fonteId: string) => {
         setCarregando(true);
         setErro(null);
@@ -70,6 +152,36 @@ export default function DevocionalExternoPage() {
         }
     };
 
+    // Buscar Reddit Trends
+    const buscarReddit = async (mode: 'trending' | 'passage') => {
+        setRedditLoading(true);
+        setRedditMode(mode);
+        setRedditPosts([]); // Limpar anterior
+
+        try {
+            // Se for modo passage, precisamos saber qual é a passagem de hoje
+            let query = '';
+            if (mode === 'passage') {
+                const { getPassagemUnificada } = await import('@/lib/supabase');
+                const p = await getPassagemUnificada(dataHoje);
+                if (p) query = p.referencia; // ex: "Jeremias 29"
+                else query = 'Bible'; // Fallback
+            }
+
+            const { data, error } = await supabase.functions.invoke('fetch-reddit-trends', {
+                body: { mode, query }
+            });
+
+            if (error) throw error;
+            setRedditPosts(data.posts || []);
+
+        } catch (e) {
+            console.error('Erro Reddit:', e);
+        } finally {
+            setRedditLoading(false);
+        }
+    };
+
     const fonteInfo = FONTES.find(f => f.id === fonteAtiva);
 
     return (
@@ -82,11 +194,19 @@ export default function DevocionalExternoPage() {
                         <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-amber-500" />
                     </Link>
 
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-rose-500/10 rounded-xl">
-                            <Globe className="w-5 h-5 text-rose-400" />
-                        </div>
-                        <span className="font-bold text-sm text-white tracking-tight">Devocional Externo</span>
+                    <div className="flex bg-white/5 p-1 rounded-xl">
+                        <button
+                            onClick={() => setTab('fontes')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'fontes' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Fontes
+                        </button>
+                        <button
+                            onClick={() => { setTab('reddit'); if (redditPosts.length === 0) buscarReddit('trending'); }}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'reddit' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            Comunidade
+                        </button>
                     </div>
 
                     <div className="w-12"></div>
@@ -95,113 +215,108 @@ export default function DevocionalExternoPage() {
 
             <main className="max-w-4xl mx-auto px-6 py-12 space-y-12">
 
-                {/* Título */}
-                <section className="text-center space-y-4 animate-enter">
-                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-                        Devocionais do Mundo
-                    </h1>
-                    <p className="text-slate-400 text-lg max-w-xl mx-auto">
-                        Escolha uma fonte e leia o devocional original, direto do site.
-                    </p>
-                </section>
+                {/* VISÃO: FONTES RSS */}
+                {tab === 'fontes' && (
+                    <>
+                        <section className="text-center space-y-4 animate-enter">
+                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                                Devocionais do Mundo
+                            </h1>
+                            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+                                Escolha uma fonte e leia o devocional original, direto do site.
+                            </p>
+                        </section>
 
-                {/* Grid de Fontes */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-enter" style={{ animationDelay: '0.1s' }}>
-                    {FONTES.map((fonte) => {
-                        const Icon = fonte.icon;
-                        const isActive = fonteAtiva === fonte.id;
+                        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-enter">
+                            {FONTES.map((fonte) => {
+                                const Icon = fonte.icon;
+                                const isActive = fonteAtiva === fonte.id;
 
-                        return (
-                            <button
-                                key={fonte.id}
-                                onClick={() => buscarDevocional(fonte.id)}
-                                disabled={carregando}
-                                className={`
-                  relative p-6 rounded-3xl border text-left transition-all duration-500 group
-                  ${isActive
-                                        ? `${fonte.bgColor} ${fonte.borderColor} shadow-xl`
-                                        : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'}
-                  ${carregando && !isActive ? 'opacity-50' : ''}
-                `}
-                            >
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-3 rounded-2xl ${fonte.bgColor} ${fonte.color}`}>
-                                        {carregando && isActive ? (
-                                            <Loader2 className="w-6 h-6 animate-spin" />
-                                        ) : (
-                                            <Icon className="w-6 h-6" />
-                                        )}
-                                    </div>
+                                return (
+                                    <button
+                                        key={fonte.id}
+                                        onClick={() => buscarDevocional(fonte.id)}
+                                        disabled={carregando}
+                                        className={`
+                                            relative p-6 rounded-3xl border text-left transition-all duration-500 group
+                                            ${isActive
+                                                ? `${fonte.bgColor} ${fonte.borderColor} shadow-xl`
+                                                : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'}
+                                            ${carregando && !isActive ? 'opacity-50' : ''}
+                                        `}
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className={`p-3 rounded-2xl ${fonte.bgColor} ${fonte.color}`}>
+                                                {carregando && isActive ? <Loader2 className="w-6 h-6 animate-spin" /> : <Icon className="w-6 h-6" />}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className={`font-bold text-lg mb-1 ${isActive ? fonte.color : 'text-white group-hover:text-amber-300'}`}>
+                                                    {fonte.nome}
+                                                </h3>
+                                                <p className="text-slate-400 text-sm leading-relaxed">{fonte.desc}</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </section>
 
-                                    <div className="flex-1">
-                                        <h3 className={`font-bold text-lg mb-1 ${isActive ? fonte.color : 'text-white group-hover:text-amber-300'}`}>
-                                            {fonte.nome}
-                                        </h3>
-                                        <p className="text-slate-400 text-sm leading-relaxed">
-                                            {fonte.desc}
-                                        </p>
+                        {/* Resultado RSS */}
+                        {resultado && !carregando && (
+                            <section className="animate-enter space-y-6">
+                                <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
+                                    <div className="whitespace-pre-wrap font-medium text-slate-300 leading-relaxed">
+                                        {resultado}
                                     </div>
                                 </div>
-
-                                {isActive && (
-                                    <div className={`absolute inset-0 rounded-3xl ${fonte.bgColor} opacity-50 -z-10 blur-xl`}></div>
-                                )}
-                            </button>
-                        );
-                    })}
-                </section>
-
-                {/* Erro */}
-                {erro && (
-                    <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 animate-enter">
-                        <AlertCircle className="w-6 h-6 text-red-400 shrink-0" />
-                        <p className="text-red-300">{erro}</p>
-                    </div>
+                            </section>
+                        )}
+                    </>
                 )}
 
-                {/* Resultado */}
-                {resultado && !carregando && (
-                    <section className="animate-enter space-y-6" style={{ animationDelay: '0.2s' }}>
+                {/* VISÃO: REDDIT TRENDS */}
+                {tab === 'reddit' && (
+                    <>
+                        <section className="text-center space-y-6 animate-enter">
+                            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                                Ecos da Comunidade Global
+                            </h1>
 
-                        {/* Header do Resultado */}
-                        <div className="flex items-center justify-between">
-                            <div className={`flex items-center gap-3 px-4 py-2 rounded-full ${fonteInfo?.bgColor} border ${fonteInfo?.borderColor}`}>
-                                <div className={`w-2 h-2 rounded-full ${fonteInfo?.color?.replace('text-', 'bg-')}`}></div>
-                                <span className={`text-xs font-bold uppercase tracking-widest ${fonteInfo?.color}`}>
-                                    {fonteInfo?.nome}
-                                </span>
+                            {/* Sub-Abas do Reddit */}
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={() => buscarReddit('trending')}
+                                    className={`px-6 py-2 rounded-full border border-white/10 transition-all ${redditMode === 'trending' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                                >
+                                    🔥 Top 5 (Geral)
+                                </button>
+                                <button
+                                    onClick={() => buscarReddit('passage')}
+                                    className={`px-6 py-2 rounded-full border border-white/10 transition-all ${redditMode === 'passage' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                                >
+                                    📖 Sobre a Leitura de Hoje
+                                </button>
                             </div>
+                        </section>
 
-                            <button
-                                onClick={() => fonteAtiva && buscarDevocional(fonteAtiva)}
-                                className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all"
-                            >
-                                <RefreshCw className="w-5 h-5 text-slate-400" />
-                            </button>
-                        </div>
-
-                        {/* Conteúdo */}
-                        <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
-                            <article className="prose prose-lg prose-invert max-w-none
-                prose-headings:text-amber-200 prose-headings:font-black
-                prose-p:text-slate-300 prose-p:leading-[1.9]
-                prose-strong:text-white
-              ">
-                                <div className="whitespace-pre-wrap font-medium">
-                                    {resultado}
-                                </div>
-                            </article>
-                        </div>
-
-                    </section>
-                )}
-
-                {/* Estado Vazio */}
-                {!resultado && !carregando && !erro && (
-                    <div className="text-center py-20 animate-enter opacity-50">
-                        <Globe className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                        <p className="text-slate-500">Selecione uma fonte para começar</p>
-                    </div>
+                        {redditLoading ? (
+                            <div className="text-center py-20">
+                                <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
+                                <p className="text-slate-400 animate-pulse">Buscando e traduzindo os melhores posts...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-6 animate-enter">
+                                {redditPosts.map((post, idx) => (
+                                    <RedditCard key={idx} post={post} />
+                                ))}
+                                {redditPosts.length === 0 && (
+                                    <div className="text-center py-10 text-slate-500">
+                                        Nenhum post encontrado para este filtro. Tente o outro modo.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
 
             </main>
