@@ -51,21 +51,39 @@ async function buscarPaoDiario(): Promise<DevocionalItem | null> {
         const description = descMatch ? descMatch[1] : '';
 
         // Extrair conteúdo principal (texto do devocional)
-        // Procura por padrões comuns de conteúdo
-        let content = description;
+        let content = '';
 
         // Tenta extrair texto mais completo
         const contentMatch = html.match(/<div[^>]*class="[^"]*devotional-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
             html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
         if (contentMatch) {
-            // Remove tags HTML
+            // Remove tags HTML mantendo quebras de linha
             content = contentMatch[1]
                 .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
                 .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-                .replace(/<[^>]+>/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .substring(0, 2000);
+                .replace(/<button[^>]*>[\s\S]*?<\/button>/gi, '')
+                .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<\/h[1-6]>/gi, '\n\n')
+                .replace(/<[^>]+>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+        }
+
+        // Se não conseguiu extrair, usa a descrição
+        if (!content || content.length < 50) {
+            content = description;
+        }
+
+        // Limitar e cortar no último ponto
+        if (content.length > 1200) {
+            const cortado = content.substring(0, 1200);
+            const ultimoPonto = cortado.lastIndexOf('.');
+            content = ultimoPonto > 800 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
         }
 
         if (!title && !content) {
