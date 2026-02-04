@@ -8,7 +8,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RSSItem {
+interface DevocionalItem {
     title: string;
     content: string;
     link: string;
@@ -16,6 +16,78 @@ interface RSSItem {
     pubDate: string;
     source: string;
     lang: string;
+}
+
+// =====================================================
+// FUNÇÃO: Buscar Pão Diário via Scraping
+// =====================================================
+async function buscarPaoDiario(): Promise<DevocionalItem | null> {
+    try {
+        const hoje = new Date();
+        const dataFormatada = `${String(hoje.getDate()).padStart(2, '0')}/${String(hoje.getMonth() + 1).padStart(2, '0')}/${hoje.getFullYear()}`;
+        const url = `https://ministeriospaodiario.com.br/devocional?date=${dataFormatada}`;
+
+        console.log(`🍞 Buscando Pão Diário: ${url}`);
+
+        const resp = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+        });
+
+        if (!resp.ok) {
+            console.error(`❌ Pão Diário falhou: ${resp.status}`);
+            return null;
+        }
+
+        const html = await resp.text();
+
+        // Extrair título (procura no HTML)
+        const titleMatch = html.match(/<h1[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h1>/i) ||
+            html.match(/<meta property="og:title" content="([^"]+)"/i);
+        const title = titleMatch ? titleMatch[1].replace('Devocional • ', '').trim() : 'Devocional Pão Diário';
+
+        // Extrair descrição do meta og:description
+        const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i) ||
+            html.match(/<meta name="description" content="([^"]+)"/i);
+        const description = descMatch ? descMatch[1] : '';
+
+        // Extrair conteúdo principal (texto do devocional)
+        // Procura por padrões comuns de conteúdo
+        let content = description;
+
+        // Tenta extrair texto mais completo
+        const contentMatch = html.match(/<div[^>]*class="[^"]*devotional-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
+            html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        if (contentMatch) {
+            // Remove tags HTML
+            content = contentMatch[1]
+                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .substring(0, 2000);
+        }
+
+        if (!title && !content) {
+            console.error('❌ Pão Diário: Não conseguiu extrair conteúdo');
+            return null;
+        }
+
+        console.log(`✅ Pão Diário: "${title}"`);
+
+        return {
+            title,
+            content: content || 'Leia o devocional completo no site.',
+            link: url,
+            author: 'Ministérios Pão Diário',
+            pubDate: new Date().toISOString(),
+            source: 'Pão Diário',
+            lang: 'pt'
+        };
+    } catch (e) {
+        console.error('Erro Pão Diário:', e);
+        return null;
+    }
 }
 
 serve(async (req) => {
@@ -27,20 +99,15 @@ serve(async (req) => {
         const { mode } = await req.json();
         const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
 
-        console.log(`🔍 [SAFE SOURCES MODE] Buscando devocionais seguros...`);
+        console.log(`🔍 [DEVOCIONAIS DO MUNDO] Buscando fontes seguras...`);
 
         // =====================================================
-        // FONTES DEVOCIONAIS BRASILEIRAS DE QUALIDADE
+        // FONTES RSS
         // =====================================================
-        const SAFE_SOURCES = [
+        const RSS_SOURCES = [
             {
                 name: 'Ministério Fiel',
-                url: 'https://ministeriofiel.com.br/feed',
-                lang: 'pt'
-            },
-            {
-                name: 'Pão Diário',
-                url: 'https://ministeriospaodiario.org/feed',
+                url: 'https://ministeriofiel.com.br/artigos/feed/',
                 lang: 'pt'
             },
             {
@@ -51,12 +118,18 @@ serve(async (req) => {
         ];
 
         const parser = new Parser();
-        let allPosts: RSSItem[] = [];
+        let allPosts: DevocionalItem[] = [];
 
-        // 1. Fetch em Paralelo das Fontes Seguras
-        await Promise.all(SAFE_SOURCES.map(async (source) => {
+        // 1. Buscar Pão Diário via Scraping (Prioritário!)
+        const paoDiario = await buscarPaoDiario();
+        if (paoDiario) {
+            allPosts.push(paoDiario);
+        }
+
+        // 2. Fetch RSS em Paralelo
+        await Promise.all(RSS_SOURCES.map(async (source) => {
             try {
-                console.log(`Fetching: ${source.name}...`);
+                console.log(`📡 Fetching RSS: ${source.name}...`);
                 const resp = await fetch(source.url, {
                     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
                 });
@@ -65,7 +138,7 @@ serve(async (req) => {
                     const xml = await resp.text();
                     const feed = await parser.parseString(xml);
 
-                    const items = feed.items?.slice(0, 3).map((item: any) => ({
+                    const items = feed.items?.slice(0, 2).map((item: any) => ({
                         title: item.title || "Sem título",
                         content: item.contentSnippet || item.content || item.summary || "",
                         link: item.link || item.guid || "#",
@@ -85,19 +158,26 @@ serve(async (req) => {
             }
         }));
 
-        // 2. Ordenar por data (mais recentes primeiro)
-        allPosts.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+        // 3. Ordenar (Pão Diário primeiro, depois por data)
+        allPosts.sort((a, b) => {
+            // Pão Diário sempre primeiro
+            if (a.source === 'Pão Diário') return -1;
+            if (b.source === 'Pão Diário') return 1;
+            return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+        });
 
-        // 3. Pegar Top 5 mais recentes
+        // 4. Pegar Top 5 
         const topPosts = allPosts.slice(0, 5);
         console.log(`📚 Total de posts selecionados: ${topPosts.length}`);
 
-        // 4. Tradução (Gemini)
+        // 5. Tradução apenas para itens em inglês (Gemini)
         let translations: any[] = [];
-        if (GEMINI_KEY && topPosts.length > 0) {
+        const postsEmIngles = topPosts.filter(p => p.lang === 'en');
+
+        if (GEMINI_KEY && postsEmIngles.length > 0) {
             try {
-                const postsToTranslate = JSON.stringify(topPosts.map((p, i) => ({
-                    id: i,
+                const postsToTranslate = JSON.stringify(postsEmIngles.map((p, i) => ({
+                    id: topPosts.indexOf(p),
                     title: p.title,
                     text: p.content ? p.content.substring(0, 5000) : "Leia o artigo original."
                 })));
@@ -138,7 +218,7 @@ serve(async (req) => {
             }
         }
 
-        // 5. Mapear para Formato do Frontend
+        // 6. Mapear para Formato do Frontend
         const finalPosts = topPosts.map((post, index) => {
             const t = translations.find((x: any) => x.id === index);
             return {
@@ -150,12 +230,12 @@ serve(async (req) => {
                 author: post.author,
                 score: 100,
                 num_comments: 0,
-                fonte: post.source, // Mostra "Ministério Fiel", "Pão Diário", etc.
+                fonte: post.source,
                 created_utc: new Date(post.pubDate).getTime() / 1000
             };
         });
 
-        return new Response(JSON.stringify({ posts: finalPosts, source: 'SafeRSS' }), {
+        return new Response(JSON.stringify({ posts: finalPosts, source: 'DevocionaisBR' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
