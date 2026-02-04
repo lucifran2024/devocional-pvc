@@ -35,87 +35,120 @@ serve(async (req) => {
             throw new Error('GEMINI_API_KEY não configurada');
         }
 
-        console.log(`🔍 [GOOGLE NEWS MODE] Buscando: ${mode}, query: ${query || 'N/A'}`);
+        console.log(`🔍 [MULTI-SOURCE MODE] Buscando: ${mode}, query: ${query || 'N/A'}`);
 
-        // 1. Definir URL Google News RSS
-        // Google News é muito mais aberto e estável para RSS
-        let rssUrl = '';
+        // Lista de Fontes RSS (Prioridade: Google News -> Christianity Today -> Desiring God)
+        const sources = [
+            {
+                name: 'Google News',
+                url: mode === 'trending'
+                    ? 'https://news.google.com/rss/search?q=Christianity%20devotional+when:7d&hl=en-US&gl=US&ceid=US:en'
+                    : `https://news.google.com/rss/search?q=${encodeURIComponent(query + ' bible devotional')}&hl=en-US&gl=US&ceid=US:en`,
+                type: 'google'
+            },
+            {
+                name: 'Desiring God',
+                url: 'https://www.desiringgod.org/rss',
+                type: 'direct'
+            },
+            {
+                name: 'Christianity Today',
+                url: 'https://www.christianitytoday.com/feed', // Feed principal
+                type: 'direct'
+            }
+        ];
 
-        if (mode === 'trending') {
-            // "Christianity devotional" nos últimos 7 dias
-            const q = 'Christianity devotional OR "verse of the day" OR "daily reflection"';
-            rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}+when:7d&hl=en-US&gl=US&ceid=US:en`;
-        } else if (mode === 'passage') {
-            if (!query) throw new Error('Query obrigatória para modo passage');
-            // Busca pela passagem
-            rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query + ' bible commentary OR devotional')}&hl=en-US&gl=US&ceid=US:en`;
-        } else {
-            throw new Error('Modo inválido');
-        }
-
-        // 2. Fetch via RSS Parser
         let rawPosts: any[] = [];
-        try {
-            console.log(`Fetching RSS: ${rssUrl}`);
-            const feed = await parser.parseURL(rssUrl);
 
-            rawPosts = feed.items.map((item: any) => {
-                // Google News Items: title, link, pubDate, source (sometimes)
-                // O title geralmente é "Manchete - Fonte"
-                let titleClean = item.title || "";
-                let source = "News";
+        // Loop de Tentativas (Failover)
+        for (const source of sources) {
+            if (rawPosts.length > 0) break; // Já temos dados
 
-                if (titleClean.includes(' - ')) {
-                    const parts = titleClean.split(' - ');
-                    source = parts.pop() || "News";
-                    titleClean = parts.join(' - ');
+            try {
+                console.log(`Trying Fetch: ${source.name} (${source.url})`);
+
+                // Fetch manual para controlar headers
+                const resp = await fetch(source.url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+                        'Accept': 'application/rss+xml, application/xml, text/xml; q=0.1',
+                    }
+                });
+
+                if (!resp.ok) {
+                    console.error(`❌ ${source.name} Blocked/Error: ${resp.status}`);
+                    continue; // Tenta o próximo
                 }
 
-                return {
-                    title: titleClean,
-                    selftext: item.contentSnippet || item.content || "", // Google News geralmente tem snippet curto
-                    url: item.link,
-                    author: source, // Usamos a Fonte (ex: Christianity Today) como Autor
-                    score: 0,
-                    num_comments: 0,
-                    subreddit: "ChristianNews", // Tag fixa para indicar fonte
-                    created_utc: new Date(item.pubDate || Date.now()).getTime() / 1000
-                };
-            });
-            console.log(`✅ RSS Fetch sucesso: ${rawPosts.length} itens encontrados.`);
+                const xmlText = await resp.text();
+                // Limpeza básica de XML malformado se necessário
+                const parser = new Parser();
+                const feed = await parser.parseString(xmlText);
 
-        } catch (e) {
-            console.error('❌ Google RSS Error:', e);
+                if (!feed.items || feed.items.length === 0) {
+                    console.error(`⚠️ ${source.name} retornou 0 itens.`);
+                    continue;
+                }
+
+                // Normalizar dados
+                rawPosts = feed.items.map((item: any) => {
+                    let title = item.title || "";
+                    let author = source.name;
+
+                    // Limpeza específica do Google News
+                    if (source.type === 'google' && title.includes(' - ')) {
+                        const parts = title.split(' - ');
+                        author = parts.pop() || source.name;
+                        title = parts.join(' - ');
+                    }
+
+                    return {
+                        title: title,
+                        selftext: item.contentSnippet || item.content || item.summary || "",
+                        url: item.link || item.guid,
+                        author: author,
+                        score: 0,
+                        num_comments: 0,
+                        subreddit: "NoticiasCristas", // Tag interna
+                        created_utc: new Date(item.pubDate || Date.now()).getTime() / 1000
+                    };
+                });
+
+                console.log(`✅ Sucesso via ${source.name}: ${rawPosts.length} itens.`);
+
+            } catch (e) {
+                console.error(`❌ Erro ao processar ${source.name}:`, e);
+            }
         }
 
         // --- FALLBACK MOCK (MODO DE SEGURANÇA) ---
         if (rawPosts.length === 0) {
-            console.log('⚠️ RSS vazio/falhou. Usando Mock Data de Segurança.');
+            console.log('⚠️ TODAS as fontes falharam. Usando Mock Data de Segurança.');
             rawPosts = [
                 {
-                    title: "Trusting God in the Waiting",
+                    title: "Trusting God in the Waiting (Fallback)",
                     selftext: "Sometimes the hardest part of faith is waiting. But remember that God's timing is perfect. Isaiah 40:31 says that those who wait upon the Lord shall renew their strength.",
                     url: "https://www.bible.com",
-                    author: "Daily Devotional",
+                    author: "System",
                     score: 99,
                     num_comments: 0,
-                    subreddit: "Devotional",
+                    subreddit: "System",
                     created_utc: Date.now() / 1000
                 },
                 {
                     title: "Verse of the Day: Philippians 4:13",
                     selftext: "I can do all things through Christ who strengthens me.",
                     url: "https://www.biblegateway.com",
-                    author: "Bible Gateway",
+                    author: "System",
                     score: 99,
                     num_comments: 0,
-                    subreddit: "Scripture",
+                    subreddit: "System",
                     created_utc: Date.now() / 1000
                 }
             ];
         }
 
-        // Google News já vem ordenado por relevância/data. Pegamos Top 5.
+        // Limit to 5
         const topPosts = rawPosts.slice(0, 5).map((p: any) => ({
             title: p.title,
             selftext: p.selftext ? p.selftext.substring(0, 1000).replace(/<[^>]*>/g, '') : '',
