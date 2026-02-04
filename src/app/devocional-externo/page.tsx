@@ -202,7 +202,7 @@ export default function DevocionalExternoPage() {
                             onClick={() => { setTab('reddit'); if (redditPosts.length === 0) buscarReddit('trending'); }}
                             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'reddit' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
-                            Comunidade
+                            Mundo (RSS)
                         </button>
                     </div>
 
@@ -274,49 +274,36 @@ export default function DevocionalExternoPage() {
                 {/* VISÃO: REDDIT TRENDS */}
                 {tab === 'reddit' && (
                     <>
-                        <section className="text-center space-y-6 animate-enter">
-                            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                                Ecos da Comunidade Global
-                            </h1>
+                        {/* Sub-Abas do Reddit (REMOVIDAS - AGORA É FEED ÚNICO) */}
+                        {/* <div className="flex justify-center gap-4"> ... </div> */}
+                        <div className="flex justify-center">
+                            <span className="px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-500/20">
+                                Feed Oficial Seguro
+                            </span>
+                        </div>
+                    </section>
 
-                            {/* Sub-Abas do Reddit */}
-                            <div className="flex justify-center gap-4">
-                                <button
-                                    onClick={() => buscarReddit('trending')}
-                                    className={`px-6 py-2 rounded-full border border-white/10 transition-all ${redditMode === 'trending' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-                                >
-                                    🔥 Top 5 (Geral)
-                                </button>
-                                <button
-                                    onClick={() => buscarReddit('passage')}
-                                    className={`px-6 py-2 rounded-full border border-white/10 transition-all ${redditMode === 'passage' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-                                >
-                                    📖 Sobre a Leitura de Hoje
-                                </button>
-                            </div>
-                        </section>
-
-                        {redditLoading ? (
-                            <div className="text-center py-20">
-                                <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-                                <p className="text-slate-400 animate-pulse">Buscando e traduzindo os melhores posts...</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-6 animate-enter">
-                                {redditPosts.map((post, idx) => (
-                                    <RedditCard key={idx} post={post} />
-                                ))}
-                                {redditPosts.length === 0 && (
-                                    <div className="text-center py-10 text-slate-500">
-                                        Nenhum post encontrado para este filtro. Tente o outro modo.
-                                    </div>
-                                )}
+                {redditLoading ? (
+                    <div className="text-center py-20">
+                        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
+                        <p className="text-slate-400 animate-pulse">Buscando e traduzindo os melhores posts...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 animate-enter">
+                        {redditPosts.map((post, idx) => (
+                            <RedditCard key={idx} post={post} />
+                        ))}
+                        {redditPosts.length === 0 && (
+                            <div className="text-center py-10 text-slate-500">
+                                Nenhum post encontrado para este filtro. Tente o outro modo.
                             </div>
                         )}
-                    </>
+                    </div>
+                )}
+            </>
                 )}
 
-            </main>
-        </CosmicBackground>
+        </main>
+        </CosmicBackground >
     );
 }
