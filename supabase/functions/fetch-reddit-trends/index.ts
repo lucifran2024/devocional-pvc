@@ -108,6 +108,91 @@ async function buscarPaoDiario(): Promise<DevocionalItem | null> {
     }
 }
 
+// =====================================================
+// FUNÇÃO: Buscar Tabletalk Daily Study via Scraping
+// =====================================================
+async function buscarTabletalk(): Promise<DevocionalItem | null> {
+    try {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+
+        // URL do índice mensal para pegar o devocional do dia
+        const indexUrl = `https://tabletalkmagazine.com/daily-study/${ano}/${mes}/`;
+
+        console.log(`📖 Buscando Tabletalk: ${indexUrl}`);
+
+        const indexResp = await fetch(indexUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+        });
+
+        if (!indexResp.ok) {
+            console.error(`❌ Tabletalk index falhou: ${indexResp.status}`);
+            return null;
+        }
+
+        const indexHtml = await indexResp.text();
+
+        // Procura links de daily-study do dia atual ou mais recente
+        const linkPattern = new RegExp(`href="(https://tabletalkmagazine\\.com/daily-study/${ano}/${mes}/[^"]+)"`, 'gi');
+        const links: string[] = [];
+        let match;
+        while ((match = linkPattern.exec(indexHtml)) !== null) {
+            if (!links.includes(match[1])) links.push(match[1]);
+        }
+
+        if (links.length === 0) {
+            console.error('❌ Tabletalk: Nenhum link encontrado');
+            return null;
+        }
+
+        // Pega o primeiro link (mais recente)
+        const devocionalUrl = links[0];
+        console.log(`📖 Tabletalk URL: ${devocionalUrl}`);
+
+        const resp = await fetch(devocionalUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+        });
+
+        if (!resp.ok) return null;
+
+        const html = await resp.text();
+
+        // Extrair título
+        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) ||
+            html.match(/<title>([^<|]+)/i);
+        const title = titleMatch ? titleMatch[1].replace(' | Tabletalk', '').trim() : 'Daily Study';
+
+        // Extrair conteúdo do og:description
+        const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i) ||
+            html.match(/<meta name="description" content="([^"]+)"/i);
+        let content = descMatch ? descMatch[1] : '';
+
+        // Limitar tamanho
+        if (content.length > 1000) {
+            const cortado = content.substring(0, 1000);
+            const ultimoPonto = cortado.lastIndexOf('.');
+            content = ultimoPonto > 600 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
+        }
+
+        console.log(`✅ Tabletalk: "${title}" (${content.length} chars)`);
+
+        return {
+            title,
+            content,
+            link: devocionalUrl,
+            author: 'Tabletalk Magazine',
+            pubDate: new Date().toISOString(),
+            source: 'Tabletalk (Ligonier)',
+            lang: 'en'
+        };
+    } catch (e) {
+        console.error('Erro Tabletalk:', e);
+        return null;
+    }
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
@@ -120,18 +205,13 @@ serve(async (req) => {
         console.log(`🔍 [DEVOCIONAIS DO MUNDO] Buscando fontes seguras...`);
 
         // =====================================================
-        // FONTES RSS
+        // FONTES RSS (Apenas Ministério Fiel)
         // =====================================================
         const RSS_SOURCES = [
             {
                 name: 'Ministério Fiel',
                 url: 'https://ministeriofiel.com.br/artigos/feed/',
                 lang: 'pt'
-            },
-            {
-                name: 'Tabletalk (Ligonier)',
-                url: 'https://tabletalkmagazine.com/feed/',
-                lang: 'en'
             }
         ];
 
@@ -142,6 +222,12 @@ serve(async (req) => {
         const paoDiario = await buscarPaoDiario();
         if (paoDiario) {
             allPosts.push(paoDiario);
+        }
+
+        // 2. Buscar Tabletalk Daily Study via Scraping
+        const tabletalk = await buscarTabletalk();
+        if (tabletalk) {
+            allPosts.push(tabletalk);
         }
 
         // 2. Fetch RSS em Paralelo
