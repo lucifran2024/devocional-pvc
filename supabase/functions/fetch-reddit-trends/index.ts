@@ -53,21 +53,20 @@ serve(async (req) => {
             }
         }
 
-        // 2. Definir Endpoint e Headers
-        const subreddits = 'Christianity+Bible+TrueChristian';
-        const timeFilter = mode === 'trending' ? 'week' : 'month'; // Week é mais seguro que 48h para garantir dados
-        const sort = mode === 'trending' ? 'top' : 'relevance';
+        // 1. Definir URL RSS do Reddit (Mais resiliente a bloqueios que JSON)
+        // Tentativa de bypass: Usar old.reddit.com que muitas vezes tem rate limits diferentes
+        let rssUrl = '';
+        const subreddits = 'Bible+Christianity+TrueChristian';
 
-        // Se tiver token, usa API oficial (oauth.reddit.com). Se não, tenta a pública (respeitando rate limits extremos)
-        const baseUrl = accessToken ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
-
-        let targetUrl = '';
         if (mode === 'trending') {
-            const q = 'devotional OR verse OR scripture OR reflection';
-            targetUrl = `${baseUrl}/r/${subreddits}/search.json?q=${encodeURIComponent(q)}&restrict_sr=1&sort=${sort}&t=${timeFilter}&limit=15`;
+            // Top da semana via RSS
+            rssUrl = `https://old.reddit.com/r/${subreddits}/top/.rss?t=week&limit=10`;
+        } else if (mode === 'passage') {
+            if (!query) throw new Error('Query obrigatória para modo passage');
+            // Busca via RSS
+            rssUrl = `https://old.reddit.com/r/${subreddits}/search/.rss?q=${encodeURIComponent(query)}&restrict_sr=1&sort=relevance&limit=10`;
         } else {
-            if (!query) throw new Error('Query necessária');
-            targetUrl = `${baseUrl}/r/${subreddits}/search.json?q=${encodeURIComponent(query)}&restrict_sr=1&sort=${sort}&t=${timeFilter}&limit=10`;
+            throw new Error('Modo inválido');
         }
 
         const headers: any = {
