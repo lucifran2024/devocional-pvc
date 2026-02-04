@@ -8,127 +8,109 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface RSSItem {
+    title: string;
+    content: string;
+    link: string;
+    author: string;
+    pubDate: string;
+    source: string;
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
 
     try {
-        const { mode, query } = await req.json();
+        const { mode } = await req.json();
         const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
 
-        // --- CHAVE MESTRA DO USUÁRIO (PRIVATE FEED) ---
-        // Isso permite acesso direto sem login, pois contém o token do usuário.
-        const PRIVATE_FEED_URL = 'https://www.reddit.com/.json?feed=e82293b1f1af109cdf74c39e877829537e8236ab&user=Practical-Mall-5821';
+        console.log(`🔍 [SAFE SOURCES MODE] Buscando devocionais seguros...`);
 
-        console.log(`🔍 [PRIVATE FEED MODE] Buscando: ${mode}`);
-
-        let rawPosts: any[] = [];
-        let sourceUsed = 'Reddit (Private)';
-
-        // --- ESTRATÉGIA 1: PRIVATE FEED (INFALÍVEL) ---
-        try {
-            console.log(`Fetching Private Feed...`);
-            const resp = await fetch(PRIVATE_FEED_URL, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
-            });
-
-            if (resp.ok) {
-                const data = await resp.json();
-
-                // O feed privado retorna um JSON Listing padrão do Reddit
-                if (data.data && data.data.children) {
-                    rawPosts = data.data.children.map((child: any) => ({
-                        title: child.data.title,
-                        selftext: child.data.selftext,
-                        url: `https://reddit.com${child.data.permalink}`,
-                        author: `u/${child.data.author}`,
-                        score: child.data.score,
-                        num_comments: child.data.num_comments,
-                        subreddit: child.data.subreddit,
-                        created_utc: child.data.created_utc
-                    }));
-                    console.log(`✅ Sucesso Private Feed: ${rawPosts.length} posts retornados.`);
-                }
-            } else {
-                console.error(`❌ Private Feed Error Status: ${resp.status}`);
+        // =====================================================
+        // FONTES SEGURAS EXCLUSIVAS (SEM REDDIT!)
+        // =====================================================
+        const SAFE_SOURCES = [
+            {
+                name: 'Desiring God',
+                url: 'https://www.desiringgod.org/rss/feed/all'
+            },
+            {
+                name: 'Crosswalk Devotionals',
+                url: 'https://www.crosswalk.com/devotionals/rss.xml'
+            },
+            {
+                name: 'Christianity Today',
+                url: 'https://www.christianitytoday.com/feed'
             }
-        } catch (e) {
-            console.error('❌ Erro Fatal Private Feed:', e);
-        }
+        ];
 
-        // --- FILTRA APENAS CONTEÚDO RELEVANTE ---
-        // Filtramos posts vazios ou muito curtos para garantir qualidade.
-        rawPosts = rawPosts.filter(p => p.selftext && p.selftext.length > 50);
+        const parser = new Parser();
+        let allPosts: RSSItem[] = [];
 
-        // --- ESTRATÉGIA 2: RSS SOURCES (FALLBACK DE SEGURANÇA) ---
-        if (rawPosts.length === 0) {
-            console.log('⚠️ Private Feed vazio/falhou. Ativando Fallback RSS.');
-            sourceUsed = 'RSS Fallback';
+        // 1. Fetch em Paralelo das Fontes Seguras
+        await Promise.all(SAFE_SOURCES.map(async (source) => {
+            try {
+                console.log(`Fetching: ${source.name}...`);
+                const resp = await fetch(source.url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+                });
 
-            const sources = [
-                { name: 'Desiring God', url: 'https://www.desiringgod.org/rss/feed/all' },
-                { name: 'Christianity Today', url: 'https://www.christianitytoday.com/feed' }
-            ];
-
-            const parser = new Parser();
-
-            for (const source of sources) {
-                if (rawPosts.length > 0) break;
-                try {
-                    const resp = await fetch(source.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-                    if (!resp.ok) continue;
+                if (resp.ok) {
                     const xml = await resp.text();
                     const feed = await parser.parseString(xml);
-                    if (feed.items) {
-                        rawPosts = feed.items.map((item: any) => ({
-                            title: item.title,
-                            selftext: item.contentSnippet || item.content || "",
-                            url: item.link || item.guid,
-                            author: source.name,
-                            score: 0, num_comments: 0, subreddit: "Devocional",
-                            created_utc: Date.now() / 1000
-                        }));
-                    }
-                } catch (e) { }
+
+                    const items = feed.items?.slice(0, 3).map((item: any) => ({
+                        title: item.title || "Sem título",
+                        content: item.contentSnippet || item.content || item.summary || "",
+                        link: item.link || item.guid || "#",
+                        author: item.creator || item.author || source.name,
+                        pubDate: item.pubDate || new Date().toISOString(),
+                        source: source.name
+                    })) || [];
+
+                    allPosts.push(...items);
+                    console.log(`✅ ${source.name}: ${items.length} items`);
+                } else {
+                    console.error(`❌ ${source.name} falhou: ${resp.status}`);
+                }
+            } catch (e) {
+                console.error(`Erro ao buscar ${source.name}:`, e);
             }
-        }
+        }));
 
-        // Slice Top 5
-        const topPosts = rawPosts.slice(0, 5);
+        // 2. Ordenar por data (mais recentes primeiro)
+        allPosts.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 
+        // 3. Pegar Top 5 mais recentes
+        const topPosts = allPosts.slice(0, 5);
+        console.log(`📚 Total de posts selecionados: ${topPosts.length}`);
 
-        // --- TRADUÇÃO (GEMINI) ---
+        // 4. Tradução (Gemini)
         let translations: any[] = [];
-
-        // Filtrar posts que realmente têm texto para traduzir ou título
-        const measurablePosts = topPosts.filter(p => p.title || p.selftext);
-
-        if (GEMINI_KEY && measurablePosts.length > 0) {
+        if (GEMINI_KEY && topPosts.length > 0) {
             try {
-                const postsToTranslate = JSON.stringify(measurablePosts.map((p: any, i: number) => ({
+                const postsToTranslate = JSON.stringify(topPosts.map((p, i) => ({
                     id: i,
                     title: p.title,
-                    text: p.selftext ? p.selftext.substring(0, 5000) : "Conteúdo externo (Link/Imagem). Leia o título." // Aumentado para 5000
+                    text: p.content ? p.content.substring(0, 5000) : "Leia o artigo original."
                 })));
 
                 const prompt = `
-                ATUE COMO UM TRADUTOR PASTORAL.
-                Sua missão é traduzir estes textos do Reddit para Português do Brasil.
+                ATUE COMO UM PASTOR TRADUTOR.
                 
-                REGRAS CRITICAS:
-                1. **NÃO RESUMA**. Traduza o texto INTEGRALMENTE. O usuário quer ler tudo.
-                2. Se o texto for "Conteúdo externo...", traduza apenas o título e mantenha essa nota.
-                3. Mantenha o tom emocional, testemunhal e teológico original.
-                4. Converta referências bíblicas para o padrão brasileiro (ex: James -> Tiago).
-                5. Output OBRIGATÓRIO em JSON: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
+                OBJETIVO: Traduzir estes devocionais profundos para Português do Brasil.
+                
+                DIRETRIZES:
+                1. **TRADUÇÃO INTEGRAL:** Não resuma. Mantenha cada parágrafo.
+                2. **TOM:** Solene, poético e teológico (Estilo John Piper/Sproul).
+                3. **BÍBLIA:** Use linguagem bíblica padrão (Almeida/NVI).
+                4. **OUTPUT:** JSON estrito: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
                 
                 INPUT: ${postsToTranslate}
                 `;
 
-                // Usando gemini-2.0-flash conforme preferência do usuário
                 const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -142,39 +124,40 @@ serve(async (req) => {
                     const js = await geminiResp.json();
                     const txt = js.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (txt) translations = JSON.parse(txt);
+                    console.log(`🌐 Tradução OK: ${translations.length} items`);
                 } else {
-                    console.error('Gemini Error Status:', geminiResp.status);
-                    const err = await geminiResp.text();
-                    console.error('Gemini Error Body:', err);
+                    console.error('Gemini Error:', geminiResp.status);
                 }
             } catch (e) {
                 console.error('Translation Error:', e);
             }
         }
 
-        // Merge Final - Se tradução falhar, usa original com aviso
-        const finalPosts = topPosts.map((post: any, index: number) => {
+        // 5. Mapear para Formato do Frontend
+        const finalPosts = topPosts.map((post, index) => {
             const t = translations.find((x: any) => x.id === index);
-
-            // Se falhou a tradução, adiciona um prefixo para debug do usuário saber
-            const titleFallback = t ? t.titulo_pt : `(EN) ${post.title}`;
-            const textFallback = t ? t.texto_pt : post.selftext;
-
             return {
-                ...post,
-                titulo_pt: titleFallback,
-                texto_pt: textFallback
+                title: post.title,
+                selftext: post.content,
+                titulo_pt: t?.titulo_pt || post.title,
+                texto_pt: t?.texto_pt || post.content,
+                url: post.link,
+                author: post.author,
+                score: 100,
+                num_comments: 0,
+                subreddit: post.source, // Mostra "Desiring God", "Crosswalk", etc.
+                created_utc: new Date(post.pubDate).getTime() / 1000
             };
         });
 
-        return new Response(JSON.stringify({ posts: finalPosts, source: sourceUsed }), {
+        return new Response(JSON.stringify({ posts: finalPosts, source: 'SafeRSS' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
     } catch (e: any) {
+        console.error('Fatal Error:', e);
         return new Response(JSON.stringify({ error: e.message }), {
             status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
 });
-
