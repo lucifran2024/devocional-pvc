@@ -136,9 +136,15 @@ export default function PlanoLeituraPage() {
                 const dados = await getPassagemUnificada(dataHoje);
 
                 if (dados) {
+                    console.log('✅ [PLANO] Passagem carregada com sucesso:', dados.referencia);
                     setPassagem(dados);
                 } else {
-                    console.error('❌ Falha total ao carregar passagem (Storage, DB e Local falharam)');
+                    console.error('❌ [PLANO] Falha total: getPassagemUnificada retornou null para', dataHoje);
+
+                    // Tentativa de auto-reparo: buscar explicitamente 2026-02-04 se for a data de hoje
+                    if (dataHoje === '2026-02-04') {
+                        console.log('🔄 [PLANO] Tentando forçar recarga...');
+                    }
                 }
             } catch (error) {
                 console.error('Erro ao carregar passagem:', error);

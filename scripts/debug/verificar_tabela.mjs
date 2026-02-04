@@ -40,19 +40,19 @@ async function verificar() {
     console.log("\n📅 Últimas 5 datas:");
     ultimos?.forEach(r => console.log(`   ${r.data} | ${r.passagem_do_dia}`));
 
-    // Hoje e próximos dias
-    const { data: fevereiro } = await supabase
+    // Verificação específica para 2026-02-04
+    const { data: hoje } = await supabase
         .from('leitura_do_dia')
-        .select('data, passagem_do_dia')
-        .gte('data', '2026-02-01')
-        .lte('data', '2026-02-10')
-        .order('data', { ascending: true });
+        .select('*')
+        .eq('data', '2026-02-04');
 
-    console.log("\n📅 Fevereiro (01-10):");
-    if (fevereiro?.length > 0) {
-        fevereiro.forEach(r => console.log(`   ${r.data} | ${r.passagem_do_dia}`));
+    console.log("\n🔍 Verificação Focada (2026-02-04):");
+    if (hoje?.length > 0) {
+        console.log("   ✅ REGISTRO ENCONTRADO:", hoje[0].passagem_do_dia);
+        console.log("   📝 Arquetipo:", hoje[0].arquetipo);
+        console.log("   📝 Insights:", hoje[0].insights_pre_minerados?.length || 0);
     } else {
-        console.log("   ❌ NENHUM REGISTRO PARA FEVEREIRO!");
+        console.log("   ❌ REGISTRO NÃO ENCONTRADO PARA 2026-02-04!");
     }
 }
 

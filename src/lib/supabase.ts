@@ -202,10 +202,15 @@ export async function executarModo(modo_id: string, data: string, pergunta?: str
 /**
  * Retorna a data de hoje no formato YYYY-MM-DD
  */
+/**
+ * Retorna a data de hoje no formato YYYY-MM-DD (Corrigido para evitar UTC)
+ */
 export function getDataHoje(): string {
     const hoje = new Date();
-    // ... (função getDataHoje existente) ...
-    return hoje.toISOString().split('T')[0];
+    // Ajusta para o fuso horário local (Brasil/UTC-3 ou o do usuário)
+    const offset = hoje.getTimezoneOffset() * 60000;
+    const dataLocal = new Date(hoje.getTime() - offset);
+    return dataLocal.toISOString().split('T')[0];
 }
 
 // Interface para filtros de geração
