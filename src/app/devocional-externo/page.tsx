@@ -58,7 +58,7 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
     const [copiado, setCopiado] = useState(false);
 
     const handleCopy = () => {
-        const textoFormatado = `🔥 *${post.titulo_pt.toUpperCase()}*\n\n${post.texto_pt}\n\n💬 *Reflexão da Comunidade (${post.subreddit})*\n#Devocional #Reflexão`;
+        const textoFormatado = `📖 *${post.titulo_pt.toUpperCase()}*\n\n${post.texto_pt}\n\n✍️ *${post.author}* | via ${post.subreddit}\n#Devocional #Edificação`;
         navigator.clipboard.writeText(textoFormatado);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
@@ -69,17 +69,14 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md mb-2 inline-block">
-                        r/{post.subreddit}
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md mb-2 inline-block">
+                        {post.subreddit}
                     </span>
                     <h3 className="text-lg font-bold text-white leading-tight">
                         <Link href={post.url} target="_blank" className="hover:text-amber-400 transition-colors">
                             {post.titulo_pt}
                         </Link>
                     </h3>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400 bg-white/5 px-2 py-1 rounded-lg shrink-0">
-                    <span>👍 {post.score}</span>
                 </div>
             </div>
 
@@ -90,7 +87,7 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
 
             {/* Footer / Action */}
             <div className="pt-4 border-t border-white/5 flex justify-between items-center mt-auto">
-                <span className="text-xs text-slate-500">u/{post.author}</span>
+                <span className="text-xs text-slate-500 font-medium">Por: {post.author}</span>
 
                 <button
                     onClick={handleCopy}
