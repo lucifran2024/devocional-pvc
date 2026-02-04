@@ -15,104 +15,62 @@ serve(async (req) => {
 
     try {
         const { mode, query } = await req.json();
-
-        // --- CONFIGURAÇÃO DE AMBIENTE ---
         const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
-        const REDDIT_CLIENT_ID = Deno.env.get('REDDIT_CLIENT_ID');
-        const REDDIT_SECRET = Deno.env.get('REDDIT_SECRET');
 
-        if (!GEMINI_KEY) throw new Error('GEMINI_API_KEY ausente');
+        // --- CHAVE MESTRA DO USUÁRIO (PRIVATE FEED) ---
+        // Isso permite acesso direto sem login, pois contém o token do usuário.
+        const PRIVATE_FEED_URL = 'https://www.reddit.com/.json?feed=e82293b1f1af109cdf74c39e877829537e8236ab&user=Practical-Mall-5821';
 
-        // Se tiver ID e SECRET, usamos modo OAuth (Qualidade Máxima)
-        const hasRedditAuth = REDDIT_CLIENT_ID && REDDIT_SECRET;
-
-        console.log(`🔍 [HYBRID MODE] Buscando: ${mode}, Auth: ${hasRedditAuth ? 'Active' : 'Missing'}`);
+        console.log(`🔍 [PRIVATE FEED MODE] Buscando: ${mode}`);
 
         let rawPosts: any[] = [];
-        let sourceUsed = 'Unknown';
+        let sourceUsed = 'Reddit (Private)';
 
-        // --- ESTRATÉGIA 1: REDDIT OAUTH (SE CONFIGURADO) ---
-        if (hasRedditAuth) {
-            try {
-                // 1. Obter Token
-                const authString = btoa(`${REDDIT_CLIENT_ID}:${REDDIT_SECRET}`);
-                const tokenResp = await fetch('https://www.reddit.com/api/v1/access_token', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Basic ${authString}`,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'User-Agent': 'DevocionalPVC/1.0'
-                    },
-                    body: 'grant_type=client_credentials'
-                });
-
-                if (tokenResp.ok) {
-                    const tokenData = await tokenResp.json();
-                    const accessToken = tokenData.access_token;
-
-                    // 2. Buscar Dados
-                    const subreddits = 'Christianity+Bible+TrueChristian';
-                    const timeFilter = mode === 'trending' ? 'week' : 'month';
-                    const sort = mode === 'trending' ? 'top' : 'relevance';
-                    const baseUrl = 'https://oauth.reddit.com';
-
-                    let targetUrl = '';
-                    if (mode === 'trending') {
-                        const q = 'devotional OR verse OR scripture';
-                        targetUrl = `${baseUrl}/r/${subreddits}/search.json?q=${encodeURIComponent(q)}&restrict_sr=1&sort=${sort}&t=${timeFilter}&limit=10`;
-                    } else {
-                        targetUrl = `${baseUrl}/r/${subreddits}/search.json?q=${encodeURIComponent(query)}&restrict_sr=1&sort=${sort}&t=${timeFilter}&limit=10`;
-                    }
-
-                    console.log(`Fetching Reddit OAuth: ${targetUrl}`);
-                    const resp = await fetch(targetUrl, {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`,
-                            'User-Agent': 'DevocionalPVC/1.0'
-                        }
-                    });
-
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        rawPosts = data.data.children.map((child: any) => ({
-                            title: child.data.title,
-                            selftext: child.data.selftext,
-                            url: `https://reddit.com${child.data.permalink}`,
-                            author: `u/${child.data.author}`,
-                            score: child.data.score,
-                            num_comments: child.data.num_comments,
-                            subreddit: child.data.subreddit,
-                            created_utc: child.data.created_utc
-                        }));
-                        sourceUsed = 'Reddit';
-                        console.log(`✅ Sucesso Reddit OAuth: ${rawPosts.length} posts.`);
-                    }
+        // --- ESTRATÉGIA 1: PRIVATE FEED (INFALÍVEL) ---
+        try {
+            console.log(`Fetching Private Feed...`);
+            const resp = await fetch(PRIVATE_FEED_URL, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
-            } catch (e) {
-                console.error('❌ Erro Reddit OAuth:', e);
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+
+                // O feed privado retorna um JSON Listing padrão do Reddit
+                if (data.data && data.data.children) {
+                    rawPosts = data.data.children.map((child: any) => ({
+                        title: child.data.title,
+                        selftext: child.data.selftext,
+                        url: `https://reddit.com${child.data.permalink}`,
+                        author: `u/${child.data.author}`,
+                        score: child.data.score,
+                        num_comments: child.data.num_comments,
+                        subreddit: child.data.subreddit,
+                        created_utc: child.data.created_utc
+                    }));
+                    console.log(`✅ Sucesso Private Feed: ${rawPosts.length} posts retornados.`);
+                }
+            } else {
+                console.error(`❌ Private Feed Error Status: ${resp.status}`);
             }
+        } catch (e) {
+            console.error('❌ Erro Fatal Private Feed:', e);
         }
 
-        // --- ESTRATÉGIA 2: RSS SOURCES (SE REDDIT FALHAR OU NÃO TIVER AUTH) ---
+        // --- FILTRA APENAS CONTEÚDO RELEVANTE ---
+        // Filtramos posts vazios ou muito curtos para garantir qualidade.
+        rawPosts = rawPosts.filter(p => p.selftext && p.selftext.length > 50);
+
+        // --- ESTRATÉGIA 2: RSS SOURCES (FALLBACK DE SEGURANÇA) ---
         if (rawPosts.length === 0) {
-            console.log('⚠️ Reddit falhou/indisponível. Tentando Fallback RSS.');
+            console.log('⚠️ Private Feed vazio/falhou. Ativando Fallback RSS.');
+            sourceUsed = 'RSS Fallback';
 
             const sources = [
-                {
-                    name: 'Desiring God',
-                    url: 'https://www.desiringgod.org/rss/feed/all',
-                    type: 'direct'
-                },
-                {
-                    name: 'Crosswalk',
-                    url: 'https://www.crosswalk.com/devotionals/rss.xml',
-                    type: 'direct'
-                },
-                {
-                    name: 'Christianity Today',
-                    url: 'https://www.christianitytoday.com/feed',
-                    type: 'direct'
-                }
+                { name: 'Desiring God', url: 'https://www.desiringgod.org/rss/feed/all' },
+                { name: 'Christianity Today', url: 'https://www.christianitytoday.com/feed' }
             ];
 
             const parser = new Parser();
@@ -120,92 +78,70 @@ serve(async (req) => {
             for (const source of sources) {
                 if (rawPosts.length > 0) break;
                 try {
-                    const resp = await fetch(source.url, {
-                        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-                    });
+                    const resp = await fetch(source.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
                     if (!resp.ok) continue;
-
                     const xml = await resp.text();
                     const feed = await parser.parseString(xml);
-
-                    if (feed.items && feed.items.length > 0) {
+                    if (feed.items) {
                         rawPosts = feed.items.map((item: any) => ({
                             title: item.title,
                             selftext: item.contentSnippet || item.content || "",
                             url: item.link || item.guid,
                             author: source.name,
-                            score: 0,
-                            num_comments: 0,
-                            subreddit: "Devocional",
-                            created_utc: new Date(item.pubDate || Date.now()).getTime() / 1000
+                            score: 0, num_comments: 0, subreddit: "Devocional",
+                            created_utc: Date.now() / 1000
                         }));
-                        sourceUsed = 'RSS';
-                        console.log(`✅ Sucesso RSS (${source.name}): ${rawPosts.length} posts.`);
                     }
-                } catch (e) { console.error(`RSS Error ${source.name}`, e); }
+                } catch (e) { }
             }
         }
 
-        // --- FALLBACK MOCK (SE TUDO FALHAR) ---
-        if (rawPosts.length === 0) {
-            rawPosts = getMockData();
-            sourceUsed = 'Mock';
-        }
-
-        // Preparar Top 5
-        const topPosts = rawPosts.slice(0, 5).map((p: any) => ({
-            title: p.title,
-            selftext: p.selftext ? p.selftext.substring(0, 800) : '',
-            url: p.url,
-            author: p.author,
-            score: p.score || 0,
-            num_comments: p.num_comments || 0,
-            subreddit: p.subreddit,
-            created_utc: p.created_utc
-        }));
+        // Slice Top 5
+        const topPosts = rawPosts.slice(0, 5);
 
         // --- TRADUÇÃO (GEMINI) ---
-        // Voltamos para "Tradução" e não "Geração" para manter a voz original
         let translations: any[] = [];
-        try {
-            const postsToTranslate = JSON.stringify(topPosts.map((p: any, i: number) => ({
-                id: i,
-                title: p.title,
-                text: p.selftext
-            })));
+        if (GEMINI_KEY && topPosts.length > 0) {
+            try {
+                const postsToTranslate = JSON.stringify(topPosts.map((p: any, i: number) => ({
+                    id: i,
+                    title: p.title,
+                    text: p.selftext ? p.selftext.substring(0, 1000) : ""
+                })));
 
-            const prompt = `
-            Você é um tradutor devocional. 
-            Traduza estes conteúdos do ${sourceUsed} para Português.
-            
-            DIRETRIZES:
-            1. Mantenha o sentido ORIGINAL do autor (seja um post do Reddit ou texto de blog).
-            2. Se for texto curto/título, traduza fielmente.
-            3. Se for longo, resuma mantendo a lição espiritual.
-            4. Retorne JSON: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
-            
-            INPUT: ${postsToTranslate}
-            `;
+                const prompt = `
+                Você é um tradutor teológico experiente.
+                Traduza estes posts do Reddit/RSS para Português do Brasil.
+                
+                DIRETRIZES:
+                1. Mantenha o tom pessoal e testemunhal do autor original.
+                2. Traduza gírias ou contextos culturais para equivalentes brasileiros cristãos.
+                3. Se o texto for muito longo, faça um resumo rico, mantendo a essência espiritual.
+                4. Retorne APENAS JSON: [{ "id": 0, "titulo_pt": "...", "texto_pt": "..." }]
+                
+                INPUT: ${postsToTranslate}
+                `;
 
-            const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
+                const geminiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
 
-            if (geminiResp.ok) {
-                const js = await geminiResp.json();
-                const txt = js.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (txt) translations = JSON.parse(txt);
+                if (geminiResp.ok) {
+                    const js = await geminiResp.json();
+                    const txt = js.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (txt) translations = JSON.parse(txt);
+                }
+            } catch (e) {
+                console.error('Translation Error:', e);
             }
-        } catch (e) {
-            console.error('Translation Error:', e);
         }
 
-        // Merge
+        // Merge Final
         const finalPosts = topPosts.map((post: any, index: number) => {
             const t = translations.find((x: any) => x.id === index);
             return {
@@ -225,15 +161,3 @@ serve(async (req) => {
         });
     }
 });
-
-function getMockData() {
-    return [
-        {
-            title: "Wait on the Lord",
-            selftext: "Isaiah 40:31 - But they who wait for the Lord shall renew their strength.",
-            url: "https://www.bible.com",
-            author: "System",
-            score: 0, num_comments: 0, subreddit: "System", created_utc: Date.now() / 1000
-        }
-    ];
-}
