@@ -275,35 +275,33 @@ export default function DevocionalExternoPage() {
                 {tab === 'reddit' && (
                     <>
                         {/* Sub-Abas do Reddit (REMOVIDAS - AGORA É FEED ÚNICO) */}
-                        {/* <div className="flex justify-center gap-4"> ... </div> */}
-                        <div className="flex justify-center">
+                        <div className="flex justify-center mb-8">
                             <span className="px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-500/20">
                                 Feed Oficial Seguro
                             </span>
                         </div>
-                    </section>
 
-                {redditLoading ? (
-                    <div className="text-center py-20">
-                        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-                        <p className="text-slate-400 animate-pulse">Buscando e traduzindo os melhores posts...</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-6 animate-enter">
-                        {redditPosts.map((post, idx) => (
-                            <RedditCard key={idx} post={post} />
-                        ))}
-                        {redditPosts.length === 0 && (
-                            <div className="text-center py-10 text-slate-500">
-                                Nenhum post encontrado para este filtro. Tente o outro modo.
+                        {redditLoading ? (
+                            <div className="text-center py-20">
+                                <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
+                                <p className="text-slate-400 animate-pulse">Buscando devocionais do mundo...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-6 animate-enter">
+                                {redditPosts.map((post, idx) => (
+                                    <RedditCard key={idx} post={post} />
+                                ))}
+                                {redditPosts.length === 0 && (
+                                    <div className="text-center py-10 text-slate-500">
+                                        Nenhum devocional encontrado. Tente novamente.
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
-                )}
-            </>
+                    </>
                 )}
 
-        </main>
-        </CosmicBackground >
+            </main>
+        </CosmicBackground>
     );
 }
