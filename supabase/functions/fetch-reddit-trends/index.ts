@@ -15,6 +15,7 @@ interface RSSItem {
     author: string;
     pubDate: string;
     source: string;
+    lang: string;
 }
 
 serve(async (req) => {
@@ -29,20 +30,23 @@ serve(async (req) => {
         console.log(`🔍 [SAFE SOURCES MODE] Buscando devocionais seguros...`);
 
         // =====================================================
-        // FONTES SEGURAS EXCLUSIVAS (SEM REDDIT!)
+        // FONTES DEVOCIONAIS BRASILEIRAS DE QUALIDADE
         // =====================================================
         const SAFE_SOURCES = [
             {
-                name: 'Desiring God',
-                url: 'https://www.desiringgod.org/rss/feed/all'
+                name: 'Ministério Fiel',
+                url: 'https://ministeriofiel.com.br/feed',
+                lang: 'pt'
             },
             {
-                name: 'Crosswalk Devotionals',
-                url: 'https://www.crosswalk.com/devotionals/rss.xml'
+                name: 'Pão Diário',
+                url: 'https://ministeriospaodiario.org/feed',
+                lang: 'pt'
             },
             {
-                name: 'Christianity Today',
-                url: 'https://www.christianitytoday.com/feed'
+                name: 'Tabletalk (Ligonier)',
+                url: 'https://tabletalkmagazine.com/feed/',
+                lang: 'en'
             }
         ];
 
@@ -67,7 +71,8 @@ serve(async (req) => {
                         link: item.link || item.guid || "#",
                         author: item.creator || item.author || source.name,
                         pubDate: item.pubDate || new Date().toISOString(),
-                        source: source.name
+                        source: source.name,
+                        lang: source.lang || 'pt'
                     })) || [];
 
                     allPosts.push(...items);
@@ -145,7 +150,7 @@ serve(async (req) => {
                 author: post.author,
                 score: 100,
                 num_comments: 0,
-                subreddit: post.source, // Mostra "Desiring God", "Crosswalk", etc.
+                fonte: post.source, // Mostra "Ministério Fiel", "Pão Diário", etc.
                 created_utc: new Date(post.pubDate).getTime() / 1000
             };
         });

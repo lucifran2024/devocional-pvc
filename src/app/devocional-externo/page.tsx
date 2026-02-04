@@ -41,7 +41,7 @@ const FONTES = [
 // COMPONENTES AUXILIARES
 // ============================================
 
-interface RedditPost {
+interface DevocionalPost {
     title: string;
     selftext: string;
     titulo_pt: string;
@@ -50,15 +50,15 @@ interface RedditPost {
     author: string;
     score: number;
     num_comments: number;
-    subreddit: string;
+    fonte: string;
     created_utc: number;
 }
 
-const RedditCard = ({ post }: { post: RedditPost }) => {
+const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
     const [copiado, setCopiado] = useState(false);
 
     const handleCopy = () => {
-        const textoFormatado = `📖 *${post.titulo_pt.toUpperCase()}*\n\n${post.texto_pt}\n\n✍️ *${post.author}* | via ${post.subreddit}\n#Devocional #Edificação`;
+        const textoFormatado = `📖 *${post.titulo_pt.toUpperCase()}*\n\n${post.texto_pt}\n\n✍️ *${post.author}* | via ${post.fonte}\n#Devocional #Edificação`;
         navigator.clipboard.writeText(textoFormatado);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
@@ -70,7 +70,7 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
             <div className="flex justify-between items-start gap-4">
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md mb-2 inline-block">
-                        {post.subreddit}
+                        {post.fonte}
                     </span>
                     <h3 className="text-lg font-bold text-white leading-tight">
                         <Link href={post.url} target="_blank" className="hover:text-amber-400 transition-colors">
@@ -107,12 +107,12 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
 // PÁGINA DEVOCIONAL EXTERNO
 // ============================================
 export default function DevocionalExternoPage() {
-    const [tab, setTab] = useState<'fontes' | 'reddit'>('fontes');
-    const [redditMode, setRedditMode] = useState<'trending' | 'passage'>('trending');
+    const [tab, setTab] = useState<'fontes' | 'mundo'>('fontes');
+    const [searchMode, setSearchMode] = useState<'trending' | 'passage'>('trending');
 
-    // Estados do Reddit
-    const [redditPosts, setRedditPosts] = useState<RedditPost[]>([]);
-    const [redditLoading, setRedditLoading] = useState(false);
+    // Estados dos Devocionais Externos
+    const [devocionais, setDevocionais] = useState<DevocionalPost[]>([]);
+    const [buscandoMundo, setBuscandoMundo] = useState(false);
 
     // Estados das Fontes
     const [fonteAtiva, setFonteAtiva] = useState<string | null>(null);
@@ -149,11 +149,11 @@ export default function DevocionalExternoPage() {
         }
     };
 
-    // Buscar Reddit Trends
-    const buscarReddit = async (mode: 'trending' | 'passage') => {
-        setRedditLoading(true);
-        setRedditMode(mode);
-        setRedditPosts([]); // Limpar anterior
+    // Buscar Devocionais do Mundo
+    const buscarDevocionaisMundo = async (mode: 'trending' | 'passage') => {
+        setBuscandoMundo(true);
+        setSearchMode(mode);
+        setDevocionais([]); // Limpar anterior
 
         try {
             // Se for modo passage, precisamos saber qual é a passagem de hoje
@@ -170,12 +170,12 @@ export default function DevocionalExternoPage() {
             });
 
             if (error) throw error;
-            setRedditPosts(data.posts || []);
+            setDevocionais(data.posts || []);
 
         } catch (e) {
-            console.error('Erro Reddit:', e);
+            console.error('Erro ao buscar devocionais:', e);
         } finally {
-            setRedditLoading(false);
+            setBuscandoMundo(false);
         }
     };
 
@@ -199,8 +199,8 @@ export default function DevocionalExternoPage() {
                             Fontes
                         </button>
                         <button
-                            onClick={() => { setTab('reddit'); if (redditPosts.length === 0) buscarReddit('trending'); }}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'reddit' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            onClick={() => { setTab('mundo'); if (devocionais.length === 0) buscarDevocionaisMundo('trending'); }}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'mundo' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
                             Mundo (RSS)
                         </button>
@@ -271,27 +271,27 @@ export default function DevocionalExternoPage() {
                     </>
                 )}
 
-                {/* VISÃO: REDDIT TRENDS */}
-                {tab === 'reddit' && (
+                {/* VISÃO: DEVOCIONAIS DO MUNDO */}
+                {tab === 'mundo' && (
                     <>
-                        {/* Sub-Abas do Reddit (REMOVIDAS - AGORA É FEED ÚNICO) */}
+                        {/* Feed Único de Fontes Seguras */}
                         <div className="flex justify-center mb-8">
                             <span className="px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-500/20">
                                 Feed Oficial Seguro
                             </span>
                         </div>
 
-                        {redditLoading ? (
+                        {buscandoMundo ? (
                             <div className="text-center py-20">
                                 <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
                                 <p className="text-slate-400 animate-pulse">Buscando devocionais do mundo...</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-6 animate-enter">
-                                {redditPosts.map((post, idx) => (
-                                    <RedditCard key={idx} post={post} />
+                                {devocionais.map((post: DevocionalPost, idx: number) => (
+                                    <DevocionalCard key={idx} post={post} />
                                 ))}
-                                {redditPosts.length === 0 && (
+                                {devocionais.length === 0 && (
                                     <div className="text-center py-10 text-slate-500">
                                         Nenhum devocional encontrado. Tente novamente.
                                     </div>
