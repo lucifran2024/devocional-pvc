@@ -84,7 +84,7 @@ const RedditCard = ({ post }: { post: RedditPost }) => {
             </div>
 
             {/* Content Preview */}
-            <div className="text-slate-300 text-sm line-clamp-4 leading-relaxed">
+            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
                 {post.texto_pt}
             </div>
 
