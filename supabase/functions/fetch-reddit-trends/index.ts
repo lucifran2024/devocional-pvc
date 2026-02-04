@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Parser from "https://esm.sh/rss-parser@3.13.0";
 
 // Configuração CORS
 const corsHeaders = {
@@ -40,64 +39,34 @@ async function buscarPaoDiario(): Promise<DevocionalItem | null> {
 
         const html = await resp.text();
 
-        // Extrair título (procura no HTML)
-        const titleMatch = html.match(/<h1[^>]*class="[^"]*title[^"]*"[^>]*>([^<]+)<\/h1>/i) ||
-            html.match(/<meta property="og:title" content="([^"]+)"/i);
-        const title = titleMatch ? titleMatch[1].replace('Devocional • ', '').trim() : 'Devocional Pão Diário';
+        // Extrair título 
+        const titleMatch = html.match(/<meta property="og:title" content="Devocional • ([^"]+)"/i);
+        const title = titleMatch ? titleMatch[1].trim() : 'Devocional do Dia';
 
-        // Extrair descrição do meta og:description
+        // Extrair descrição do meta og:description 
         const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i) ||
             html.match(/<meta name="description" content="([^"]+)"/i);
-        const description = descMatch ? descMatch[1] : '';
+        let content = descMatch ? descMatch[1] : '';
 
-        // Extrair conteúdo principal (texto do devocional)
-        let content = '';
-
-        // Tenta extrair texto mais completo
-        const contentMatch = html.match(/<div[^>]*class="[^"]*devotional-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
-            html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-        if (contentMatch) {
-            // Remove tags HTML mantendo quebras de linha
-            content = contentMatch[1]
-                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-                .replace(/<button[^>]*>[\s\S]*?<\/button>/gi, '')
-                .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-                .replace(/<br\s*\/?>/gi, '\n')
-                .replace(/<\/p>/gi, '\n\n')
-                .replace(/<\/h[1-6]>/gi, '\n\n')
-                .replace(/<[^>]+>/g, '')
-                .replace(/&nbsp;/g, ' ')
-                .replace(/&quot;/g, '"')
-                .replace(/&amp;/g, '&')
-                .replace(/\n{3,}/g, '\n\n')
-                .trim();
-        }
-
-        // Se não conseguiu extrair, usa a descrição
-        if (!content || content.length < 50) {
-            content = description;
-        }
-
-        // Limitar e cortar no último ponto
-        if (content.length > 1200) {
-            const cortado = content.substring(0, 1200);
+        // Limitar e formatar
+        if (content.length > 1000) {
+            const cortado = content.substring(0, 1000);
             const ultimoPonto = cortado.lastIndexOf('.');
-            content = ultimoPonto > 800 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
+            content = ultimoPonto > 600 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
         }
 
-        if (!title && !content) {
-            console.error('❌ Pão Diário: Não conseguiu extrair conteúdo');
+        if (!title || content.length < 50) {
+            console.error('❌ Pão Diário: Conteúdo insuficiente');
             return null;
         }
 
-        console.log(`✅ Pão Diário: "${title}"`);
+        console.log(`✅ Pão Diário: "${title}" (${content.length} chars)`);
 
         return {
             title,
-            content: content || 'Leia o devocional completo no site.',
+            content,
             link: url,
-            author: 'Ministérios Pão Diário',
+            author: 'Pão Diário',
             pubDate: new Date().toISOString(),
             source: 'Pão Diário',
             lang: 'pt'
@@ -109,19 +78,17 @@ async function buscarPaoDiario(): Promise<DevocionalItem | null> {
 }
 
 // =====================================================
-// FUNÇÃO: Buscar Tabletalk Daily Study via Scraping
+// FUNÇÃO: Buscar Tabletalk Daily Study
 // =====================================================
 async function buscarTabletalk(): Promise<DevocionalItem | null> {
     try {
         const hoje = new Date();
         const ano = hoje.getFullYear();
         const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
 
-        // URL do índice mensal para pegar o devocional do dia
+        // Primeiro, buscar a lista de daily studies do mês
         const indexUrl = `https://tabletalkmagazine.com/daily-study/${ano}/${mes}/`;
-
-        console.log(`📖 Buscando Tabletalk: ${indexUrl}`);
+        console.log(`📖 Buscando Tabletalk index: ${indexUrl}`);
 
         const indexResp = await fetch(indexUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
@@ -134,24 +101,96 @@ async function buscarTabletalk(): Promise<DevocionalItem | null> {
 
         const indexHtml = await indexResp.text();
 
-        // Procura links de daily-study do dia atual ou mais recente
-        const linkPattern = new RegExp(`href="(https://tabletalkmagazine\\.com/daily-study/${ano}/${mes}/[^"]+)"`, 'gi');
-        const links: string[] = [];
-        let match;
-        while ((match = linkPattern.exec(indexHtml)) !== null) {
-            if (!links.includes(match[1])) links.push(match[1]);
-        }
+        // Procura links de daily-study 
+        const linkMatches = indexHtml.match(/href="(https:\/\/tabletalkmagazine\.com\/daily-study\/\d{4}\/\d{2}\/[^"]+)"/gi);
 
-        if (links.length === 0) {
+        if (!linkMatches || linkMatches.length === 0) {
             console.error('❌ Tabletalk: Nenhum link encontrado');
             return null;
         }
 
-        // Pega o primeiro link (mais recente)
-        const devocionalUrl = links[0];
-        console.log(`📖 Tabletalk URL: ${devocionalUrl}`);
+        // Extrair URLs (pegar o primeiro/mais recente)
+        const firstLink = linkMatches[0].replace(/href="|"/g, '');
+        console.log(`📖 Tabletalk devocional: ${firstLink}`);
 
-        const resp = await fetch(devocionalUrl, {
+        const resp = await fetch(firstLink, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+        });
+
+        if (!resp.ok) return null;
+
+        const html = await resp.text();
+
+        // Extrair título
+        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i);
+        const title = titleMatch ? titleMatch[1].replace(' | Tabletalk', '').trim() : 'Daily Study';
+
+        // Extrair conteúdo do og:description
+        const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i);
+        let content = descMatch ? descMatch[1] : '';
+
+        // Limitar
+        if (content.length > 800) {
+            const cortado = content.substring(0, 800);
+            const ultimoPonto = cortado.lastIndexOf('.');
+            content = ultimoPonto > 400 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
+        }
+
+        if (!content) {
+            console.error('❌ Tabletalk: Sem conteúdo');
+            return null;
+        }
+
+        console.log(`✅ Tabletalk: "${title}" (${content.length} chars)`);
+
+        return {
+            title,
+            content,
+            link: firstLink,
+            author: 'Tabletalk Magazine',
+            pubDate: new Date().toISOString(),
+            source: 'Tabletalk (Ligonier)',
+            lang: 'en'
+        };
+    } catch (e) {
+        console.error('Erro Tabletalk:', e);
+        return null;
+    }
+}
+
+// =====================================================
+// FUNÇÃO: Buscar Ministério Fiel (artigo completo)
+// =====================================================
+async function buscarMinisterioFiel(): Promise<DevocionalItem | null> {
+    try {
+        // Primeiro, buscar a página de artigos para pegar o mais recente
+        const listUrl = 'https://ministeriofiel.com.br/artigos/';
+        console.log(`📚 Buscando Ministério Fiel: ${listUrl}`);
+
+        const listResp = await fetch(listUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
+        });
+
+        if (!listResp.ok) {
+            console.error(`❌ Ministério Fiel lista falhou: ${listResp.status}`);
+            return null;
+        }
+
+        const listHtml = await listResp.text();
+
+        // Procurar o primeiro link de artigo
+        const linkMatch = listHtml.match(/href="(https:\/\/ministeriofiel\.com\.br\/artigos\/[^"]+)"/i);
+
+        if (!linkMatch) {
+            console.error('❌ Ministério Fiel: Nenhum artigo encontrado');
+            return null;
+        }
+
+        const artigoUrl = linkMatch[1];
+        console.log(`📚 Ministério Fiel artigo: ${artigoUrl}`);
+
+        // Buscar o artigo completo
+        const resp = await fetch(artigoUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
         });
 
@@ -161,34 +200,64 @@ async function buscarTabletalk(): Promise<DevocionalItem | null> {
 
         // Extrair título
         const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) ||
-            html.match(/<title>([^<|]+)/i);
-        const title = titleMatch ? titleMatch[1].replace(' | Tabletalk', '').trim() : 'Daily Study';
+            html.match(/<title>([^<-]+)/i);
+        const title = titleMatch ? titleMatch[1].replace(' - Ministério Fiel', '').trim() : 'Artigo Ministério Fiel';
 
-        // Extrair conteúdo do og:description
+        // Extrair autor
+        const authorMatch = html.match(/class="[^"]*author[^"]*"[^>]*>([^<]+)</i) ||
+            html.match(/<a[^>]*href="[^"]*autor[^"]*"[^>]*>([^<]+)</i);
+        const author = authorMatch ? authorMatch[1].trim() : 'Ministério Fiel';
+
+        // Extrair conteúdo do og:description ou do resumo
         const descMatch = html.match(/<meta property="og:description" content="([^"]+)"/i) ||
             html.match(/<meta name="description" content="([^"]+)"/i);
         let content = descMatch ? descMatch[1] : '';
 
-        // Limitar tamanho
-        if (content.length > 1000) {
-            const cortado = content.substring(0, 1000);
-            const ultimoPonto = cortado.lastIndexOf('.');
-            content = ultimoPonto > 600 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
+        // Tentar pegar mais conteúdo da página
+        const contentMatch = html.match(/<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
+            html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+
+        if (contentMatch && contentMatch[1]) {
+            const extracted = contentMatch[1]
+                .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<[^>]+>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            if (extracted.length > content.length) {
+                content = extracted;
+            }
         }
 
-        console.log(`✅ Tabletalk: "${title}" (${content.length} chars)`);
+        // Limitar
+        if (content.length > 1200) {
+            const cortado = content.substring(0, 1200);
+            const ultimoPonto = cortado.lastIndexOf('.');
+            content = ultimoPonto > 800 ? cortado.substring(0, ultimoPonto + 1) : cortado + '...';
+        }
+
+        if (!content || content.length < 100) {
+            console.error('❌ Ministério Fiel: Conteúdo insuficiente');
+            return null;
+        }
+
+        console.log(`✅ Ministério Fiel: "${title}" por ${author} (${content.length} chars)`);
 
         return {
             title,
             content,
-            link: devocionalUrl,
-            author: 'Tabletalk Magazine',
+            link: artigoUrl,
+            author,
             pubDate: new Date().toISOString(),
-            source: 'Tabletalk (Ligonier)',
-            lang: 'en'
+            source: 'Ministério Fiel',
+            lang: 'pt'
         };
     } catch (e) {
-        console.error('Erro Tabletalk:', e);
+        console.error('Erro Ministério Fiel:', e);
         return null;
     }
 }
@@ -204,86 +273,31 @@ serve(async (req) => {
 
         console.log(`🔍 [DEVOCIONAIS DO MUNDO] Buscando fontes seguras...`);
 
-        // =====================================================
-        // FONTES RSS (Apenas Ministério Fiel)
-        // =====================================================
-        const RSS_SOURCES = [
-            {
-                name: 'Ministério Fiel',
-                url: 'https://ministeriofiel.com.br/artigos/feed/',
-                lang: 'pt'
-            }
-        ];
-
-        const parser = new Parser();
         let allPosts: DevocionalItem[] = [];
 
-        // 1. Buscar Pão Diário via Scraping (Prioritário!)
-        const paoDiario = await buscarPaoDiario();
-        if (paoDiario) {
-            allPosts.push(paoDiario);
-        }
+        // 1. Buscar em paralelo todas as fontes via scraping
+        const [paoDiario, tabletalk, ministerioFiel] = await Promise.all([
+            buscarPaoDiario(),
+            buscarTabletalk(),
+            buscarMinisterioFiel()
+        ]);
 
-        // 2. Buscar Tabletalk Daily Study via Scraping
-        const tabletalk = await buscarTabletalk();
-        if (tabletalk) {
-            allPosts.push(tabletalk);
-        }
+        if (paoDiario) allPosts.push(paoDiario);
+        if (tabletalk) allPosts.push(tabletalk);
+        if (ministerioFiel) allPosts.push(ministerioFiel);
 
-        // 2. Fetch RSS em Paralelo
-        await Promise.all(RSS_SOURCES.map(async (source) => {
-            try {
-                console.log(`📡 Fetching RSS: ${source.name}...`);
-                const resp = await fetch(source.url, {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DevocionalBot/1.0)' }
-                });
+        console.log(`📚 Total de devocionais: ${allPosts.length}`);
 
-                if (resp.ok) {
-                    const xml = await resp.text();
-                    const feed = await parser.parseString(xml);
-
-                    const items = feed.items?.slice(0, 2).map((item: any) => ({
-                        title: item.title || "Sem título",
-                        content: item.contentSnippet || item.content || item.summary || "",
-                        link: item.link || item.guid || "#",
-                        author: item.creator || item.author || source.name,
-                        pubDate: item.pubDate || new Date().toISOString(),
-                        source: source.name,
-                        lang: source.lang || 'pt'
-                    })) || [];
-
-                    allPosts.push(...items);
-                    console.log(`✅ ${source.name}: ${items.length} items`);
-                } else {
-                    console.error(`❌ ${source.name} falhou: ${resp.status}`);
-                }
-            } catch (e) {
-                console.error(`Erro ao buscar ${source.name}:`, e);
-            }
-        }));
-
-        // 3. Ordenar (Pão Diário primeiro, depois por data)
-        allPosts.sort((a, b) => {
-            // Pão Diário sempre primeiro
-            if (a.source === 'Pão Diário') return -1;
-            if (b.source === 'Pão Diário') return 1;
-            return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
-        });
-
-        // 4. Pegar Top 5 
-        const topPosts = allPosts.slice(0, 5);
-        console.log(`📚 Total de posts selecionados: ${topPosts.length}`);
-
-        // 5. Tradução apenas para itens em inglês (Gemini)
+        // 2. Tradução apenas para itens em inglês (Gemini)
         let translations: any[] = [];
-        const postsEmIngles = topPosts.filter(p => p.lang === 'en');
+        const postsEmIngles = allPosts.filter(p => p.lang === 'en');
 
         if (GEMINI_KEY && postsEmIngles.length > 0) {
             try {
                 const postsToTranslate = JSON.stringify(postsEmIngles.map((p, i) => ({
-                    id: topPosts.indexOf(p),
+                    id: allPosts.indexOf(p),
                     title: p.title,
-                    text: p.content ? p.content.substring(0, 5000) : "Leia o artigo original."
+                    text: p.content
                 })));
 
                 const prompt = `
@@ -322,8 +336,8 @@ serve(async (req) => {
             }
         }
 
-        // 6. Mapear para Formato do Frontend
-        const finalPosts = topPosts.map((post, index) => {
+        // 3. Mapear para Formato do Frontend
+        const finalPosts = allPosts.map((post, index) => {
             const t = translations.find((x: any) => x.id === index);
             return {
                 title: post.title,
