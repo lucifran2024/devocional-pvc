@@ -784,7 +784,8 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
           config: config,
           passagem_usada: passagemRef,
           // Retornamos o registro completo (o frontend vai usar isso agora)
-          registro: savedRecord || { ...cachedData, id: 0 }
+          registro: savedRecord || { ...cachedData, id: 0 },
+          debug_save_error: saveError // Expondo erro para debug
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

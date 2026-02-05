@@ -1053,7 +1053,10 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
         // 2. O Backend agora retorna o registro salvo!
         if (json.registro) {
             console.log('✅ [PALAVRA] Recebido registro salvo do backend:', json.registro.id);
+            if (json.debug_save_error) console.error('⚠️ [DEBUG] Erro ao salvar (mas retornou ID?):', json.debug_save_error);
             return { data: json.registro as PalavraManhaCache, error: null };
+        } else if (json.debug_save_error) {
+            console.error('❌ [PALAVRA] ERRO CRÍTICO AO SALVAR NO BACKEND:', json.debug_save_error);
         }
 
         // Fallback legado (caso backend antigo responda)
