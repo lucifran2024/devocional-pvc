@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
@@ -386,8 +386,7 @@ ${dnaFavoritas}
         throw new Error("GEMINI_API_KEY não configurada.");
       }
 
-      // Receber dados do cliente
-      const { referencia, versiculos, parte } = await req.json().catch(() => ({}));
+      // Usar dados já parseados do início
       const versiculosTexto = versiculos || '';
       const referenciaPassagem = referencia || 'Passagem bíblica';
       const parteAtual = parte || 1;
