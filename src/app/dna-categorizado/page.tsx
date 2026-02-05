@@ -66,7 +66,7 @@ export default function DnaCategorizadoPage() {
     // Opções de filtros
     const FORMATOS = ['Curto', 'Médio', 'Longo'];
     const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
-    const MOMENTOS = ['Início da Semana', 'Fim da Semana', 'Início do Mês', 'Fim do Mês'];
+    const MOMENTOS = ['Começo de Semana', 'Fim de Semana', 'Início do Mês', 'Fim do Mês'];
 
     const loadData = async () => {
         setLoading(true);

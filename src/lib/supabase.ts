@@ -1024,6 +1024,13 @@ export async function getPalavraManha(data: string): Promise<PalavraManhaCache |
  */
 export async function gerarPalavraManha(data: string): Promise<{ data: PalavraManhaCache | null; error: string | null }> {
     try {
+        // 0. DOUBLE-CHECK: Verificar novamente se já existe no cache (race condition fix)
+        const existente = await getPalavraManha(data);
+        if (existente) {
+            console.log('🌅 [PALAVRA] Cache encontrado no double-check, usando existente');
+            return { data: existente, error: null };
+        }
+
         // 1. Chama Edge Function
         const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
             method: 'POST',
@@ -1043,7 +1050,7 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 
         if (!json.ok || !json.resultado) throw new Error(json.error || 'Erro ao gerar mensagem');
 
-        // 2. Salva no Cache
+        // 2. Salva no Cache (usando UPSERT para evitar erro de duplicata)
         const config = json.config;
         const novoCache: any = {
             data: data,
@@ -1056,7 +1063,7 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 
         const { data: saved, error: saveError } = await supabase
             .from('palavra_manha_cache')
-            .insert(novoCache)
+            .upsert(novoCache, { onConflict: 'data' })
             .select('*')
             .single();
 

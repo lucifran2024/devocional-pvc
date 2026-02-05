@@ -183,7 +183,15 @@ Deno.serve(async (req) => {
           instrucoesFiltro += `1. **TIPO [${filtros.tipo.toUpperCase()}]**: ${descTipo}\n`;
         }
         if (filtros.periodo) {
-          instrucoesFiltro += `2. **SAUDAÇÃO**: COMECE cada mensagem com "${filtros.periodo}" (ex: "${filtros.periodo}, amado(a)!")\n`;
+          // Mapear período para saudação correta
+          const saudacaoMap: Record<string, string> = {
+            'Manhã': 'Bom dia',
+            'Tarde': 'Boa tarde',
+            'Noite': 'Boa noite',
+            'Madrugada': 'Paz nesta madrugada'
+          };
+          const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
+          instrucoesFiltro += `2. **SAUDAÇÃO [${filtros.periodo.toUpperCase()}]**: COMECE cada mensagem com "${saudacao}" (ex: "${saudacao}, amado(a)!")\n`;
         }
         if (filtros.diaSemana) {
           instrucoesFiltro += `3. **DIA**: Mencione "${filtros.diaSemana}" no texto (ex: "Neste ${filtros.diaSemana}...")\n`;
