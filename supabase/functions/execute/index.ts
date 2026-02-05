@@ -394,43 +394,38 @@ ${dnaFavoritas}
       console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}`);
 
       const promptExplicar = `
-# EXPLICAÇÃO CONTEXTUAL — PARTE ${parteAtual}
+# EXPLICAÇÃO DO TRECHO BÍBLICO
 
-Você é um professor bíblico experiente explicando o que ACABOU de ser lido.
+Você é um estudioso bíblico experiente. Seu trabalho é explicar o trecho que o usuário ACABOU DE LER, da mesma forma que um comentarista bíblico faria.
 
 ## PASSAGEM: ${referenciaPassagem}
-## PARTE ATUAL: ${parteAtual}
+## PARTE: ${parteAtual}
 
 ### VERSÍCULOS QUE O USUÁRIO ACABOU DE LER:
 ${versiculosTexto}
 
-## SUA TAREFA:
+## FORMATO OBRIGATÓRIO DA RESPOSTA:
 
-Explique SOMENTE os versículos acima de forma CONTEXTUAL e EDUCATIVA.
-O usuário está lendo a passagem em partes — foque no que ele ACABOU de ler.
+Gere uma explicação usando EXATAMENTE este formato com bullets (•):
 
-### 📍 **O QUE ESTÁ ACONTECENDO AQUI?** (2-3 frases)
-Explique o contexto imediato: quem está falando, para quem, e o que está acontecendo neste trecho específico.
+🔍 **CONTEXTO & EXPLICAÇÃO**
 
-### 🔗 **CONEXÃO COM O QUE VEIO ANTES** (1-2 frases)
-${parteAtual > 1 ? 'Como estes versículos se conectam com os versículos anteriores que o usuário já leu?' : 'Por que a passagem começa assim? Qual o contexto maior?'}
+• **O que está acontecendo:** [1-2 frases explicando o que está literalmente acontecendo no texto. Quem fala, para quem, qual a ação.]
 
-### 💡 **PALAVRAS-CHAVE E SIGNIFICADOS** (2-3 itens)
-Liste as palavras ou conceitos mais importantes destes versículos, com explicação breve:
-- **[Palavra]**: significado/contexto
+• **Contexto:** [2-3 frases com background histórico, cultural ou literário ESPECÍFICO deste trecho. Mencione versículos específicos quando relevante. Se há conexão com outras passagens, cite. Explique símbolos, nomes ou referências que o leitor moderno pode não entender.]
 
-### ✝️ **CONEXÃO COM CRISTO E OUTRAS PASSAGENS** (1-2 frases)
-Como estes versículos se conectam com Jesus ou com outras partes da Bíblia?
+• **Significado:** [A parte mais rica. Explique a mensagem teológica, espiritual ou prática. Pode ter múltiplos pontos se necessário. Use frases impactantes. Termine com uma verdade que ressoa no coração.]
 
-### 🎯 **PARA GUARDAR NO CORAÇÃO** (1 frase)
-Uma verdade prática destes versículos que o leitor deve lembrar.
-
-## REGRAS CRÍTICAS:
-- ⚠️ NÃO inclua oração — a oração vem só no FINAL de toda a leitura
-- ⚠️ NÃO repita explicações genéricas da passagem toda — foque no trecho ATUAL
-- ⚠️ Seja CONCISO e DIDÁTICO — máximo 250 palavras
-- ⚠️ Use linguagem simples e acessível
-- ⚠️ O objetivo é que ao terminar, o leitor ENTENDA completamente o que leu
+## REGRAS:
+1. Use o formato acima COM BULLETS (•), não números
+2. Cite versículos específicos do trecho (ex: "v.3", "v.9")
+3. Faça conexões com outras passagens da Bíblia quando relevante
+4. Linguagem profunda mas acessível — não acadêmica
+5. NÃO inclua oração
+6. NÃO inclua seção de aplicação prática separada
+7. A verdade prática deve estar DENTRO do "Significado"
+8. Máximo 200 palavras
+9. NÃO use emojis além do 🔍 no início
 
 Gere a explicação agora:
 `;
