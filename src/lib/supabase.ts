@@ -1108,6 +1108,7 @@ export async function darAmen(id: number): Promise<boolean> {
             const { error: updateError } = await supabase
                 .from('palavra_manha_diaria')
                 .update({ amei_count: 1 }) // Não é atômico mas serve
+
                 .eq('id', id);
 
             return !updateError;
@@ -1119,16 +1120,4 @@ export async function darAmen(id: number): Promise<boolean> {
         console.error('💥 [AMÉM] Exceção:', e);
         return false;
     }
-}
-                .eq('id', id);
-
-return !updateError;
-        }
-
-console.log('✅ [AMÉM] Recebido!');
-return true;
-    } catch (e) {
-    console.error('💥 [AMÉM] Exceção:', e);
-    return false;
-}
 }
