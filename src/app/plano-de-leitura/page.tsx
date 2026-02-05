@@ -24,22 +24,20 @@ interface ChatMessage {
     timestamp: Date;
 }
 
-type MenuOption = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | null;
+type MenuOption = '1' | '2' | '3' | '4' | '5' | '6' | '7' | null;
 
 // ===========================================
 // MENU OPTIONS CONFIG
 // ===========================================
 
 const MENU_OPTIONS = [
-    { id: '1', icon: Book, label: 'Ler Passagem Comentada', desc: 'texto bíblico em telas + explicações.' },
-    { id: '2', icon: Clock, label: 'Linha do Tempo', desc: 'personagens, cenário e sequência dos fatos.' },
-    { id: '3', icon: Search, label: 'Estudo Profundo', desc: 'teologia, palavras-chave e simbolismos.' },
-    { id: '4', icon: Globe, label: 'Contexto Histórico', desc: 'cultura, geografia e costumes.' },
-    { id: '5', icon: Rocket, label: 'Aplicação Prática', desc: 'como viver isso nas próximas 24–48h.' },
-    { id: '6', icon: Zap, label: 'Síntese Completa', desc: 'visão panorâmica e resumo executivo da passagem.' },
-    { id: '7', icon: Building, label: 'Exposição Detalhada', desc: 'análise verso a verso ou em blocos, com profundidade teológica.' },
-    { id: '8', icon: MessageSquare, label: 'Chat Pastoral', desc: 'tirar dúvidas e aprofundar meu entendimento sobre a passagem.' },
-    { id: '9', icon: ClipboardList, label: 'Revisão & Quiz', desc: 'perguntas para testar se entendi bem a passagem.' },
+    { id: '1', icon: Book, label: 'Ler Passagem', desc: 'Texto bíblico puro, leitura rápida.' },
+    { id: '2', icon: Clock, label: 'Linha do Tempo', desc: 'Personagens, cenário e sequência dos fatos.' },
+    { id: '3', icon: Search, label: 'Estudo Profundo', desc: 'Teologia, palavras-chave e simbolismos.' },
+    { id: '4', icon: Globe, label: 'Contexto Histórico', desc: 'Cultura, geografia e costumes.' },
+    { id: '5', icon: Rocket, label: 'Aplicação Prática', desc: 'Como viver isso nas próximas 24–48h.' },
+    { id: '6', icon: Zap, label: 'Síntese Completa', desc: 'Visão panorâmica e resumo executivo.' },
+    { id: '7', icon: Building, label: 'Exposição Detalhada', desc: 'Análise verso a verso com profundidade.' },
 ] as const;
 
 // ===========================================
@@ -199,17 +197,15 @@ Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 
 ---
 
-Escolha uma das opções abaixo ou digite o número correspondente:
+Escolha uma das opções abaixo:
 
-1. 📖 **Ler Passagem Comentada**
-2. 🧭 **Linha do Tempo**
-3. 🔍 **Estudo Profundo**
-4. 🌍 **Contexto Histórico**
-5. 🚀 **Aplicação Prática**
-6. ⚡ **Síntese Completa**
-7. 🏛️ **Exposição Detalhada**
-8. 💬 **Chat Pastoral**
-9. 📝 **Revisão & Quiz**
+1. 📖 **Ler Passagem** — Texto bíblico puro
+2. 🧭 **Linha do Tempo** — Personagens e cenário
+3. 🔍 **Estudo Profundo** — Teologia e simbolismos
+4. 🌍 **Contexto Histórico** — Cultura e costumes
+5. 🚀 **Aplicação Prática** — Como viver isso hoje
+6. ⚡ **Síntese Completa** — Resumo executivo
+7. 🏛️ **Exposição Detalhada** — Análise verso a verso
 
 Estou pronto para guiá-lo nesta jornada espiritual.`;
     };
@@ -236,18 +232,22 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
             return await gerarRespostaOpcao(optionId);
         }
 
-        // Se está em chat pastoral (opção 8), processar como pergunta
-        if (activeOption === '8') {
-            return await processarChatPastoral(comando);
-        }
 
         // Comando continuar
         if (['continuar', 'próximo', 'proximo', 'seguir', 'leia mais'].includes(cmdLower)) {
             return await processarContinuar();
         }
 
+        // Comando EXPLICAR (só funciona na Opção 1)
+        if (['explicar', 'explicação', 'explicacao', 'contexto'].includes(cmdLower)) {
+            if (activeOption === '1') {
+                return gerarExplicacaoAtual();
+            }
+            return 'O comando **EXPLICAR** só funciona na opção 1 (Ler Passagem).';
+        }
+
         // Comando não reconhecido
-        return `Não entendi o comando. Digite um número de **1 a 9** ou **MENU** para ver as opções.`;
+        return `Não entendi o comando. Digite um número de **1 a 7** ou **MENU** para ver as opções.`;
     };
 
     // Gerar resposta para cada opção
@@ -269,29 +269,12 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
                 return gerarSinteseCompleta();
             case '7':
                 return gerarExposicaoDetalhada();
-            case '8':
-                return `💬 **CHAT PASTORAL ATIVADO**
-
-Agora estamos em modo de conversa direta sobre a passagem de hoje: **${passagem.referencia}**.
-
-Você pode me perguntar:
-• Dúvidas de interpretação ("o que esse versículo quer dizer?")
-• Perguntas de estrutura ("como essa parte se conecta com o resto?")
-• Aplicações pessoais ("como eu posso viver isso?")
-• Conexões bíblicas ("existe paralelo em outro lugar?")
-
-Faça sua pergunta, e vamos explorar juntos!
-
----
-Digite **MENU** para voltar às opções.`;
-            case '9':
-                return gerarQuiz();
             default:
                 return 'Opção não reconhecida.';
         }
     };
 
-    // Opção 1: Leitura Guiada
+    // Opção 1: Leitura Pura (Sem Explicação)
     const gerarLeituraGuiada = (): string => {
         if (!passagem) return '';
 
@@ -300,11 +283,10 @@ Digite **MENU** para voltar às opções.`;
             ? formatarVersiculosParte(bibleData.versiculos, 0, 10)
             : '(Carregando versículos...)';
 
-        const lexico = passagem.lexico_do_dia?.[0];
-        const insight = passagem.insights_pre_minerados?.[0];
+        const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
 
-        return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
-📍 *Parte 1 de ${bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3}*
+        return `📖 **${passagem.referencia}**
+📍 *Parte 1 de ${totalPartes}*
 
 ---
 
@@ -312,17 +294,36 @@ ${versiculosTexto}
 
 ---
 
-🔍 **CONTEXTO & EXPLICAÇÃO**
+Digite **CONTINUAR** para os próximos versículos.
+Digite **EXPLICAR** para gerar contexto e explicação desta parte.
+Ou **MENU** para voltar.`;
+    };
 
-${lexico ? `📖 **Palavra-chave:** ${lexico}` : ''}
+    // Gerar explicação sob demanda (comando EXPLICAR)
+    const gerarExplicacaoAtual = (): string => {
+        if (!passagem) return '';
 
-${insight ? `🎯 **Destaque:** ${insight.tese || 'Este texto nos convida à reflexão profunda.'}` : '🎯 **Destaque:** Medite nesta Palavra hoje.'}
+        const page = currentPageRef.current;
+        const lexico = passagem.lexico_do_dia?.[page - 1] || passagem.lexico_do_dia?.[0];
+        const insight = passagem.insights_pre_minerados?.[page - 1] || passagem.insights_pre_minerados?.[0];
 
-🙏 **Para Refletir:**
+        return `🔍 **CONTEXTO & EXPLICAÇÃO**
+📍 *Parte ${page} de ${passagem.referencia}*
+
+---
+
+${lexico ? `📖 **Palavra-chave:** ${lexico}
+
+` : ''}${insight ? `🎯 **Tese Central:** ${insight.tese || 'Este texto nos convida à reflexão profunda.'}
+
+📚 **Categoria:** ${insight.familia || 'Teologia Bíblica'}
+📜 **Versículo de Apoio:** ${insight.verso_suporte || passagem.referencia}
+
+` : ''}🙏 **Para Refletir:**
 *"Como este texto pode transformar minha forma de pensar e agir hoje?"*
 
 ---
-Digite **CONTINUAR** para seguir para os próximos versículos.
+Digite **CONTINUAR** para os próximos versículos.
 Ou **MENU** para voltar.`;
     };
 
@@ -752,15 +753,13 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
                 currentPageRef.current = 2;
                 setCurrentPage(2);
 
-                // Usa versículos dinâmicos do bibleData (posições 10-19)
                 const versiculosParte2 = bibleData
                     ? formatarVersiculosParte(bibleData.versiculos, 10, 10)
                     : '(Carregando versículos...)';
 
                 const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
-                const insight = passagem.insights_pre_minerados?.[1] || passagem.insights_pre_minerados?.[0];
 
-                return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+                return `📖 **${passagem.referencia}**
 📍 *Parte 2 de ${totalPartes}*
 
 ---
@@ -769,18 +768,8 @@ ${versiculosParte2}
 
 ---
 
-🔍 **CONTEXTO & EXPLICAÇÃO**
-
-${insight ? `🎯 **Destaque:** ${insight.tese}` : '🎯 **Destaque:** Continue meditando nesta Palavra.'}
-
-💡 **Por que isso importa HOJE:**
-O orgulho tem data de validade. Tudo que é construído sobre arrogância, Deus humilha. O que é construído sobre humildade, permanece.
-
-🙏 **Para Refletir:**
-*"Em que área da minha vida estou confiando mais em mim mesmo do que em Deus?"*
-
----
-Digite **CONTINUAR** para os últimos versículos.
+Digite **CONTINUAR** para os próximos versículos.
+Digite **EXPLICAR** para gerar contexto e explicação desta parte.
 Ou **MENU** para voltar.`;
             }
 
@@ -788,15 +777,13 @@ Ou **MENU** para voltar.`;
                 currentPageRef.current = 3;
                 setCurrentPage(3);
 
-                // Usa versículos dinâmicos do bibleData (posições 20+)
                 const versiculosParte3 = bibleData
                     ? formatarVersiculosParte(bibleData.versiculos, 20, 10)
                     : '(Carregando versículos...)';
 
                 const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
-                const insight = passagem.insights_pre_minerados?.[2] || passagem.insights_pre_minerados?.[0];
 
-                return `📲 **LEITURA BÍBLICA: ${passagem.referencia}**
+                return `📖 **${passagem.referencia}**
 📍 *Parte 3 de ${totalPartes}*
 
 ---
@@ -805,18 +792,8 @@ ${versiculosParte3}
 
 ---
 
-🔍 **CONTEXTO & EXPLICAÇÃO**
-
-${insight ? `🎯 **Destaque:** ${insight.tese}` : '🎯 **Destaque:** Medite profundamente nesta passagem.'}
-
-💡 **Por que isso importa HOJE:**
-O caminho de Cristo é o oposto do orgulho: Ele desceu, e por isso foi exaltado (Fp 2:5-11). Quando nos humilhamos diante de Deus, encontramos verdadeira exaltação.
-
-🙏 **Para Refletir:**
-*"Estou disposto a descer para que Deus me exalte no tempo certo?"*
-
----
 Digite **CONTINUAR** para finalizar a leitura.
+Digite **EXPLICAR** para gerar contexto e explicação desta parte.
 Ou **MENU** para voltar.`;
             }
 
@@ -1179,46 +1156,24 @@ Digite **MENU** para continuar estudando.`;
                                 <div ref={chatEndRef} />
                             </div>
 
-                            {/* Input Area (Só aparece para opções interativas ou para "Continuar") */}
+                            {/* Input Area - Botão Continuar para todas as opções */}
                             <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
-                                        submitMessage(inputValue);
+                                        submitMessage('Continuar');
                                     }}
                                     className="relative flex gap-2"
                                 >
-                                    {activeOption !== '8' && activeOption !== '9' ? (
-                                        // Botões de ação rápida para modos de leitura
-                                        <button
-                                            type="button"
-                                            onClick={() => submitMessage('Continuar')}
-                                            className="w-full btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
-                                            disabled={isProcessing}
-                                        >
-                                            <ArrowRight className="w-5 h-5" />
-                                            Continuar Leitura
-                                        </button>
-                                    ) : (
-                                        // Input de texto para Chat/Quiz
-                                        <>
-                                            <input
-                                                type="text"
-                                                value={inputValue}
-                                                onChange={(e) => setInputValue(e.target.value)}
-                                                placeholder={activeOption === '8' ? "Faça uma pergunta sobre a passagem..." : "Digite sua resposta..."}
-                                                disabled={isProcessing}
-                                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 transition-all"
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={!inputValue.trim() || isProcessing}
-                                                className="btn-premium px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <Send className="w-5 h-5" />
-                                            </button>
-                                        </>
-                                    )}
+                                    <button
+                                        type="submit"
+                                        onClick={() => submitMessage('Continuar')}
+                                        className="w-full btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
+                                        disabled={isProcessing}
+                                    >
+                                        <ArrowRight className="w-5 h-5" />
+                                        Continuar Leitura
+                                    </button>
                                 </form>
                             </div>
 
