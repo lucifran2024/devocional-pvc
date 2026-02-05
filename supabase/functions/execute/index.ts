@@ -670,7 +670,7 @@ Gere as 10 mensagens agora:
       // 3. Buscar Histórico Recente (Anti-Repetição)
       // Buscar últimas 3 gerações da palavra da manhã para evitar repetição
       const { data: historicoRecente } = await supabase
-        .from("palavra_manha_cache")
+        .from("palavra_manha_diaria")
         .select("mensagem, categoria")
         .order("data", { ascending: false })
         .limit(3);

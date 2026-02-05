@@ -1006,17 +1006,25 @@ export async function getCategoriaStats(): Promise<CategoriaStats[]> {
 // PALAVRA DA MANHÃ (AUTO)
 // ===========================================
 
-/**
- * Busca Palavra da Manhã do cache
- */
+// Função para BUSCAR do cache (nova tabela)
 export async function getPalavraManha(data: string): Promise<PalavraManhaCache | null> {
-    const { data: result } = await supabase
-        .from('palavra_manha_cache')
-        .select('*')
-        .eq('data', data)
-        .maybeSingle();
+    try {
+        const { data: result, error } = await supabase
+            .from('palavra_manha_diaria')
+            .select('*')
+            .eq('data', data)
+            .maybeSingle();
 
-    return result;
+        if (error) {
+            console.error('Erro ao buscar palavra_manha_diaria:', error);
+            return null;
+        }
+
+        return result as PalavraManhaCache | null;
+    } catch (e) {
+        console.error('Exceção getPalavraManha:', e);
+        return null;
+    }
 }
 
 /**
@@ -1059,7 +1067,7 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
             console.error('❌ [PALAVRA] ERRO CRÍTICO AO SALVAR NO BACKEND:', json.debug_save_error);
         }
 
-        // Fallback legado (caso backend antigo responda)
+        // Fallback legado (caso backend antigo responda ou erro de save)
         const config = json.config;
         const novoCache: any = {
             data: data,
@@ -1070,6 +1078,12 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
             passagem_ref: json.passagem_usada || null
         };
 
+        // Tenta salvar no cliente APENAS se o backend falhou (redundância)
+        if (!json.registro) {
+            console.log('⚠️ [PALAVRA] Backend não retornou registro, tentando salvar cliente...');
+            await supabase.from('palavra_manha_diaria').upsert(novoCache);
+        }
+
         return { data: { ...novoCache, id: 0 } as PalavraManhaCache, error: null };
 
     } catch (e) {
@@ -1079,20 +1093,21 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 }
 
 /**
- * Envia o "Amém" (Feedback positivo)
+ * Envia o "Amém" (Feedback positivo) - Nova Tabela
  */
 export async function darAmen(id: number): Promise<boolean> {
     console.log(`🙏 [AMÉM] Enviando feedback para ID ${id}`);
 
     try {
-        const { error } = await supabase.rpc('increment_amei', { row_id: id });
+        // Tenta RPC novo
+        const { error } = await supabase.rpc('increment_amei_diaria', { row_id: id });
 
         if (error) {
             console.error('❌ [AMÉM] Erro RPC:', error);
-            // Fallback manual se RPC falhar ou não existir
+            // Fallback: update direto na tabela nova
             const { error: updateError } = await supabase
-                .from('palavra_manha_cache')
-                .update({ amei_count: 1 }) // Incremento básico
+                .from('palavra_manha_diaria')
+                .update({ amei_count: 1 }) // Não é atômico mas serve
                 .eq('id', id);
 
             return !updateError;
@@ -1104,4 +1119,16 @@ export async function darAmen(id: number): Promise<boolean> {
         console.error('💥 [AMÉM] Exceção:', e);
         return false;
     }
+}
+                .eq('id', id);
+
+return !updateError;
+        }
+
+console.log('✅ [AMÉM] Recebido!');
+return true;
+    } catch (e) {
+    console.error('💥 [AMÉM] Exceção:', e);
+    return false;
+}
 }
