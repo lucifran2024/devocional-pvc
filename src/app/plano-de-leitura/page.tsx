@@ -299,32 +299,66 @@ Digite **EXPLICAR** para gerar contexto e explicação desta parte.
 Ou **MENU** para voltar.`;
     };
 
-    // Gerar explicação sob demanda (comando EXPLICAR)
-    const gerarExplicacaoAtual = (): string => {
+    // Gerar explicação sob demanda via IA (comando EXPLICAR)
+    const gerarExplicacaoAtual = async (): Promise<string> => {
         if (!passagem) return '';
 
         const page = currentPageRef.current;
-        const lexico = passagem.lexico_do_dia?.[page - 1] || passagem.lexico_do_dia?.[0];
-        const insight = passagem.insights_pre_minerados?.[page - 1] || passagem.insights_pre_minerados?.[0];
 
-        return `🔍 **CONTEXTO & EXPLICAÇÃO**
+        // Pegar versículos da parte atual
+        const startIndex = (page - 1) * 10;
+        const versiculosAtual = bibleData
+            ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
+            : '';
+
+        try {
+            console.log('🔍 Chamando Edge Function explicar_passagem...');
+
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    modo_id: 'explicar_passagem',
+                    data: new Date().toISOString().split('T')[0],
+                    referencia: passagem.referencia,
+                    versiculos: versiculosAtual,
+                    parte: page
+                })
+            });
+
+            if (!resp.ok) {
+                throw new Error(`Erro ${resp.status}`);
+            }
+
+            const data = await resp.json();
+
+            if (data.ok && data.resultado) {
+                return `🔍 **EXPLICAÇÃO GERADA POR IA**
 📍 *Parte ${page} de ${passagem.referencia}*
 
 ---
 
-${lexico ? `📖 **Palavra-chave:** ${lexico}
-
-` : ''}${insight ? `🎯 **Tese Central:** ${insight.tese || 'Este texto nos convida à reflexão profunda.'}
-
-📚 **Categoria:** ${insight.familia || 'Teologia Bíblica'}
-📜 **Versículo de Apoio:** ${insight.verso_suporte || passagem.referencia}
-
-` : ''}🙏 **Para Refletir:**
-*"Como este texto pode transformar minha forma de pensar e agir hoje?"*
+${data.resultado}
 
 ---
 Digite **CONTINUAR** para os próximos versículos.
 Ou **MENU** para voltar.`;
+            } else {
+                throw new Error(data.error || 'Erro ao gerar explicação');
+            }
+        } catch (error) {
+            console.error('Erro ao gerar explicação:', error);
+            return `❌ **Erro ao gerar explicação**
+
+Não foi possível gerar a explicação no momento. Tente novamente.
+
+---
+Digite **CONTINUAR** para os próximos versículos.
+Ou **MENU** para voltar.`;
+        }
     };
 
     // Opção 2: Linha do Tempo

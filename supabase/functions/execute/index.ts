@@ -376,6 +376,113 @@ ${dnaFavoritas}
     // ========================================
 
     // ========================================
+    // MODO ESPECIAL: EXPLICAR PASSAGEM (GERAÇÃO IA)
+    // ========================================
+    if (modo_id === 'explicar_passagem') {
+      console.log(`🔍 [EXPLICAR PASSAGEM] Gerando explicação com IA...`);
+
+      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      if (!geminiKey) {
+        throw new Error("GEMINI_API_KEY não configurada.");
+      }
+
+      // Receber dados do cliente
+      const { referencia, versiculos, parte } = await req.json().catch(() => ({}));
+      const versiculosTexto = versiculos || '';
+      const referenciaPassagem = referencia || 'Passagem bíblica';
+      const parteAtual = parte || 1;
+
+      console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}`);
+
+      const promptExplicar = `
+# EXPLICAÇÃO BÍBLICA PROFUNDA
+
+Você é um teólogo e estudioso bíblico experiente. Gere uma explicação RICA e PROFUNDA para a seguinte passagem:
+
+## PASSAGEM: ${referenciaPassagem}
+## PARTE: ${parteAtual}
+
+### VERSÍCULOS:
+${versiculosTexto}
+
+## SUA TAREFA:
+
+Gere uma explicação em Português do Brasil com as seguintes seções:
+
+### 🔍 **CONTEXTO HISTÓRICO**
+- Quando e por quem foi escrito?
+- Qual o cenário político/social da época?
+- Para quem foi originalmente dirigido?
+
+### 📖 **SIGNIFICADO TEOLÓGICO**
+- Qual a mensagem central desta passagem?
+- Quais são as palavras-chave importantes (em hebraico/grego se relevante)?
+- Como se conecta com o restante das Escrituras?
+
+### ✝️ **CONEXÃO COM CRISTO**
+- Como esta passagem aponta para Jesus?
+- Qual o cumprimento no Novo Testamento?
+
+### 🎯 **APLICAÇÃO PRÁTICA**
+- Como viver isso hoje, nas próximas 24 horas?
+- Que atitude/ação concreta podemos tomar?
+
+### 🙏 **ORAÇÃO BASEADA NO TEXTO**
+- Uma oração curta (2-3 frases) baseada na passagem.
+
+## REGRAS:
+- Seja claro e edificante, não acadêmico demais
+- Use linguagem acessível mas não superficial
+- Máximo 400 palavras total
+- Use emojis para organizar as seções
+
+Gere a explicação agora:
+`;
+
+      const MODEL_NAME = "gemini-2.0-flash";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: promptExplicar }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048
+          }
+        })
+      });
+
+      if (!resp.ok) {
+        const errorBody = await resp.text();
+        console.error(`❌ Erro Gemini:`, errorBody);
+        throw new Error(`Erro API Gemini: ${resp.status}`);
+      }
+
+      const aiData = await resp.json();
+      const explicacao = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar explicação.";
+
+      console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada com sucesso!`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: explicacao,
+          tipo: 'explicar_passagem'
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+    // ========================================
+    // FIM DO MODO EXPLICAR PASSAGEM
+    // ========================================
+
+
+    // ========================================
     // MODO HÍBRIDO: PASSAGEM DO DIA + FAVORITAS
     // ========================================
     if (modo_id === 'modo_hibrido') {
