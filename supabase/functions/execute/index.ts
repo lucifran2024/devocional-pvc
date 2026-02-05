@@ -394,46 +394,43 @@ ${dnaFavoritas}
       console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}`);
 
       const promptExplicar = `
-# EXPLICAÇÃO BÍBLICA PROFUNDA
+# EXPLICAÇÃO CONTEXTUAL — PARTE ${parteAtual}
 
-Você é um teólogo e estudioso bíblico experiente. Gere uma explicação RICA e PROFUNDA para a seguinte passagem:
+Você é um professor bíblico experiente explicando o que ACABOU de ser lido.
 
 ## PASSAGEM: ${referenciaPassagem}
-## PARTE: ${parteAtual}
+## PARTE ATUAL: ${parteAtual}
 
-### VERSÍCULOS:
+### VERSÍCULOS QUE O USUÁRIO ACABOU DE LER:
 ${versiculosTexto}
 
 ## SUA TAREFA:
 
-Gere uma explicação em Português do Brasil com as seguintes seções:
+Explique SOMENTE os versículos acima de forma CONTEXTUAL e EDUCATIVA.
+O usuário está lendo a passagem em partes — foque no que ele ACABOU de ler.
 
-### 🔍 **CONTEXTO HISTÓRICO**
-- Quando e por quem foi escrito?
-- Qual o cenário político/social da época?
-- Para quem foi originalmente dirigido?
+### 📍 **O QUE ESTÁ ACONTECENDO AQUI?** (2-3 frases)
+Explique o contexto imediato: quem está falando, para quem, e o que está acontecendo neste trecho específico.
 
-### 📖 **SIGNIFICADO TEOLÓGICO**
-- Qual a mensagem central desta passagem?
-- Quais são as palavras-chave importantes (em hebraico/grego se relevante)?
-- Como se conecta com o restante das Escrituras?
+### 🔗 **CONEXÃO COM O QUE VEIO ANTES** (1-2 frases)
+${parteAtual > 1 ? 'Como estes versículos se conectam com os versículos anteriores que o usuário já leu?' : 'Por que a passagem começa assim? Qual o contexto maior?'}
 
-### ✝️ **CONEXÃO COM CRISTO**
-- Como esta passagem aponta para Jesus?
-- Qual o cumprimento no Novo Testamento?
+### 💡 **PALAVRAS-CHAVE E SIGNIFICADOS** (2-3 itens)
+Liste as palavras ou conceitos mais importantes destes versículos, com explicação breve:
+- **[Palavra]**: significado/contexto
 
-### 🎯 **APLICAÇÃO PRÁTICA**
-- Como viver isso hoje, nas próximas 24 horas?
-- Que atitude/ação concreta podemos tomar?
+### ✝️ **CONEXÃO COM CRISTO E OUTRAS PASSAGENS** (1-2 frases)
+Como estes versículos se conectam com Jesus ou com outras partes da Bíblia?
 
-### 🙏 **ORAÇÃO BASEADA NO TEXTO**
-- Uma oração curta (2-3 frases) baseada na passagem.
+### 🎯 **PARA GUARDAR NO CORAÇÃO** (1 frase)
+Uma verdade prática destes versículos que o leitor deve lembrar.
 
-## REGRAS:
-- Seja claro e edificante, não acadêmico demais
-- Use linguagem acessível mas não superficial
-- Máximo 400 palavras total
-- Use emojis para organizar as seções
+## REGRAS CRÍTICAS:
+- ⚠️ NÃO inclua oração — a oração vem só no FINAL de toda a leitura
+- ⚠️ NÃO repita explicações genéricas da passagem toda — foque no trecho ATUAL
+- ⚠️ Seja CONCISO e DIDÁTICO — máximo 250 palavras
+- ⚠️ Use linguagem simples e acessível
+- ⚠️ O objetivo é que ao terminar, o leitor ENTENDA completamente o que leu
 
 Gere a explicação agora:
 `;
