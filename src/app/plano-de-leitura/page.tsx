@@ -746,72 +746,57 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
         const page = currentPageRef.current;  // Use ref for immediate value
         console.log('🔄 processarContinuar - activeOption:', activeOption, 'currentPage (ref):', page);
 
-        // OPÇÃO 1: LEITURA GUIADA
+        // OPÇÃO 1: LEITURA GUIADA (Paginação Dinâmica)
         if (activeOption === '1') {
-            console.log('📖 Opção 1 - Página atual:', page);
-            if (page === 1) {
-                currentPageRef.current = 2;
-                setCurrentPage(2);
+            const totalVersiculos = bibleData?.versiculos.length || 30;
+            const totalPartes = Math.ceil(totalVersiculos / 10);
 
-                const versiculosParte2 = bibleData
-                    ? formatarVersiculosParte(bibleData.versiculos, 10, 10)
-                    : '(Carregando versículos...)';
+            console.log('📖 Opção 1 - Página atual:', page, 'Total partes:', totalPartes);
 
-                const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
-
-                return `📖 **${passagem.referencia}**
-📍 *Parte 2 de ${totalPartes}*
-
----
-
-${versiculosParte2}
-
----
-
-Digite **CONTINUAR** para os próximos versículos.
-Digite **EXPLICAR** para gerar contexto e explicação desta parte.
-Ou **MENU** para voltar.`;
-            }
-
-            if (page === 2) {
-                currentPageRef.current = 3;
-                setCurrentPage(3);
-
-                const versiculosParte3 = bibleData
-                    ? formatarVersiculosParte(bibleData.versiculos, 20, 10)
-                    : '(Carregando versículos...)';
-
-                const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
-
-                return `📖 **${passagem.referencia}**
-📍 *Parte 3 de ${totalPartes}*
-
----
-
-${versiculosParte3}
-
----
-
-Digite **CONTINUAR** para finalizar a leitura.
-Digite **EXPLICAR** para gerar contexto e explicação desta parte.
-Ou **MENU** para voltar.`;
-            }
-
-            // currentPage >= 3 - Leitura concluída
-            return `✅ **LEITURA CONCLUÍDA!**
+            // Se já estamos na última página ou além, mostra conclusão
+            if (page >= totalPartes) {
+                return `✅ **LEITURA CONCLUÍDA!**
 
 ---
 
 📖 **Você completou a leitura de ${passagem.referencia}!**
 
-💎 **Resumo de Ouro:** Deus é soberano sobre todas as nações. O orgulho humano sempre será humilhado, mas há graça para os humildes.
+💎 **Resumo:** Medite sobre o que leu e deixe a Palavra transformar seu coração.
 
 🙏 **Sugestão de Oração:**
 
-*"Senhor, obrigado por me lembrar que Tu estás no controle. Que eu não seja como Babilônia, buscando minha própria glória. Ajuda-me a viver com humildade, confiando na Tua soberania. Em nome de Jesus. Amém."*
+*"Senhor, obrigado por Tua Palavra. Que ela habite ricamente em mim e guie meus passos hoje. Em nome de Jesus. Amém."*
 
 ---
 Digite **MENU** para voltar e explorar outras opções.`;
+            }
+
+            // Avança para próxima página
+            const nextPage = page + 1;
+            currentPageRef.current = nextPage;
+            setCurrentPage(nextPage);
+
+            const startIndex = page * 10;  // page=1 -> start=10, page=2 -> start=20, etc.
+            const versiculosProximos = bibleData
+                ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
+                : '(Carregando versículos...)';
+
+            const ehUltimaParte = nextPage >= totalPartes;
+
+            return `📖 **${passagem.referencia}**
+📍 *Parte ${nextPage} de ${totalPartes}*
+
+---
+
+${versiculosProximos}
+
+---
+
+${ehUltimaParte
+                    ? 'Digite **CONTINUAR** para finalizar a leitura.'
+                    : 'Digite **CONTINUAR** para os próximos versículos.'}
+Digite **EXPLICAR** para gerar contexto e explicação desta parte.
+Ou **MENU** para voltar.`;
         }
 
         // OPÇÃO 7: EXPOSIÇÃO DETALHADA
@@ -1156,25 +1141,33 @@ Digite **MENU** para continuar estudando.`;
                                 <div ref={chatEndRef} />
                             </div>
 
-                            {/* Input Area - Botão Continuar para todas as opções */}
+                            {/* Input Area - Botões de ação */}
                             <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        submitMessage('Continuar');
-                                    }}
-                                    className="relative flex gap-2"
-                                >
+                                <div className="flex gap-3">
+                                    {/* Botão Continuar */}
                                     <button
-                                        type="submit"
+                                        type="button"
                                         onClick={() => submitMessage('Continuar')}
-                                        className="w-full btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
+                                        className="flex-1 btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
                                         disabled={isProcessing}
                                     >
                                         <ArrowRight className="w-5 h-5" />
-                                        Continuar Leitura
+                                        Continuar
                                     </button>
-                                </form>
+
+                                    {/* Botão Explicar (só na Opção 1) */}
+                                    {activeOption === '1' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => submitMessage('Explicar')}
+                                            className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-4 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                            disabled={isProcessing}
+                                        >
+                                            <Sparkles className="w-5 h-5 text-amber-400" />
+                                            Explicar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                         </div>
