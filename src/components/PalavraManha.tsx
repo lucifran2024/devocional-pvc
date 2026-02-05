@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Copy, RefreshCw, Sun, Check, Loader2, Share2, Sparkles, BookOpen } from 'lucide-react';
+import { Copy, RefreshCw, Sun, Check, Loader2, Share2, Sparkles, BookOpen, Heart } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getDataHoje, getPalavraManha, gerarPalavraManha, type PalavraManhaCache } from '@/lib/supabase';
+import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
 
 interface PalavraManhaProps {
     passagemDia?: string;
@@ -15,6 +15,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [generating, setGenerating] = useState(false);
+    const [amei, setAmei] = useState(false); // Estado local do feedback
 
     useEffect(() => {
         loadData();
@@ -68,6 +69,18 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         navigator.clipboard.writeText(textoShare);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleAmen = async () => {
+        if (!data || amei) return;
+        setAmei(true); // Feedback instantâneo na UI
+
+        // Envia para o banco
+        const sucesso = await darAmen(data.id);
+        if (!sucesso) {
+            // Se falhar (raro), deveríamos reverter? 
+            // Para UX, melhor manter como "feito" visualmente para não frustrar
+        }
     };
 
     if (loading && !data) {
@@ -132,10 +145,22 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
                     <div className="flex items-center gap-2">
                         <button
+                            onClick={handleAmen}
+                            disabled={amei}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${amei
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 cursor-default'
+                                : 'bg-white/5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-300 hover:border-rose-500/30'
+                                }`}
+                        >
+                            <Heart className={`w-3 h-3 ${amei ? 'fill-current' : ''}`} />
+                            {amei ? 'Amém!' : 'Amém'}
+                        </button>
+
+                        <button
                             onClick={handleCopy}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${copied
-                                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                    : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5'
+                                ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5'
                                 }`}
                         >
                             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}

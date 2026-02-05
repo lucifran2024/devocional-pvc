@@ -749,14 +749,42 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
       const aiData = await resp.json();
       const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
 
-      console.log(`✅ [PALAVRA DA MANHÃ] Gerada com sucesso!`);
+      console.log(`✅ [PALAVRA DA MANHÃ] Geração concluída!`);
+
+      // 7. Salvar no Cache (SERVER-SIDE SAVE - CRITICAL FIX)
+      // Garante persistência mesmo se o cliente falhar
+      const cachedData = {
+        data: data,
+        dia_semana: config.dia,
+        categoria: config.categoria,
+        formato: config.formato,
+        mensagem: resultado,
+        passagem_ref: passagemRef || null,
+        amei_count: 0 // Novo campo default
+      };
+
+      console.log('💾 [SERVER SAVE] Salvando no banco:', cachedData);
+
+      const { data: savedRecord, error: saveError } = await supabase
+        .from('palavra_manha_cache')
+        .upsert(cachedData, { onConflict: 'data' })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('❌ [SERVER SAVE] Erro crítico:', saveError);
+      } else {
+        console.log('✅ [SERVER SAVE] Salvo com ID:', savedRecord.id);
+      }
 
       return new Response(
         JSON.stringify({
           ok: true,
           resultado: resultado,
           config: config,
-          passagem_usada: passagemRef
+          passagem_usada: passagemRef,
+          // Retornamos o registro completo (o frontend vai usar isso agora)
+          registro: savedRecord || { ...cachedData, id: 0 }
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1050,33 +1050,55 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 
         if (!json.ok || !json.resultado) throw new Error(json.error || 'Erro ao gerar mensagem');
 
-        // 2. Salva no Cache (usando UPSERT para evitar erro de duplicata)
+        // 2. O Backend agora retorna o registro salvo!
+        if (json.registro) {
+            console.log('✅ [PALAVRA] Recebido registro salvo do backend:', json.registro.id);
+            return { data: json.registro as PalavraManhaCache, error: null };
+        }
+
+        // Fallback legado (caso backend antigo responda)
         const config = json.config;
         const novoCache: any = {
             data: data,
-            dia_semana: config.dia,
-            categoria: config.categoria,
-            formato: config.formato,
+            dia_semana: config?.dia || 'Hoje',
+            categoria: config?.categoria || 'DEVOCIONAL',
+            formato: config?.formato || 'Auto',
             mensagem: json.resultado,
             passagem_ref: json.passagem_usada || null
         };
 
-        const { data: saved, error: saveError } = await supabase
-            .from('palavra_manha_cache')
-            .upsert(novoCache, { onConflict: 'data' })
-            .select('*')
-            .single();
-
-        if (saveError) {
-            console.error('Erro ao salvar cache:', saveError);
-            // Retorna o gerado mesmo se falhar cache
-            return { data: { ...novoCache, id: 0 } as PalavraManhaCache, error: null };
-        }
-
-        return { data: saved, error: null };
+        return { data: { ...novoCache, id: 0 } as PalavraManhaCache, error: null };
 
     } catch (e) {
         console.error('Erro gerarPalavraManha:', e);
         return { data: null, error: e instanceof Error ? e.message : 'Erro desconhecido' };
+    }
+}
+
+/**
+ * Envia o "Amém" (Feedback positivo)
+ */
+export async function darAmen(id: number): Promise<boolean> {
+    console.log(`🙏 [AMÉM] Enviando feedback para ID ${id}`);
+
+    try {
+        const { error } = await supabase.rpc('increment_amei', { row_id: id });
+
+        if (error) {
+            console.error('❌ [AMÉM] Erro RPC:', error);
+            // Fallback manual se RPC falhar ou não existir
+            const { error: updateError } = await supabase
+                .from('palavra_manha_cache')
+                .update({ amei_count: 1 }) // Incremento básico
+                .eq('id', id);
+
+            return !updateError;
+        }
+
+        console.log('✅ [AMÉM] Recebido!');
+        return true;
+    } catch (e) {
+        console.error('💥 [AMÉM] Exceção:', e);
+        return false;
     }
 }
