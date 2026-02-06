@@ -70,7 +70,7 @@ export default function DnaCategorizadoPage() {
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
 
     // Estilos de Apresentação (NOVO)
-    const [estilosApresentacao, setEstilosApresentacao] = useState<CategoriaDna[]>([]);
+
 
     // Últimas Gerações (Nova Tabela)
     const [recentGenerations, setRecentGenerations] = useState<DnaGeracao[]>([]);
@@ -163,7 +163,7 @@ export default function DnaCategorizadoPage() {
             momento: filtroMomento || undefined,
             usarDnaBase,
             usarPassagemDia,
-            estilosApresentacao: estilosApresentacao.length > 0 ? estilosApresentacao : undefined,
+
         };
 
         try {
@@ -403,46 +403,12 @@ export default function DnaCategorizadoPage() {
                                         </div>
                                     </div>
 
-                                    {/* ESTILO DE APRESENTAÇÃO - NOVA SEÇÃO */}
-                                    <div className="mt-4 pt-4 border-t border-white/10">
-                                        <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">🎨 Estilo de Apresentação</label>
-                                        <p className="text-[10px] text-slate-500 mb-3">Selecione como o resultado deve ser formatado (baseado nos seus exemplos salvos)</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {CATEGORIAS.map(cat => {
-                                                const isSelected = estilosApresentacao.includes(cat.id);
-                                                return (
-                                                    <button
-                                                        key={`estilo-${cat.id}`}
-                                                        onClick={() => {
-                                                            if (isSelected) {
-                                                                setEstilosApresentacao(prev => prev.filter(c => c !== cat.id));
-                                                            } else {
-                                                                setEstilosApresentacao(prev => [...prev, cat.id]);
-                                                            }
-                                                        }}
-                                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${isSelected ? cat.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
-                                                    >
-                                                        <cat.icon className="w-3 h-3" />
-                                                        {cat.nome}
-                                                        {isSelected && <span className="ml-1">✓</span>}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        {estilosApresentacao.length > 0 && (
-                                            <p className="text-[10px] text-violet-400/70 mt-2">
-                                                {estilosApresentacao.length === 1
-                                                    ? `A IA vai formatar a saída como seus ${estilosApresentacao[0]}s`
-                                                    : `A IA vai variar entre os estilos: ${estilosApresentacao.join(', ')}`
-                                                }
-                                            </p>
-                                        )}
-                                    </div>
+
 
                                     {/* Limpar Filtros */}
-                                    {(filtroTema || filtroFormato || filtroPeriodo || filtroMomento || estilosApresentacao.length > 0) && (
+                                    {(filtroTema || filtroFormato || filtroPeriodo || filtroMomento) && (
                                         <button
-                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); setFiltroMomento(''); setEstilosApresentacao([]); }}
+                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); setFiltroMomento(''); }}
                                             className="mt-3 text-xs text-violet-400 hover:text-violet-300"
                                         >
                                             ✕ Limpar filtros avançados
