@@ -345,6 +345,78 @@ export async function getHistorico(showOnlyFavorites: boolean = false) {
     }
 }
 
+// ===========================================
+// FUNÇÕES DE HISTÓRICO RESTAURADAS
+// ===========================================
+
+/**
+ * Busca o histórico de gerações
+ */
+export async function getHistorico(showOnlyFavorites: boolean = false) {
+    console.log(`📜 [HISTORICO] Buscando gerações (Apenas Favoritos: ${showOnlyFavorites})...`);
+
+    try {
+        let query = supabase
+            .from('historico_geracoes')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (showOnlyFavorites) {
+            query = query.eq('aprovado', true);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('❌ [HISTORICO] Erro ao buscar:', error);
+            return [];
+        }
+
+        return data;
+    } catch (err) {
+        console.error('💥 [HISTORICO] Exceção:', err);
+        return [];
+    }
+}
+
+/**
+ * Deleta um item do histórico de gerações
+ */
+export async function deleteHistoricoItem(id: number): Promise<boolean> {
+    console.log(`🗑️ [DELETE] Deletando item ID ${id}`);
+
+    try {
+        // Verifica se existe
+        const { data: existingItem } = await supabase
+            .from('historico_geracoes')
+            .select('id')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (!existingItem) {
+            console.warn('⚠️ [DELETE] Item não encontrado:', id);
+            return true;
+        }
+
+        // Deleta
+        const { error } = await supabase
+            .from('historico_geracoes')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [DELETE] Erro ao deletar:', error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('💥 [DELETE] Exceção:', err);
+        return false;
+    }
+}
+
 /**
  * Alterna o like (aprovado) de um item
  */
