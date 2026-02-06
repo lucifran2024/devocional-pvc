@@ -589,8 +589,15 @@ ${instrucoesFiltro}
 
 ## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
 1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.
-2. **ANTI-REPETIÇÃO**: INICIAR cada mensagem de forma totalmente diferente das ultimas geradas:
+2. **ANTI-REPETIÇÃO RIGOROSA**:
+   Abaixo estão as mensagens que você gerou recentemente.
+   **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
+   **VOCÊ ESTÁ PROIBIDO DE REPETIR O MESMO TEMA OU ÂNGULO HOJE.**
+   Se a última mensagem foi sobre "Confiança", fale sobre "Gratidão" ou "Sabedoria". Mude o disco!
+   
+   --- HISTÓRICO RECENTE (EVITAR ESSES TEMAS) ---
 ${contextoAntiRepeticao}
+   ----------------------------------------------
 
 ## SUA TAREFA:
 Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
