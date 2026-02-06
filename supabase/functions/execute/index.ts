@@ -308,10 +308,13 @@ ATENÇÃO: Você DEVE gerar mensagens que PAREÇAM ter sido escritas pelo MESMO 
           }
 
           instrucoesEstiloApresentacao += `
-## ⛔ REGRA ABSOLUTA:
-Suas mensagens devem ser INDISTINGUÍVEIS dos exemplos acima.
+## ⛔ REGRA ABSOLUTA — 100% DAS MENSAGENS:
+TODAS as ${quantidade} mensagens geradas DEVEM seguir o estilo "${filtros.estilosApresentacao.join(', ')}" mostrado acima.
+NÃO MISTURE estilos. NÃO crie mensagens "normais" ou "genéricas".
+Se você pediu ${quantidade} mensagens como "${filtros.estilosApresentacao[0]}", então são ${quantidade} mensagens de "${filtros.estilosApresentacao[0]}" — TODAS.
+
+Cada mensagem deve ser INDISTINGUÍVEL dos exemplos acima.
 Se eu colocar sua mensagem junto com os exemplos, NINGUÉM deve conseguir identificar qual é a sua.
-${filtros.estilosApresentacao.length > 1 ? `Varie entre os estilos: ${filtros.estilosApresentacao.join(', ')}` : `Use consistentemente o estilo: ${filtros.estilosApresentacao[0]}`}
 
 Separe cada mensagem com --- em uma linha sozinha.
 `;
