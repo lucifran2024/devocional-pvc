@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Wand2, Loader2, BookOpen, Heart, Book, Lightbulb, Megaphone, MessageCircle, HelpCircle, Layers } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, BookOpen, Heart, Book, Lightbulb, Megaphone, MessageCircle, HelpCircle, Layers, Sparkles } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { executarModoComFiltros, getDataHoje, CategoriaDna, saveDnaGeracoes, getDnaGeracoes, DnaGeracao } from '@/lib/supabase';
@@ -85,8 +85,8 @@ export default function GeradorEstiloPage() {
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`relative p-4 rounded-xl border text-left transition-all group ${isSelected
-                                            ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
-                                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                        ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
+                                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
                                     <cat.icon className={`w-6 h-6 mb-3 ${isSelected ? 'text-current' : 'text-slate-400 group-hover:text-white'}`} />
