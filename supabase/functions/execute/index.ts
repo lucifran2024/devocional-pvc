@@ -401,7 +401,7 @@ ${formatoPassagemDoDia}${instrucoesFiltro}
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
-${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
+${(!filtros?.formato && !instrucoesEstiloApresentacao) ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
 ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares. Use apenas "Bom dia!", "Boa tarde!", "Boa noite!" sem complementos.
 
