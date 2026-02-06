@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Sparkles, Book, MessageSquare, Heart, Anchor, Feather, Star, Layers
+  Calendar, Sparkles, Book, MessageSquare, Heart, Anchor, Feather, Star, Layers, Wand2
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -114,6 +114,16 @@ export default function DashboardPage() {
             icon={Sparkles}
             accentColor="text-indigo-400"
             badge="IA POWERED"
+          />
+
+          {/* Card 1.5: Gerador por Estilo */}
+          <DashboardCard
+            href="/gerador-estilo"
+            title="Gerador por Estilo"
+            desc="Crie devocionais imitando estilos específicos (Oração, Exortação, etc)."
+            icon={Wand2}
+            accentColor="text-pink-400"
+            badge="NOVO"
           />
 
           {/* Card 2: Plano de Leitura */}
