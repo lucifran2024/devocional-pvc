@@ -13,7 +13,13 @@ import {
     getDataHoje,
     DnaCategorizado,
     CategoriaDna,
-    CategoriaStats
+    CategoriaStats,
+    // NEW: DNA Gerações
+    getDnaGeracoes,
+    deleteDnaGeracao,
+    deleteDnaGeracaoBatch,
+    saveDnaGeracoes,
+    DnaGeracao
 } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -63,6 +69,11 @@ export default function DnaCategorizadoPage() {
     const [usarDnaBase, setUsarDnaBase] = useState(true);
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
 
+    // Últimas Gerações (Nova Tabela)
+    const [recentGenerations, setRecentGenerations] = useState<DnaGeracao[]>([]);
+    const [deletingBatch, setDeletingBatch] = useState<string | null>(null);
+    const [deletingGenId, setDeletingGenId] = useState<number | null>(null);
+
     // Opções de filtros
     const FORMATOS = ['Curto', 'Médio', 'Longo'];
     const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
@@ -72,12 +83,14 @@ export default function DnaCategorizadoPage() {
         setLoading(true);
         try {
             const categoria = filtroCategoria === 'todas' ? undefined : filtroCategoria;
-            const [dataItems, dataStats] = await Promise.all([
+            const [dataItems, dataStats, dataRecent] = await Promise.all([
                 getDnaCategorizado(categoria),
-                getCategoriaStats()
+                getCategoriaStats(),
+                getDnaGeracoes(3) // Últimos 3 dias
             ]);
             setItems(dataItems);
             setStats(dataStats);
+            setRecentGenerations(dataRecent);
         } catch (e) {
             console.error('Erro ao carregar:', e);
         }
@@ -154,6 +167,16 @@ export default function DnaCategorizadoPage() {
             if (result.ok && result.resultado) {
                 setGeneratedResult(result.resultado);
                 setShowResult(true);
+
+                // NOVO: Salvar mensagens na tabela dna_geracoes
+                const mensagens = parseMessages(result.resultado);
+                if (mensagens.length > 0) {
+                    const categoriaStr = filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined;
+                    await saveDnaGeracoes(mensagens, categoriaStr, filtros);
+                    // Recarregar lista de gerações recentes
+                    const novasGeracoes = await getDnaGeracoes(3);
+                    setRecentGenerations(novasGeracoes);
+                }
             } else {
                 alert(result.error || 'Erro ao gerar.');
             }
@@ -161,6 +184,27 @@ export default function DnaCategorizadoPage() {
             alert('Erro de conexão.');
         }
         setGenerating(false);
+    };
+
+    // Handlers para Últimas Gerações
+    const handleDeleteGeneration = async (id: number) => {
+        if (!confirm('Apagar esta mensagem?')) return;
+        setDeletingGenId(id);
+        const success = await deleteDnaGeracao(id);
+        if (success) {
+            setRecentGenerations(prev => prev.filter(g => g.id !== id));
+        }
+        setDeletingGenId(null);
+    };
+
+    const handleDeleteBatch = async (batchId: string) => {
+        if (!confirm('Apagar todo este lote de mensagens?')) return;
+        setDeletingBatch(batchId);
+        const success = await deleteDnaGeracaoBatch(batchId);
+        if (success) {
+            setRecentGenerations(prev => prev.filter(g => g.batch_id !== batchId));
+        }
+        setDeletingBatch(null);
     };
 
     const parseMessages = (text: string): string[] => {
@@ -450,6 +494,80 @@ export default function DnaCategorizadoPage() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* NOVO: CARD ÚLTIMAS GERAÇÕES */}
+                    {recentGenerations.length > 0 && (
+                        <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/10 border border-amber-500/30 rounded-2xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-amber-400 font-bold text-lg flex items-center gap-2">
+                                    <Calendar className="w-5 h-5" />
+                                    Últimas Gerações ({recentGenerations.length})
+                                </h3>
+                            </div>
+
+                            {/* Agrupar por batch_id */}
+                            {Object.entries(
+                                recentGenerations.reduce((acc, gen) => {
+                                    if (!acc[gen.batch_id]) acc[gen.batch_id] = [];
+                                    acc[gen.batch_id].push(gen);
+                                    return acc;
+                                }, {} as Record<string, DnaGeracao[]>)
+                            ).map(([batchId, batchItems]) => (
+                                <div key={batchId} className="mb-6 last:mb-0">
+                                    {/* Header do Lote */}
+                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-amber-500 text-xs font-bold uppercase tracking-wider">
+                                                Lote ({batchItems.length} msgs)
+                                            </span>
+                                            <span className="text-slate-500 text-xs">
+                                                {new Date(batchItems[0].created_at).toLocaleString('pt-BR', {
+                                                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteBatch(batchId)}
+                                            disabled={deletingBatch === batchId}
+                                            className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 rounded border border-red-500/20"
+                                        >
+                                            {deletingBatch === batchId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                            Apagar Lote
+                                        </button>
+                                    </div>
+
+                                    {/* Mensagens do Lote */}
+                                    <div className="space-y-3">
+                                        {batchItems.map((gen) => (
+                                            <div key={gen.id} className="bg-black/30 border border-white/10 rounded-xl p-4">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-amber-500 text-xs font-bold">#{gen.id}</span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleCopy(gen.texto_msg, gen.id)}
+                                                            className="text-xs px-2 py-1 bg-white/10 rounded text-slate-300 hover:text-white"
+                                                        >
+                                                            {copiedId === gen.id ? '✓ Copiado' : <Copy className="w-3 h-3" />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteGeneration(gen.id)}
+                                                            disabled={deletingGenId === gen.id}
+                                                            className="text-xs px-2 py-1 bg-red-500/10 rounded text-red-400 hover:bg-red-500/20"
+                                                        >
+                                                            {deletingGenId === gen.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="prose prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                                    <ReactMarkdown>{gen.texto_msg}</ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
 

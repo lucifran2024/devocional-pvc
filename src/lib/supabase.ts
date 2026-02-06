@@ -51,6 +51,16 @@ export interface PalavraManhaCache {
     passagem_ref?: string;
 }
 
+// Interface para gerações do DNA Categorizado
+export interface DnaGeracao {
+    id: number;
+    batch_id: string;
+    texto_msg: string;
+    categoria?: string;
+    filtros?: Record<string, unknown>;
+    created_at: string;
+}
+
 // ===========================================
 // FUNÇÕES
 // ===========================================
@@ -345,6 +355,122 @@ export async function getHistorico(showOnlyFavorites: boolean = false) {
     }
 }
 
+// ===========================================
+// FUNÇÕES PARA DNA_GERACOES (Nova Tabela)
+// ===========================================
+
+/**
+ * Busca gerações do DNA Categorizado dos últimos N dias
+ */
+export async function getDnaGeracoes(limitDays: number = 3): Promise<DnaGeracao[]> {
+    console.log(`🧬 [DNA_GERACOES] Buscando gerações dos últimos ${limitDays} dias...`);
+
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - limitDays);
+
+        const { data, error } = await supabase
+            .from('dna_geracoes')
+            .select('*')
+            .gte('created_at', cutoffDate.toISOString())
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ [DNA_GERACOES] Erro ao buscar:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (err) {
+        console.error('💥 [DNA_GERACOES] Exceção:', err);
+        return [];
+    }
+}
+
+/**
+ * Deleta uma geração individual do DNA
+ */
+export async function deleteDnaGeracao(id: number): Promise<boolean> {
+    console.log(`🗑️ [DNA_GERACOES] Deletando item ID ${id}`);
+
+    try {
+        const { error } = await supabase
+            .from('dna_geracoes')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [DNA_GERACOES] Erro ao deletar:', error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('💥 [DNA_GERACOES] Exceção:', err);
+        return false;
+    }
+}
+
+/**
+ * Deleta um lote inteiro de gerações pelo batch_id
+ */
+export async function deleteDnaGeracaoBatch(batchId: string): Promise<boolean> {
+    console.log(`🗑️ [DNA_GERACOES] Deletando lote: ${batchId}`);
+
+    try {
+        const { error } = await supabase
+            .from('dna_geracoes')
+            .delete()
+            .eq('batch_id', batchId);
+
+        if (error) {
+            console.error('❌ [DNA_GERACOES] Erro ao deletar lote:', error);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('💥 [DNA_GERACOES] Exceção:', err);
+        return false;
+    }
+}
+
+/**
+ * Salva um lote de gerações do DNA Categorizado
+ * @returns O batch_id gerado ou null em caso de erro
+ */
+export async function saveDnaGeracoes(
+    mensagens: string[],
+    categoria?: string,
+    filtros?: Record<string, unknown>
+): Promise<string | null> {
+    const batchId = crypto.randomUUID();
+    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}`);
+
+    try {
+        const records = mensagens.map(texto => ({
+            batch_id: batchId,
+            texto_msg: texto.trim(),
+            categoria: categoria || null,
+            filtros: filtros || null
+        }));
+
+        const { error } = await supabase
+            .from('dna_geracoes')
+            .insert(records);
+
+        if (error) {
+            console.error('❌ [DNA_GERACOES] Erro ao salvar:', error);
+            return null;
+        }
+
+        console.log(`✅ [DNA_GERACOES] Lote salvo com sucesso!`);
+        return batchId;
+    } catch (err) {
+        console.error('💥 [DNA_GERACOES] Exceção:', err);
+        return null;
+    }
+}
 
 
 /**

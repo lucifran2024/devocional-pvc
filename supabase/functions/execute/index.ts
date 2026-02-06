@@ -506,15 +506,43 @@ Gere a explicação agora:
       const passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "Passagem não encontrada";
       const passagemTexto = payloadDia?.texto || "";
 
-      console.log(`📖 Passagem encontrada: ${passagemRef}`);
-
-      // 2. Buscar Favoritas
+      // 1.1 BUSCAR FAVORITAS (CRÍTICO PARA MODO HÍBRIDO)
       const { data: favoritas } = await supabase
         .from("favoritos_mensagens")
         .select("texto_msg")
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(20);
 
+      // ========================================
+      // 2. BUSCAR CONTEXTO ANTERIOR (ANTI-REPETIÇÃO)
+      // ========================================
+      console.log(`🧠 [CONTEXTO] Buscando últimas 3 gerações para o modo: ${modo_id}`);
+
+      const { data: historicoRecente } = await supabase
+        .from("historico_geracoes")
+        .select("resultado_texto, created_at")
+        .eq("modo_id", modo_id)
+        // QUERY DE 3 DIAS PARA O MODO HIBRIDO TAMBÉM
+        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false });
+
+      let contextoAnterior = "";
+      if (historicoRecente && historicoRecente.length > 0) {
+        contextoAnterior = `
+## 🧠 CONTEXTO ANTERIOR (O QUE VOCÊ JÁ GEROU RECENTEMENTE):
+Abaixo estão as últimas mensagens que você gerou. 
+⚠️ **OBJETIVO:** EVITE REPETIR AS MESMAS FRASES, VERSÍCULOS OU ESTRUTURAS EXATAS. CRIE ALGO NOVO.
+
+${historicoRecente.map((h, i) => `--- GERAÇÃO ${i + 1} ---\n${h.resultado_texto.substring(0, 300)}...`).join('\n')}
+`;
+      } else {
+        contextoAnterior = "\n## 🧠 CONTEXTO: Primeira execução recente.\n";
+      }
+
+      // ========================================
+      // ========================================
+      // 3. RECUPERAR FAVORITAS (DNA)
+      // ========================================
       const dnaFavoritas = favoritas?.length
         ? favoritas.map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`).join("\n\n---\n\n")
         : "Não há favoritas ainda.";
@@ -554,6 +582,8 @@ ${dnaFavoritas}
 
 ### SEPARADOR:
 Use --- entre cada mensagem
+
+${contextoAnterior}
 
 Gere as 10 mensagens agora:
 `;
@@ -1167,14 +1197,35 @@ REGRAS FINAIS DE NUANCE:
         const partesAntigo = historicoAntigo.map((h: any) =>
           `-- 📜 Histórico Aprovado (${h.passagem}):\n${h.resultado_texto.substring(0, 250)}...`
         );
-        memoriaPartes.push(...partesAntigo);
-        console.log(`📜 [HISTORICO] Fallback: ${historicoAntigo.length} favoritos antigos`);
       }
     }
 
     const memoria = memoriaPartes.length > 0
       ? memoriaPartes.join("\n\n")
-      : "Não há favoritos ainda. Gere devocionais e curta suas mensagens preferidas!";
+      : "Não há favoritas ainda. Gere devocionais e curta suas mensagens preferidas!";
+
+    // ========================================
+    // 7f. CONTEXTO RECENTE (ANTI-REPETIÇÃO - ÚLTIMOS 3 DIAS)
+    // ========================================
+    console.log(`🧠 [CONTEXTO] Buscando gerações dos ÚLTIMOS 3 DIAS para o modo: ${modo_id}`);
+
+    // Calcular data de 3 dias atrás
+    const tresDiasAtras = new Date();
+    tresDiasAtras.setDate(tresDiasAtras.getDate() - 3);
+    const dataCorte = tresDiasAtras.toISOString();
+
+    const { data: historicoRecente } = await supabase
+      .from("historico_geracoes")
+      .select("resultado_texto, created_at")
+      .eq("modo_id", modo_id)
+      .gte("created_at", dataCorte) // Filtra pelos últimos 3 dias
+      .order("created_at", { ascending: false });
+
+    const contextoRecenteTexto = historicoRecente && historicoRecente.length > 0
+      ? historicoRecente.map((h: any, i: number) =>
+        `--- GERAÇÃO RECENTE ${i + 1} (${h.created_at}) ---\n${h.resultado_texto.substring(0, 400)}...`
+      ).join('\n\n')
+      : "Nenhuma geração recente encontrada. Terra virgem.";
 
     // 8. Montar Prompt
     // HIERARQUIA v4 (CORRIGIDA - Janeiro 2026):
@@ -1201,6 +1252,12 @@ ESTES EXEMPLOS definem "COMO" falar (tom, ritmo, vocabulário).
 
 IMITE OBSESSIVAMENTE O ESTILO DESTES EXEMPLOS:
 ${memoria}
+
+### [CONTEXTO_RECENTE] ⚠️ O QUE NÃO DIZER (ANTI-REPETIÇÃO)
+Aqui está o que você gerou recentemente para este modo.
+OBJETIVO: **NÃO SE REPITA**. Não use a mesma estrutura exata, nem as mesmas frases de impacto.
+Se a última mensagem foi sobre "paz", enfoque agora em "guerra" ou "vigilância". Mude o ângulo.
+${contextoRecenteTexto}
 
 ### [REGRAS_DE_ESTILO] ⭐⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
 
