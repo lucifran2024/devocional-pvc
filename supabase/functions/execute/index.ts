@@ -359,7 +359,7 @@ Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
 Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
-${formatoPassagemDoDia}${instrucoesFiltro}${instrucoesEstiloApresentacao}
+${formatoPassagemDoDia}${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
@@ -374,6 +374,13 @@ ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAG
 - ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : 'O versículo pode vir das favoritas OU ser um novo que combine com a mensagem'}
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
 
+${instrucoesEstiloApresentacao ? `
+${instrucoesEstiloApresentacao}
+
+## ⚠️ FORMATO DE SAÍDA (SIGA O ESTILO ACIMA):
+Cada mensagem DEVE seguir EXATAMENTE a estrutura e formatação dos exemplos de estilo acima.
+Use --- como separador entre as mensagens.
+` : `
 ## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
 ${filtros?.usarPassagemDia ? `
@@ -398,6 +405,7 @@ ${filtros?.usarPassagemDia ? `
 ---
 `}
 (continue até MENSAGEM ${quantidade})
+`}
 ${contextoAntiRepeticao}
 ## MENSAGENS FAVORITAS (DNA BASE):
 ${dnaFavoritas}
