@@ -254,6 +254,8 @@ Deno.serve(async (req) => {
 
       // 4.6 ESTILOS DE APRESENTAÇÃO: Buscar exemplos das categorias selecionadas
       let instrucoesEstiloApresentacao = '';
+      console.log(`🎨 [ESTILO DEBUG] filtros?.estilosApresentacao:`, filtros?.estilosApresentacao);
+
       if (filtros?.estilosApresentacao && filtros.estilosApresentacao.length > 0) {
         console.log(`🎨 [ESTILO] Buscando exemplos de: ${filtros.estilosApresentacao.join(', ')}`);
 
@@ -264,6 +266,8 @@ Deno.serve(async (req) => {
           .in("categoria", filtros.estilosApresentacao)
           .order("created_at", { ascending: false })
           .limit(15); // Até 15 exemplos no total
+
+        console.log(`🎨 [ESTILO DEBUG] Query result - error:`, estiloError, `data length:`, exemplosEstilo?.length);
 
         if (!estiloError && exemplosEstilo && exemplosEstilo.length > 0) {
           console.log(`🎨 [ESTILO] Encontrados ${exemplosEstilo.length} exemplos de estilo`);
@@ -295,7 +299,12 @@ Observe a estrutura, formatação, uso de emojis, quebras de linha, e tom de cad
 **REGRA DE OURO**: Cada mensagem gerada deve parecer que FOI ESCRITA pelo mesmo autor dos exemplos acima.
 ${filtros.estilosApresentacao.length > 1 ? `Varie entre os estilos: ${filtros.estilosApresentacao.join(', ')}` : `Use consistentemente o estilo: ${filtros.estilosApresentacao[0]}`}
 `;
+          console.log(`🎨 [ESTILO] Instruções geradas com ${instrucoesEstiloApresentacao.length} caracteres`);
+        } else {
+          console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para: ${filtros.estilosApresentacao.join(', ')}`);
         }
+      } else {
+        console.log(`🎨 [ESTILO] Nenhum estilo selecionado`);
       }
 
       // 4.5 ANTI-REPETIÇÃO: Buscar últimos 3 dias de gerações para não repetir
