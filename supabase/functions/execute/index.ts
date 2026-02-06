@@ -561,8 +561,10 @@ Todas as mensagens devem basear-se ou citar esta passagem:
 
 ${instrucoesFiltro}
 
-## 4. RESTRIÇÕES (ANTI-REPETIÇÃO):
-Não repita frases iniciais usadas recentemente:
+## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
+1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.
+2. **TAMANHO**: Tente manter a profundidade e o tamanho das mensagens similar ao DNA (Fonte 2), mas usando a formatação visual do Estilo (Fonte 1).
+3. **ANTI-REPETIÇÃO**: INICIAR cada mensagem de forma totalmente diferente das ultimas geradas:
 ${contextoAntiRepeticao}
 
 ## SUA TAREFA:
@@ -571,8 +573,9 @@ Gere **${quantidade} NOVAS MENSAGENS**.
 **CHECKLIST FINAL PARA CADA MENSAGEM:**
 1. [ESTILO] A estrutura visual parece com os Exemplos de Estilo?
 2. [CONTEÚDO] A teologia condiz com o DNA?
-3. [FILTROS] Respeitou o ${filtros?.tema ? `tema "${filtros.tema}"` : 'tema livre'} e ${diasSemana ? `os dias (${diasSemana})` : 'os dias'}?
-4. [SEPARAÇÃO] Use "---" entre as mensagens.
+3. [VERSÍCULO] A regra dos 40% foi respeitada?
+4. [FILTROS] Respeitou o ${filtros?.tema ? `tema "${filtros.tema}"` : 'tema livre'} e ${diasSemana ? `os dias (${diasSemana})` : 'os dias'}?
+5. [SEPARAÇÃO] Use "---" entre as mensagens.
 
 Gere agora:
 `;
