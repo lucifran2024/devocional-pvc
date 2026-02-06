@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Wand2, Loader2, BookOpen, Heart, Book, Lightbulb, Megaphone, MessageCircle, HelpCircle, Layers, Sparkles, Copy, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, Wand2, Loader2, BookOpen, Heart, Book, Lightbulb, Megaphone, MessageCircle, HelpCircle, Layers, Sparkles, Copy, Trash2, Calendar, Filter, ChevronDown, CheckSquare, Square } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
-import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { executarModoComFiltros, getDataHoje, CategoriaDna, saveDnaGeracoes, getDnaGeracoes, DnaGeracao, deleteDnaGeracao, deleteDnaGeracaoBatch } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 
@@ -18,17 +17,35 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: any; cor: string }[] =
     { id: 'declaração', nome: 'Declaração', icon: MessageCircle, cor: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
 ];
 
+const QUANTIDADES = [5, 10, 15, 20, 30];
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
 export default function GeradorEstiloPage() {
     const [selectedCategory, setSelectedCategory] = useState<CategoriaDna | null>(null);
     const [generating, setGenerating] = useState(false);
     const [result, setResult] = useState<string | null>(null);
     const [quantidade, setQuantidade] = useState(5);
 
+    // Filtros Avançados
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [filtroTema, setFiltroTema] = useState('');
+    const [filtroFormato, setFiltroFormato] = useState('');
+    const [filtroPeriodo, setFiltroPeriodo] = useState('');
+    const [filtroMomento, setFiltroMomento] = useState('');
+    const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
+    const [usarDnaBase, setUsarDnaBase] = useState(true);
+    const [usarPassagemDia, setUsarPassagemDia] = useState(false);
+
     // Últimas Gerações
     const [recentGenerations, setRecentGenerations] = useState<DnaGeracao[]>([]);
     const [deletingBatch, setDeletingBatch] = useState<string | null>(null);
     const [deletingGenId, setDeletingGenId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
+
+    // Opções de filtros
+    const FORMATOS = ['Curto', 'Médio', 'Longo'];
+    const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
+    const MOMENTOS = ['Começo de Semana', 'Fim de Semana', 'Início do Mês', 'Fim do Mês'];
 
     // Carregar histórico inicial
     useEffect(() => {
@@ -40,25 +57,40 @@ export default function GeradorEstiloPage() {
         setRecentGenerations(data);
     };
 
+    const toggleDia = (dia: string) => {
+        setDiasSelecionados(prev =>
+            prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]
+        );
+    };
+
     const handleGerar = async () => {
         if (!selectedCategory) return;
         setGenerating(true);
         setResult(null);
 
+        const filtros = {
+            estilo: selectedCategory,
+            quantidade,
+            tema: filtroTema || undefined,
+            formato: filtroFormato || undefined,
+            periodo: filtroPeriodo || undefined,
+            momento: filtroMomento || undefined,
+            diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
+            usarDnaBase,
+            usarPassagemDia
+        };
+
         try {
-            // Chamada para o novo modo_estilo backend
-            const response = await executarModoComFiltros('modo_estilo', getDataHoje(), {
-                estilo: selectedCategory, // Categoria selecionada atua como "Estilo"
-                quantidade
-            });
+            // Chamada para o modo_estilo backend
+            const response = await executarModoComFiltros('modo_estilo', getDataHoje(), filtros);
 
             if (response.ok && response.resultado) {
                 setResult(response.resultado);
 
                 // Salvar gerações
-                const mensagens = response.resultado.split(/\n\s*---\s*\n/).filter(p => p.trim().length > 0);
+                const mensagens = response.resultado.split(/\n\s*---\s*\n/).filter((p: string) => p.trim().length > 0);
                 if (mensagens.length > 0) {
-                    await saveDnaGeracoes(mensagens, selectedCategory, { modo: 'estilo', estilo: selectedCategory });
+                    await saveDnaGeracoes(mensagens, selectedCategory, filtros);
                     await loadRecentGenerations(); // Recarregar lista
                 }
             } else {
@@ -108,7 +140,7 @@ export default function GeradorEstiloPage() {
 
     return (
         <CosmicBackground className="font-sans text-slate-100 min-h-screen">
-            <div className="w-full max-w-4xl mx-auto px-6 py-12 relative z-10">
+            <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 relative z-10">
 
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-12">
@@ -125,54 +157,163 @@ export default function GeradorEstiloPage() {
                 </div>
 
                 {/* Passo 1: Selecionar Estilo */}
-                <section className="mb-10 animate-enter">
+                <section className="mb-8 animate-enter">
                     <h2 className="text-sm uppercase tracking-widest text-slate-500 font-bold mb-4">1. Escolha o Estilo (Formato)</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {CATEGORIAS.map(cat => {
                             const isSelected = selectedCategory === cat.id;
                             return (
                                 <button
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`relative p-4 rounded-xl border text-left transition-all group ${isSelected
+                                    className={`relative p-3 rounded-xl border text-left transition-all group ${isSelected
                                         ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
                                         : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
-                                    <cat.icon className={`w-6 h-6 mb-3 ${isSelected ? 'text-current' : 'text-slate-400 group-hover:text-white'}`} />
-                                    <h3 className={`font-bold ${isSelected ? 'text-current' : 'text-slate-200'}`}>{cat.nome}</h3>
-                                    {isSelected && <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-current animate-pulse"></div>}
+                                    <cat.icon className={`w-5 h-5 mb-2 ${isSelected ? 'text-current' : 'text-slate-400 group-hover:text-white'}`} />
+                                    <h3 className={`font-bold text-sm ${isSelected ? 'text-current' : 'text-slate-200'}`}>{cat.nome}</h3>
                                 </button>
                             )
                         })}
                     </div>
                 </section>
 
-                {/* Passo 2: Gerar */}
-                <section className="mb-12 animate-enter" style={{ animationDelay: '100ms' }}>
-                    <button
-                        onClick={handleGerar}
-                        disabled={!selectedCategory || generating}
-                        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${!selectedCategory || generating
-                            ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/25'
-                            }`}
-                    >
-                        {generating ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                Analisando DNA e Gerando...
-                            </>
-                        ) : (
-                            <>
-                                <Wand2 className="w-5 h-5" />
-                                Gerar 5 Mensagens no Estilo {selectedCategory ? CATEGORIAS.find(c => c.id === selectedCategory)?.nome : ''}
-                            </>
-                        )}
-                    </button>
-                    <p className="text-center text-xs text-slate-500 mt-3">
-                        O sistema analisa suas favoritas dessa categoria e cria novas mensagens com a mesma "pegada".
-                    </p>
+                {/* Passo 2: Configuração e Filtros */}
+                <section className="mb-8 animate-enter" style={{ animationDelay: '100ms' }}>
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <select
+                            value={quantidade}
+                            onChange={(e) => setQuantidade(Number(e.target.value))}
+                            className="px-3 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:border-violet-500 focus:outline-none"
+                        >
+                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q} mensagens</option>)}
+                        </select>
+
+                        <button
+                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                        >
+                            <Filter className="w-4 h-4" />
+                            Filtros Avançados
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <button
+                            onClick={handleGerar}
+                            disabled={!selectedCategory || generating}
+                            className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${!selectedCategory || generating
+                                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/25'
+                                }`}
+                        >
+                            {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
+                            {generating ? 'Gerando...' : `Gerar ${quantidade} Mensagens`}
+                        </button>
+                    </div>
+
+                    {/* Painel de Filtros */}
+                    {showAdvancedFilters && (
+                        <div className="p-5 bg-black/40 border border-white/10 rounded-2xl animate-in slide-in-from-top-2 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                                {/* Tema */}
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tema (livre)</label>
+                                    <input
+                                        type="text"
+                                        value={filtroTema}
+                                        onChange={(e) => setFiltroTema(e.target.value)}
+                                        placeholder="Ex: Esperança, Fé..."
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Formato */}
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tamanho</label>
+                                    <select
+                                        value={filtroFormato}
+                                        onChange={(e) => setFiltroFormato(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                    >
+                                        <option value="" className="bg-slate-900">Padrão do Estilo</option>
+                                        {FORMATOS.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Período */}
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Período do Dia</label>
+                                    <select
+                                        value={filtroPeriodo}
+                                        onChange={(e) => setFiltroPeriodo(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                    >
+                                        <option value="" className="bg-slate-900">Qualquer período</option>
+                                        {PERIODOS.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Momento */}
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Momento</label>
+                                    <select
+                                        value={filtroMomento}
+                                        onChange={(e) => setFiltroMomento(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                    >
+                                        <option value="" className="bg-slate-900">Qualquer momento</option>
+                                        {MOMENTOS.map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {/* Dias da Semana */}
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Dias da Semana (Mencionar no texto)</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {DIAS_SEMANA.map(dia => {
+                                            const active = diasSelecionados.includes(dia);
+                                            return (
+                                                <button
+                                                    key={dia}
+                                                    onClick={() => toggleDia(dia)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                >
+                                                    {active ? <CheckSquare className="w-3 h-3" /> : <Square className="w-3 h-3" />}
+                                                    {dia}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Toggles */}
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() => setUsarDnaBase(!usarDnaBase)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-all ${usarDnaBase ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                    >
+                                        <span className="font-medium">Usar DNA Base (Teologia)</span>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${usarDnaBase ? 'bg-green-500' : 'bg-slate-700'}`}>
+                                            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${usarDnaBase ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setUsarPassagemDia(!usarPassagemDia)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-all ${usarPassagemDia ? 'bg-amber-500/10 border-amber-500/20 text-amber-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                    >
+                                        <span className="font-medium">Usar Passagem do Dia</span>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${usarPassagemDia ? 'bg-amber-500' : 'bg-slate-700'}`}>
+                                            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${usarPassagemDia ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* Resultado */}
@@ -184,8 +325,26 @@ export default function GeradorEstiloPage() {
                             </h2>
                         </div>
                         <div className="p-6 md:p-8 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
-                            <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line">
-                                <ReactMarkdown>{result}</ReactMarkdown>
+                            <div className="space-y-8">
+                                {result.split(/\n\s*---\s*\n/).filter(msg => msg.trim().length > 0).map((msg, i) => (
+                                    <div key={i} className="relative group">
+                                        <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                            <button
+                                                onClick={() => handleCopy(msg, -i)}
+                                                className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300"
+                                                title="Copiar"
+                                            >
+                                                {copiedId === -i ? '✓' : <Copy className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line">
+                                            <ReactMarkdown>{msg}</ReactMarkdown>
+                                        </div>
+                                        {i < result.split(/\n\s*---\s*\n/).length - 1 && (
+                                            <div className="h-px bg-white/10 my-8 w-full" />
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </section>

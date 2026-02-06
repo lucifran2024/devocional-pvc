@@ -412,10 +412,15 @@ ${dnaFavoritas}
     // MODO ESPECIAL: GERADOR POR ESTILO (HÍBRIDO: DNA + ESTILO FORÇADO)
     // ========================================
     if (modo_id === 'modo_estilo') {
-      console.log(`🎨 [MODO ESTILO] Iniciando geração híbrida...`);
+      console.log(`🎨 [MODO ESTILO] Iniciando geração híbrida com filtros...`);
 
-      const estiloAlvo = filtros?.estilo;
+      const estiloAlvo = filtros?.estilo; // String (Categoria)
       const quantidade = filtros?.quantidade || 5;
+
+      // Novos Filtros
+      const usarPassagemDia = filtros?.usarPassagemDia || false;
+      const usarDnaBase = filtros?.usarDnaBase !== false; // Default true
+      const diasSemana = filtros?.diasSemana; // String "Segunda, Quarta"
 
       if (!estiloAlvo) throw new Error("Estilo não especificado para modo_estilo");
 
@@ -431,14 +436,19 @@ ${dnaFavoritas}
       const supabase = createClient(supabaseUrl, serviceKey);
 
       // 1. Buscar DNA (Favoritas) - FONTE DE TEOLOGIA/ESSÊNCIA
-      const { data: favoritas, error: favError } = await supabase
-        .from("favoritos_mensagens")
-        .select("texto_msg")
-        .order("created_at", { ascending: false })
-        .limit(60);
+      let dnaEssencia = "";
+      if (usarDnaBase) {
+        const { data: favoritas, error: favError } = await supabase
+          .from("favoritos_mensagens")
+          .select("texto_msg")
+          .order("created_at", { ascending: false })
+          .limit(60);
 
-      const dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
-      console.log(`📚 [DNA] ${favoritas?.length || 0} favoritas carregadas para essência.`);
+        dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
+        console.log(`📚 [DNA] ${favoritas?.length || 0} favoritas carregadas para essência.`);
+      } else {
+        console.log(`📚 [DNA] DNA Base desativado pelo usuário.`);
+      }
 
       // 2. Buscar Exemplos do Estilo - FONTE DE ESTRUTURA
       const { data: exemplosEstilo, error: styleError } = await supabase
@@ -456,7 +466,24 @@ ${dnaFavoritas}
         console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
       }
 
-      // 3. Anti-Repetição
+      // 3. Buscar Passagem do Dia (SE CHECADO)
+      let passagemDoDia = '';
+      let passagemRef = '';
+      if (usarPassagemDia) {
+        console.log('📖 [PASSAGEM] Buscando passagem do dia...');
+        const dataAlvo = data || new Date().toISOString().split('T')[0];
+        const { data: payloadDia } = await supabase
+          .from("payload_do_dia")
+          .select("*")
+          .eq("data", dataAlvo)
+          .maybeSingle();
+
+        passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
+        passagemDoDia = payloadDia?.texto || "";
+        console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
+      }
+
+      // 4. Anti-Repetição (Últimos 3 dias)
       const dataCorte = new Date();
       dataCorte.setDate(dataCorte.getDate() - 3);
       const { data: geracoesRecentes } = await supabase
@@ -467,45 +494,90 @@ ${dnaFavoritas}
 
       const contextoAntiRepeticao = geracoesRecentes?.map((g: any) => g.texto_msg.substring(0, 100)).join("\n") || "";
 
-      // 4. Montar Prompt Híbrido
+      // 5. Construção dos Filtros Dinâmicos
+      let instrucoesFiltro = '';
+      const temFiltrosExtras = filtros && (filtros.tema || filtros.formato || filtros.periodo || filtros.momento || diasSemana);
+
+      if (temFiltrosExtras) {
+        instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
+
+        if (filtros.tema) {
+          instrucoesFiltro += `• **TEMA**: O assunto principal deve ser "${filtros.tema}"\n`;
+        }
+        if (filtros.formato) {
+          instrucoesFiltro += `• **TAMANHO**: ${filtros.formato} (Ajuste o tamanho mas mantenha o ESTILO da categoria)\n`;
+        }
+        if (filtros.periodo) {
+          const saudacaoMap: Record<string, string> = {
+            'Manhã': 'Bom dia',
+            'Tarde': 'Boa tarde',
+            'Noite': 'Boa noite',
+            'Madrugada': 'Paz na madrugada'
+          };
+          const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
+          instrucoesFiltro += `• **PERÍODO**: Inicie com saudação de "${saudacao}"\n`;
+        }
+        if (filtros.momento) {
+          instrucoesFiltro += `• **CONTEXTO**: Foque no momento "${filtros.momento}"\n`;
+        }
+        if (diasSemana) {
+          instrucoesFiltro += `• **DIAS DA SEMANA**: Você deve mencionar explicitamente estes dias: ${diasSemana}. (Ex: "Nesta ${diasSemana} abençoada...", "Que seu ${diasSemana} seja..."). Distribua os dias entre as mensagens geradas.\n`;
+        }
+      }
+
+      // 6. Montar Prompt Híbrido
       const promptHibrido = `
-# GERADOR HÍBRIDO DE MENSAGENS
+# GERADOR DE ESTILO HÍBRIDO
+Data Atual: ${new Date().toLocaleDateString('pt-BR')}
 
-Você atua como um "Ghostwriter Espiritual". Sua tarefa é escrever novas mensagens combinando DUAS fontes distintas:
+Você atua como um "Ghostwriter Espiritual" especialista em replicar estilos.
+Gere **${quantidade} NOVAS MENSAGENS** seguindo rigorosamente as instruções abaixo.
 
-## 1. FONTE DE CONTEÚDO (TEOLOGIA & TOM):
-Use a abaixo para entender A ALMA, O VOCABULÁRIO e A TEOLOGIA do autor.
-NÃO copie estas mensagens, apenas absorva a essência espiritual delas.
-
---- INÍCIO DNA (ESSÊNCIA) ---
-${dnaEssencia}
---- FIM DNA ---
-
-## 2. FONTE DE FORMA (ESTRUTURA OBRIGATÓRIA):
+## 1. FONTE DE ESTRUTURA (O JEITO DE ESCREVER) [ALTA PRIORIDADE]:
 Você DEVE escrever as novas mensagens seguindo ESTRITAMENTE a estrutura, formatação e "jeito de escrever" dos exemplos abaixo (Categoria: ${estiloAlvo.toUpperCase()}).
-Copie: emojis, quebras de linha, uso de títulos (ou falta deles), tamanho e pontuação.
+Copie: emojis, quebras de linha, uso de títulos (ou falta deles), tamanho médio e pontuação.
+SE OS EXEMPLOS USAM TÍTULOS EM CAPS, USE. SE NÃO USAM, NÃO USE.
 
 --- INÍCIO EXEMPLOS DE ESTILO (${estiloAlvo}) ---
 ${exemplosEstrutura}
 --- FIM EXEMPLOS ---
 
-## 3. RESTRIÇÕES (ANTI-REPETIÇÃO):
-Não repita assuntos ou frases iniciais usadas recentemente:
+${usarDnaBase ? `
+## 2. FONTE DE CONTEÚDO (A ALMA/TEOLOGIA):
+Use a base abaixo para entender o VOCABULÁRIO e a PROFUNDIDADE TEOLÓGICA.
+Não copie frases inteiras, mas use as palavras-chave e o tom espiritual daqui.
+
+--- INÍCIO DNA (ESSÊNCIA) ---
+${dnaEssencia}
+--- FIM DNA ---
+` : ''}
+
+${usarPassagemDia ? `
+## 3. PASSAGEM BÍBLICA OBRIGATÓRIA:
+Todas as mensagens devem basear-se ou citar esta passagem:
+📖 **${passagemRef}**
+"${passagemDoDia}"
+` : ''}
+
+${instrucoesFiltro}
+
+## 4. RESTRIÇÕES (ANTI-REPETIÇÃO):
+Não repita frases iniciais usadas recentemente:
 ${contextoAntiRepeticao}
 
 ## SUA TAREFA:
-Gere **${quantidade} NOVAS MENSAGENS** sobre temas variados (fé, esperança, coragem, descanso).
+Gere **${quantidade} NOVAS MENSAGENS**.
 
-**REGRAS DE OURO:**
-1. **CONTEÚDO**: Teologia das Favoritas (Fonte 1).
-2. **FORMA**: Estrutura dos Exemplos de Estilo (Fonte 2).
-3. **SEPARAÇÃO**: Use "---" entre as mensagens.
-4. **NÃO COPIE**: Crie conteúdo novo.
+**CHECKLIST FINAL PARA CADA MENSAGEM:**
+1. [ESTILO] A estrutura visual parece com os Exemplos de Estilo?
+2. [CONTEÚDO] A teologia condiz com o DNA?
+3. [FILTROS] Respeitou o ${filtros?.tema ? `tema "${filtros.tema}"` : 'tema livre'} e ${diasSemana ? `os dias (${diasSemana})` : 'os dias'}?
+4. [SEPARAÇÃO] Use "---" entre as mensagens.
 
 Gere agora:
 `;
 
-      // 5. Chamar Gemini
+      // 7. Chamar Gemini
       const MODEL_NAME = "gemini-2.0-flash";
       const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
@@ -515,7 +587,7 @@ Gere agora:
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
           generationConfig: {
-            temperature: 0.7,
+            temperature: 0.75,
             maxOutputTokens: 4000,
           }
         })
