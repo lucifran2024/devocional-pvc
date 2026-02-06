@@ -233,6 +233,7 @@ export interface FiltrosGeracao {
     periodo?: string;
     diaSemana?: string;
     momento?: string;
+    estilosApresentacao?: string[]; // Categorias para definir o formato de apresentação
 }
 
 /**

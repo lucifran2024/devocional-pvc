@@ -252,6 +252,52 @@ Deno.serve(async (req) => {
         console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
       }
 
+      // 4.6 ESTILOS DE APRESENTAÇÃO: Buscar exemplos das categorias selecionadas
+      let instrucoesEstiloApresentacao = '';
+      if (filtros?.estilosApresentacao && filtros.estilosApresentacao.length > 0) {
+        console.log(`🎨 [ESTILO] Buscando exemplos de: ${filtros.estilosApresentacao.join(', ')}`);
+
+        // Buscar exemplos do dna_categorizado para cada categoria selecionada
+        const { data: exemplosEstilo, error: estiloError } = await supabase
+          .from("dna_categorizado")
+          .select("texto_msg, categoria")
+          .in("categoria", filtros.estilosApresentacao)
+          .order("created_at", { ascending: false })
+          .limit(15); // Até 15 exemplos no total
+
+        if (!estiloError && exemplosEstilo && exemplosEstilo.length > 0) {
+          console.log(`🎨 [ESTILO] Encontrados ${exemplosEstilo.length} exemplos de estilo`);
+
+          // Agrupar por categoria para mostrar padrões de cada tipo
+          const exemplosAgrupados = exemplosEstilo.reduce((acc: Record<string, string[]>, ex: any) => {
+            const cat = ex.categoria || 'outro';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(ex.texto_msg);
+            return acc;
+          }, {});
+
+          instrucoesEstiloApresentacao = `
+## 🎨 ESTILO DE APRESENTAÇÃO OBRIGATÓRIO:
+⚠️ VOCÊ DEVE formatar CADA mensagem gerada seguindo EXATAMENTE o padrão dos exemplos abaixo.
+Observe a estrutura, formatação, uso de emojis, quebras de linha, e tom de cada categoria.
+
+`;
+          for (const [categoria, exemplos] of Object.entries(exemplosAgrupados)) {
+            const exemplosTipo = exemplos as string[];
+            instrucoesEstiloApresentacao += `### EXEMPLOS DE "${categoria.toUpperCase()}" (IMITE ESTE FORMATO):\n`;
+            exemplosTipo.slice(0, 3).forEach((ex: string, i: number) => {
+              instrucoesEstiloApresentacao += `\n**Exemplo ${i + 1}:**\n${ex.substring(0, 500)}${ex.length > 500 ? '...' : ''}\n`;
+            });
+            instrucoesEstiloApresentacao += '\n---\n';
+          }
+
+          instrucoesEstiloApresentacao += `
+**REGRA DE OURO**: Cada mensagem gerada deve parecer que FOI ESCRITA pelo mesmo autor dos exemplos acima.
+${filtros.estilosApresentacao.length > 1 ? `Varie entre os estilos: ${filtros.estilosApresentacao.join(', ')}` : `Use consistentemente o estilo: ${filtros.estilosApresentacao[0]}`}
+`;
+        }
+      }
+
       // 4.5 ANTI-REPETIÇÃO: Buscar últimos 3 dias de gerações para não repetir
       let contextoAntiRepeticao = '';
       const dataCorte = new Date();
@@ -313,7 +359,7 @@ Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
 Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
-${formatoPassagemDoDia}${instrucoesFiltro}
+${formatoPassagemDoDia}${instrucoesFiltro}${instrucoesEstiloApresentacao}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
 2. **MISTURE** elementos de diferentes favoritas para criar algo novo
