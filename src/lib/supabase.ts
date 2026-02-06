@@ -234,6 +234,7 @@ export interface FiltrosGeracao {
     diaSemana?: string;
     momento?: string;
     estilosApresentacao?: string[]; // Categorias para definir o formato de apresentação
+    estilo?: string; // NOVO: Estilo único forçado (modo_estilo)
 }
 
 /**
