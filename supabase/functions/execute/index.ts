@@ -435,17 +435,36 @@ ${dnaFavoritas}
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      // 1. Buscar DNA (Favoritas) - FONTE DE TEOLOGIA/ESSÊNCIA
+      // 1. Buscar DNA (Fonte de TEOLOGIA/ESSÊNCIA)
+      // ESTRATÉGIA DE OURO: Tentar buscar DNA da PRÓPRIA CATEGORIA primeiro para garantir o gênero.
       let dnaEssencia = "";
-      if (usarDnaBase) {
-        const { data: favoritas, error: favError } = await supabase
-          .from("favoritos_mensagens")
-          .select("texto_msg")
-          .order("created_at", { ascending: false })
-          .limit(60);
+      let dnaSourceType = "GENERICO"; // ou 'ESPECIFICO'
 
-        dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
-        console.log(`📚 [DNA] ${favoritas?.length || 0} favoritas carregadas para essência.`);
+      if (usarDnaBase) {
+        // Tenta buscar do DNA Categorizado (que já é filtrado por tipo: oração, versículo, etc)
+        const { data: dnaEspecifico } = await supabase
+          .from("dna_categorizado")
+          .select("texto_msg")
+          .eq("categoria", estiloAlvo)
+          .order("created_at", { ascending: false })
+          .limit(40);
+
+        if (dnaEspecifico && dnaEspecifico.length >= 5) {
+          // Temos DNA específico suficiente!
+          dnaEssencia = dnaEspecifico.map((d: any) => d.texto_msg).join("\n\n---\n\n");
+          dnaSourceType = "ESPECIFICO";
+          console.log(`📚 [DNA] Usando ${dnaEspecifico.length} exemplos ESPECÍFICOS de '${estiloAlvo}'.`);
+        } else {
+          // Fallback para Favoritas Gerais (mistureba, mas garante teologia)
+          const { data: favoritas, error: favError } = await supabase
+            .from("favoritos_mensagens")
+            .select("texto_msg")
+            .order("created_at", { ascending: false })
+            .limit(60);
+
+          dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
+          console.log(`📚 [DNA] Usando ${favoritas?.length || 0} favoritas GERAIS (Fallback).`);
+        }
       } else {
         console.log(`📚 [DNA] DNA Base desativado pelo usuário.`);
       }
@@ -525,36 +544,43 @@ ${dnaFavoritas}
         }
       }
 
-      // 6. Montar Prompt Híbrido
+      // 6. Montar Prompt Híbrido - AGORA COM INSTRUÇÃO DE GÊNERO EXPLÍCITA
       const promptHibrido = `
-# GERADOR DE ESTILO HÍBRIDO
+# GERADOR DE CONTEÚDO CATEGORIZADO
 Data Atual: ${new Date().toLocaleDateString('pt-BR')}
 
-Você atua como um "Ghostwriter Espiritual" especialista em replicar estilos.
-Gere **${quantidade} NOVAS MENSAGENS** seguindo rigorosamente as instruções abaixo.
+Você atua como um "Ghostwriter Espiritual".
+Sua missão é gerar **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 
-## 1. FONTE DE ESTRUTURA (O JEITO DE ESCREVER) [ALTA PRIORIDADE]:
-Você DEVE escrever as novas mensagens seguindo ESTRITAMENTE a estrutura, formatação e "jeito de escrever" dos exemplos abaixo (Categoria: ${estiloAlvo.toUpperCase()}).
-Copie: emojis, quebras de linha, uso de títulos (ou falta deles), tamanho médio e pontuação.
-SE OS EXEMPLOS USAM TÍTULOS EM CAPS, USE. SE NÃO USAM, NÃO USE.
+🚨 **REGRA DE OURO (GÊNERO TEXTUAL)**:
+Você está gerando uma **${estiloAlvo.toUpperCase()}**.
+${estiloAlvo === 'oração' ? 'O texto DEVE ser uma conversa direta com Deus (usar "Senhor", "Pai", 1ª pessoa falando com Deus).' : ''}
+${estiloAlvo === 'devocional' ? 'O texto DEVE ser uma reflexão ou ensino bíblico (falar sobre Deus/vida).' : ''}
+${estiloAlvo === 'versículo' ? 'O texto DEVE ser centrado na explicação de um versículo específico.' : ''}
+${estiloAlvo === 'declaração' ? 'O texto DEVE ser uma proclamação de fé em 1ª pessoa ("Eu creio", "Eu declaro").' : ''}
+NÃO GERE OUTRO TIPO DE TEXTO. SE É ${estiloAlvo}, FAÇA ${estiloAlvo}!
 
---- INÍCIO EXEMPLOS DE ESTILO (${estiloAlvo}) ---
+## 1. FONTE DE ESTRUTURA VISUAL (COPIAR FORMATO):
+Use os exemplos abaixo APENAS para copiar a formatação (emojis, quebras de linha, estrutura visual).
+NÃO COPIE O CONTEÚDO, APENAS A "ROUPA" DO TEXTO.
+
+--- INÍCIO EXEMPLOS VISUAIS (${estiloAlvo}) ---
 ${exemplosEstrutura}
 --- FIM EXEMPLOS ---
 
 ${usarDnaBase ? `
-## 2. FONTE DE CONTEÚDO (A ALMA/TEOLOGIA):
-Use a base abaixo para entender o VOCABULÁRIO e a PROFUNDIDADE TEOLÓGICA.
-Não copie frases inteiras, mas use as palavras-chave e o tom espiritual daqui.
+## 2. FONTE DE CONTEÚDO (INSPIRAÇÃO):
+Use a base abaixo para entender o TOM e a TEOLOGIA.
+${dnaSourceType === 'ESPECIFICO' ? 'Estes são exemplos PERFEITOS do mesmo tipo. Use como forte inspiração.' : 'Estes são exemplos gerais. Adapte a teologia para o formato de ' + estiloAlvo + '.'}
 
---- INÍCIO DNA (ESSÊNCIA) ---
+--- INÍCIO DNA (INSPIRAÇÃO) ---
 ${dnaEssencia}
 --- FIM DNA ---
 ` : ''}
 
 ${usarPassagemDia ? `
-## 3. PASSAGEM BÍBLICA OBRIGATÓRIA:
-Todas as mensagens devem basear-se ou citar esta passagem:
+## 3. PASSAGEM BÍBLICA:
+Baseie-se nisto:
 📖 **${passagemRef}**
 "${passagemDoDia}"
 ` : ''}
@@ -563,19 +589,17 @@ ${instrucoesFiltro}
 
 ## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
 1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.
-2. **TAMANHO**: Tente manter a profundidade e o tamanho das mensagens similar ao DNA (Fonte 2), mas usando a formatação visual do Estilo (Fonte 1).
-3. **ANTI-REPETIÇÃO**: INICIAR cada mensagem de forma totalmente diferente das ultimas geradas:
+2. **ANTI-REPETIÇÃO**: INICIAR cada mensagem de forma totalmente diferente das ultimas geradas:
 ${contextoAntiRepeticao}
 
 ## SUA TAREFA:
-Gere **${quantidade} NOVAS MENSAGENS**.
+Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 
-**CHECKLIST FINAL PARA CADA MENSAGEM:**
-1. [ESTILO] A estrutura visual parece com os Exemplos de Estilo?
-2. [CONTEÚDO] A teologia condiz com o DNA?
-3. [VERSÍCULO] A regra dos 40% foi respeitada?
-4. [FILTROS] Respeitou o ${filtros?.tema ? `tema "${filtros.tema}"` : 'tema livre'} e ${diasSemana ? `os dias (${diasSemana})` : 'os dias'}?
-5. [SEPARAÇÃO] Use "---" entre as mensagens.
+**CHECKLIST:**
+1. [GÊNERO] O texto é realmente uma ${estiloAlvo}? (Se Oração, fala com Deus? Se Devocional, ensina?)
+2. [VERSÍCULO] 40% tem bíblia?
+3. [FILTROS] ${diasSemana ? `Citou ${diasSemana}?` : 'Ok.'}
+4. [SEPARAÇÃO] Use "---" entre as mensagens.
 
 Gere agora:
 `;
