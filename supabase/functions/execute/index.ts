@@ -281,23 +281,39 @@ Deno.serve(async (req) => {
           }, {});
 
           instrucoesEstiloApresentacao = `
-## 🎨 ESTILO DE APRESENTAÇÃO OBRIGATÓRIO:
-⚠️ VOCÊ DEVE formatar CADA mensagem gerada seguindo EXATAMENTE o padrão dos exemplos abaixo.
-Observe a estrutura, formatação, uso de emojis, quebras de linha, e tom de cada categoria.
+## 🚨 ESTILO OBRIGATÓRIO — COPIE O FORMATO EXATAMENTE:
+
+ATENÇÃO: Você DEVE gerar mensagens que PAREÇAM ter sido escritas pelo MESMO AUTOR dos exemplos abaixo.
+
+**COPIE EXATAMENTE:**
+- A ESTRUTURA (como o texto é organizado)
+- Os ELEMENTOS (emojis, símbolos, aspas, travessões)
+- O TAMANHO (curto/longo como nos exemplos)
+- O TOM (formal/informal como nos exemplos)
+- As QUEBRAS DE LINHA (exatamente como estão)
+
+**NÃO ADICIONE:**
+- Títulos "MENSAGEM 01", "MENSAGEM 02"
+- Formatação diferente da que você vê nos exemplos
+- Elementos que não existem nos exemplos
 
 `;
           for (const [categoria, exemplos] of Object.entries(exemplosAgrupados)) {
             const exemplosTipo = exemplos as string[];
-            instrucoesEstiloApresentacao += `### EXEMPLOS DE "${categoria.toUpperCase()}" (IMITE ESTE FORMATO):\n`;
+            instrucoesEstiloApresentacao += `### 📌 MODELO "${categoria.toUpperCase()}" — COPIE ESTE ESTILO:\n`;
             exemplosTipo.slice(0, 3).forEach((ex: string, i: number) => {
-              instrucoesEstiloApresentacao += `\n**Exemplo ${i + 1}:**\n${ex.substring(0, 500)}${ex.length > 500 ? '...' : ''}\n`;
+              instrucoesEstiloApresentacao += `\n**EXEMPLO ${i + 1} (copie a estrutura exata):**\n\`\`\`\n${ex.substring(0, 600)}${ex.length > 600 ? '...' : ''}\n\`\`\`\n`;
             });
-            instrucoesEstiloApresentacao += '\n---\n';
+            instrucoesEstiloApresentacao += '\n';
           }
 
           instrucoesEstiloApresentacao += `
-**REGRA DE OURO**: Cada mensagem gerada deve parecer que FOI ESCRITA pelo mesmo autor dos exemplos acima.
+## ⛔ REGRA ABSOLUTA:
+Suas mensagens devem ser INDISTINGUÍVEIS dos exemplos acima.
+Se eu colocar sua mensagem junto com os exemplos, NINGUÉM deve conseguir identificar qual é a sua.
 ${filtros.estilosApresentacao.length > 1 ? `Varie entre os estilos: ${filtros.estilosApresentacao.join(', ')}` : `Use consistentemente o estilo: ${filtros.estilosApresentacao[0]}`}
+
+Separe cada mensagem com --- em uma linha sozinha.
 `;
           console.log(`🎨 [ESTILO] Instruções geradas com ${instrucoesEstiloApresentacao.length} caracteres`);
         } else {
