@@ -171,6 +171,18 @@ export default function GeradorPage() {
             if (res.ok) {
                 setResultado({ texto: res.resultado, modo: res.modo || modo.titulo, id: res.id });
                 setIsLiked(false); // Não auto-curtir - usuário decide
+
+                // ATUALIZA O CARD DE ÚLTIMA GERAÇÃO IMEDIATAMENTE
+                if (res.id) {
+                    setLastGeneration({
+                        id: res.id,
+                        created_at: new Date().toISOString(),
+                        modo_id: modo.id,
+                        passagem: payloadDoDia?.passagem_do_dia || "Nova Geração",
+                        resultado_texto: res.resultado,
+                        aprovado: false
+                    });
+                }
             } else {
                 console.error('Erro no execute:', res.error);
                 if (res.error?.includes('non-2xx')) {
