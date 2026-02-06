@@ -363,7 +363,15 @@ Cada mensagem DEVE seguir esta estrutura:
       const promptFavoritas = `
 # MODO FAVORITAS — GERADOR DE DNA
 ${formatoPassagemDoDia ? '\n## 🔀 MODO: FAVORITAS + PASSAGEM DO DIA' : ''}
+${instrucoesEstiloApresentacao ? `
 
+## 🚨 PRIORIDADE MÁXIMA — ESTILO DE APRESENTAÇÃO:
+${instrucoesEstiloApresentacao}
+
+⛔ ATENÇÃO: VOCÊ DEVE seguir EXATAMENTE o estilo e formatação dos exemplos acima.
+Este é o requisito mais importante. IGNORE formatos padrão.
+
+` : ''}
 Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
