@@ -1068,7 +1068,7 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
       console.log('💾 [SERVER SAVE] Salvando no banco:', cachedData);
 
       const { data: savedRecord, error: saveError } = await supabase
-        .from('palavra_manha_cache')
+        .from('palavra_manha_diaria')
         .upsert(cachedData, { onConflict: 'data' })
         .select()
         .single();
