@@ -274,11 +274,17 @@ Deno.serve(async (req) => {
           .join('\n- ');
         contextoAntiRepeticao = `
 
-## ⛔ O QUE NÃO REPETIR (Gerações dos últimos 3 dias):
-Evite criar mensagens parecidas com estas que já foram geradas:
-- ${resumoGeracoes}
-
-**REGRA**: Cada mensagem nova deve trazer uma PERSPECTIVA DIFERENTE, abordagem diferente ou estilo diferente das acima.
+## ⛔ ANTI-REPETIÇÃO RIGOROSA (Histórico Recente):
+   Abaixo estão as mensagens geradas nos últimos 3 dias.
+   **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
+   **VOCÊ ESTÁ PROIBIDO DE REPETIR O MESMO TEMA OU ÂNGULO HOJE.**
+   Se a última mensagem foi sobre "Confiança", fale sobre "Gratidão" ou "Sabedoria". Mude o disco!
+   
+   --- EVITAR ESSES TEMAS ---
+   - ${resumoGeracoes}
+   --------------------------
+   
+**REGRA FINAL**: Cada mensagem nova deve trazer uma PERSPECTIVA INÉDITA, abordagem diferente ou estilo diferente das acima.
 `;
       }
 
