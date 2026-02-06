@@ -252,6 +252,33 @@ Deno.serve(async (req) => {
         console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
       }
 
+      // 4.5 ANTI-REPETIÇÃO: Buscar últimos 3 dias de gerações para não repetir
+      let contextoAntiRepeticao = '';
+      const dataCorte = new Date();
+      dataCorte.setDate(dataCorte.getDate() - 3);
+
+      const { data: geracoesRecentes, error: genError } = await supabase
+        .from("dna_geracoes")
+        .select("texto_msg")
+        .gte("created_at", dataCorte.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (!genError && geracoesRecentes && geracoesRecentes.length > 0) {
+        console.log(`🔄 [ANTI-REPETIÇÃO] Encontradas ${geracoesRecentes.length} gerações recentes`);
+        const resumoGeracoes = geracoesRecentes
+          .map((g: any) => g.texto_msg.substring(0, 100) + '...')
+          .join('\n- ');
+        contextoAntiRepeticao = `
+
+## ⛔ O QUE NÃO REPETIR (Gerações dos últimos 3 dias):
+Evite criar mensagens parecidas com estas que já foram geradas:
+- ${resumoGeracoes}
+
+**REGRA**: Cada mensagem nova deve trazer uma PERSPECTIVA DIFERENTE, abordagem diferente ou estilo diferente das acima.
+`;
+      }
+
       // 5. Prompt interno para gerar mensagens
       // Se usarPassagemDia, usa formato estruturado
       const formatoPassagemDoDia = filtros?.usarPassagemDia ? `
@@ -324,7 +351,7 @@ ${filtros?.usarPassagemDia ? `
 ---
 `}
 (continue até MENSAGEM ${quantidade})
-
+${contextoAntiRepeticao}
 ## MENSAGENS FAVORITAS (DNA BASE):
 ${dnaFavoritas}
 
