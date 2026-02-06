@@ -397,10 +397,10 @@ Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
 ${formatoPassagemDoDia}${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
-1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
-2. **MISTURE** elementos de diferentes favoritas para criar algo novo
-3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
-4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
+1. **NÃO COPIE** literalmente — absorva o TOM e VOCABULÁRIO das favoritas
+2. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
+${instrucoesEstiloApresentacao ? '3. ⚠️ **USE APENAS O ESTILO DE APRESENTAÇÃO INDICADO ACIMA** — não misture com o formato das favoritas' : '3. **MISTURE** elementos de diferentes favoritas para criar algo novo'}
+${!instrucoesEstiloApresentacao ? '4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)' : ''}
 ${(!filtros?.formato && !instrucoesEstiloApresentacao) ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
 ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares. Use apenas "Bom dia!", "Boa tarde!", "Boa noite!" sem complementos.
@@ -411,10 +411,9 @@ ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAG
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
 
 ${instrucoesEstiloApresentacao ? `
-${instrucoesEstiloApresentacao}
-
-## ⚠️ FORMATO DE SAÍDA (SIGA O ESTILO ACIMA):
-Cada mensagem DEVE seguir EXATAMENTE a estrutura e formatação dos exemplos de estilo acima.
+## ⚠️ FORMATO DE SAÍDA — ESTILO OBRIGATÓRIO:
+Cada mensagem DEVE ter EXATAMENTE a mesma estrutura e formatação dos EXEMPLOS DE ESTILO mostrados acima.
+NÃO use o formato das favoritas. Use APENAS o estilo selecionado.
 Use --- como separador entre as mensagens.
 ` : `
 ## FORMATO DE SAÍDA:
