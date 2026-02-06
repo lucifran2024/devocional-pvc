@@ -13,9 +13,13 @@ import {
     executarModo,
     getDataHoje,
     atualizarFeedback,
+    getHistorico, // NEW
+    deleteHistoricoItem, // NEW
+    toggleLike, // NEW
     type PayloadDoDia,
     type Modo
 } from '@/lib/supabase';
+import { Trash2 } from 'lucide-react'; // NEW ICON
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import ReactMarkdown from 'react-markdown';
@@ -78,6 +82,7 @@ export default function GeradorPage() {
     // Estados de Dados
     const [payloadDoDia, setPayloadDoDia] = useState<PayloadDoDia | null>(null);
     const [modos, setModos] = useState<Modo[]>([]);
+    const [lastGeneration, setLastGeneration] = useState<any>(null); // NEW: Última geração
 
     // Estados de UI
     const [sidebarOpen, setSidebarOpen] = useState(true); // Desktop default
@@ -129,13 +134,19 @@ export default function GeradorPage() {
             setCarregandoModos(true);
 
             try {
-                const [payloadRes, modosRes] = await Promise.all([
+                const [payloadRes, modosRes, historicoRes] = await Promise.all([
                     getPayloadDoDia(dataHoje),
-                    getModos()
+                    getModos(),
+                    getHistorico(false) // Buscar histórico geral
                 ]);
 
                 setPayloadDoDia(payloadRes.data);
                 setModos(modosRes.data || []);
+
+                // Set Last Generation
+                if (historicoRes && historicoRes.length > 0) {
+                    setLastGeneration(historicoRes[0]);
+                }
             } catch (err) {
                 console.error('Erro na inicialização:', err);
             } finally {
@@ -190,6 +201,40 @@ export default function GeradorPage() {
         setIsLiked(novoStatus);
 
         await atualizarFeedback(resultado.id, novoStatus);
+
+        // Refresh Last Generation state if current result matches
+        if (lastGeneration && lastGeneration.id === resultado.id) {
+            setLastGeneration({ ...lastGeneration, aprovado: novoStatus });
+        }
+    };
+
+    // NEW HANDLERS FOR LAST GENERATION CARD
+    const handleDeleteLast = async () => {
+        if (!lastGeneration) return;
+        if (!confirm('Tem certeza que deseja excluir esta mensagem?')) return;
+
+        const success = await deleteHistoricoItem(lastGeneration.id);
+        if (success) {
+            setLastGeneration(null);
+            // Refresh logic could be better, but nulling is fine for now
+            // If the current displayed result IS the deleted item, maybe clear it too?
+            if (resultado?.id === lastGeneration.id) {
+                setResultado(null);
+            }
+        }
+    };
+
+    const handleLikeLast = async () => {
+        if (!lastGeneration) return;
+        const newStatus = !lastGeneration.aprovado;
+        setLastGeneration({ ...lastGeneration, aprovado: newStatus }); // Optimistic
+        await atualizarFeedback(lastGeneration.id, newStatus);
+    };
+
+    const handleCopyLast = async () => {
+        if (!lastGeneration) return;
+        await navigator.clipboard.writeText(lastGeneration.resultado_texto);
+        alert('Copiado!');
     };
 
     return (
@@ -289,6 +334,45 @@ export default function GeradorPage() {
                     </div>
 
                     <div className="max-w-6xl mx-auto px-6 py-10 md:px-12 md:py-20 space-y-12">
+
+                        {/* 0. LAST GENERATION CARD (NEW) */}
+                        {lastGeneration && !resultado && (
+                            <section className="animate-in fade-in slide-in-from-top-4 duration-700">
+                                <div className="glass-card border-white/10 p-6 rounded-3xl relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                    <div className="flex items-center justify-between mb-4 relative z-10">
+                                        <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-4 h-4 text-slate-400" />
+                                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Última Criação Recente</h3>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={handleCopyLast} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors" title="Copiar">
+                                                <Copy className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={handleLikeLast} className={`p-2 hover:bg-white/10 rounded-full transition-colors ${lastGeneration.aprovado ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} title="Eternizar">
+                                                <Heart className={`w-4 h-4 ${lastGeneration.aprovado ? 'fill-current' : ''}`} />
+                                            </button>
+                                            <button onClick={handleDeleteLast} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-red-500 transition-colors" title="Excluir">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="prose prose-invert prose-sm max-w-none relative z-10">
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ node, ...props }) => <p className="text-slate-300 leading-relaxed mb-4" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="text-white font-bold" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="text-amber-200 font-bold text-lg mt-4 mb-2 uppercase tracking-wide" {...props} />
+                                            }}
+                                        >
+                                            {lastGeneration.resultado_texto ? lastGeneration.resultado_texto.substring(0, 300) + (lastGeneration.resultado_texto.length > 300 ? '...' : '') : ''}
+                                        </ReactMarkdown>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
 
                         {/* 1. HERO: Leitura do Dia */}
                         <section className="animate-enter">

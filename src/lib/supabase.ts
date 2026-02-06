@@ -267,6 +267,7 @@ export async function atualizarFeedback(id: number, aprovado: boolean): Promise<
     console.log(`👍 [FEEDBACK] Atualizando ID ${id} para aprovado=${aprovado}`);
 
     try {
+        // 1. Atualiza status no histórico
         const { error } = await supabase
             .from('historico_geracoes')
             .update({ aprovado })
@@ -275,6 +276,34 @@ export async function atualizarFeedback(id: number, aprovado: boolean): Promise<
         if (error) {
             console.error('❌ [FEEDBACK] Erro ao atualizar:', error);
             return false;
+        }
+
+        // 2. SE APROVADO: Eternizar no DNA Categorizado (Se ainda não existir)
+        if (aprovado) {
+            console.log('💎 [ETERNIZAR] Tentando salvar no DNA Categorizado...');
+
+            // Buscar texto da geração
+            const { data: geracao, error: fetchError } = await supabase
+                .from('historico_geracoes')
+                .select('resultado_texto')
+                .eq('id', id)
+                .single();
+
+            if (geracao && geracao.resultado_texto) {
+                // Verificar se já existe (evitar duplicatas exatas)
+                const { data: existente } = await supabase
+                    .from('dna_categorizado')
+                    .select('id')
+                    .eq('texto_msg', geracao.resultado_texto)
+                    .maybeSingle();
+
+                if (!existente) {
+                    await addDnaCategorizado(geracao.resultado_texto, 'devocional', ['gerado_via_app']);
+                    console.log('💎 [ETERNIZAR] Salvo com sucesso no DNA!');
+                } else {
+                    console.log('⚠️ [ETERNIZAR] Já existe no DNA, ignorando duplicata.');
+                }
+            }
         }
 
         console.log('✅ [FEEDBACK] Sucesso!');
