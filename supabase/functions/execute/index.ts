@@ -260,16 +260,37 @@ Deno.serve(async (req) => {
 
       const { data: geracoesRecentes, error: genError } = await supabase
         .from("dna_geracoes")
-        .select("texto_msg")
+        .select("texto_msg, tema_principal")
         .gte("created_at", dataCorte.toISOString())
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (!genError && geracoesRecentes && geracoesRecentes.length > 0) {
         console.log(`🔄 [ANTI-REPETIÇÃO] Encontradas ${geracoesRecentes.length} gerações recentes`);
+
+        // Coletar temas explícitos (quando salvos)
+        const temasExplicitos = geracoesRecentes
+          .filter((g: any) => g.tema_principal)
+          .map((g: any) => g.tema_principal);
+        const temasUnicos = [...new Set(temasExplicitos)];
+
+        // Extrair título (primeira linha) + início do corpo para melhor identificação de tema
         const resumoGeracoes = geracoesRecentes
-          .map((g: any) => g.texto_msg.substring(0, 100) + '...')
+          .map((g: any) => {
+            const texto = g.texto_msg || '';
+            const linhas = texto.split('\n').filter((l: string) => l.trim());
+            const titulo = linhas[0]?.substring(0, 80) || '';
+            const corpo = linhas.slice(1).join(' ').substring(0, 120) || '';
+            const temaSalvo = g.tema_principal ? `[TEMA: ${g.tema_principal}] ` : '';
+            return `${temaSalvo}${titulo} | ${corpo}...`;
+          })
           .join('\n- ');
+
+        // Listar temas explícitos para facilitar anti-repetição
+        const listaTemasExplicitos = temasUnicos.length > 0
+          ? `\n   **TEMAS JÁ USADOS (EVITAR!)**: ${temasUnicos.join(', ')}\n`
+          : '';
+
         contextoAntiRepeticao = `
 
 ## ⛔ ANTI-REPETIÇÃO RIGOROSA (Histórico Recente):
@@ -277,11 +298,11 @@ Deno.serve(async (req) => {
    **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
    **VOCÊ ESTÁ PROIBIDO DE REPETIR O MESMO TEMA OU ÂNGULO HOJE.**
    Se a última mensagem foi sobre "Confiança", fale sobre "Gratidão" ou "Sabedoria". Mude o disco!
-   
+${listaTemasExplicitos}
    --- EVITAR ESSES TEMAS ---
    - ${resumoGeracoes}
    --------------------------
-   
+
 **REGRA FINAL**: Cada mensagem nova deve trazer uma PERSPECTIVA INÉDITA, abordagem diferente ou estilo diferente das acima.
 `;
       }
@@ -399,7 +420,10 @@ ${dnaFavoritas}
           ok: true,
           resultado: resultado,
           tipo: 'modo_favoritas',
-          total_favoritas: favoritas.length
+          total_favoritas: favoritas.length,
+          // Tracking para anti-repetição
+          tema_usado: filtros?.tema || null,
+          categoria_usada: filtros?.categoria || null
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -667,7 +691,10 @@ Gere agora:
         JSON.stringify({
           ok: true,
           resultado: resultado,
-          tipo: 'modo_estilo'
+          tipo: 'modo_estilo',
+          // Tracking para anti-repetição
+          tema_usado: filtros?.tema || null,
+          estilo_usado: estiloAlvo || null
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );

@@ -58,6 +58,8 @@ export interface DnaGeracao {
     texto_msg: string;
     categoria?: string;
     filtros?: Record<string, unknown>;
+    tema_principal?: string;
+    angulo_usado?: string;
     created_at: string;
 }
 
@@ -485,17 +487,21 @@ export async function deleteDnaGeracaoBatch(batchId: string): Promise<boolean> {
 export async function saveDnaGeracoes(
     mensagens: string[],
     categoria?: string,
-    filtros?: Record<string, unknown>
+    filtros?: Record<string, unknown>,
+    temaPrincipal?: string,
+    anguloUsado?: string
 ): Promise<string | null> {
     const batchId = crypto.randomUUID();
-    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}`);
+    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}${temaPrincipal ? ` (tema: ${temaPrincipal})` : ''}`);
 
     try {
         const records = mensagens.map(texto => ({
             batch_id: batchId,
             texto_msg: texto.trim(),
             categoria: categoria || null,
-            filtros: filtros || null
+            filtros: filtros || null,
+            tema_principal: temaPrincipal || null,
+            angulo_usado: anguloUsado || null
         }));
 
         const { error } = await supabase
@@ -1067,7 +1073,8 @@ export async function getDnaCategorizado(
             .order('created_at', { ascending: false })
             .limit(limit);
 
-        if (categoria && categoria !== 'outro') {
+        // Filtra por categoria específica (incluindo 'outro')
+        if (categoria) {
             query = query.eq('categoria', categoria);
         }
 

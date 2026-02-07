@@ -126,10 +126,11 @@ export default function GeradorEstiloPage() {
             if (response.ok && response.resultado) {
                 setResult(response.resultado);
 
-                // Salvar gerações
+                // Salvar gerações com tracking de tema
                 const mensagens = response.resultado.split(/\n\s*---\s*\n/).filter((p: string) => p.trim().length > 0);
                 if (mensagens.length > 0) {
-                    await saveDnaGeracoes(mensagens, selectedCategory, filtros);
+                    const temaUsado = response.tema_usado || filtroTema || undefined;
+                    await saveDnaGeracoes(mensagens, selectedCategory, filtros, temaUsado);
                     await loadRecentGenerations(); // Recarregar lista
                 }
             } else {

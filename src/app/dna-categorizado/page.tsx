@@ -209,11 +209,12 @@ export default function DnaCategorizadoPage() {
                 setGeneratedResult(result.resultado);
                 setShowResult(true);
 
-                // NOVO: Salvar mensagens na tabela dna_geracoes
+                // NOVO: Salvar mensagens na tabela dna_geracoes com tracking de tema
                 const mensagens = parseMessages(result.resultado);
                 if (mensagens.length > 0) {
                     const categoriaStr = filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined;
-                    await saveDnaGeracoes(mensagens, categoriaStr, filtros);
+                    const temaUsado = result.tema_usado || filtroTema || undefined;
+                    await saveDnaGeracoes(mensagens, categoriaStr, filtros, temaUsado);
                     // Recarregar lista de gerações recentes
                     const novasGeracoes = await getDnaGeracoes(3);
                     setRecentGenerations(novasGeracoes);
