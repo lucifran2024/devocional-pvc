@@ -237,7 +237,46 @@ export interface FiltrosGeracao {
     estilo?: string; // NOVO: Estilo único forçado (modo_estilo)
     neutro?: boolean; // NOVO: Filtro para remover saudações
     contextoEstrategia?: 'recent_5' | 'recent_10' | 'mixed'; // NOVO: Estratégia de contexto
+    contextoManual?: string[]; // NOVO: Inspiração curada manualmente
 }
+
+// ==================== HELPERS DE INSPIRAÇÃO (MANUAL CURATION) ====================
+export const fetchInspirationCandidates = async (
+    source: 'dna' | 'favoritos',
+    contextoEstrategia: 'recent_5' | 'recent_10' | 'mixed',
+    categoria?: string
+): Promise<{ id: number; texto: string; selected: boolean }[]> => {
+    let query = supabase.from(source === 'dna' ? 'dna_categorizado' : 'favoritos_mensagens').select('id, texto_msg, created_at');
+
+    if (source === 'dna' && categoria && categoria !== 'todas') {
+        query = query.eq('categoria', categoria);
+    }
+
+    // Para MIXED, buscamos mais para embaralhar. Para outros, normal.
+    const limit = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
+
+    const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (error || !data) {
+        console.error('Erro ao buscar candidatos:', error);
+        return [];
+    }
+
+    let result = data;
+
+    // Aplicar lógica MIXED no cliente
+    if (contextoEstrategia === 'mixed') {
+        result = data.sort(() => 0.5 - Math.random()).slice(0, 10);
+    }
+
+    return result.map(item => ({
+        id: item.id,
+        texto: item.texto_msg,
+        selected: true // Por padrão todos vêm selecionados
+    }));
+};
 
 /**
  * Executa modo COM filtros opcionais para geração personalizada

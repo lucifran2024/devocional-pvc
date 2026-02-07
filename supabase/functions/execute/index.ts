@@ -129,11 +129,16 @@ Deno.serve(async (req) => {
       console.log(`📚 [FAVORITAS] Encontradas: ${favoritas.length} mensagens`);
 
       // 2. Aplicar filtro DNA Base + Estratégia de Contexto
-      let favoritasFiltradas = favoritas;
+      let favoritasFiltradas: any[] = [];
+      const contextoManual = filtros?.contextoManual; // Array de strings
       const contextoEstrategia = filtros?.contextoEstrategia || 'recent_5'; // default: 5 últimas
       const neutro = filtros?.neutro || false;
 
-      if (contextoEstrategia === 'mixed') {
+      if (contextoManual && Array.isArray(contextoManual) && contextoManual.length > 0) {
+        // MODO MANUAL: Usa o que o usuário selecionou
+        console.log(`👆 [DNA] Usando CONTEXTO MANUAL: ${contextoManual.length} mensagens selecionadas.`);
+        favoritasFiltradas = contextoManual.map(texto => ({ texto_msg: texto }));
+      } else if (contextoEstrategia === 'mixed') {
         // Misturado: Embaralha e pega 10
         console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando 100 itens e pegando 10 aleatórios.`);
         favoritasFiltradas = [...favoritas].sort(() => 0.5 - Math.random()).slice(0, 10);
@@ -442,38 +447,47 @@ ${dnaFavoritas}
       let dnaSourceType = "GENERICO"; // ou 'ESPECIFICO'
 
       if (usarDnaBase) {
-        // Definir limites baseados na estratégia
-        const limitFetch = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
+        // CHECK MANUAL CONTEXT FIRST
+        const contextoManual = filtros?.contextoManual;
 
-        // Tenta buscar do DNA Categorizado (que já é filtrado por tipo: oração, versículo, etc)
-        const { data: dnaEspecifico } = await supabase
-          .from("dna_categorizado")
-          .select("texto_msg")
-          .eq("categoria", estiloAlvo)
-          .order("created_at", { ascending: false })
-          .limit(limitFetch); // Usa o limite da estratégia
-
-        if (dnaEspecifico && dnaEspecifico.length > 0) {
-          let selecionados = dnaEspecifico;
-
-          // Se for MIXED, embaralha e pega 10
-          if (contextoEstrategia === 'mixed') {
-            selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 10);
-          }
-
-          dnaEssencia = selecionados.map((d: any) => d.texto_msg).join("\n\n---\n\n");
-          dnaSourceType = "ESPECIFICO";
-          console.log(`📚 [DNA] Usando estratégia '${contextoEstrategia}': ${selecionados.length} exemplos.`);
+        if (contextoManual && Array.isArray(contextoManual) && contextoManual.length > 0) {
+          console.log(`👆 [DNA] Usando CONTEXTO MANUAL: ${contextoManual.length} mensagens.`);
+          dnaEssencia = contextoManual.join("\n\n---\n\n");
+          dnaSourceType = "MANUAL";
         } else {
-          // Fallback para Favoritas Gerais (mistureba, mas garante teologia)
-          const { data: favoritas, error: favError } = await supabase
-            .from("favoritos_mensagens")
-            .select("texto_msg")
-            .order("created_at", { ascending: false })
-            .limit(60);
+          // Definir limites baseados na estratégia
+          const limitFetch = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
 
-          dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
-          console.log(`📚 [DNA] Usando ${favoritas?.length || 0} favoritas GERAIS (Fallback).`);
+          // Tenta buscar do DNA Categorizado (que já é filtrado por tipo: oração, versículo, etc)
+          const { data: dnaEspecifico } = await supabase
+            .from("dna_categorizado")
+            .select("texto_msg")
+            .eq("categoria", estiloAlvo)
+            .order("created_at", { ascending: false })
+            .limit(limitFetch); // Usa o limite da estratégia
+
+          if (dnaEspecifico && dnaEspecifico.length > 0) {
+            let selecionados = dnaEspecifico;
+
+            // Se for MIXED, embaralha e pega 10
+            if (contextoEstrategia === 'mixed') {
+              selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 10);
+            }
+
+            dnaEssencia = selecionados.map((d: any) => d.texto_msg).join("\n\n---\n\n");
+            dnaSourceType = "ESPECIFICO";
+            console.log(`📚 [DNA] Usando estratégia '${contextoEstrategia}': ${selecionados.length} exemplos.`);
+          } else {
+            // Fallback para Favoritas Gerais (mistureba, mas garante teologia)
+            const { data: favoritas, error: favError } = await supabase
+              .from("favoritos_mensagens")
+              .select("texto_msg")
+              .order("created_at", { ascending: false })
+              .limit(60);
+
+            dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
+            console.log(`📚 [DNA] Usando ${favoritas?.length || 0} favoritas GERAIS (Fallback).`);
+          }
         }
       } else {
         console.log(`📚 [DNA] DNA Base desativado pelo usuário.`);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
     getDnaCategorizado,
@@ -19,7 +19,8 @@ import {
     deleteDnaGeracao,
     deleteDnaGeracaoBatch,
     saveDnaGeracoes,
-    DnaGeracao
+    DnaGeracao,
+    fetchInspirationCandidates
 } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -70,6 +71,35 @@ export default function DnaCategorizadoPage() {
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
     const [filtroNeutro, setFiltroNeutro] = useState(false);
     const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'mixed'>('recent_5');
+
+    // MANUAL CURATION STATE
+    const [candidates, setCandidates] = useState<{ id: number; texto: string; selected: boolean }[]>([]);
+    const [showCandidates, setShowCandidates] = useState(false);
+    const [loadingCandidates, setLoadingCandidates] = useState(false);
+
+    // Carregar candidatos quando estratégia ou categoria muda
+    useEffect(() => {
+        if (filtroCategoriaGerar !== 'todas' && usarDnaBase) {
+            loadCandidates();
+        }
+    }, [filtroCategoriaGerar, contextoEstrategia, usarDnaBase]);
+
+    const loadCandidates = async () => {
+        if (filtroCategoriaGerar === 'todas') return;
+        setLoadingCandidates(true);
+        try {
+            const data = await fetchInspirationCandidates('dna', contextoEstrategia, filtroCategoriaGerar);
+            setCandidates(data);
+        } catch (err) {
+            console.error("Erro carregando inspiração:", err);
+        } finally {
+            setLoadingCandidates(false);
+        }
+    };
+
+    const toggleCandidate = (id: number) => {
+        setCandidates(prev => prev.map(c => c.id === id ? { ...c, selected: !c.selected } : c));
+    };
 
     // Estilos de Apresentação (NOVO)
 
@@ -166,7 +196,11 @@ export default function DnaCategorizadoPage() {
             usarDnaBase,
             usarPassagemDia,
             neutro: filtroNeutro,
-            contextoEstrategia
+            contextoEstrategia,
+            // Injetar contexto manual selecionado
+            contextoManual: (usarDnaBase && candidates.length > 0)
+                ? candidates.filter(c => c.selected).map(c => c.texto)
+                : undefined
         };
 
         try {
@@ -464,6 +498,62 @@ export default function DnaCategorizadoPage() {
                                         >
                                             ✕ Limpar filtros avançados
                                         </button>
+                                    )}
+
+                                    {/* MANUAL CURATION PREVIEW */}
+                                    {usarDnaBase && filtroCategoriaGerar !== 'todas' && (
+                                        <div className="mt-5 pt-5 border-t border-white/10">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles className="w-4 h-4 text-amber-400" />
+                                                    <h4 className="text-sm font-bold text-white">Inspiração Selecionada</h4>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowCandidates(!showCandidates)}
+                                                    className="text-xs flex items-center gap-1.5 text-violet-300 hover:text-white transition-colors"
+                                                >
+                                                    {loadingCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
+                                                    {showCandidates ? 'Ocultar' : 'Ver/Editar'}
+                                                    <span className="bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded text-[10px] border border-violet-500/30">
+                                                        {candidates.filter(c => c.selected).length}/{candidates.length}
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            {showCandidates && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-white/5">
+                                                    {loadingCandidates ? (
+                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                            <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
+                                                            Carregando inspiração...
+                                                        </div>
+                                                    ) : candidates.length === 0 ? (
+                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                            Nenhuma mensagem encontrada para esta estratégia.
+                                                        </div>
+                                                    ) : (
+                                                        candidates.map(c => (
+                                                            <div
+                                                                key={c.id}
+                                                                onClick={() => toggleCandidate(c.id)}
+                                                                className={`
+                                                                    p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
+                                                                    ${c.selected
+                                                                        ? 'bg-violet-500/10 border-violet-500/30 text-slate-200'
+                                                                        : 'bg-transparent border-white/5 text-slate-600 opacity-60 hover:opacity-100'}
+                                                                `}
+                                                            >
+                                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                                    <span className="text-[10px] uppercase font-bold text-slate-500">#{c.id}</span>
+                                                                    {c.selected && <Check className="w-3 h-3 text-violet-400" />}
+                                                                </div>
+                                                                <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             )}
