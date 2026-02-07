@@ -39,6 +39,10 @@ export interface ExecuteResponse {
     resultado: string;
     id?: number; // Adicionado para identificar no feedback
     error?: string;
+    // Tracking para anti-repetição
+    tema_usado?: string;
+    categoria_usada?: string;
+    estilo_usado?: string;
 }
 
 export interface PalavraManhaCache {
