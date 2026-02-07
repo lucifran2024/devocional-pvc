@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
 
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
-      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana || filtros.momento || filtros.tamanho || neutro);
+      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diasSemana || filtros.momento || filtros.tamanho || neutro);
 
       // Montar instruções de filtro - MAIS CLARAS E OBRIGATÓRIAS
       let instrucoesFiltro = '';
@@ -217,8 +217,8 @@ Deno.serve(async (req) => {
           instrucoesFiltro += `2. **NEUTRO**: NÃO use saudações temporais (Bom dia, etc). Comece direto.\n`;
         }
 
-        if (filtros.diaSemana) {
-          instrucoesFiltro += `3. **DIA**: Mencione "${filtros.diaSemana}" no texto (ex: "Neste ${filtros.diaSemana}...")\n`;
+        if (filtros.diasSemana) {
+          instrucoesFiltro += `3. **DIAS DA SEMANA**: Mencione estes dias: "${filtros.diasSemana}" no texto. Distribua entre as mensagens geradas. (ex: "Nesta Segunda abençoada...", "Que sua Quarta seja...")\n`;
         }
         if (filtros.momento) {
           const descMomento = filtros.momento === 'Fim de Semana' ? 'mensagem de descanso e renovação para o fim de semana'
