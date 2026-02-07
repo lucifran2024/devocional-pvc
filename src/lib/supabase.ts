@@ -64,6 +64,7 @@ export interface DnaGeracao {
     filtros?: Record<string, unknown>;
     tema_principal?: string;
     angulo_usado?: string;
+    versiculos_usados?: string[];
     created_at: string;
 }
 
@@ -485,7 +486,33 @@ export async function deleteDnaGeracaoBatch(batchId: string): Promise<boolean> {
 }
 
 /**
+ * Extrai referências bíblicas de um texto
+ */
+function extrairVersiculos(texto: string): string[] {
+    // Regex para encontrar referências bíblicas (ex: João 3:16, Salmos 23:1-4, 1 Coríntios 13:4)
+    const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
+    const matches = texto.match(regex) || [];
+    return [...new Set(matches.map(m => m.trim()))]; // Remove duplicatas
+}
+
+/**
+ * Extrai tema/título principal de uma mensagem
+ */
+function extrairTema(texto: string): string | null {
+    const linhas = texto.split('\n').filter(l => l.trim());
+    const primeiraLinha = linhas[0] || '';
+    // Remove asteriscos, emojis, números e "MENSAGEM XX"
+    const limpo = primeiraLinha
+        .replace(/\*+/g, '')
+        .replace(/[📖🌟✨💫🙏❤️💪🔥⭐️🌅🌙]/g, '')
+        .replace(/MENSAGEM\s*\d+\s*[-—]/gi, '')
+        .trim();
+    return limpo.length > 3 ? limpo.substring(0, 100) : null;
+}
+
+/**
  * Salva um lote de gerações do DNA Categorizado
+ * Extrai automaticamente versículos e temas de cada mensagem
  * @returns O batch_id gerado ou null em caso de erro
  */
 export async function saveDnaGeracoes(
@@ -496,17 +523,26 @@ export async function saveDnaGeracoes(
     anguloUsado?: string
 ): Promise<string | null> {
     const batchId = crypto.randomUUID();
-    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}${temaPrincipal ? ` (tema: ${temaPrincipal})` : ''}`);
+    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}`);
 
     try {
-        const records = mensagens.map(texto => ({
-            batch_id: batchId,
-            texto_msg: texto.trim(),
-            categoria: categoria || null,
-            filtros: filtros || null,
-            tema_principal: temaPrincipal || null,
-            angulo_usado: anguloUsado || null
-        }));
+        const records = mensagens.map(texto => {
+            const textoLimpo = texto.trim();
+            // Extrai versículos automaticamente de cada mensagem
+            const versiculosExtraidos = extrairVersiculos(textoLimpo);
+            // Extrai tema do título se não foi fornecido
+            const temaExtraido = temaPrincipal || extrairTema(textoLimpo);
+
+            return {
+                batch_id: batchId,
+                texto_msg: textoLimpo,
+                categoria: categoria || null,
+                filtros: filtros || null,
+                tema_principal: temaExtraido,
+                angulo_usado: anguloUsado || null,
+                versiculos_usados: versiculosExtraidos.length > 0 ? versiculosExtraidos : null
+            };
+        });
 
         const { error } = await supabase
             .from('dna_geracoes')
@@ -517,7 +553,9 @@ export async function saveDnaGeracoes(
             return null;
         }
 
-        console.log(`✅ [DNA_GERACOES] Lote salvo com sucesso!`);
+        // Log de debug
+        const totalVersiculos = records.reduce((acc, r) => acc + (r.versiculos_usados?.length || 0), 0);
+        console.log(`✅ [DNA_GERACOES] Lote salvo! Versículos extraídos: ${totalVersiculos}`);
         return batchId;
     } catch (err) {
         console.error('💥 [DNA_GERACOES] Exceção:', err);

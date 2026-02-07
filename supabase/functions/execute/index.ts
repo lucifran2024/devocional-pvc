@@ -279,60 +279,115 @@ Deno.serve(async (req) => {
         console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
       }
 
-      // 4.6 ESTILOS DE APRESENTAÇÃO: Buscar exemplos das categorias selecionadas
-
-
-      // 4.5 ANTI-REPETIÇÃO: Buscar últimos 3 dias de gerações para não repetir
+      // 4.5 ANTI-REPETIÇÃO ROBUSTA: Extrair temas e versículos para não repetir
       let contextoAntiRepeticao = '';
       const dataCorte = new Date();
-      dataCorte.setDate(dataCorte.getDate() - 3);
+      dataCorte.setDate(dataCorte.getDate() - 7); // Aumentado para 7 dias
+
+      // Função para extrair versículos de um texto
+      const extrairVersiculos = (texto: string): string[] => {
+        // Regex para encontrar referências bíblicas (ex: João 3:16, Salmos 23:1-4, 1 Coríntios 13:4)
+        const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
+        const matches = texto.match(regex) || [];
+        return matches.map(m => m.trim());
+      };
+
+      // Função para extrair tema/ângulo do título
+      const extrairTemaDoTitulo = (texto: string): string => {
+        const linhas = texto.split('\n').filter((l: string) => l.trim());
+        const titulo = linhas[0] || '';
+        // Limpa asteriscos, emojis e pega palavras-chave
+        const limpo = titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim();
+        return limpo.substring(0, 50);
+      };
 
       const { data: geracoesRecentes, error: genError } = await supabase
         .from("dna_geracoes")
-        .select("texto_msg, tema_principal")
+        .select("texto_msg, tema_principal, versiculos_usados")
         .gte("created_at", dataCorte.toISOString())
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
+
+      // Extrair versículos do DNA Base também (para não repetir os mesmos do DNA)
+      const versiculosDoDna: string[] = [];
+      favoritasFiltradas.forEach((f: any) => {
+        const versiculos = extrairVersiculos(f.texto_msg || '');
+        versiculosDoDna.push(...versiculos);
+      });
+      const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
 
       if (!genError && geracoesRecentes && geracoesRecentes.length > 0) {
-        console.log(`🔄 [ANTI-REPETIÇÃO] Encontradas ${geracoesRecentes.length} gerações recentes`);
+        console.log(`🔄 [ANTI-REPETIÇÃO] Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias`);
 
-        // Coletar temas explícitos (quando salvos)
-        const temasExplicitos = geracoesRecentes
-          .filter((g: any) => g.tema_principal)
-          .map((g: any) => g.tema_principal);
-        const temasUnicos = [...new Set(temasExplicitos)];
+        // Coletar temas (salvos ou extraídos)
+        const temasColetados: string[] = [];
+        const versiculosColetados: string[] = [];
 
-        // Extrair título (primeira linha) + início do corpo para melhor identificação de tema
-        const resumoGeracoes = geracoesRecentes
+        geracoesRecentes.forEach((g: any) => {
+          // Tema
+          if (g.tema_principal) {
+            temasColetados.push(g.tema_principal);
+          } else {
+            const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
+            if (temaExtraido) temasColetados.push(temaExtraido);
+          }
+          // Versículos
+          if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
+            versiculosColetados.push(...g.versiculos_usados);
+          } else {
+            const versiculosExtraidos = extrairVersiculos(g.texto_msg || '');
+            versiculosColetados.push(...versiculosExtraidos);
+          }
+        });
+
+        const temasUnicos = [...new Set(temasColetados)].slice(0, 20);
+        const versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
+
+        console.log(`📊 [ANTI-REP] Temas encontrados: ${temasUnicos.length}, Versículos: ${versiculosUnicos.length}`);
+
+        // Resumo das últimas 10 gerações
+        const resumoGeracoes = geracoesRecentes.slice(0, 10)
           .map((g: any) => {
             const texto = g.texto_msg || '';
             const linhas = texto.split('\n').filter((l: string) => l.trim());
-            const titulo = linhas[0]?.substring(0, 80) || '';
-            const corpo = linhas.slice(1).join(' ').substring(0, 120) || '';
-            const temaSalvo = g.tema_principal ? `[TEMA: ${g.tema_principal}] ` : '';
-            return `${temaSalvo}${titulo} | ${corpo}...`;
+            const titulo = linhas[0]?.substring(0, 60) || '';
+            return titulo;
           })
           .join('\n- ');
 
-        // Listar temas explícitos para facilitar anti-repetição
-        const listaTemasExplicitos = temasUnicos.length > 0
-          ? `\n   **TEMAS JÁ USADOS (EVITAR!)**: ${temasUnicos.join(', ')}\n`
-          : '';
-
         contextoAntiRepeticao = `
 
-## ⛔ ANTI-REPETIÇÃO RIGOROSA (Histórico Recente):
-   Abaixo estão as mensagens geradas nos últimos 3 dias.
-   **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
-   **VOCÊ ESTÁ PROIBIDO DE REPETIR O MESMO TEMA OU ÂNGULO HOJE.**
-   Se a última mensagem foi sobre "Confiança", fale sobre "Gratidão" ou "Sabedoria". Mude o disco!
-${listaTemasExplicitos}
-   --- EVITAR ESSES TEMAS ---
-   - ${resumoGeracoes}
-   --------------------------
+## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO - LEIA COM ATENÇÃO):
 
-**REGRA FINAL**: Cada mensagem nova deve trazer uma PERSPECTIVA INÉDITA, abordagem diferente ou estilo diferente das acima.
+### 🚫 TEMAS PROIBIDOS (usados nos últimos 7 dias):
+${temasUnicos.length > 0 ? temasUnicos.map(t => `- ${t}`).join('\n') : '- Nenhum tema registrado ainda'}
+
+### 🚫 VERSÍCULOS PROIBIDOS (já usados recentemente):
+${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenhum'}
+${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
+${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
+
+### 📋 TÍTULOS RECENTES (não repita abordagens):
+- ${resumoGeracoes}
+
+### ⚠️ REGRAS OBRIGATÓRIAS:
+1. **CADA MENSAGEM DEVE TER UM TEMA DIFERENTE** - Se gerando 10 mensagens, são 10 temas distintos
+2. **USE VERSÍCULOS NOVOS** - Busque passagens que NÃO estão na lista proibida
+3. **CRUZE O DNA COM PASSAGENS DIFERENTES** - Se o DNA fala de Salmos 23, conecte com Isaías, João, etc
+4. **VARIE O ÂNGULO** - Uma mensagem pode ser exortação, outra consolo, outra reflexão
+5. **NÃO REPITA ESTRUTURAS** - Se uma começa com pergunta, a próxima não deve
+
+**PENALIDADE**: Se repetir tema ou versículo da lista proibida, a mensagem será DESCARTADA.
+`;
+      } else if (versiculosDnaUnicos.length > 0) {
+        // Mesmo sem gerações recentes, evita repetir versículos do DNA
+        contextoAntiRepeticao = `
+
+## ⚠️ CRUZAMENTO DE PASSAGENS:
+O DNA Base contém estes versículos: ${versiculosDnaUnicos.slice(0, 10).join(', ')}
+
+**IMPORTANTE**: Não use apenas esses versículos! CRUZE com passagens de outros livros da Bíblia.
+Exemplo: Se o DNA tem Salmos 23, conecte com João 10 (Bom Pastor) ou Ezequiel 34.
 `;
       }
 
@@ -399,10 +454,24 @@ ${isReferenciaUnica ? `
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
 - **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
-- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : 'O versículo pode vir das favoritas OU ser um novo que combine com a mensagem'}
+- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : '**USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo'}
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
+- **CRUZE LIVROS**: Se o DNA cita Salmos, use também Provérbios, Isaías, João, Romanos, etc.
 
- ## FORMATO DE SAÍDA:
+## 🎯 DIVERSIDADE NO LOTE (${quantidade} MENSAGENS):
+**CADA MENSAGEM DEVE SER ÚNICA!** Distribua assim:
+- **TEMAS**: ${quantidade} temas DIFERENTES (Fé, Esperança, Gratidão, Confiança, Paz, Força, Amor, Sabedoria, etc)
+- **ABERTURAS**: Varie como começa (pergunta, afirmação, citação, narrativa, exclamação)
+- **TONS**: Misture consolador, motivacional, reflexivo, celebrativo, exortativo
+- **LIVROS BÍBLICOS**: Use pelo menos ${Math.min(quantidade, 5)} livros diferentes da Bíblia
+- **ESTRUTURAS**: Algumas curtas (3 linhas), outras médias (5-7 linhas), outras com lista
+
+**CHECKPOINT**: Antes de finalizar, releia as ${quantidade} mensagens e confirme que:
+✓ Nenhum tema se repete
+✓ Nenhum versículo se repete
+✓ Cada uma tem uma "personalidade" diferente
+
+## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
 ${filtros?.usarPassagemDia ? `
 **📖 LEITURA DO DIA — ${passagemRef}**
