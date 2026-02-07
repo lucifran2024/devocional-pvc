@@ -235,6 +235,8 @@ export interface FiltrosGeracao {
     momento?: string;
     estilosApresentacao?: string[]; // Categorias para definir o formato de apresentação
     estilo?: string; // NOVO: Estilo único forçado (modo_estilo)
+    neutro?: boolean; // NOVO: Filtro para remover saudações
+    contextoEstrategia?: 'recent_5' | 'recent_10' | 'mixed'; // NOVO: Estratégia de contexto
 }
 
 /**

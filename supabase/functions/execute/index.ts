@@ -427,6 +427,8 @@ ${dnaFavoritas}
       const usarPassagemDia = filtros?.usarPassagemDia || false;
       const usarDnaBase = filtros?.usarDnaBase !== false; // Default true
       const diasSemana = filtros?.diasSemana; // String "Segunda, Quarta"
+      const neutro = filtros?.neutro || false; // NOVO: Filtro Neutro
+      const contextoEstrategia = filtros?.contextoEstrategia || 'recent_5'; // NOVO: Estratégia
 
       if (!estiloAlvo) throw new Error("Estilo não especificado para modo_estilo");
 
@@ -447,19 +449,28 @@ ${dnaFavoritas}
       let dnaSourceType = "GENERICO"; // ou 'ESPECIFICO'
 
       if (usarDnaBase) {
+        // Definir limites baseados na estratégia
+        const limitFetch = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
+
         // Tenta buscar do DNA Categorizado (que já é filtrado por tipo: oração, versículo, etc)
         const { data: dnaEspecifico } = await supabase
           .from("dna_categorizado")
           .select("texto_msg")
           .eq("categoria", estiloAlvo)
           .order("created_at", { ascending: false })
-          .limit(40);
+          .limit(limitFetch); // Usa o limite da estratégia
 
-        if (dnaEspecifico && dnaEspecifico.length >= 5) {
-          // Temos DNA específico suficiente!
-          dnaEssencia = dnaEspecifico.map((d: any) => d.texto_msg).join("\n\n---\n\n");
+        if (dnaEspecifico && dnaEspecifico.length > 0) {
+          let selecionados = dnaEspecifico;
+
+          // Se for MIXED, embaralha e pega 10
+          if (contextoEstrategia === 'mixed') {
+            selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 10);
+          }
+
+          dnaEssencia = selecionados.map((d: any) => d.texto_msg).join("\n\n---\n\n");
           dnaSourceType = "ESPECIFICO";
-          console.log(`📚 [DNA] Usando ${dnaEspecifico.length} exemplos ESPECÍFICOS de '${estiloAlvo}'.`);
+          console.log(`📚 [DNA] Usando estratégia '${contextoEstrategia}': ${selecionados.length} exemplos.`);
         } else {
           // Fallback para Favoritas Gerais (mistureba, mas garante teologia)
           const { data: favoritas, error: favError } = await supabase
@@ -530,9 +541,15 @@ ${dnaFavoritas}
           instrucoesFiltro += `• **TEMA**: O assunto principal deve ser "${filtros.tema}"\n`;
         }
         if (filtros.formato) {
-          instrucoesFiltro += `• **TAMANHO**: ${filtros.formato} (Ajuste o tamanho mas mantenha o ESTILO da categoria)\n`;
+          const sizeInstructions: Record<string, string> = {
+            'Curto': 'MÁXIMO 40 palavras. 1 parágrafo curto. Direto e incisivo. SEM enrolação.',
+            'Médio': 'Entre 60-90 palavras. 2 parágrafos. Equilibrado e objetivo.',
+            'Longo': 'Mais de 120 palavras. 3+ parágrafos. Detalhado, profundo e bem explicado.'
+          };
+          const instruction = sizeInstructions[filtros.formato] || filtros.formato;
+          instrucoesFiltro += `• **TAMANHO RIGOROSO**: ${instruction}\n`;
         }
-        if (filtros.periodo) {
+        if (filtros.periodo && !neutro) {
           const saudacaoMap: Record<string, string> = {
             'Manhã': 'Bom dia',
             'Tarde': 'Boa tarde',
@@ -541,6 +558,8 @@ ${dnaFavoritas}
           };
           const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
           instrucoesFiltro += `• **PERÍODO**: Inicie com saudação de "${saudacao}"\n`;
+        } else if (neutro) {
+          instrucoesFiltro += `• **NEUTRO**: NÃO use saudações temporais (Bom dia, etc). Comece direto.\n`;
         }
         if (filtros.momento) {
           instrucoesFiltro += `• **CONTEXTO**: Foque no momento "${filtros.momento}"\n`;
