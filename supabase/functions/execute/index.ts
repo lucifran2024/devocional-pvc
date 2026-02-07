@@ -109,30 +109,59 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
-      // 1. Buscar TODAS as favoritas
-      const { data: favoritas, error: favError } = await supabase
-        .from("favoritos_mensagens")
-        .select("texto_msg, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (favError || !favoritas || favoritas.length === 0) {
-        return new Response(
-          JSON.stringify({
-            ok: false,
-            error: "Nenhuma mensagem favorita encontrada. Adicione favoritas primeiro!"
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
-      }
-
-      console.log(`📚 [FAVORITAS] Encontradas: ${favoritas.length} mensagens`);
-
-      // 2. Aplicar filtro DNA Base + Estratégia de Contexto
-      let favoritasFiltradas: any[] = [];
-      const contextoManual = filtros?.contextoManual; // Array de strings
+      // 1. Buscar fonte de inspiração (DNA Categorizado OU Favoritas)
+      const categoriaFiltro = filtros?.categoria; // Categoria selecionada no frontend
+      const contextoManual = filtros?.contextoManual; // Array de strings (seleção manual)
       const contextoEstrategia = filtros?.contextoEstrategia || 'recent_5'; // default: 5 últimas
       const neutro = filtros?.neutro || false;
+
+      let fonteInspiracao: any[] = [];
+      let fonteNome = '';
+
+      // Se tem categoria definida, busca do DNA Categorizado
+      if (categoriaFiltro && categoriaFiltro !== 'todas') {
+        console.log(`🎯 [DNA] Buscando categoria específica: ${categoriaFiltro}`);
+        const { data: dnaCategorizado, error: dnaError } = await supabase
+          .from("dna_categorizado")
+          .select("texto_msg, created_at")
+          .eq("categoria", categoriaFiltro)
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (!dnaError && dnaCategorizado && dnaCategorizado.length > 0) {
+          fonteInspiracao = dnaCategorizado;
+          fonteNome = `DNA Categorizado (${categoriaFiltro})`;
+          console.log(`✅ [DNA] Encontradas ${dnaCategorizado.length} mensagens em '${categoriaFiltro}'`);
+        } else {
+          console.log(`⚠️ [DNA] Categoria '${categoriaFiltro}' vazia, usando favoritas gerais`);
+        }
+      }
+
+      // Se não tem categoria OU categoria vazia, busca das Favoritas
+      if (fonteInspiracao.length === 0) {
+        const { data: favoritas, error: favError } = await supabase
+          .from("favoritos_mensagens")
+          .select("texto_msg, created_at")
+          .order("created_at", { ascending: false })
+          .limit(100);
+
+        if (favError || !favoritas || favoritas.length === 0) {
+          return new Response(
+            JSON.stringify({
+              ok: false,
+              error: "Nenhuma mensagem encontrada. Adicione ao DNA ou Favoritas primeiro!"
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+          );
+        }
+        fonteInspiracao = favoritas;
+        fonteNome = 'Favoritas Gerais';
+      }
+
+      console.log(`📚 [FONTE] Usando: ${fonteNome} (${fonteInspiracao.length} mensagens)`);
+
+      // 2. Aplicar Estratégia de Contexto
+      let favoritasFiltradas: any[] = [];
 
       if (contextoManual && Array.isArray(contextoManual) && contextoManual.length > 0) {
         // MODO MANUAL: Usa o que o usuário selecionou
@@ -140,16 +169,16 @@ Deno.serve(async (req) => {
         favoritasFiltradas = contextoManual.map(texto => ({ texto_msg: texto }));
       } else if (contextoEstrategia === 'mixed') {
         // Misturado: Embaralha e pega 10
-        console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando 100 itens e pegando 10 aleatórios.`);
-        favoritasFiltradas = [...favoritas].sort(() => 0.5 - Math.random()).slice(0, 10);
+        console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando e pegando 10 aleatórios.`);
+        favoritasFiltradas = [...fonteInspiracao].sort(() => 0.5 - Math.random()).slice(0, 10);
       } else if (contextoEstrategia === 'recent_10') {
         // 10 mais recentes
         console.log(`🔍 [DNA] Estratégia RECENT_10: Usando as 10 mais novas.`);
-        favoritasFiltradas = favoritas.slice(0, 10);
+        favoritasFiltradas = fonteInspiracao.slice(0, 10);
       } else {
         // Default: 5 mais recentes
         console.log(`🔍 [DNA] Estratégia RECENT_5: Usando as 5 mais novas.`);
-        favoritasFiltradas = favoritas.slice(0, 5);
+        favoritasFiltradas = fonteInspiracao.slice(0, 5);
       }
 
       // 3. Preparar DNA das favoritas (texto completo para análise)
