@@ -565,13 +565,18 @@ ${dnaFavoritas}
       const MODEL_NAME = "gemini-2.0-flash";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
+      // Temperature dinâmica: varia entre 0.7 e 1.0 a cada lote
+      const tempOptions = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0];
+      const tempSorteada = tempOptions[Math.floor(Math.random() * tempOptions.length)];
+      console.log(`🌡️ [FAVORITAS] Temperature sorteada: ${tempSorteada}`);
+
       const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: promptFavoritas }] }],
           generationConfig: {
-            temperature: 0.9, // Mais criativo
+            temperature: tempSorteada,
             maxOutputTokens: 4096
           }
         })
@@ -950,13 +955,18 @@ Gere agora:
       const MODEL_NAME = "gemini-2.0-flash";
       const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
+      // Temperature dinâmica: varia entre 0.7 e 1.0 a cada lote
+      const tempOptionsEstilo = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0];
+      const tempSorteadaEstilo = tempOptionsEstilo[Math.floor(Math.random() * tempOptionsEstilo.length)];
+      console.log(`🌡️ [ESTILO] Temperature sorteada: ${tempSorteadaEstilo}`);
+
       const resp = await fetch(genUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
           generationConfig: {
-            temperature: 0.75,
+            temperature: tempSorteadaEstilo,
             maxOutputTokens: 4000,
           }
         })
