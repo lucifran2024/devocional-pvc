@@ -137,8 +137,12 @@ export default function BibliotecaPage() {
 
     // Modal de seleção
     const [modalAberto, setModalAberto] = useState(false);
-    const [faseSelecao, setFaseSelecao] = useState<'livros' | 'capitulos'>('livros');
+    const [faseSelecao, setFaseSelecao] = useState<'livros' | 'capitulos' | 'versiculos'>('livros');
     const [livroSelecionadoTemp, setLivroSelecionadoTemp] = useState(LIVROS_BIBLIA[0]);
+    const [capituloSelecionadoTemp, setCapituloSelecionadoTemp] = useState(1);
+    const [scrollToVerse, setScrollToVerse] = useState<number | null>(null);
+    const [totalVersiculosTemp, setTotalVersiculosTemp] = useState(0);
+    const [loadingVersiculosTemp, setLoadingVersiculosTemp] = useState(false);
 
     // Mini-toolbar
     const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
@@ -232,6 +236,21 @@ export default function BibliotecaPage() {
         salvarHistoricoLeitura(livroAtual.abrev, livroAtual.nome, capituloAtual);
     }, [livroAtual, capituloAtual, inicializado, buscarCapitulo]);
 
+    // Scroll para versículo específico quando carregado
+    useEffect(() => {
+        if (scrollToVerse && !loading && versiculos.length > 0) {
+            const el = document.getElementById(`verse-${scrollToVerse}`);
+            if (el) {
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('ring-2', 'ring-amber-400/60');
+                    setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400/60'), 2000);
+                }, 300);
+            }
+            setScrollToVerse(null);
+        }
+    }, [scrollToVerse, loading, versiculos]);
+
     // ==========================================
     // CARREGAR INTERAÇÕES DO CAPÍTULO
     // ==========================================
@@ -259,11 +278,12 @@ export default function BibliotecaPage() {
         if (capituloAtual > 1) setCapituloAtual(c => c - 1);
     };
 
-    const navegarPara = (abrev: string, cap: number) => {
+    const navegarPara = (abrev: string, cap: number, verse?: number) => {
         const livro = LIVROS_BIBLIA.find(l => l.abrev === abrev);
         if (livro) {
             setLivroAtual(livro);
             setCapituloAtual(cap);
+            if (verse) setScrollToVerse(verse);
         }
     };
 
@@ -281,9 +301,28 @@ export default function BibliotecaPage() {
         setFaseSelecao('capitulos');
     };
 
-    const confirmarSelecao = (cap: number) => {
+    const selecionarCapituloTemp = async (cap: number) => {
+        setCapituloSelecionadoTemp(cap);
+        setFaseSelecao('versiculos');
+        setLoadingVersiculosTemp(true);
+        setTotalVersiculosTemp(0);
+
+        // Buscar quantidade de versículos do capítulo
+        try {
+            const bookId = LIVRO_PARA_ID[livroSelecionadoTemp.abrev] || 1;
+            const resp = await fetch(`https://bolls.life/get-chapter/NTLH/${bookId}/${cap}/`);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (Array.isArray(data)) setTotalVersiculosTemp(data.length);
+            }
+        } catch { /* fallback */ }
+        setLoadingVersiculosTemp(false);
+    };
+
+    const confirmarSelecao = (versiculo?: number) => {
         setLivroAtual(livroSelecionadoTemp);
-        setCapituloAtual(cap);
+        setCapituloAtual(capituloSelecionadoTemp);
+        setScrollToVerse(versiculo || null);
         setModalAberto(false);
     };
 
@@ -513,7 +552,7 @@ export default function BibliotecaPage() {
     };
 
     const navegarParaItem = (item: BibliaInteracao) => {
-        navegarPara(item.livro_abrev, item.capitulo);
+        navegarPara(item.livro_abrev, item.capitulo, item.versiculo);
         setPainelAberto(false);
     };
 
@@ -582,7 +621,7 @@ export default function BibliotecaPage() {
                                             key={i}
                                             onClick={() => {
                                                 if (livro) {
-                                                    navegarPara(livro.abrev, r.chapter);
+                                                    navegarPara(livro.abrev, r.chapter, r.verse);
                                                     setBuscaAberta(false);
                                                     setResultadosBusca([]);
                                                     setTermoBusca('');
@@ -634,8 +673,14 @@ export default function BibliotecaPage() {
                                 <button onClick={() => setFaseSelecao('livros')} className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium">
                                     <ArrowLeft className="w-4 h-4" /> Voltar
                                 </button>
+                            ) : faseSelecao === 'versiculos' ? (
+                                <button onClick={() => setFaseSelecao('capitulos')} className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium">
+                                    <ArrowLeft className="w-4 h-4" /> Voltar
+                                </button>
                             ) : <div className="w-16" />}
-                            <h3 className="text-lg font-bold text-white">{faseSelecao === 'livros' ? 'Escolha o Livro' : livroSelecionadoTemp.nome}</h3>
+                            <h3 className="text-lg font-bold text-white">
+                                {faseSelecao === 'livros' ? 'Escolha o Livro' : faseSelecao === 'capitulos' ? livroSelecionadoTemp.nome : `${livroSelecionadoTemp.nome} ${capituloSelecionadoTemp}`}
+                            </h3>
                             <button onClick={() => setModalAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="overflow-y-auto flex-1 p-2">
@@ -653,11 +698,36 @@ export default function BibliotecaPage() {
                             {faseSelecao === 'capitulos' && (
                                 <div className="grid grid-cols-5 sm:grid-cols-6 gap-3 p-2">
                                     {Array.from({ length: livroSelecionadoTemp.capitulos }, (_, i) => i + 1).map(cap => (
-                                        <button key={cap} onClick={() => confirmarSelecao(cap)}
+                                        <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
                                             className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold transition-all border ${(livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual) ? 'bg-amber-500 text-black border-amber-400' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/20'}`}>
                                             {cap}
                                         </button>
                                     ))}
+                                </div>
+                            )}
+                            {faseSelecao === 'versiculos' && (
+                                <div className="p-2">
+                                    {/* Botão abrir capítulo inteiro */}
+                                    <button onClick={() => confirmarSelecao()} className="w-full mb-3 py-3 px-4 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-sm hover:bg-amber-500/30 transition-colors">
+                                        Abrir capítulo inteiro
+                                    </button>
+
+                                    <p className="text-slate-500 text-xs text-center mb-3">Ou escolha um versículo para ir direto:</p>
+
+                                    {loadingVersiculosTemp ? (
+                                        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-amber-400 animate-spin" /></div>
+                                    ) : totalVersiculosTemp > 0 ? (
+                                        <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                                            {Array.from({ length: totalVersiculosTemp }, (_, i) => i + 1).map(v => (
+                                                <button key={v} onClick={() => confirmarSelecao(v)}
+                                                    className="aspect-square flex items-center justify-center rounded-lg text-sm font-bold transition-all border bg-white/5 border-white/10 text-slate-300 hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-400">
+                                                    {v}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-center text-slate-500 py-4">Não foi possível carregar versículos</p>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -771,6 +841,7 @@ export default function BibliotecaPage() {
                             {versiculos.map(v => (
                                 <div
                                     key={v.verse}
+                                    id={`verse-${v.verse}`}
                                     onClick={(e) => handleVersiculoClick(v.verse, e)}
                                     className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                         ${getCorClasse(v.verse)}
