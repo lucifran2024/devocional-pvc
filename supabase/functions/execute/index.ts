@@ -535,7 +535,7 @@ ${dnaFavoritas}
           ok: true,
           resultado: resultado,
           tipo: 'modo_favoritas',
-          total_favoritas: favoritas.length,
+          total_favoritas: fonteInspiracao.length,
           // Tracking para anti-repetição
           tema_usado: filtros?.tema || null,
           categoria_usada: filtros?.categoria || null
