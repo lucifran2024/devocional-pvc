@@ -128,36 +128,23 @@ Deno.serve(async (req) => {
 
       console.log(`📚 [FAVORITAS] Encontradas: ${favoritas.length} mensagens`);
 
-      // 2. Aplicar filtro DNA Base se especificado
+      // 2. Aplicar filtro DNA Base + Estratégia de Contexto
       let favoritasFiltradas = favoritas;
-      if (filtros?.dnaBase) {
-        const dnaBase = filtros.dnaBase;
-        const limite = parseInt(dnaBase.split(' ')[0]) || 10;
+      const contextoEstrategia = filtros?.contextoEstrategia || 'recent_5'; // default: 5 últimas
+      const neutro = filtros?.neutro || false;
 
-        if (dnaBase.includes('primeiras')) {
-          // Primeiras = mais recentes (início da lista ordenada por created_at DESC)
-          favoritasFiltradas = favoritas.slice(0, limite);
-          console.log(`🔝 [DNA] Usando ${limite} primeiras (mais recentes)`);
-        } else if (dnaBase.includes('últimas')) {
-          // Últimas = mais antigas (final da lista)
-          favoritasFiltradas = favoritas.slice(-limite);
-          console.log(`🔚 [DNA] Usando ${limite} últimas (mais antigas)`);
-        } else if (dnaBase.includes('do meio')) {
-          // Do meio = centro da lista
-          const meio = Math.floor(favoritas.length / 2);
-          const inicio = Math.max(0, meio - Math.floor(limite / 2));
-          favoritasFiltradas = favoritas.slice(inicio, inicio + limite);
-          console.log(`🎯 [DNA] Usando ${limite} do meio (posições ${inicio} a ${inicio + limite})`);
-        } else if (dnaBase.includes('aleatórias')) {
-          // Embaralha e pega as primeiras
-          const embaralhadas = [...favoritas].sort(() => Math.random() - 0.5);
-          favoritasFiltradas = embaralhadas.slice(0, limite);
-          console.log(`🎲 [DNA] Usando ${limite} aleatórias`);
-        } else if (dnaBase.includes('recentes')) {
-          // Legado: mesma coisa que primeiras
-          favoritasFiltradas = favoritas.slice(0, limite);
-          console.log(`🔍 [DNA] Usando ${limite} mais recentes`);
-        }
+      if (contextoEstrategia === 'mixed') {
+        // Misturado: Embaralha e pega 10
+        console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando 100 itens e pegando 10 aleatórios.`);
+        favoritasFiltradas = [...favoritas].sort(() => 0.5 - Math.random()).slice(0, 10);
+      } else if (contextoEstrategia === 'recent_10') {
+        // 10 mais recentes
+        console.log(`🔍 [DNA] Estratégia RECENT_10: Usando as 10 mais novas.`);
+        favoritasFiltradas = favoritas.slice(0, 10);
+      } else {
+        // Default: 5 mais recentes
+        console.log(`🔍 [DNA] Estratégia RECENT_5: Usando as 5 mais novas.`);
+        favoritasFiltradas = favoritas.slice(0, 5);
       }
 
       // 3. Preparar DNA das favoritas (texto completo para análise)
@@ -167,7 +154,7 @@ Deno.serve(async (req) => {
 
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
-      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana || filtros.momento);
+      const temFiltros = filtros && (filtros.tema || filtros.tipo || filtros.formato || filtros.periodo || filtros.diaSemana || filtros.momento || filtros.tamanho || neutro);
 
       // Montar instruções de filtro - MAIS CLARAS E OBRIGATÓRIAS
       let instrucoesFiltro = '';
@@ -182,7 +169,7 @@ Deno.serve(async (req) => {
                 : 'reflexão curta e direta';
           instrucoesFiltro += `1. **TIPO [${filtros.tipo.toUpperCase()}]**: ${descTipo}\n`;
         }
-        if (filtros.periodo) {
+        if (filtros.periodo && !neutro) {
           // Mapear período para saudação correta
           const saudacaoMap: Record<string, string> = {
             'Manhã': 'Bom dia',
@@ -192,7 +179,10 @@ Deno.serve(async (req) => {
           };
           const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
           instrucoesFiltro += `2. **SAUDAÇÃO [${filtros.periodo.toUpperCase()}]**: COMECE cada mensagem com "${saudacao}" (ex: "${saudacao}, amado(a)!")\n`;
+        } else if (neutro) {
+          instrucoesFiltro += `2. **NEUTRO**: NÃO use saudações temporais (Bom dia, etc). Comece direto.\n`;
         }
+
         if (filtros.diaSemana) {
           instrucoesFiltro += `3. **DIA**: Mencione "${filtros.diaSemana}" no texto (ex: "Neste ${filtros.diaSemana}...")\n`;
         }
@@ -214,10 +204,13 @@ Deno.serve(async (req) => {
           instrucoesFiltro += `6. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
         }
         if (filtros.tamanho) {
-          const descTamanho = filtros.tamanho === 'Curto' ? 'máximo 50 palavras, direto ao ponto'
-            : filtros.tamanho === 'Médio' ? 'entre 50-100 palavras, equilibrado'
-              : 'mais de 100 palavras, desenvolvido e profundo';
-          instrucoesFiltro += `7. **TAMANHO [${filtros.tamanho.toUpperCase()}]**: ${descTamanho}\n`;
+          const sizeInstructions: Record<string, string> = {
+            'Curto': 'MÁXIMO 40 palavras. 1 parágrafo curto. Direto e incisivo. SEM enrolação.',
+            'Médio': 'Entre 60-90 palavras. 2 parágrafos. Equilibrado e objetivo.',
+            'Longo': 'Mais de 120 palavras. 3+ parágrafos. Detalhado, profundo e bem explicado.'
+          };
+          const instruction = sizeInstructions[filtros.tamanho] || filtros.tamanho;
+          instrucoesFiltro += `7. **TAMANHO RIGOROSO**: ${instruction}\n`;
         }
         if (filtros.tom) {
           const descTom = filtros.tom === 'Alegre' ? 'tom positivo, vibrante, celebrando a vida'

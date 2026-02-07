@@ -68,6 +68,8 @@ export default function DnaCategorizadoPage() {
     const [filtroMomento, setFiltroMomento] = useState('');
     const [usarDnaBase, setUsarDnaBase] = useState(true);
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
+    const [filtroNeutro, setFiltroNeutro] = useState(false);
+    const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'mixed'>('recent_5');
 
     // Estilos de Apresentação (NOVO)
 
@@ -163,7 +165,8 @@ export default function DnaCategorizadoPage() {
             momento: filtroMomento || undefined,
             usarDnaBase,
             usarPassagemDia,
-
+            neutro: filtroNeutro,
+            contextoEstrategia
         };
 
         try {
@@ -403,6 +406,54 @@ export default function DnaCategorizadoPage() {
                                         </div>
                                     </div>
 
+                                    <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        {/* Estratégia de Contexto */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Fonte de Inspiração (Contexto)</label>
+                                            <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+                                                <button
+                                                    onClick={() => setContextoEstrategia('recent_5')}
+                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'recent_5' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    5 Últimas
+                                                </button>
+                                                <button
+                                                    onClick={() => setContextoEstrategia('recent_10')}
+                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'recent_10' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    10 Últimas
+                                                </button>
+                                                <button
+                                                    onClick={() => setContextoEstrategia('mixed')}
+                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'mixed' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                                >
+                                                    Misturado
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 mt-1.5">
+                                                {contextoEstrategia === 'recent_5' && 'Usa as 5 mensagens favoritas mais recentes.'}
+                                                {contextoEstrategia === 'recent_10' && 'Usa as 10 mais recentes.'}
+                                                {contextoEstrategia === 'mixed' && 'Pega 10 aleatórias do histórico para variedade.'}
+                                            </p>
+                                        </div>
+
+                                        {/* Toggle Neutro */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Configurações Extras</label>
+                                            <button
+                                                onClick={() => setFiltroNeutro(!filtroNeutro)}
+                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-all ${filtroNeutro ? 'bg-slate-500/20 border-slate-500/30 text-slate-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                            >
+                                                <div className="flex flex-col items-start text-left">
+                                                    <span className="font-medium">Filtro Neutro (Sem Saudações)</span>
+                                                    <span className="text-[10px] opacity-70">Remove "Bom dia", "Boa tarde", etc.</span>
+                                                </div>
+                                                <div className={`w-8 h-4 rounded-full relative transition-colors ${filtroNeutro ? 'bg-slate-500' : 'bg-slate-700'}`}>
+                                                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${filtroNeutro ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
 
 
                                     {/* Limpar Filtros */}
