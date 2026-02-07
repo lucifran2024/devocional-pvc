@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check } from 'lucide-react';
+import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check, CheckSquare, Square } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
     getDnaCategorizado,
@@ -37,6 +37,7 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: stri
 ];
 
 const QUANTIDADES = [5, 10, 15, 20, 30];
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 // Tipos de abas disponíveis
 type TabType = 'gerenciar' | 'gerar-dna' | 'gerar-estilo';
@@ -83,6 +84,7 @@ export default function DnaCategorizadoPage() {
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
     const [filtroNeutro, setFiltroNeutro] = useState(false);
     const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'mixed'>('recent_5');
+    const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
 
     // MANUAL CURATION STATE
     const [candidates, setCandidates] = useState<{ id: number; texto: string; selected: boolean }[]>([]);
@@ -111,6 +113,12 @@ export default function DnaCategorizadoPage() {
 
     const toggleCandidate = (id: number) => {
         setCandidates(prev => prev.map(c => c.id === id ? { ...c, selected: !c.selected } : c));
+    };
+
+    const toggleDia = (dia: string) => {
+        setDiasSelecionados(prev =>
+            prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]
+        );
     };
 
     // Estilos de Apresentação (NOVO)
@@ -205,6 +213,7 @@ export default function DnaCategorizadoPage() {
             formato: filtroFormato || undefined,
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
+            diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
             usarDnaBase,
             usarPassagemDia,
             neutro: filtroNeutro,
@@ -302,6 +311,7 @@ export default function DnaCategorizadoPage() {
             formato: filtroFormato || undefined,
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
+            diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
             usarDnaBase,
             usarPassagemDia,
             neutro: filtroNeutro,
@@ -629,6 +639,26 @@ export default function DnaCategorizadoPage() {
                                             {usarPassagemDia && (
                                                 <p className="text-[10px] text-amber-400/70 mt-1">Formato: Cabeçalho + Título + Corpo c/ Versículo + Fechamento</p>
                                             )}
+                                        </div>
+                                    </div>
+
+                                    {/* Dias da Semana */}
+                                    <div className="mt-5 pt-5 border-t border-white/10">
+                                        <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Dias da Semana (Mencionar no texto)</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {DIAS_SEMANA.map(dia => {
+                                                const active = diasSelecionados.includes(dia);
+                                                return (
+                                                    <button
+                                                        key={dia}
+                                                        onClick={() => toggleDia(dia)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                    >
+                                                        {active ? <CheckSquare className="w-3 h-3" /> : <Square className="w-3 h-3" />}
+                                                        {dia}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
