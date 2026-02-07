@@ -12,10 +12,12 @@ create table if not exists public.push_subscriptions (
 -- RLS: Permitir que qualquer um insira (anonKey) pois não temos auth obrigatória
 alter table public.push_subscriptions enable row level security;
 
-create policy "Enable insert for everyone" 
-on public.push_subscriptions for insert 
-with check (true);
-
-create policy "Enable read for service role only" 
-on public.push_subscriptions for select 
-using (auth.role() = 'service_role');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Enable insert for everyone' AND tablename = 'push_subscriptions') THEN
+    CREATE POLICY "Enable insert for everyone" ON public.push_subscriptions FOR INSERT WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Enable read for service role only' AND tablename = 'push_subscriptions') THEN
+    CREATE POLICY "Enable read for service role only" ON public.push_subscriptions FOR SELECT USING (auth.role() = 'service_role');
+  END IF;
+END $$;

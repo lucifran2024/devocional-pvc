@@ -1371,3 +1371,107 @@ export async function darAmen(id: number): Promise<boolean> {
     }
 }
 
+// ===========================================
+// BÍBLIA — Interações (Destaques, Favoritos, Notas)
+// ===========================================
+
+export interface BibliaInteracao {
+    id?: number;
+    tipo: 'destaque' | 'favorito' | 'nota';
+    livro_abrev: string;
+    livro_nome: string;
+    capitulo: number;
+    versiculo: number;
+    texto_versiculo: string;
+    cor?: string;
+    nota?: string;
+    created_at?: string;
+}
+
+export async function salvarInteracaoBiblia(interacao: Omit<BibliaInteracao, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+        .from('biblia_interacoes')
+        .insert(interacao)
+        .select()
+        .single();
+    if (error) console.error('❌ [BIBLIA] Erro ao salvar:', error);
+    return { data, error };
+}
+
+export async function removerInteracaoBiblia(id: number) {
+    const { error } = await supabase
+        .from('biblia_interacoes')
+        .delete()
+        .eq('id', id);
+    if (error) console.error('❌ [BIBLIA] Erro ao remover:', error);
+    return { error };
+}
+
+export async function removerInteracaoPorVersiculoETipo(
+    tipo: string, livroAbrev: string, capitulo: number, versiculo: number
+) {
+    const { error } = await supabase
+        .from('biblia_interacoes')
+        .delete()
+        .eq('tipo', tipo)
+        .eq('livro_abrev', livroAbrev)
+        .eq('capitulo', capitulo)
+        .eq('versiculo', versiculo);
+    if (error) console.error('❌ [BIBLIA] Erro ao remover por versículo:', error);
+    return { error };
+}
+
+export async function getInteracoesPorCapitulo(livroAbrev: string, capitulo: number) {
+    const { data, error } = await supabase
+        .from('biblia_interacoes')
+        .select('*')
+        .eq('livro_abrev', livroAbrev)
+        .eq('capitulo', capitulo)
+        .order('versiculo', { ascending: true });
+    if (error) console.error('❌ [BIBLIA] Erro ao buscar interações:', error);
+    return data || [];
+}
+
+export async function getAllInteracoesPorTipo(tipo: string, limit: number = 100) {
+    const { data, error } = await supabase
+        .from('biblia_interacoes')
+        .select('*')
+        .eq('tipo', tipo)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+    if (error) console.error('❌ [BIBLIA] Erro ao buscar por tipo:', error);
+    return data || [];
+}
+
+export async function atualizarNotaBiblia(id: number, nota: string) {
+    const { error } = await supabase
+        .from('biblia_interacoes')
+        .update({ nota })
+        .eq('id', id);
+    if (error) console.error('❌ [BIBLIA] Erro ao atualizar nota:', error);
+    return { error };
+}
+
+// ===========================================
+// BÍBLIA — Histórico de Leitura
+// ===========================================
+
+export async function salvarHistoricoLeitura(livroAbrev: string, livroNome: string, capitulo: number) {
+    const { error } = await supabase
+        .from('biblia_historico_leitura')
+        .insert({ livro_abrev: livroAbrev, livro_nome: livroNome, capitulo });
+    if (error) console.error('❌ [BIBLIA] Erro ao salvar histórico:', error);
+    return { error };
+}
+
+export async function getUltimaLeitura() {
+    const { data, error } = await supabase
+        .from('biblia_historico_leitura')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    if (error) console.error('❌ [BIBLIA] Erro ao buscar última leitura:', error);
+    return data;
+}
+
