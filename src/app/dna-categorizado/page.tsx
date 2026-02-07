@@ -38,7 +38,13 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: stri
 
 const QUANTIDADES = [5, 10, 15, 20, 30];
 
+// Tipos de abas disponíveis
+type TabType = 'gerenciar' | 'gerar-dna' | 'gerar-estilo';
+
 export default function DnaCategorizadoPage() {
+    // === ESTADO DA ABA ATIVA ===
+    const [activeTab, setActiveTab] = useState<TabType>('gerenciar');
+
     const [items, setItems] = useState<DnaCategorizado[]>([]);
     const [stats, setStats] = useState<CategoriaStats[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,6 +53,12 @@ export default function DnaCategorizadoPage() {
 
     // Filtro de categoria
     const [filtroCategoria, setFiltroCategoria] = useState<CategoriaDna | 'todas'>('todas');
+
+    // === ESTADO DO GERADOR POR ESTILO ===
+    const [selectedStyleCategory, setSelectedStyleCategory] = useState<CategoriaDna | null>(null);
+    const [styleCandidates, setStyleCandidates] = useState<{ id: number; texto: string; selected: boolean }[]>([]);
+    const [showStyleCandidates, setShowStyleCandidates] = useState(false);
+    const [loadingStyleCandidates, setLoadingStyleCandidates] = useState(false);
 
     // Form de adição
     const [showAddForm, setShowAddForm] = useState(false);
@@ -249,6 +261,78 @@ export default function DnaCategorizadoPage() {
         setDeletingBatch(null);
     };
 
+    // === FUNÇÕES DO GERADOR POR ESTILO ===
+
+    // Carregar candidatos quando categoria de estilo muda
+    useEffect(() => {
+        if (selectedStyleCategory && usarDnaBase) {
+            loadStyleCandidates();
+        }
+    }, [selectedStyleCategory, contextoEstrategia, usarDnaBase]);
+
+    const loadStyleCandidates = async () => {
+        if (!selectedStyleCategory) return;
+        setLoadingStyleCandidates(true);
+        try {
+            const data = await fetchInspirationCandidates('dna', contextoEstrategia, selectedStyleCategory);
+            setStyleCandidates(data);
+        } catch (err) {
+            console.error("Erro carregando inspiração de estilo:", err);
+        } finally {
+            setLoadingStyleCandidates(false);
+        }
+    };
+
+    const toggleStyleCandidate = (id: number) => {
+        setStyleCandidates(prev => prev.map(c => c.id === id ? { ...c, selected: !c.selected } : c));
+    };
+
+    const handleGerarEstilo = async () => {
+        if (!selectedStyleCategory) {
+            alert('Selecione um estilo primeiro!');
+            return;
+        }
+        setGenerating(true);
+        setGeneratedResult(null);
+
+        const filtros = {
+            estilo: selectedStyleCategory,
+            quantidade: filtroQuantidade,
+            tema: filtroTema || undefined,
+            formato: filtroFormato || undefined,
+            periodo: filtroPeriodo || undefined,
+            momento: filtroMomento || undefined,
+            usarDnaBase,
+            usarPassagemDia,
+            neutro: filtroNeutro,
+            contextoEstrategia,
+            contextoManual: (usarDnaBase && styleCandidates.length > 0)
+                ? styleCandidates.filter(c => c.selected).map(c => c.texto)
+                : undefined
+        };
+
+        try {
+            const result = await executarModoComFiltros('modo_estilo', getDataHoje(), filtros);
+            if (result.ok && result.resultado) {
+                setGeneratedResult(result.resultado);
+                setShowResult(true);
+
+                const mensagens = parseMessages(result.resultado);
+                if (mensagens.length > 0) {
+                    const temaUsado = result.tema_usado || filtroTema || undefined;
+                    await saveDnaGeracoes(mensagens, selectedStyleCategory, filtros, temaUsado);
+                    const novasGeracoes = await getDnaGeracoes(3);
+                    setRecentGenerations(novasGeracoes);
+                }
+            } else {
+                alert(result.error || 'Erro ao gerar.');
+            }
+        } catch (e) {
+            alert('Erro de conexão.');
+        }
+        setGenerating(false);
+    };
+
     const parseMessages = (text: string): string[] => {
         if (!text) return [];
         const parts = text.split(/\n\s*---\s*\n/);
@@ -279,7 +363,46 @@ export default function DnaCategorizadoPage() {
                                 DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-200 to-fuchsia-500">Categorizado</span>
                             </h1>
 
-                            {/* ESTATÍSTICAS POR CATEGORIA */}
+                            {/* === SISTEMA DE ABAS === */}
+                            <div className="flex flex-wrap gap-2 mb-6 p-1 bg-black/30 rounded-xl border border-white/10 w-fit">
+                                <button
+                                    onClick={() => setActiveTab('gerenciar')}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                        activeTab === 'gerenciar'
+                                            ? 'bg-violet-500/30 text-violet-200 border border-violet-500/30'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Layers className="w-4 h-4" />
+                                    Gerenciar DNA
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('gerar-dna')}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                        activeTab === 'gerar-dna'
+                                            ? 'bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-500/30'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Wand2 className="w-4 h-4" />
+                                    Gerar DNA
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('gerar-estilo')}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                        activeTab === 'gerar-estilo'
+                                            ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    Gerar por Estilo
+                                </button>
+                            </div>
+
+                            {/* ESTATÍSTICAS POR CATEGORIA - Só mostra na aba Gerenciar */}
+                            {activeTab === 'gerenciar' && (
+                            <>
                             <div className="flex flex-wrap items-center gap-2 mb-6">
                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm">
                                     <Layers className="w-4 h-4 text-violet-400" />
@@ -309,7 +432,7 @@ export default function DnaCategorizadoPage() {
                                 )}
                             </div>
 
-                            {/* AÇÕES */}
+                            {/* AÇÕES DA ABA GERENCIAR */}
                             <div className="flex flex-wrap items-center gap-3 mt-4">
                                 <button
                                     onClick={() => setShowAddForm(!showAddForm)}
@@ -318,7 +441,15 @@ export default function DnaCategorizadoPage() {
                                     <Plus className="w-5 h-5" />
                                     Adicionar Mensagem
                                 </button>
+                            </div>
+                            </>
+                            )}
 
+                            {/* === ABA GERAR DNA === */}
+                            {activeTab === 'gerar-dna' && (
+                            <>
+                            <p className="text-slate-400 mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
+                            <div className="flex flex-wrap items-center gap-3">
                                 <button
                                     onClick={handleGerar}
                                     disabled={generating || items.length === 0}
@@ -328,7 +459,6 @@ export default function DnaCategorizadoPage() {
                                     {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
                                 </button>
 
-                                {/* Filtros de geração */}
                                 <select
                                     value={filtroQuantidade}
                                     onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
@@ -355,9 +485,70 @@ export default function DnaCategorizadoPage() {
                                     <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
                                 </button>
                             </div>
+                            </>
+                            )}
 
-                            {/* FILTROS AVANÇADOS */}
-                            {showAdvancedFilters && (
+                            {/* === ABA GERAR POR ESTILO === */}
+                            {activeTab === 'gerar-estilo' && (
+                            <>
+                            <p className="text-slate-400 mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
+
+                            {/* Seleção de Estilo */}
+                            <div className="mb-4">
+                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">1. Escolha o Estilo de Saída</label>
+                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                    {CATEGORIAS.filter(c => c.id !== 'outro').map(cat => {
+                                        const isSelected = selectedStyleCategory === cat.id;
+                                        return (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setSelectedStyleCategory(cat.id)}
+                                                className={`p-3 rounded-xl border text-center transition-all ${isSelected
+                                                    ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
+                                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                            >
+                                                <cat.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? 'text-current' : 'text-slate-400'}`} />
+                                                <span className={`text-xs font-bold ${isSelected ? 'text-current' : 'text-slate-300'}`}>{cat.nome}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Ações do Gerador por Estilo */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                    onClick={handleGerarEstilo}
+                                    disabled={generating || !selectedStyleCategory}
+                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                >
+                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                    {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
+                                </button>
+
+                                <select
+                                    value={filtroQuantidade}
+                                    onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
+                                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                >
+                                    {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
+                                </select>
+
+                                <button
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                >
+                                    <Filter className="w-4 h-4" />
+                                    Filtros Avançados
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                                </button>
+                            </div>
+                            </>
+                            )}
+
+                            {/* FILTROS AVANÇADOS - Visível em ambas abas de geração */}
+                            {(activeTab === 'gerar-dna' || activeTab === 'gerar-estilo') && showAdvancedFilters && (
                                 <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
                                     <h4 className="text-white font-bold mb-4 flex items-center gap-2">
                                         <Filter className="w-4 h-4 text-violet-400" />
@@ -501,8 +692,8 @@ export default function DnaCategorizadoPage() {
                                         </button>
                                     )}
 
-                                    {/* MANUAL CURATION PREVIEW */}
-                                    {usarDnaBase && filtroCategoriaGerar !== 'todas' && (
+                                    {/* MANUAL CURATION PREVIEW - Gerar DNA */}
+                                    {activeTab === 'gerar-dna' && usarDnaBase && filtroCategoriaGerar !== 'todas' && (
                                         <div className="mt-5 pt-5 border-t border-white/10">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
@@ -556,11 +747,67 @@ export default function DnaCategorizadoPage() {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* MANUAL CURATION PREVIEW - Gerar por Estilo */}
+                                    {activeTab === 'gerar-estilo' && usarDnaBase && selectedStyleCategory && (
+                                        <div className="mt-5 pt-5 border-t border-white/10">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                                                    <h4 className="text-sm font-bold text-white">Exemplos de {selectedStyleCategory}</h4>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowStyleCandidates(!showStyleCandidates)}
+                                                    className="text-xs flex items-center gap-1.5 text-indigo-300 hover:text-white transition-colors"
+                                                >
+                                                    {loadingStyleCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
+                                                    {showStyleCandidates ? 'Ocultar' : 'Ver/Editar'}
+                                                    <span className="bg-indigo-500/20 text-indigo-200 px-1.5 py-0.5 rounded text-[10px] border border-indigo-500/30">
+                                                        {styleCandidates.filter(c => c.selected).length}/{styleCandidates.length}
+                                                    </span>
+                                                </button>
+                                            </div>
+
+                                            {showStyleCandidates && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-white/5">
+                                                    {loadingStyleCandidates ? (
+                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                            <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
+                                                            Carregando exemplos...
+                                                        </div>
+                                                    ) : styleCandidates.length === 0 ? (
+                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                            Nenhum exemplo encontrado para este estilo.
+                                                        </div>
+                                                    ) : (
+                                                        styleCandidates.map(c => (
+                                                            <div
+                                                                key={c.id}
+                                                                onClick={() => toggleStyleCandidate(c.id)}
+                                                                className={`
+                                                                    p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
+                                                                    ${c.selected
+                                                                        ? 'bg-indigo-500/10 border-indigo-500/30 text-slate-200'
+                                                                        : 'bg-transparent border-white/5 text-slate-600 opacity-60 hover:opacity-100'}
+                                                                `}
+                                                            >
+                                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                                    <span className="text-[10px] uppercase font-bold text-slate-500">#{c.id}</span>
+                                                                    {c.selected && <Check className="w-3 h-3 text-indigo-400" />}
+                                                                </div>
+                                                                <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* FORM DE ADIÇÃO */}
-                            {showAddForm && (
+                            {/* FORM DE ADIÇÃO - Só na aba Gerenciar */}
+                            {activeTab === 'gerenciar' && showAddForm && (
                                 <div className="mt-4 p-4 bg-black/40 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
                                     <h3 className="text-white font-bold mb-3">Adicionar Nova Mensagem</h3>
                                     <div className="space-y-3">
@@ -719,8 +966,8 @@ export default function DnaCategorizadoPage() {
                         </div>
                     )}
 
-                    {/* Lista de DNA */}
-                    {loading ? (
+                    {/* Lista de DNA - Só na aba Gerenciar */}
+                    {activeTab === 'gerenciar' && (loading ? (
                         [1, 2, 3].map(i => (
                             <div key={i} className="h-40 bg-white/[0.02] rounded-2xl animate-pulse border border-white/5" />
                         ))
@@ -771,7 +1018,7 @@ export default function DnaCategorizadoPage() {
                                 </div>
                             );
                         })
-                    )}
+                    ))}
                 </main>
             </div>
         </CosmicBackground>
