@@ -362,6 +362,10 @@ Cada mensagem DEVE seguir esta estrutura:
 
 ` : '';
 
+      // Detectar se é modo de referência única (1-2 mensagens selecionadas)
+      const isReferenciaUnica = favoritasFiltradas.length <= 2;
+      const totalReferencias = favoritasFiltradas.length;
+
       const promptFavoritas = `
 # MODO FAVORITAS — GERADOR DE DNA
 ${formatoPassagemDoDia ? '\n## 🔀 MODO: FAVORITAS + PASSAGEM DO DIA' : ''}
@@ -369,16 +373,29 @@ ${formatoPassagemDoDia ? '\n## 🔀 MODO: FAVORITAS + PASSAGEM DO DIA' : ''}
 Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
-Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.
+${isReferenciaUnica
+  ? `**ATENÇÃO: MODO REFERÊNCIA ÚNICA!**
+Você tem apenas ${totalReferencias} mensagem(ns) como referência.
+Gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que REPLICAM FIELMENTE o estilo, tom e estrutura dessa(s) referência(s).
+**COPIE O ESTILO EXATO**: mesmo tamanho de frases, mesma pontuação, mesma estrutura, mesmo vocabulário.`
+  : `Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.`}
 ${formatoPassagemDoDia}${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
-2. **MISTURE** elementos de diferentes favoritas para criar algo novo
+${isReferenciaUnica
+  ? `2. **REPLIQUE O ESTILO**: Como há apenas ${totalReferencias} referência(s), SIGA EXATAMENTE o mesmo padrão de escrita. Cada nova mensagem deve parecer escrita pela mesma pessoa.`
+  : '2. **MISTURE** elementos de diferentes favoritas para criar algo novo'}
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
 ${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
 ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares. Use apenas "Bom dia!", "Boa tarde!", "Boa noite!" sem complementos.
+${isReferenciaUnica ? `
+## ⚠️ IMPORTANTE - MODO REFERÊNCIA ÚNICA:
+- Analise CADA DETALHE da mensagem de referência: comprimento das frases, uso de maiúsculas, pontuação, emojis
+- Se a referência usa frases curtas, USE frases curtas
+- Se a referência usa "..." ou "—", USE esses mesmos recursos
+- O leitor deve sentir que TODAS as mensagens geradas vieram do mesmo autor da referência` : ''}
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
 - **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
