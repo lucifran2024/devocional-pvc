@@ -242,7 +242,7 @@ export default function BibliotecaPage() {
             const el = document.getElementById(`verse-${scrollToVerse}`);
             if (el) {
                 setTimeout(() => {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     el.classList.add('ring-2', 'ring-amber-400/60');
                     setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400/60'), 2000);
                 }, 300);
