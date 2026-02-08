@@ -584,23 +584,35 @@ ${isReferenciaUnica ? `
 - O leitor deve sentir que TODAS as mensagens geradas vieram do mesmo autor da referência` : ''}
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
-- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
-- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : '**USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo'}
+${(() => {
+  const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
+  const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
+  if (isVersiculoMode) {
+    return `- **100% DAS MENSAGENS (TODAS AS ${quantidade})** DEVEM conter um versículo bíblico como elemento CENTRAL. O versículo é o PROTAGONISTA de cada mensagem.
+- CADA mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma breve reflexão sobre ele
+- **USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo`;
+  } else {
+    return `- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
+- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : '**USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo'}`;
+  }
+})()}
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
 - **CRUZE LIVROS**: Se o DNA cita Salmos, use também Provérbios, Isaías, João, Romanos, etc.
 
-## 🎯 DIVERSIDADE NO LOTE (${quantidade} MENSAGENS):
+${quantidade === 1 ? `## 🎯 MENSAGEM ÚNICA:
+Gere **1 mensagem** com máxima qualidade e profundidade.
+- Escolha um tema forte e original
+- Inclua um versículo bíblico relevante
+- Capriche na estrutura e no impacto` : `## 🎯 DIVERSIDADE NO LOTE (${quantidade} MENSAGENS):
 **CADA MENSAGEM DEVE SER ÚNICA!** Distribua assim:
 - **TEMAS**: ${quantidade} temas DIFERENTES (Fé, Esperança, Gratidão, Confiança, Paz, Força, Amor, Sabedoria, etc)
 - **ABERTURAS**: Varie como começa (pergunta, afirmação, citação, narrativa, exclamação)
 - **TONS**: Misture consolador, motivacional, reflexivo, celebrativo, exortativo
 - **LIVROS BÍBLICOS**: Use pelo menos ${Math.min(quantidade, 5)} livros diferentes da Bíblia
-- **ESTRUTURAS**: Algumas curtas (3 linhas), outras médias (5-7 linhas), outras com lista
+- **ESTRUTURAS**: Algumas curtas (3 linhas), outras médias (5-7 linhas), outras com lista`}
 
-**CHECKPOINT**: Antes de finalizar, releia as ${quantidade} mensagens e confirme que:
-✓ Nenhum tema se repete
-✓ Nenhum versículo se repete
-✓ Cada uma tem uma "personalidade" diferente
+**CHECKPOINT**: Antes de finalizar, releia ${quantidade === 1 ? 'a mensagem' : `as ${quantidade} mensagens`} e confirme que:
+${quantidade > 1 ? '✓ Nenhum tema se repete\n✓ Nenhum versículo se repete\n✓ Cada uma tem uma "personalidade" diferente' : '✓ A mensagem é original e impactante'}
 ${neutro ? '✓ NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações (MODO NEUTRO ATIVO)' : ''}
 ${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana} (NENHUM outro dia)` : ''}
 
@@ -652,7 +664,7 @@ ${dnaFavoritas}
           contents: [{ role: 'user', parts: [{ text: promptFavoritas }] }],
           generationConfig: {
             temperature: tempSorteada,
-            maxOutputTokens: 4096
+            maxOutputTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192
           }
         })
       });
@@ -1031,8 +1043,10 @@ Sua missão é gerar **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 Você está gerando uma **${estiloAlvo.toUpperCase()}**.
 ${estiloAlvo === 'oração' ? 'O texto DEVE ser uma conversa direta com Deus (usar "Senhor", "Pai", 1ª pessoa falando com Deus).' : ''}
 ${estiloAlvo === 'devocional' ? 'O texto DEVE ser uma reflexão ou ensino bíblico (falar sobre Deus/vida).' : ''}
-${estiloAlvo === 'versículo' ? 'O texto DEVE ser centrado na explicação de um versículo específico.' : ''}
+${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo') ? 'O texto DEVE ser centrado em um versículo bíblico específico. CADA mensagem deve citar o versículo completo entre aspas e oferecer uma reflexão.' : ''}
 ${estiloAlvo === 'declaração' ? 'O texto DEVE ser uma proclamação de fé em 1ª pessoa ("Eu creio", "Eu declaro").' : ''}
+${estiloAlvo === 'reflexão' ? 'O texto DEVE ser uma reflexão contemplativa e profunda sobre a vida espiritual e a jornada de fé.' : ''}
+${estiloAlvo === 'exortação' ? 'O texto DEVE ser uma exortação — mensagem de encorajamento forte, chamado à ação, motivação espiritual.' : ''}
 NÃO GERE OUTRO TIPO DE TEXTO. SE É ${estiloAlvo}, FAÇA ${estiloAlvo}!
 
 ## 1. FONTE DE ESTRUTURA VISUAL (COPIAR FORMATO):
@@ -1063,7 +1077,9 @@ Baseie-se nisto:
 ${instrucoesFiltro}
 
 ## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
-1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.
+${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo')
+  ? `1. **VERSÍCULOS OBRIGATÓRIOS (100%)**: TODAS AS ${quantidade} MENSAGENS devem ser centradas em um versículo bíblico. O versículo é o PROTAGONISTA. Cada mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma reflexão. USE VERSÍCULOS DIFERENTES em cada uma.`
+  : `1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.`}
 2. **ANTI-REPETIÇÃO RIGOROSA**:
    Abaixo estão as mensagens que você gerou recentemente.
    **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
@@ -1079,7 +1095,7 @@ Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 
 **CHECKLIST:**
 1. [GÊNERO] O texto é realmente uma ${estiloAlvo}? (Se Oração, fala com Deus? Se Devocional, ensina?)
-2. [VERSÍCULO] 40% tem bíblia? AT e NT equilibrados?
+2. [VERSÍCULO] ${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo') ? '100% tem versículo central? Cada uma com versículo DIFERENTE?' : '40% tem bíblia? AT e NT equilibrados?'}
 3. [TEMA] ${temaFinalEstilo ? `Abordou "${temaFinalEstilo}" em todas?` : 'Cada mensagem tem tema único?'}
 4. [FILTROS] ${diasSemana ? `Citou APENAS ${diasSemana}? (NÃO citou outros dias?)` : 'Ok.'}
 5. [SEPARAÇÃO] Use "---" entre as mensagens.
@@ -1105,7 +1121,7 @@ Gere agora:
           contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
           generationConfig: {
             temperature: tempSorteadaEstilo,
-            maxOutputTokens: 4000,
+            maxOutputTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192,
           }
         })
       });

@@ -36,7 +36,7 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: stri
     { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-slate-400 bg-slate-500/20 border-slate-500/30' },
 ];
 
-const QUANTIDADES = [5, 10, 15, 20, 30];
+const QUANTIDADES = [1, 5, 10, 15, 20, 30];
 const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 // Tipos de abas disponíveis
