@@ -13,13 +13,9 @@ import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { getCachedChapter, cacheChapter } from '@/lib/bible-db';
 import { OfflineManager } from './components/OfflineManager';
+import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import {
-    salvarInteracaoBiblia,
-    removerInteracaoBiblia,
-    removerInteracaoPorVersiculoETipo,
-    getInteracoesPorCapitulo,
     getAllInteracoesPorTipo,
-    atualizarNotaBiblia,
     salvarHistoricoLeitura,
     getUltimaLeitura,
     type BibliaInteracao
@@ -434,8 +430,17 @@ export default function BibliotecaPage() {
     const [notaFullscreen, setNotaFullscreen] = useState(false);
     const [notaFullscreenVerso, setNotaFullscreenVerso] = useState<number | null>(null);
 
-    // Interações
-    const [interacoesMap, setInteracoesMap] = useState<InteracoesMap>({ destaques: {}, favoritos: {}, notas: {} });
+    // Interações (offline-first hook)
+    const {
+        interacoesMap,
+        pendingCount,
+        syncing,
+        carregarInteracoes,
+        salvarInteracao,
+        removerInteracao,
+        removerPorVersiculoETipo,
+        atualizarNota,
+    } = useOfflineInteractions(livroAtual.abrev, livroAtual.nome, capituloAtual);
 
     // Estudo IA
     const [estudoAberto, setEstudoAberto] = useState(false);
@@ -617,7 +622,7 @@ export default function BibliotecaPage() {
         setModoMultiSelecao(false);
         setVersiculosSelecionados(new Set());
         setMostrarCores(false);
-    }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia]);
+    }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia, carregarInteracoes]);
 
     // Scroll para versículo específico quando carregado
     useEffect(() => {
@@ -634,21 +639,7 @@ export default function BibliotecaPage() {
         }
     }, [scrollToVerse, loading, versiculos]);
 
-    // ==========================================
-    // CARREGAR INTERAÇÕES DO CAPÍTULO
-    // ==========================================
-    const carregarInteracoes = async () => {
-        const dados = await getInteracoesPorCapitulo(livroAtual.abrev, capituloAtual);
-        const map: InteracoesMap = { destaques: {}, favoritos: {}, notas: {} };
-
-        dados.forEach((item: BibliaInteracao) => {
-            if (item.tipo === 'destaque') map.destaques[item.versiculo] = item;
-            else if (item.tipo === 'favorito') map.favoritos[item.versiculo] = item;
-            else if (item.tipo === 'nota') map.notas[item.versiculo] = item;
-        });
-
-        setInteracoesMap(map);
-    };
+    // carregarInteracoes agora vem do hook useOfflineInteractions
 
     // ==========================================
     // NAVEGAÇÃO
@@ -780,11 +771,11 @@ export default function BibliotecaPage() {
         // Se já tem destaque, remove
         const existente = interacoesMap.destaques[versiculoSelecionado];
         if (existente && existente.cor === cor) {
-            await removerInteracaoBiblia(existente.id!);
+            await removerPorVersiculoETipo('destaque', versiculoSelecionado);
             success('Destaque removido');
         } else {
-            if (existente) await removerInteracaoBiblia(existente.id!);
-            await salvarInteracaoBiblia({
+            if (existente) await removerPorVersiculoETipo('destaque', versiculoSelecionado);
+            await salvarInteracao({
                 tipo: 'destaque', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                 capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, cor
             });
@@ -801,10 +792,10 @@ export default function BibliotecaPage() {
 
         const existente = interacoesMap.favoritos[versiculoSelecionado];
         if (existente) {
-            await removerInteracaoBiblia(existente.id!);
+            await removerPorVersiculoETipo('favorito', versiculoSelecionado);
             success('Removido dos favoritos');
         } else {
-            await salvarInteracaoBiblia({
+            await salvarInteracao({
                 tipo: 'favorito', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                 capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text
             });
@@ -847,9 +838,9 @@ export default function BibliotecaPage() {
 
         const existente = interacoesMap.notas[versiculoSelecionado];
         if (existente) {
-            await atualizarNotaBiblia(existente.id!, textoNota.trim());
+            await atualizarNota(existente.id!, textoNota.trim());
         } else {
-            await salvarInteracaoBiblia({
+            await salvarInteracao({
                 tipo: 'nota', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                 capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
             });
@@ -895,8 +886,8 @@ export default function BibliotecaPage() {
             const v = getVersiculoObj(verse);
             if (!v) continue;
             const existente = interacoesMap.destaques[verse];
-            if (existente) await removerInteracaoBiblia(existente.id!);
-            await salvarInteracaoBiblia({
+            if (existente) await removerPorVersiculoETipo('destaque', verse);
+            await salvarInteracao({
                 tipo: 'destaque', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                 capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, cor
             });
@@ -913,7 +904,7 @@ export default function BibliotecaPage() {
             if (!v) continue;
             const existente = interacoesMap.favoritos[verse];
             if (!existente) {
-                await salvarInteracaoBiblia({
+                await salvarInteracao({
                     tipo: 'favorito', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                     capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text
                 });
@@ -968,9 +959,9 @@ export default function BibliotecaPage() {
 
         const existente = interacoesMap.notas[notaFullscreenVerso];
         if (existente) {
-            await atualizarNotaBiblia(existente.id!, textoNota.trim());
+            await atualizarNota(existente.id!, textoNota.trim());
         } else {
-            await salvarInteracaoBiblia({
+            await salvarInteracao({
                 tipo: 'nota', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
                 capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
             });
@@ -1066,7 +1057,7 @@ export default function BibliotecaPage() {
     };
 
     const removerItemPainel = async (id: number) => {
-        await removerInteracaoBiblia(id);
+        await removerInteracao(id);
         setPainelItens(prev => prev.filter(i => i.id !== id));
         success('Removido!');
         await carregarInteracoes();
@@ -1117,6 +1108,16 @@ export default function BibliotecaPage() {
                         ) : cameFromCache ? (
                             <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded-full">
                                 <Database className="w-3 h-3" /> cache
+                            </span>
+                        ) : null}
+                        {/* Indicador de sync pendente */}
+                        {syncing ? (
+                            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full animate-pulse">
+                                <Loader2 className="w-3 h-3 animate-spin" /> sync...
+                            </span>
+                        ) : pendingCount > 0 ? (
+                            <span className="flex items-center gap-1 text-[10px] text-sky-400 bg-sky-500/15 px-1.5 py-0.5 rounded-full">
+                                {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
                             </span>
                         ) : null}
                     </div>
@@ -1468,9 +1469,9 @@ export default function BibliotecaPage() {
                     {/* Footer com ações */}
                     <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 bg-white/5">
                         <div className="flex gap-2">
-                            {interacoesMap.notas[notaFullscreenVerso] && (
+                            {notaFullscreenVerso && interacoesMap.notas[notaFullscreenVerso] && (
                                 <button onClick={async () => {
-                                    await removerInteracaoPorVersiculoETipo('nota', livroAtual.abrev, capituloAtual, notaFullscreenVerso);
+                                    await removerPorVersiculoETipo('nota', notaFullscreenVerso);
                                     success('Nota removida');
                                     setNotaFullscreen(false);
                                     setNotaFullscreenVerso(null);
