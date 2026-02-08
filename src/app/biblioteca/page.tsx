@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
-    Search, BookmarkIcon, Trash2, ChevronDown
+    Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -113,6 +113,29 @@ const CORES_DESTAQUE: { id: string; nome: string; bg: string; border: string }[]
     { id: 'green', nome: 'Verde', bg: 'bg-green-500/20', border: 'border-green-500/40' },
     { id: 'pink', nome: 'Rosa', bg: 'bg-pink-500/20', border: 'border-pink-500/40' },
 ];
+
+// Versões da Bíblia disponíveis (API bolls.life)
+const VERSOES_BIBLIA = [
+    { codigo: 'NTLH', nome: 'NTLH', nomeCompleto: 'Nova Tradução na Linguagem de Hoje' },
+    { codigo: 'NVIPT', nome: 'NVI', nomeCompleto: 'Nova Versão Internacional' },
+    { codigo: 'ARA', nome: 'ARA', nomeCompleto: 'Almeida Revista e Atualizada' },
+    { codigo: 'NAA', nome: 'NAA', nomeCompleto: 'Nova Almeida Atualizada' },
+    { codigo: 'NVT', nome: 'NVT', nomeCompleto: 'Nova Versão Transformadora' },
+    { codigo: 'KJA', nome: 'KJA', nomeCompleto: 'King James Atualizada' },
+    { codigo: 'ARC09', nome: 'ARC', nomeCompleto: 'Almeida Revista e Corrigida' },
+    { codigo: 'ACF11', nome: 'ACF', nomeCompleto: 'Almeida Corrigida Fiel' },
+    { codigo: 'ALM21', nome: 'A21', nomeCompleto: 'Almeida Século 21' },
+    { codigo: 'MENS', nome: 'MSG', nomeCompleto: 'A Mensagem' },
+];
+
+// Configuração de tamanho de fonte
+const FONT_SIZES = [
+    { label: 'P', value: 'text-base md:text-lg', salvos: 'text-sm', titulo: 'text-lg md:text-xl' },
+    { label: 'M', value: 'text-lg md:text-xl', salvos: 'text-base', titulo: 'text-xl md:text-2xl' },
+    { label: 'G', value: 'text-xl md:text-2xl', salvos: 'text-lg', titulo: 'text-2xl md:text-3xl' },
+    { label: 'GG', value: 'text-2xl md:text-3xl', salvos: 'text-xl', titulo: 'text-3xl md:text-4xl' },
+];
+const DEFAULT_FONT_INDEX = 1; // M = padrão
 
 // Títulos de seção da Bíblia (livro:capítulo -> versículo -> título)
 const TITULOS_SECAO: Record<string, Record<number, string>> = {
@@ -389,6 +412,11 @@ export default function BibliotecaPage() {
     const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
     const [buscaLoading, setBuscaLoading] = useState(false);
 
+    // Fonte e versão
+    const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
+    const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
+    const [mostrarVersoes, setMostrarVersoes] = useState(false);
+
     // Painel de salvos
     const [painelAberto, setPainelAberto] = useState(false);
     const [painelAba, setPainelAba] = useState<'favoritos' | 'destaques' | 'notas'>('favoritos');
@@ -400,11 +428,49 @@ export default function BibliotecaPage() {
     const versiculosRef = useRef<HTMLDivElement>(null);
     const versiculoAnteriorRef = useRef<number | null>(null);
 
+    // Helpers de fonte
+    const fontConfig = FONT_SIZES[fontSizeIndex];
+    const canIncrease = fontSizeIndex < FONT_SIZES.length - 1;
+    const canDecrease = fontSizeIndex > 0;
+
+    const aumentarFonte = () => {
+        if (canIncrease) {
+            const next = fontSizeIndex + 1;
+            setFontSizeIndex(next);
+            localStorage.setItem('biblia-font-size', String(next));
+        }
+    };
+    const diminuirFonte = () => {
+        if (canDecrease) {
+            const next = fontSizeIndex - 1;
+            setFontSizeIndex(next);
+            localStorage.setItem('biblia-font-size', String(next));
+        }
+    };
+
+    const trocarVersao = (versao: typeof VERSOES_BIBLIA[0]) => {
+        setVersaoBiblia(versao);
+        setMostrarVersoes(false);
+        localStorage.setItem('biblia-versao', versao.codigo);
+    };
+
     // ==========================================
-    // INICIALIZAÇÃO: Carregar última leitura
+    // INICIALIZAÇÃO: Carregar última leitura + prefs
     // ==========================================
     useEffect(() => {
         async function init() {
+            // Restaurar preferências salvas
+            const savedFont = localStorage.getItem('biblia-font-size');
+            if (savedFont) {
+                const idx = Number(savedFont);
+                if (idx >= 0 && idx < FONT_SIZES.length) setFontSizeIndex(idx);
+            }
+            const savedVersao = localStorage.getItem('biblia-versao');
+            if (savedVersao) {
+                const v = VERSOES_BIBLIA.find(ver => ver.codigo === savedVersao);
+                if (v) setVersaoBiblia(v);
+            }
+
             const ultima = await getUltimaLeitura();
             if (ultima) {
                 const livro = LIVROS_BIBLIA.find(l => l.abrev === ultima.livro_abrev);
@@ -421,14 +487,15 @@ export default function BibliotecaPage() {
     // ==========================================
     // BUSCAR CAPÍTULO
     // ==========================================
-    const buscarCapitulo = useCallback(async (livro: string, cap: number) => {
+    const buscarCapitulo = useCallback(async (livro: string, cap: number, versaoCodigo?: string) => {
         setLoading(true);
         setError(null);
         setVersiculoSelecionado(null);
 
+        const codigo = versaoCodigo || versaoBiblia.codigo;
         try {
             const bookId = LIVRO_PARA_ID[livro] || 1;
-            const response = await fetch(`https://bolls.life/get-chapter/NTLH/${bookId}/${cap}/`);
+            const response = await fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`);
 
             if (!response.ok) throw new Error('API não disponível');
 
@@ -450,7 +517,7 @@ export default function BibliotecaPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [versaoBiblia.codigo]);
 
     // Carregar capítulo + interações quando muda
     useEffect(() => {
@@ -458,7 +525,7 @@ export default function BibliotecaPage() {
         buscarCapitulo(livroAtual.abrev, capituloAtual);
         carregarInteracoes();
         salvarHistoricoLeitura(livroAtual.abrev, livroAtual.nome, capituloAtual);
-    }, [livroAtual, capituloAtual, inicializado, buscarCapitulo]);
+    }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia]);
 
     // Scroll para versículo específico quando carregado
     useEffect(() => {
@@ -534,7 +601,7 @@ export default function BibliotecaPage() {
         // Buscar quantidade de versículos do capítulo
         try {
             const bookId = LIVRO_PARA_ID[livroSelecionadoTemp.abrev] || 1;
-            const resp = await fetch(`https://bolls.life/get-chapter/NTLH/${bookId}/${cap}/`);
+            const resp = await fetch(`https://bolls.life/get-chapter/${versaoBiblia.codigo}/${bookId}/${cap}/`);
             if (resp.ok) {
                 const data = await resp.json();
                 if (Array.isArray(data)) setTotalVersiculosTemp(data.length);
@@ -652,7 +719,7 @@ export default function BibliotecaPage() {
         const v = getVersiculoObj(versiculoSelecionado);
         if (!v) return;
 
-        const texto = `"${v.text}" — ${livroAtual.nome} ${capituloAtual}:${v.verse}`;
+        const texto = `"${v.text}" — ${livroAtual.nome} ${capituloAtual}:${v.verse} (${versaoBiblia.nome})`;
         await navigator.clipboard.writeText(texto);
         success('Versículo copiado!');
     };
@@ -662,7 +729,7 @@ export default function BibliotecaPage() {
         const v = getVersiculoObj(versiculoSelecionado);
         if (!v) return;
 
-        const texto = `"${v.text}"\n— ${livroAtual.nome} ${capituloAtual}:${v.verse}`;
+        const texto = `"${v.text}"\n— ${livroAtual.nome} ${capituloAtual}:${v.verse} (${versaoBiblia.nome})`;
 
         if (navigator.share) {
             try {
@@ -745,7 +812,7 @@ export default function BibliotecaPage() {
         setResultadosBusca([]);
 
         try {
-            const resp = await fetch(`https://bolls.life/search/NTLH/${encodeURIComponent(termoBusca.trim())}/`);
+            const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termoBusca.trim())}/`);
             if (resp.ok) {
                 const data = await resp.json();
                 setResultadosBusca(Array.isArray(data) ? data.slice(0, 50) : []);
@@ -882,27 +949,92 @@ export default function BibliotecaPage() {
 
             {/* Barra de Navegação (Sticky) */}
             <div className="sticky top-[57px] z-40 bg-black/60 backdrop-blur-xl border-b border-white/5">
-                <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-                    <button onClick={abrirModal} className="flex-1 glass-panel px-4 py-2.5 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors group">
-                        <div className="text-left">
+                <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+                    <button onClick={abrirModal} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors group">
+                        <div className="text-left min-w-0">
                             <div className="text-[10px] text-slate-500 uppercase tracking-wider">Leitura</div>
-                            <div className="text-white font-bold text-base flex items-center gap-1">
+                            <div className="text-white font-bold text-sm flex items-center gap-1 truncate">
                                 {livroAtual.nome} {capituloAtual}
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                                <ChevronDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                             </div>
                         </div>
                     </button>
 
-                    <div className="flex items-center gap-1.5">
-                        <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="p-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
+                    {/* Seletor de Versão */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setMostrarVersoes(!mostrarVersoes)}
+                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-1.5"
+                            title="Versão da Bíblia"
+                        >
+                            <Languages className="w-4 h-4 text-amber-400" />
+                            <span className="text-xs font-bold text-amber-400">{versaoBiblia.nome}</span>
+                            <ChevronDown className="w-3 h-3 text-slate-500" />
+                        </button>
+
+                        {mostrarVersoes && (
+                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-slate-900/98 border border-white/15 rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                                <div className="p-2 border-b border-white/10">
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
+                                </div>
+                                <div className="max-h-64 overflow-y-auto p-1.5">
+                                    {VERSOES_BIBLIA.map(v => (
+                                        <button
+                                            key={v.codigo}
+                                            onClick={() => trocarVersao(v)}
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${
+                                                versaoBiblia.codigo === v.codigo
+                                                    ? 'bg-amber-500/20 border border-amber-500/30'
+                                                    : 'hover:bg-white/10 border border-transparent'
+                                            }`}
+                                        >
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-400' : 'text-white'}`}>
+                                                {v.nome}
+                                            </span>
+                                            <span className="text-xs text-slate-400 truncate">{v.nomeCompleto}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Controle de Fonte */}
+                    <div className="flex items-center glass-panel rounded-xl overflow-hidden">
+                        <button
+                            onClick={diminuirFonte}
+                            disabled={!canDecrease}
+                            className="p-2.5 hover:bg-white/10 transition-colors disabled:opacity-30"
+                            title="Diminuir fonte"
+                        >
+                            <Minus className="w-4 h-4 text-white" />
+                        </button>
+                        <span className="text-[10px] font-bold text-amber-400 px-1 min-w-[20px] text-center">{fontConfig.label}</span>
+                        <button
+                            onClick={aumentarFonte}
+                            disabled={!canIncrease}
+                            className="p-2.5 hover:bg-white/10 transition-colors disabled:opacity-30"
+                            title="Aumentar fonte"
+                        >
+                            <Plus className="w-4 h-4 text-white" />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
                             <ChevronLeft className="w-5 h-5 text-white" />
                         </button>
-                        <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="p-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
+                        <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
                             <ChevronRight className="w-5 h-5 text-white" />
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Backdrop para fechar dropdown de versões */}
+            {mostrarVersoes && (
+                <div className="fixed inset-0 z-30" onClick={() => setMostrarVersoes(false)} />
+            )}
 
             {/* --- MODAL DE SELEÇÃO --- */}
             {modalAberto && (
@@ -1038,10 +1170,10 @@ export default function BibliotecaPage() {
                                         <div key={item.id} className="flex items-start gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                                             <button onClick={() => navegarParaItem(item)} className="flex-1 text-left">
                                                 <div className="text-amber-400 text-sm font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
-                                                <div className="text-slate-300 text-base mt-1.5 line-clamp-3 leading-relaxed">{item.texto_versiculo}</div>
+                                                <div className={`text-slate-200 ${fontConfig.salvos} mt-1.5 line-clamp-4 leading-relaxed font-serif`}>{item.texto_versiculo}</div>
                                                 {item.nota && <div className="text-slate-400 text-sm mt-2 italic bg-white/5 rounded-lg px-3 py-2">{item.nota}</div>}
                                             </button>
-                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all">
+                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all shrink-0">
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
                                         </div>
@@ -1057,6 +1189,7 @@ export default function BibliotecaPage() {
             <main className="max-w-4xl mx-auto px-4 py-6">
                 <h1 className="text-2xl md:text-3xl font-black text-white mb-6 text-center tracking-tight">
                     {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
+                    <span className="ml-2 text-xs font-medium text-slate-500 bg-white/5 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
                 </h1>
 
                 {loading && (
@@ -1077,13 +1210,13 @@ export default function BibliotecaPage() {
                     <div className="glass-panel rounded-2xl p-5 md:p-8 relative overflow-visible" ref={versiculosRef}>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                        <div className="space-y-1 text-lg md:text-xl leading-relaxed text-slate-200 font-serif relative">
+                        <div className={`space-y-1 ${fontConfig.value} leading-relaxed text-slate-200 font-serif relative`}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
                                     {getTituloSecao(v.verse) && (
                                         <div className="pt-6 pb-3 first:pt-0">
-                                            <h2 className="text-xl md:text-2xl font-black text-amber-400/90 font-sans tracking-tight border-b border-amber-500/20 pb-2">
+                                            <h2 className={`${fontConfig.titulo} font-black text-amber-400/90 font-sans tracking-tight border-b border-amber-500/20 pb-2`}>
                                                 {getTituloSecao(v.verse)}
                                             </h2>
                                         </div>
