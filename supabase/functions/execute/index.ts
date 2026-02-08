@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       }
       const temaFinal = filtros?.tema || temaAutopilot;
 
-      const temFiltros = filtros && (temaFinal || filtros.tipo || filtros.formato || filtros.periodo || filtros.diasSemana || filtros.momento || filtros.tamanho || neutro);
+      const temFiltros = filtros && (temaFinal || filtros.tipo || filtros.categoria || filtros.formato || filtros.periodo || filtros.diasSemana || filtros.momento || filtros.tamanho || neutro);
 
       // Montar instruções de filtro - MAIS CLARAS E OBRIGATÓRIAS
       let instrucoesFiltro = '';
@@ -230,12 +230,20 @@ Deno.serve(async (req) => {
         instrucoesFiltro = '\n## 🎯 FILTROS OBRIGATÓRIOS (SIGA TODOS SIMULTANEAMENTE):\n';
         instrucoesFiltro += '> ⚠️ IMPORTANTE: Você DEVE aplicar TODOS os filtros abaixo EM CADA mensagem.\n\n';
 
-        if (filtros.tipo) {
-          const descTipo = filtros.tipo === 'Versículo' ? 'foque em versículos bíblicos com breve reflexão'
-            : filtros.tipo === 'Oração' ? 'escreva como oração/prece falando diretamente com Deus (Senhor, Te peço...)'
-              : filtros.tipo === 'Devocional' ? 'reflexão devocional completa e elaborada'
-                : 'reflexão curta e direta';
-          instrucoesFiltro += `1. **TIPO [${filtros.tipo.toUpperCase()}]**: ${descTipo}\n`;
+        // BUG FIX: O frontend envia "categoria" mas o prompt procurava "tipo".
+        // Agora aceita ambos: filtros.tipo OU filtros.categoria
+        const tipoOuCategoria = filtros.tipo || filtros.categoria;
+        if (tipoOuCategoria) {
+          const tipoLower = tipoOuCategoria.toLowerCase();
+          const descTipo = (tipoLower === 'versículo' || tipoLower === 'versiculo')
+            ? 'CADA mensagem DEVE ser centrada em um versículo bíblico específico. Formato: cite o versículo completo entre aspas, seguido de uma breve reflexão (2-3 frases). O versículo é o PROTAGONISTA, não coadjuvante.'
+            : tipoLower === 'oração' ? 'escreva como oração/prece falando diretamente com Deus (Senhor, Te peço...)'
+              : tipoLower === 'devocional' ? 'reflexão devocional completa e elaborada'
+                : tipoLower === 'exortação' ? 'mensagem de exortação, encorajamento e chamado à ação espiritual'
+                  : tipoLower === 'declaração' ? 'proclamação de fé em 1ª pessoa ("Eu creio", "Eu declaro")'
+                    : tipoLower === 'reflexão' ? 'reflexão contemplativa e profunda sobre a vida espiritual'
+                      : 'reflexão curta e direta';
+          instrucoesFiltro += `1. **TIPO/CATEGORIA [${tipoOuCategoria.toUpperCase()}]**: ${descTipo}\n`;
         }
         if (filtros.periodo && !neutro) {
           // Mapear período para saudação correta
@@ -246,13 +254,15 @@ Deno.serve(async (req) => {
             'Madrugada': 'Paz nesta madrugada'
           };
           const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
-          instrucoesFiltro += `2. **SAUDAÇÃO [${filtros.periodo.toUpperCase()}]**: COMECE cada mensagem com "${saudacao}" (ex: "${saudacao}, amado(a)!")\n`;
+          instrucoesFiltro += `2. **SAUDAÇÃO [${filtros.periodo.toUpperCase()}]**: COMECE cada mensagem com "${saudacao}!" (sem vocativos como "amado(a)")\n`;
         } else if (neutro) {
-          instrucoesFiltro += `2. **NEUTRO**: NÃO use saudações temporais (Bom dia, etc). Comece direto.\n`;
+          instrucoesFiltro += `2. **🚫 MODO NEUTRO (OBRIGATÓRIO)**: É PROIBIDO usar qualquer saudação temporal. NÃO escreva "Bom dia", "Boa tarde", "Boa noite", "Bom fim de semana" ou variações. Comece DIRETO com o conteúdo da mensagem (reflexão, versículo, declaração, etc). Esta regra tem PRIORIDADE MÁXIMA sobre qualquer outra instrução.\n`;
         }
 
         if (filtros.diasSemana) {
-          instrucoesFiltro += `3. **DIAS DA SEMANA**: Mencione estes dias: "${filtros.diasSemana}" no texto. Distribua entre as mensagens geradas. (ex: "Nesta Segunda abençoada...", "Que sua Quarta seja...")\n`;
+          // BUG FIX: Instrução mais restritiva para evitar dias não selecionados
+          const diasArray = filtros.diasSemana.split(',').map((d: string) => d.trim());
+          instrucoesFiltro += `3. **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: "${filtros.diasSemana}". NÃO mencione NENHUM outro dia da semana que não esteja nesta lista. Distribua os ${diasArray.length} dia(s) entre as ${quantidade} mensagens. (ex: "Neste(a) ${diasArray[0]} abençoado(a)...")\n`;
         }
         if (filtros.momento) {
           const descMomento = filtros.momento === 'Fim de Semana' ? 'mensagem de descanso e renovação para o fim de semana'
@@ -292,25 +302,88 @@ Deno.serve(async (req) => {
         instrucoesFiltro += '\n> Aplique TODOS os filtros acima em CADA mensagem gerada.\n';
       }
 
-      // 4. PASSAGEM DO DIA - Buscar se filtro ativo
+      // 4. PASSAGEM DO DIA - Buscar se filtro ativo (UNIFICADO: Storage → DB → Fallback)
       let passagemDoDia = '';
       let passagemRef = '';
       if (filtros?.usarPassagemDia) {
-        console.log('📖 [PASSAGEM] Buscando passagem do dia...');
+        console.log('📖 [PASSAGEM] Buscando passagem do dia (UNIFICADO)...');
         const dataAlvo = data || new Date().toISOString().split('T')[0];
-        const { data: payloadDia, error: payloadErr } = await supabase
-          .from("payload_do_dia")
-          .select("*")
-          .eq("data", dataAlvo)
-          .maybeSingle();
 
-        if (payloadErr) {
-          console.error("Erro ao buscar passagem:", payloadErr);
+        // FONTE 1: Tentar Storage (SECAO6.TXT) - SSOT
+        try {
+          const { data: secao6File, error: secao6Err } = await supabase.storage
+            .from('pvc')
+            .download('secao6/SECAO6.TXT');
+
+          if (!secao6Err && secao6File) {
+            const text = await secao6File.text();
+            const jsonMarker = '### JSON_BEGIN';
+            const jsonStartIndex = text.indexOf(jsonMarker);
+            if (jsonStartIndex !== -1) {
+              let jsonString = text.substring(jsonStartIndex + jsonMarker.length).trim();
+              const jsonEndMarker = '### JSON_END';
+              const jsonEndIndex = jsonString.indexOf(jsonEndMarker);
+              if (jsonEndIndex !== -1) jsonString = jsonString.substring(0, jsonEndIndex).trim();
+
+              // Tentar parse direto
+              try {
+                const passagens = JSON.parse(jsonString);
+                const passagemHoje = passagens.find((p: any) => p.data === dataAlvo);
+                if (passagemHoje) {
+                  passagemRef = passagemHoje.referencia || '';
+                  passagemDoDia = ''; // Storage não tem texto completo
+                  console.log(`📖 [PASSAGEM] Encontrada no Storage: ${passagemRef}`);
+                }
+              } catch {
+                // Fallback: extração manual por data
+                const dataPattern = `"data": "${dataAlvo}"`;
+                const dataIndex = jsonString.indexOf(dataPattern);
+                if (dataIndex !== -1) {
+                  const refMatch = jsonString.substring(dataIndex, dataIndex + 500).match(/"referencia":\s*"([^"]+)"/);
+                  if (refMatch) {
+                    passagemRef = refMatch[1];
+                    console.log(`📖 [PASSAGEM] Extraída via fallback do Storage: ${passagemRef}`);
+                  }
+                }
+              }
+            }
+          }
+        } catch (storageErr) {
+          console.warn('⚠️ [PASSAGEM] Erro ao buscar do Storage:', storageErr);
         }
 
-        passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
-        passagemDoDia = payloadDia?.texto || "";
-        console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
+        // FONTE 2: Se Storage falhou, tentar tabela leitura_do_dia
+        if (!passagemRef) {
+          const { data: leituraDia } = await supabase
+            .from("leitura_do_dia")
+            .select("*")
+            .eq("data", dataAlvo)
+            .maybeSingle();
+
+          if (leituraDia) {
+            passagemRef = leituraDia.passagem_do_dia || '';
+            passagemDoDia = leituraDia.texto || '';
+            console.log(`📖 [PASSAGEM] Encontrada no DB (leitura_do_dia): ${passagemRef}`);
+          }
+        }
+
+        // FONTE 3: Fallback final - tabela payload_do_dia
+        if (!passagemRef) {
+          const { data: payloadDia, error: payloadErr } = await supabase
+            .from("payload_do_dia")
+            .select("*")
+            .eq("data", dataAlvo)
+            .maybeSingle();
+
+          if (payloadErr) {
+            console.error("Erro ao buscar passagem (payload_do_dia):", payloadErr);
+          }
+
+          passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
+          passagemDoDia = payloadDia?.texto || "";
+        }
+
+        console.log(`📖 [PASSAGEM] Ref Final: ${passagemRef || '(não encontrada)'}`);
       }
 
       // 4.5 ANTI-REPETIÇÃO ROBUSTA: Extrair temas e versículos para não repetir
@@ -502,7 +575,7 @@ ${isReferenciaUnica
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
 ${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
 ${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
-7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares. Use apenas "Bom dia!", "Boa tarde!", "Boa noite!" sem complementos.
+7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares.${neutro ? ' Como o MODO NEUTRO está ativo, NÃO use NENHUMA saudação (Bom dia, Boa tarde, etc). Comece direto com o conteúdo.' : ' Se houver saudação, use apenas "Bom dia!", "Boa tarde!" ou "Boa noite!" sem complementos.'}
 ${isReferenciaUnica ? `
 ## ⚠️ IMPORTANTE - MODO REFERÊNCIA ÚNICA:
 - Analise CADA DETALHE da mensagem de referência: comprimento das frases, uso de maiúsculas, pontuação, emojis
@@ -528,6 +601,8 @@ ${isReferenciaUnica ? `
 ✓ Nenhum tema se repete
 ✓ Nenhum versículo se repete
 ✓ Cada uma tem uma "personalidade" diferente
+${neutro ? '✓ NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações (MODO NEUTRO ATIVO)' : ''}
+${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana} (NENHUM outro dia)` : ''}
 
 ## FORMATO DE SAÍDA:
 Para cada mensagem, use o formato:
@@ -712,21 +787,81 @@ ${dnaFavoritas}
         console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
       }
 
-      // 3. Buscar Passagem do Dia (SE CHECADO)
+      // 3. Buscar Passagem do Dia (SE CHECADO) - UNIFICADO: Storage → DB → Fallback
       let passagemDoDia = '';
       let passagemRef = '';
       if (usarPassagemDia) {
-        console.log('📖 [PASSAGEM] Buscando passagem do dia...');
+        console.log('📖 [PASSAGEM ESTILO] Buscando passagem do dia (UNIFICADO)...');
         const dataAlvo = data || new Date().toISOString().split('T')[0];
-        const { data: payloadDia } = await supabase
-          .from("payload_do_dia")
-          .select("*")
-          .eq("data", dataAlvo)
-          .maybeSingle();
 
-        passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
-        passagemDoDia = payloadDia?.texto || "";
-        console.log(`📖 [PASSAGEM] Ref: ${passagemRef}`);
+        // FONTE 1: Tentar Storage (SECAO6.TXT) - SSOT
+        try {
+          const { data: secao6File, error: secao6Err } = await supabase.storage
+            .from('pvc')
+            .download('secao6/SECAO6.TXT');
+
+          if (!secao6Err && secao6File) {
+            const text = await secao6File.text();
+            const jsonMarker = '### JSON_BEGIN';
+            const jsonStartIndex = text.indexOf(jsonMarker);
+            if (jsonStartIndex !== -1) {
+              let jsonString = text.substring(jsonStartIndex + jsonMarker.length).trim();
+              const jsonEndMarker = '### JSON_END';
+              const jsonEndIndex = jsonString.indexOf(jsonEndMarker);
+              if (jsonEndIndex !== -1) jsonString = jsonString.substring(0, jsonEndIndex).trim();
+
+              try {
+                const passagens = JSON.parse(jsonString);
+                const passagemHoje = passagens.find((p: any) => p.data === dataAlvo);
+                if (passagemHoje) {
+                  passagemRef = passagemHoje.referencia || '';
+                  console.log(`📖 [PASSAGEM ESTILO] Encontrada no Storage: ${passagemRef}`);
+                }
+              } catch {
+                const dataPattern = `"data": "${dataAlvo}"`;
+                const dataIndex = jsonString.indexOf(dataPattern);
+                if (dataIndex !== -1) {
+                  const refMatch = jsonString.substring(dataIndex, dataIndex + 500).match(/"referencia":\s*"([^"]+)"/);
+                  if (refMatch) {
+                    passagemRef = refMatch[1];
+                    console.log(`📖 [PASSAGEM ESTILO] Extraída via fallback: ${passagemRef}`);
+                  }
+                }
+              }
+            }
+          }
+        } catch (storageErr) {
+          console.warn('⚠️ [PASSAGEM ESTILO] Erro Storage:', storageErr);
+        }
+
+        // FONTE 2: Tabela leitura_do_dia
+        if (!passagemRef) {
+          const { data: leituraDia } = await supabase
+            .from("leitura_do_dia")
+            .select("*")
+            .eq("data", dataAlvo)
+            .maybeSingle();
+
+          if (leituraDia) {
+            passagemRef = leituraDia.passagem_do_dia || '';
+            passagemDoDia = leituraDia.texto || '';
+            console.log(`📖 [PASSAGEM ESTILO] Encontrada em leitura_do_dia: ${passagemRef}`);
+          }
+        }
+
+        // FONTE 3: Fallback - payload_do_dia
+        if (!passagemRef) {
+          const { data: payloadDia } = await supabase
+            .from("payload_do_dia")
+            .select("*")
+            .eq("data", dataAlvo)
+            .maybeSingle();
+
+          passagemRef = payloadDia?.passagem_do_dia || payloadDia?.passagem || "";
+          passagemDoDia = payloadDia?.texto || "";
+        }
+
+        console.log(`📖 [PASSAGEM ESTILO] Ref Final: ${passagemRef || '(não encontrada)'}`);
       }
 
       // 4. Anti-Repetição ROBUSTA (Últimos 7 dias — equalizado com modo_favoritas)
@@ -845,7 +980,7 @@ ${instrucaoTestamento}
 
       // 5. Construção dos Filtros Dinâmicos
       let instrucoesFiltro = '';
-      const temFiltrosExtras = filtros && (temaFinalEstilo || filtros.formato || filtros.periodo || filtros.momento || diasSemana);
+      const temFiltrosExtras = filtros && (temaFinalEstilo || filtros.formato || filtros.periodo || filtros.momento || diasSemana || neutro);
 
       if (temFiltrosExtras) {
         instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
@@ -870,15 +1005,17 @@ ${instrucaoTestamento}
             'Madrugada': 'Paz na madrugada'
           };
           const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
-          instrucoesFiltro += `• **PERÍODO**: Inicie com saudação de "${saudacao}"\n`;
+          instrucoesFiltro += `• **PERÍODO**: Inicie com saudação de "${saudacao}!" (sem vocativos)\n`;
         } else if (neutro) {
-          instrucoesFiltro += `• **NEUTRO**: NÃO use saudações temporais (Bom dia, etc). Comece direto.\n`;
+          instrucoesFiltro += `• **🚫 MODO NEUTRO (OBRIGATÓRIO)**: É PROIBIDO usar qualquer saudação temporal. NÃO escreva "Bom dia", "Boa tarde", "Boa noite", "Bom fim de semana" ou variações. Comece DIRETO com o conteúdo da mensagem. Esta regra tem PRIORIDADE MÁXIMA.\n`;
         }
         if (filtros.momento) {
           instrucoesFiltro += `• **CONTEXTO**: Foque no momento "${filtros.momento}"\n`;
         }
         if (diasSemana) {
-          instrucoesFiltro += `• **DIAS DA SEMANA**: Você deve mencionar explicitamente estes dias: ${diasSemana}. (Ex: "Nesta ${diasSemana} abençoada...", "Que seu ${diasSemana} seja..."). Distribua os dias entre as mensagens geradas.\n`;
+          // BUG FIX: Instrução mais restritiva para evitar dias não selecionados
+          const diasArrayEstilo = diasSemana.split(',').map((d: string) => d.trim());
+          instrucoesFiltro += `• **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: ${diasSemana}. NÃO mencione NENHUM outro dia da semana que não esteja nesta lista. Distribua os ${diasArrayEstilo.length} dia(s) entre as ${quantidade} mensagens. (Ex: "Neste(a) ${diasArrayEstilo[0]} abençoado(a)...")\n`;
         }
       }
 
@@ -944,9 +1081,10 @@ Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 1. [GÊNERO] O texto é realmente uma ${estiloAlvo}? (Se Oração, fala com Deus? Se Devocional, ensina?)
 2. [VERSÍCULO] 40% tem bíblia? AT e NT equilibrados?
 3. [TEMA] ${temaFinalEstilo ? `Abordou "${temaFinalEstilo}" em todas?` : 'Cada mensagem tem tema único?'}
-4. [FILTROS] ${diasSemana ? `Citou ${diasSemana}?` : 'Ok.'}
+4. [FILTROS] ${diasSemana ? `Citou APENAS ${diasSemana}? (NÃO citou outros dias?)` : 'Ok.'}
 5. [SEPARAÇÃO] Use "---" entre as mensagens.
 6. [ANTI-REP] Nenhum tema ou versículo da lista proibida foi repetido?
+${neutro ? '7. [NEUTRO] NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações? CONFIRME!' : ''}
 
 Gere agora:
 `;
