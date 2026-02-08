@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check, CheckSquare, Square } from 'lucide-react';
+import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check, CheckSquare, Square, Pencil, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
     getDnaCategorizado,
     addDnaCategorizado,
     removeDnaById,
+    updateDnaCategorizado,
     getCategoriaStats,
     executarModoComFiltros,
     getDataHoje,
@@ -51,6 +52,12 @@ export default function DnaCategorizadoPage() {
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
+
+    // Edição inline
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editTexto, setEditTexto] = useState('');
+    const [editCategoria, setEditCategoria] = useState<CategoriaDna>('reflexão');
+    const [saving, setSaving] = useState(false);
 
     // Filtro de categoria
     const [filtroCategoria, setFiltroCategoria] = useState<CategoriaDna | 'todas'>('todas');
@@ -179,6 +186,37 @@ export default function DnaCategorizadoPage() {
             alert('Erro ao remover.');
         }
         setDeletingId(null);
+    };
+
+    const handleStartEdit = (item: DnaCategorizado) => {
+        setEditingId(item.id);
+        setEditTexto(item.texto_msg);
+        setEditCategoria(item.categoria);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setEditTexto('');
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingId || !editTexto.trim()) return;
+        setSaving(true);
+        const success = await updateDnaCategorizado(editingId, editTexto.trim(), editCategoria);
+        if (success) {
+            setItems(prev => prev.map(item =>
+                item.id === editingId
+                    ? { ...item, texto_msg: editTexto.trim(), categoria: editCategoria }
+                    : item
+            ));
+            const newStats = await getCategoriaStats();
+            setStats(newStats);
+            setEditingId(null);
+            setEditTexto('');
+        } else {
+            alert('Erro ao salvar edição.');
+        }
+        setSaving(false);
     };
 
     const handleAdd = async () => {
@@ -1012,8 +1050,59 @@ export default function DnaCategorizadoPage() {
                     ) : (
                         items.map((item) => {
                             const cat = getCategoriaInfo(item.categoria);
+                            const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className="group relative bg-[#020617]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-violet-500/30 transition-all">
+                                <div key={item.id} className={`group relative bg-[#020617]/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-white/10 hover:border-violet-500/30'}`}>
+                                    {isEditing ? (
+                                        /* === MODO EDIÇÃO === */
+                                        <div className="space-y-4">
+                                            {/* Seletor de categoria */}
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Categoria</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {CATEGORIAS.map(c => (
+                                                        <button
+                                                            key={c.id}
+                                                            onClick={() => setEditCategoria(c.id)}
+                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${editCategoria === c.id ? c.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                        >
+                                                            <c.icon className="w-3 h-3" />
+                                                            {c.nome}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {/* Textarea do texto */}
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Texto</label>
+                                                <textarea
+                                                    value={editTexto}
+                                                    onChange={(e) => setEditTexto(e.target.value)}
+                                                    rows={8}
+                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:border-amber-500 focus:outline-none resize-y leading-relaxed"
+                                                />
+                                            </div>
+                                            {/* Botões salvar / cancelar */}
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    disabled={saving || !editTexto.trim()}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50 text-sm"
+                                                >
+                                                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                                    {saving ? 'Salvando...' : 'Salvar'}
+                                                </button>
+                                                <button
+                                                    onClick={handleCancelEdit}
+                                                    className="px-4 py-2 text-slate-400 hover:text-white text-sm"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* === MODO VISUALIZAÇÃO === */
+                                        <>
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cat.cor}`}>
@@ -1026,6 +1115,13 @@ export default function DnaCategorizadoPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleStartEdit(item)}
+                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 text-xs font-bold"
+                                            >
+                                                <Pencil className="w-3 h-3" />
+                                                Editar
+                                            </button>
                                             <button
                                                 onClick={() => handleCopy(item.texto_msg, item.id)}
                                                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 text-xs font-bold"
@@ -1045,6 +1141,8 @@ export default function DnaCategorizadoPage() {
                                     <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                         <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
                                     </div>
+                                        </>
+                                    )}
                                 </div>
                             );
                         })

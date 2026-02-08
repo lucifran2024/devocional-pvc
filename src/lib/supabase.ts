@@ -1217,6 +1217,35 @@ export async function removeDnaById(id: number): Promise<boolean> {
 }
 
 /**
+ * Atualiza texto e/ou categoria de um DNA
+ */
+export async function updateDnaCategorizado(
+    id: number,
+    textoMsg: string,
+    categoria: CategoriaDna
+): Promise<boolean> {
+    console.log(`✏️ [DNA] Atualizando ID ${id} → categoria: ${categoria}`);
+
+    try {
+        const { error } = await supabase
+            .from('dna_categorizado')
+            .update({ texto_msg: textoMsg, categoria })
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [DNA] Erro ao atualizar:', error);
+            return false;
+        }
+
+        console.log('✅ [DNA] Atualizado com sucesso');
+        return true;
+    } catch (err) {
+        console.error('💥 [DNA] Exceção:', err);
+        return false;
+    }
+}
+
+/**
  * Retorna estatísticas por categoria
  */
 export async function getCategoriaStats(): Promise<CategoriaStats[]> {
