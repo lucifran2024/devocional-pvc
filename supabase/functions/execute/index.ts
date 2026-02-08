@@ -44,6 +44,196 @@ let cachedBancoOuroExemplos: string | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora de cache
 
+// =====================================================
+// CONSTANTES E UTILS COMPARTILHADOS (modo_favoritas + modo_estilo)
+// =====================================================
+
+const TEMAS_POOL = [
+  'Gratidão', 'Fé', 'Esperança', 'Amor', 'Perdão', 'Confiança', 'Paz Interior',
+  'Força na Adversidade', 'Paciência', 'Sabedoria', 'Propósito', 'Renovação',
+  'Coragem', 'Humildade', 'Misericórdia', 'Alegria', 'Provisão de Deus',
+  'Obediência', 'Descanso em Deus', 'Transformação', 'Graça', 'Comunhão',
+  'Perseverança', 'Integridade', 'Liberdade', 'Cura Interior', 'Adoração',
+  'Identidade em Cristo', 'Novo Começo', 'Fidelidade de Deus', 'Entrega Total',
+  'Contentamento', 'Resiliência', 'Generosidade', 'Santidade', 'Direção Divina',
+  'Consagração', 'Refúgio em Deus', 'Vitória Espiritual', 'Gratidão pelo Simples',
+  'Família', 'Trabalho como Adoração', 'Ansiedade', 'Solidão', 'Recomeço',
+  'Compromisso', 'Arrependimento', 'Restauração', 'Soberania de Deus', 'Eternidade'
+];
+
+const LIVROS_AT = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','Samuel','Reis','Crônicas','Esdras','Neemias','Ester','Jó','Salmos','Provérbios','Eclesiastes','Cantares','Isaías','Jeremias','Lamentações','Ezequiel','Daniel','Oséias','Joel','Amós','Obadias','Jonas','Miquéias','Naum','Habacuque','Sofonias','Ageu','Zacarias','Malaquias'];
+const LIVROS_NT = ['Mateus','Marcos','Lucas','João','Atos','Romanos','Coríntios','Gálatas','Efésios','Filipenses','Colossenses','Tessalonicenses','Timóteo','Tito','Filemom','Hebreus','Tiago','Pedro','Judas','Apocalipse'];
+
+function extrairVersiculos(texto: string): string[] {
+  const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
+  const matches = texto.match(regex) || [];
+  return matches.map(m => m.trim());
+}
+
+function extrairTemaDoTitulo(texto: string): string {
+  const linhas = texto.split('\n').filter((l: string) => l.trim());
+  const titulo = linhas[0] || '';
+  return titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim().substring(0, 50);
+}
+
+// Anti-repetição centralizada: consulta gerações recentes e monta contexto
+async function buildAntiRepeticaoContext(
+  supabase: any,
+  quantidade: number,
+  dnaTextsParaCrosscheck?: string[],
+  buildStyle: 'favoritas' | 'estilo' = 'favoritas'
+): Promise<{
+  contexto: string;
+  temasUnicos: string[];
+  versiculosUnicos: string[];
+  versiculosDnaUnicos: string[];
+  contAT: number;
+  contNT: number;
+}> {
+  const dataCorte = new Date();
+  dataCorte.setDate(dataCorte.getDate() - 7);
+
+  // Extrair versículos do DNA Base (crosscheck)
+  const versiculosDoDna: string[] = [];
+  if (dnaTextsParaCrosscheck) {
+    dnaTextsParaCrosscheck.forEach((texto: string) => {
+      versiculosDoDna.push(...extrairVersiculos(texto));
+    });
+  }
+  const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
+
+  const { data: geracoesRecentes, error: genError } = await supabase
+    .from("dna_geracoes")
+    .select("texto_msg, tema_principal, versiculos_usados")
+    .gte("created_at", dataCorte.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (genError || !geracoesRecentes || geracoesRecentes.length === 0) {
+    // Sem gerações recentes — só crosscheck de DNA se houver
+    if (versiculosDnaUnicos.length > 0) {
+      return {
+        contexto: `
+
+## ⚠️ CRUZAMENTO DE PASSAGENS:
+O DNA Base contém estes versículos: ${versiculosDnaUnicos.slice(0, 10).join(', ')}
+
+**IMPORTANTE**: Não use apenas esses versículos! CRUZE com passagens de outros livros da Bíblia.
+Exemplo: Se o DNA tem Salmos 23, conecte com João 10 (Bom Pastor) ou Ezequiel 34.
+
+### 📖 EQUILÍBRIO BÍBLICO:
+Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50).
+`,
+        temasUnicos: [],
+        versiculosUnicos: [],
+        versiculosDnaUnicos,
+        contAT: 0,
+        contNT: 0
+      };
+    }
+    return { contexto: '', temasUnicos: [], versiculosUnicos: [], versiculosDnaUnicos: [], contAT: 0, contNT: 0 };
+  }
+
+  console.log(`🔄 [ANTI-REPETIÇÃO] Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias`);
+
+  const temasColetados: string[] = [];
+  const versiculosColetados: string[] = [];
+
+  geracoesRecentes.forEach((g: any) => {
+    if (g.tema_principal) {
+      temasColetados.push(g.tema_principal);
+    } else {
+      const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
+      if (temaExtraido) temasColetados.push(temaExtraido);
+    }
+    if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
+      versiculosColetados.push(...g.versiculos_usados);
+    } else {
+      versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
+    }
+  });
+
+  const temasUnicos = [...new Set(temasColetados)].slice(0, 20);
+  const versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
+
+  console.log(`📊 [ANTI-REP] Temas: ${temasUnicos.length}, Versículos: ${versiculosUnicos.length}`);
+
+  const resumoGeracoes = geracoesRecentes.slice(0, 10)
+    .map((g: any) => {
+      const texto = g.texto_msg || '';
+      const linhas = texto.split('\n').filter((l: string) => l.trim());
+      return linhas[0]?.substring(0, 60) || '';
+    })
+    .join('\n- ');
+
+  // Rotação AT/NT
+  let contAT = 0, contNT = 0;
+  versiculosUnicos.forEach((v: string) => {
+    if (LIVROS_AT.some(l => v.includes(l))) contAT++;
+    else if (LIVROS_NT.some(l => v.includes(l))) contNT++;
+  });
+
+  let instrucaoTestamento = '';
+  if (contAT > contNT + 2) {
+    instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nAs últimas gerações usaram MUITO o Antigo Testamento (${contAT} AT vs ${contNT} NT).\n**PRIORIZE O NOVO TESTAMENTO** nesta geração: Romanos, João, Efésios, Filipenses, Tiago, Hebreus, etc.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens devem usar versículos do NT.\n`;
+  } else if (contNT > contAT + 2) {
+    instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nAs últimas gerações usaram MUITO o Novo Testamento (${contNT} NT vs ${contAT} AT).\n**PRIORIZE O ANTIGO TESTAMENTO** nesta geração: Salmos, Provérbios, Isaías, Jeremias, Eclesiastes, Daniel, etc.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens devem usar versículos do AT.\n`;
+  } else {
+    instrucaoTestamento = `\n### 📖 EQUILÍBRIO BÍBLICO:\nDistribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50).\n`;
+  }
+
+  let contexto = '';
+
+  if (buildStyle === 'favoritas') {
+    contexto = `
+
+## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO - LEIA COM ATENÇÃO):
+
+### 🚫 TEMAS PROIBIDOS (usados nos últimos 7 dias):
+${temasUnicos.length > 0 ? temasUnicos.map(t => `- ${t}`).join('\n') : '- Nenhum tema registrado ainda'}
+
+### 🚫 VERSÍCULOS PROIBIDOS (já usados recentemente):
+${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenhum'}
+${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
+${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
+
+### 📋 TÍTULOS RECENTES (não repita abordagens):
+- ${resumoGeracoes}
+
+### ⚠️ REGRAS OBRIGATÓRIAS:
+1. **CADA MENSAGEM DEVE TER UM TEMA DIFERENTE** - Se gerando 10 mensagens, são 10 temas distintos
+2. **USE VERSÍCULOS NOVOS** - Busque passagens que NÃO estão na lista proibida
+3. **CRUZE O DNA COM PASSAGENS DIFERENTES** - Se o DNA fala de Salmos 23, conecte com Isaías, João, etc
+4. **VARIE O ÂNGULO** - Uma mensagem pode ser exortação, outra consolo, outra reflexão
+5. **NÃO REPITA ESTRUTURAS** - Se uma começa com pergunta, a próxima não deve
+
+**PENALIDADE**: Se repetir tema ou versículo da lista proibida, a mensagem será DESCARTADA.
+`;
+  } else {
+    // estilo
+    contexto = `
+## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO):
+
+### 🚫 TEMAS PROIBIDOS (últimos 7 dias):
+${temasUnicos.map(t => `- ${t}`).join('\n')}
+
+### 🚫 VERSÍCULOS PROIBIDOS:
+${versiculosUnicos.slice(0, 15).join(', ')}
+
+### 📋 TÍTULOS RECENTES (não repita):
+- ${resumoGeracoes}
+`;
+  }
+
+  contexto += instrucaoTestamento;
+
+  if (buildStyle === 'estilo') {
+    contexto += `\n**PENALIDADE**: Se repetir tema ou versículo da lista, a mensagem será DESCARTADA.\n`;
+  }
+
+  return { contexto, temasUnicos, versiculosUnicos, versiculosDnaUnicos, contAT, contNT };
+}
+
 Deno.serve(async (req) => {
   // Extrair origin para CORS
   const origin = req.headers.get('origin');
@@ -189,33 +379,19 @@ Deno.serve(async (req) => {
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
 
-      // ========== SMART AUTOPILOT: Tema automático quando vazio ==========
-      const TEMAS_POOL = [
-        'Gratidão', 'Fé', 'Esperança', 'Amor', 'Perdão', 'Confiança', 'Paz Interior',
-        'Força na Adversidade', 'Paciência', 'Sabedoria', 'Propósito', 'Renovação',
-        'Coragem', 'Humildade', 'Misericórdia', 'Alegria', 'Provisão de Deus',
-        'Obediência', 'Descanso em Deus', 'Transformação', 'Graça', 'Comunhão',
-        'Perseverança', 'Integridade', 'Liberdade', 'Cura Interior', 'Adoração',
-        'Identidade em Cristo', 'Novo Começo', 'Fidelidade de Deus', 'Entrega Total',
-        'Contentamento', 'Resiliência', 'Generosidade', 'Santidade', 'Direção Divina',
-        'Consagração', 'Refúgio em Deus', 'Vitória Espiritual', 'Gratidão pelo Simples',
-        'Família', 'Trabalho como Adoração', 'Ansiedade', 'Solidão', 'Recomeço',
-        'Compromisso', 'Arrependimento', 'Restauração', 'Soberania de Deus', 'Eternidade'
-      ];
+      // ========== ANTI-REPETIÇÃO + SMART AUTOPILOT ==========
+      const antiRep = await buildAntiRepeticaoContext(
+        supabase,
+        quantidade,
+        favoritasFiltradas.map((f: any) => f.texto_msg || ''),
+        'favoritas'
+      );
+      const contextoAntiRepeticao = antiRep.contexto;
 
       let temaAutopilot = '';
       if (!filtros?.tema) {
-        // Buscar temas usados recentemente para evitar repetir
-        const dataCorteAuto = new Date();
-        dataCorteAuto.setDate(dataCorteAuto.getDate() - 7);
-        const { data: temasRecentes } = await supabase
-          .from("dna_geracoes")
-          .select("tema_principal")
-          .gte("created_at", dataCorteAuto.toISOString())
-          .not("tema_principal", "is", null);
-
-        const temasUsados = temasRecentes?.map((t: any) => t.tema_principal?.toLowerCase()) || [];
-        const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsados.includes(t.toLowerCase()));
+        const temasUsadosLower = antiRep.temasUnicos.map(t => t.toLowerCase());
+        const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
         const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
         temaAutopilot = pool[Math.floor(Math.random() * pool.length)];
         console.log(`🎯 [AUTOPILOT] Tema sorteado: "${temaAutopilot}" (${temasDisponiveis.length} disponíveis de ${TEMAS_POOL.length})`);
@@ -384,142 +560,6 @@ Deno.serve(async (req) => {
         }
 
         console.log(`📖 [PASSAGEM] Ref Final: ${passagemRef || '(não encontrada)'}`);
-      }
-
-      // 4.5 ANTI-REPETIÇÃO ROBUSTA: Extrair temas e versículos para não repetir
-      let contextoAntiRepeticao = '';
-      const dataCorte = new Date();
-      dataCorte.setDate(dataCorte.getDate() - 7); // Aumentado para 7 dias
-
-      // Função para extrair versículos de um texto
-      const extrairVersiculos = (texto: string): string[] => {
-        // Regex para encontrar referências bíblicas (ex: João 3:16, Salmos 23:1-4, 1 Coríntios 13:4)
-        const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
-        const matches = texto.match(regex) || [];
-        return matches.map(m => m.trim());
-      };
-
-      // Função para extrair tema/ângulo do título
-      const extrairTemaDoTitulo = (texto: string): string => {
-        const linhas = texto.split('\n').filter((l: string) => l.trim());
-        const titulo = linhas[0] || '';
-        // Limpa asteriscos, emojis e pega palavras-chave
-        const limpo = titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim();
-        return limpo.substring(0, 50);
-      };
-
-      const { data: geracoesRecentes, error: genError } = await supabase
-        .from("dna_geracoes")
-        .select("texto_msg, tema_principal, versiculos_usados")
-        .gte("created_at", dataCorte.toISOString())
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      // Extrair versículos do DNA Base também (para não repetir os mesmos do DNA)
-      const versiculosDoDna: string[] = [];
-      favoritasFiltradas.forEach((f: any) => {
-        const versiculos = extrairVersiculos(f.texto_msg || '');
-        versiculosDoDna.push(...versiculos);
-      });
-      const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
-
-      if (!genError && geracoesRecentes && geracoesRecentes.length > 0) {
-        console.log(`🔄 [ANTI-REPETIÇÃO] Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias`);
-
-        // Coletar temas (salvos ou extraídos)
-        const temasColetados: string[] = [];
-        const versiculosColetados: string[] = [];
-
-        geracoesRecentes.forEach((g: any) => {
-          // Tema
-          if (g.tema_principal) {
-            temasColetados.push(g.tema_principal);
-          } else {
-            const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
-            if (temaExtraido) temasColetados.push(temaExtraido);
-          }
-          // Versículos
-          if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
-            versiculosColetados.push(...g.versiculos_usados);
-          } else {
-            const versiculosExtraidos = extrairVersiculos(g.texto_msg || '');
-            versiculosColetados.push(...versiculosExtraidos);
-          }
-        });
-
-        const temasUnicos = [...new Set(temasColetados)].slice(0, 20);
-        const versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
-
-        console.log(`📊 [ANTI-REP] Temas encontrados: ${temasUnicos.length}, Versículos: ${versiculosUnicos.length}`);
-
-        // Resumo das últimas 10 gerações
-        const resumoGeracoes = geracoesRecentes.slice(0, 10)
-          .map((g: any) => {
-            const texto = g.texto_msg || '';
-            const linhas = texto.split('\n').filter((l: string) => l.trim());
-            const titulo = linhas[0]?.substring(0, 60) || '';
-            return titulo;
-          })
-          .join('\n- ');
-
-        contextoAntiRepeticao = `
-
-## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO - LEIA COM ATENÇÃO):
-
-### 🚫 TEMAS PROIBIDOS (usados nos últimos 7 dias):
-${temasUnicos.length > 0 ? temasUnicos.map(t => `- ${t}`).join('\n') : '- Nenhum tema registrado ainda'}
-
-### 🚫 VERSÍCULOS PROIBIDOS (já usados recentemente):
-${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenhum'}
-${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
-${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
-
-### 📋 TÍTULOS RECENTES (não repita abordagens):
-- ${resumoGeracoes}
-
-### ⚠️ REGRAS OBRIGATÓRIAS:
-1. **CADA MENSAGEM DEVE TER UM TEMA DIFERENTE** - Se gerando 10 mensagens, são 10 temas distintos
-2. **USE VERSÍCULOS NOVOS** - Busque passagens que NÃO estão na lista proibida
-3. **CRUZE O DNA COM PASSAGENS DIFERENTES** - Se o DNA fala de Salmos 23, conecte com Isaías, João, etc
-4. **VARIE O ÂNGULO** - Uma mensagem pode ser exortação, outra consolo, outra reflexão
-5. **NÃO REPITA ESTRUTURAS** - Se uma começa com pergunta, a próxima não deve
-
-**PENALIDADE**: Se repetir tema ou versículo da lista proibida, a mensagem será DESCARTADA.
-`;
-
-        // ========== ROTAÇÃO AT/NT ==========
-        const LIVROS_AT = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','Samuel','Reis','Crônicas','Esdras','Neemias','Ester','Jó','Salmos','Provérbios','Eclesiastes','Cantares','Isaías','Jeremias','Lamentações','Ezequiel','Daniel','Oséias','Joel','Amós','Obadias','Jonas','Miquéias','Naum','Habacuque','Sofonias','Ageu','Zacarias','Malaquias'];
-        const LIVROS_NT = ['Mateus','Marcos','Lucas','João','Atos','Romanos','Coríntios','Gálatas','Efésios','Filipenses','Colossenses','Tessalonicenses','Timóteo','Tito','Filemom','Hebreus','Tiago','Pedro','Judas','Apocalipse'];
-
-        let contAT = 0, contNT = 0;
-        versiculosUnicos.forEach((v: string) => {
-          if (LIVROS_AT.some(l => v.includes(l))) contAT++;
-          else if (LIVROS_NT.some(l => v.includes(l))) contNT++;
-        });
-
-        let instrucaoTestamento = '';
-        if (contAT > contNT + 2) {
-          instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nAs últimas gerações usaram MUITO o Antigo Testamento (${contAT} AT vs ${contNT} NT).\n**PRIORIZE O NOVO TESTAMENTO** nesta geração: Romanos, João, Efésios, Filipenses, Tiago, Hebreus, etc.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens devem usar versículos do NT.\n`;
-        } else if (contNT > contAT + 2) {
-          instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nAs últimas gerações usaram MUITO o Novo Testamento (${contNT} NT vs ${contAT} AT).\n**PRIORIZE O ANTIGO TESTAMENTO** nesta geração: Salmos, Provérbios, Isaías, Jeremias, Eclesiastes, Daniel, etc.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens devem usar versículos do AT.\n`;
-        } else {
-          instrucaoTestamento = `\n### 📖 EQUILÍBRIO BÍBLICO:\nDistribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50).\n`;
-        }
-        contextoAntiRepeticao += instrucaoTestamento;
-
-      } else if (versiculosDnaUnicos.length > 0) {
-        // Mesmo sem gerações recentes, evita repetir versículos do DNA
-        contextoAntiRepeticao = `
-
-## ⚠️ CRUZAMENTO DE PASSAGENS:
-O DNA Base contém estes versículos: ${versiculosDnaUnicos.slice(0, 10).join(', ')}
-
-**IMPORTANTE**: Não use apenas esses versículos! CRUZE com passagens de outros livros da Bíblia.
-Exemplo: Se o DNA tem Salmos 23, conecte com João 10 (Bom Pastor) ou Ezequiel 34.
-
-### 📖 EQUILÍBRIO BÍBLICO:
-Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50).
-`;
       }
 
       // 5. Prompt interno para gerar mensagens
@@ -876,115 +916,16 @@ ${dnaFavoritas}
         console.log(`📖 [PASSAGEM ESTILO] Ref Final: ${passagemRef || '(não encontrada)'}`);
       }
 
-      // 4. Anti-Repetição ROBUSTA (Últimos 7 dias — equalizado com modo_favoritas)
-      const dataCorte = new Date();
-      dataCorte.setDate(dataCorte.getDate() - 7);
-
-      // Função para extrair versículos de um texto
-      const extrairVersiculos = (texto: string): string[] => {
-        const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
-        const matches = texto.match(regex) || [];
-        return matches.map(m => m.trim());
-      };
-
-      const extrairTemaDoTitulo = (texto: string): string => {
-        const linhas = texto.split('\n').filter((l: string) => l.trim());
-        const titulo = linhas[0] || '';
-        return titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim().substring(0, 50);
-      };
-
-      const { data: geracoesRecentes } = await supabase
-        .from("dna_geracoes")
-        .select("texto_msg, tema_principal, versiculos_usados")
-        .gte("created_at", dataCorte.toISOString())
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      let contextoAntiRepeticao = '';
-      let temasUnicos: string[] = [];
-      let versiculosUnicos: string[] = [];
-
-      if (geracoesRecentes && geracoesRecentes.length > 0) {
-        console.log(`🔄 [ANTI-REP ESTILO] Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias`);
-
-        const temasColetados: string[] = [];
-        const versiculosColetados: string[] = [];
-
-        geracoesRecentes.forEach((g: any) => {
-          if (g.tema_principal) {
-            temasColetados.push(g.tema_principal);
-          } else {
-            const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
-            if (temaExtraido) temasColetados.push(temaExtraido);
-          }
-          if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
-            versiculosColetados.push(...g.versiculos_usados);
-          } else {
-            versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
-          }
-        });
-
-        temasUnicos = [...new Set(temasColetados)].slice(0, 20);
-        versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
-
-        const resumoGeracoes = geracoesRecentes.slice(0, 10)
-          .map((g: any) => (g.texto_msg || '').split('\n').filter((l: string) => l.trim())[0]?.substring(0, 60) || '')
-          .join('\n- ');
-
-        // Rotação AT/NT
-        const LIVROS_AT = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','Samuel','Reis','Crônicas','Esdras','Neemias','Ester','Jó','Salmos','Provérbios','Eclesiastes','Cantares','Isaías','Jeremias','Lamentações','Ezequiel','Daniel','Oséias','Joel','Amós','Obadias','Jonas','Miquéias','Naum','Habacuque','Sofonias','Ageu','Zacarias','Malaquias'];
-        const LIVROS_NT = ['Mateus','Marcos','Lucas','João','Atos','Romanos','Coríntios','Gálatas','Efésios','Filipenses','Colossenses','Tessalonicenses','Timóteo','Tito','Filemom','Hebreus','Tiago','Pedro','Judas','Apocalipse'];
-
-        let contAT = 0, contNT = 0;
-        versiculosUnicos.forEach((v: string) => {
-          if (LIVROS_AT.some(l => v.includes(l))) contAT++;
-          else if (LIVROS_NT.some(l => v.includes(l))) contNT++;
-        });
-
-        let instrucaoTestamento = '';
-        if (contAT > contNT + 2) {
-          instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nÚltimas gerações usaram MUITO AT (${contAT} AT vs ${contNT} NT). **PRIORIZE O NOVO TESTAMENTO**: Romanos, João, Efésios, Filipenses, Tiago, Hebreus.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens com versículos do NT.\n`;
-        } else if (contNT > contAT + 2) {
-          instrucaoTestamento = `\n### 📖 ROTAÇÃO BÍBLICA OBRIGATÓRIA:\nÚltimas gerações usaram MUITO NT (${contNT} NT vs ${contAT} AT). **PRIORIZE O ANTIGO TESTAMENTO**: Salmos, Provérbios, Isaías, Jeremias, Eclesiastes.\nPelo menos ${Math.ceil(quantidade * 0.6)} mensagens com versículos do AT.\n`;
-        } else {
-          instrucaoTestamento = `\n### 📖 EQUILÍBRIO BÍBLICO: Distribua versículos entre AT e NT (50/50).\n`;
-        }
-
-        contextoAntiRepeticao = `
-## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO):
-
-### 🚫 TEMAS PROIBIDOS (últimos 7 dias):
-${temasUnicos.map(t => `- ${t}`).join('\n')}
-
-### 🚫 VERSÍCULOS PROIBIDOS:
-${versiculosUnicos.slice(0, 15).join(', ')}
-
-### 📋 TÍTULOS RECENTES (não repita):
-- ${resumoGeracoes}
-${instrucaoTestamento}
-**PENALIDADE**: Se repetir tema ou versículo da lista, a mensagem será DESCARTADA.
-`;
-      }
-
-      // ========== SMART AUTOPILOT: Tema automático quando vazio ==========
-      const TEMAS_POOL_ESTILO = [
-        'Gratidão', 'Fé', 'Esperança', 'Amor', 'Perdão', 'Confiança', 'Paz Interior',
-        'Força na Adversidade', 'Paciência', 'Sabedoria', 'Propósito', 'Renovação',
-        'Coragem', 'Humildade', 'Misericórdia', 'Alegria', 'Provisão de Deus',
-        'Obediência', 'Descanso em Deus', 'Transformação', 'Graça', 'Comunhão',
-        'Perseverança', 'Integridade', 'Liberdade', 'Cura Interior', 'Adoração',
-        'Identidade em Cristo', 'Novo Começo', 'Fidelidade de Deus', 'Entrega Total',
-        'Contentamento', 'Resiliência', 'Generosidade', 'Santidade', 'Direção Divina',
-        'Consagração', 'Refúgio em Deus', 'Vitória Espiritual', 'Gratidão pelo Simples',
-        'Família', 'Trabalho como Adoração', 'Ansiedade', 'Solidão', 'Recomeço',
-        'Compromisso', 'Arrependimento', 'Restauração', 'Soberania de Deus', 'Eternidade'
-      ];
+      // 4. Anti-Repetição + Smart Autopilot (usando função centralizada)
+      const dnaTextsEstilo = dnaEssencia ? [dnaEssencia] : [];
+      const antiRepEstilo = await buildAntiRepeticaoContext(supabase, quantidade, dnaTextsEstilo, 'estilo');
+      const contextoAntiRepeticao = antiRepEstilo.contexto;
 
       let temaAutopilotEstilo = '';
       if (!filtros?.tema) {
-        const temasUsadosLower = temasUnicos.map(t => t.toLowerCase());
-        const temasDisponiveis = TEMAS_POOL_ESTILO.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
-        const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL_ESTILO;
+        const temasUsadosLower = antiRepEstilo.temasUnicos.map(t => t.toLowerCase());
+        const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
+        const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
         temaAutopilotEstilo = pool[Math.floor(Math.random() * pool.length)];
         console.log(`🎯 [AUTOPILOT ESTILO] Tema sorteado: "${temaAutopilotEstilo}" (${temasDisponiveis.length} disponíveis)`);
       }
@@ -992,7 +933,13 @@ ${instrucaoTestamento}
 
       // 5. Construção dos Filtros Dinâmicos
       let instrucoesFiltro = '';
-      const temFiltrosExtras = filtros && (temaFinalEstilo || filtros.formato || filtros.periodo || filtros.momento || diasSemana || neutro);
+      // BUG FIX: Separar tamanho (Curto/Médio/Longo) de formato (Staccato/Narrativo/Lista/Perguntas)
+      // O frontend envia 'formato' com valores de tamanho — aceitar ambos para backward compat
+      const TAMANHOS_VALIDOS = ['Curto', 'Médio', 'Longo'];
+      const tamanhoEstilo = filtros?.tamanho || (TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros.formato : null);
+      const formatoEstilo = !TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros?.formato : null;
+
+      const temFiltrosExtras = filtros && (temaFinalEstilo || tamanhoEstilo || formatoEstilo || filtros.periodo || filtros.momento || diasSemana || neutro);
 
       if (temFiltrosExtras) {
         instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
@@ -1000,14 +947,24 @@ ${instrucaoTestamento}
         if (temaFinalEstilo) {
           instrucoesFiltro += `• **TEMA**: O assunto principal deve ser "${temaFinalEstilo}"${!filtros?.tema ? ' (tema surpresa — explore com profundidade!)' : ''}\n`;
         }
-        if (filtros.formato) {
+        if (tamanhoEstilo) {
           const sizeInstructions: Record<string, string> = {
             'Curto': 'MÁXIMO 40 palavras. 1 parágrafo curto. Direto e incisivo. SEM enrolação.',
             'Médio': 'Entre 60-90 palavras. 2 parágrafos. Equilibrado e objetivo.',
             'Longo': 'Mais de 120 palavras. 3+ parágrafos. Detalhado, profundo e bem explicado.'
           };
-          const instruction = sizeInstructions[filtros.formato] || filtros.formato;
+          const instruction = sizeInstructions[tamanhoEstilo] || tamanhoEstilo;
           instrucoesFiltro += `• **TAMANHO RIGOROSO**: ${instruction}\n`;
+        }
+        if (formatoEstilo) {
+          const formatInstructions: Record<string, string> = {
+            'Staccato': 'frases curtas e impactantes, com quebras de linha entre cada frase',
+            'Narrativo': 'texto fluido como uma história, com começo, meio e fim',
+            'Lista': 'tópicos numerados ou com bullets, organizados logicamente',
+            'Perguntas': 'use perguntas reflexivas que levem o leitor a meditar'
+          };
+          const fmtInstruction = formatInstructions[formatoEstilo] || formatoEstilo;
+          instrucoesFiltro += `• **FORMATO TEXTUAL [${formatoEstilo.toUpperCase()}]**: ${fmtInstruction}\n`;
         }
         if (filtros.periodo && !neutro) {
           const saudacaoMap: Record<string, string> = {
@@ -1963,7 +1920,7 @@ REGRAS FINAIS DE NUANCE:
         .limit(5);
 
       if (historicoAntigo && historicoAntigo.length > 0) {
-        const partesAntigo = historicoAntigo.map((h: any) =>
+        memoriaPartes = historicoAntigo.map((h: any) =>
           `-- 📜 Histórico Aprovado (${h.passagem}):\n${h.resultado_texto.substring(0, 250)}...`
         );
       }
