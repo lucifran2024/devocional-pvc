@@ -77,6 +77,27 @@ const LIVRO_PARA_ID: { [key: string]: number } = {
     'apocalipse': 66, 'ap': 66
 };
 
+// Mapa reverso: ID → abreviação curta (para uso no sistema de interações)
+const ID_PARA_ABREV: Record<number, string> = {
+    1: 'gn', 2: 'ex', 3: 'lv', 4: 'nm', 5: 'dt', 6: 'js', 7: 'jz', 8: 'rt',
+    9: '1sm', 10: '2sm', 11: '1rs', 12: '2rs', 13: '1cr', 14: '2cr',
+    15: 'ed', 16: 'ne', 17: 'et', 18: 'jó', 19: 'sl', 20: 'pv', 21: 'ec',
+    22: 'ct', 23: 'is', 24: 'jr', 25: 'lm', 26: 'ez', 27: 'dn', 28: 'os',
+    29: 'jl', 30: 'am', 31: 'ob', 32: 'jn', 33: 'mq', 34: 'na', 35: 'hc',
+    36: 'sf', 37: 'ag', 38: 'zc', 39: 'ml', 40: 'mt', 41: 'mc', 42: 'lc',
+    43: 'jo', 44: 'at', 45: 'rm', 46: '1co', 47: '2co', 48: 'gl', 49: 'ef',
+    50: 'fp', 51: 'cl', 52: '1ts', 53: '2ts', 54: '1tm', 55: '2tm', 56: 'tt',
+    57: 'fm', 58: 'hb', 59: 'tg', 60: '1pe', 61: '2pe', 62: '1jo', 63: '2jo',
+    64: '3jo', 65: 'jd', 66: 'ap'
+};
+
+/**
+ * Retorna a abreviação curta de um livro pelo ID
+ */
+export function getAbrevFromId(livroId: number): string {
+    return ID_PARA_ABREV[livroId] || '';
+}
+
 /**
  * Extrai informações de uma referência bíblica como "Isaías 16-18" ou "João 3:16"
  * Retorna: { livro, capituloInicio, capituloFim, versiculoInicio?, versiculoFim? }

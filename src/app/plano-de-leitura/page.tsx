@@ -1,18 +1,367 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
     Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
     ChevronRight, RotateCcw, GraduationCap, Clock, Search,
-    Globe, Rocket, Zap, Building, MessageSquare, ClipboardList, ArrowRight
+    Globe, Rocket, Zap, Building, MessageSquare, ClipboardList, ArrowRight,
+    Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X
 } from 'lucide-react';
-import { getDataHoje } from '@/lib/supabase';
+import {
+    getDataHoje,
+    salvarInteracaoBiblia,
+    removerInteracaoBiblia,
+    removerInteracaoPorVersiculoETipo,
+    getInteracoesPorCapitulo,
+    atualizarNotaBiblia,
+    type BibliaInteracao
+} from '@/lib/supabase';
 import { getPassagemDoDia, getTeseCentral, type PassagemSecao6 } from '@/lib/secao6';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import { useToast } from '@/hooks/useToast';
+import { ToastContainer } from '@/components/ui/ToastContainer';
 import ReactMarkdown from 'react-markdown';
-import { buscarPassagem, formatarVersiculosParte, type Versiculo } from '@/lib/bible-api';
+import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
+
+// Cores para destacar versículos
+const CORES_DESTAQUE_PLANO: { id: string; nome: string; bg: string; border: string }[] = [
+    { id: 'yellow', nome: 'Amarelo', bg: 'bg-yellow-500/20', border: 'border-yellow-500/40' },
+    { id: 'blue', nome: 'Azul', bg: 'bg-blue-500/20', border: 'border-blue-500/40' },
+    { id: 'green', nome: 'Verde', bg: 'bg-green-500/20', border: 'border-green-500/40' },
+    { id: 'pink', nome: 'Rosa', bg: 'bg-pink-500/20', border: 'border-pink-500/40' },
+];
+
+// Mapa de interações por versículo
+interface InteracoesMapPlano {
+    destaques: Record<number, BibliaInteracao>;
+    favoritos: Record<number, BibliaInteracao>;
+    notas: Record<number, BibliaInteracao>;
+}
+
+// Componente de versículos interativos para o Plano de Leitura
+function VersiculosInterativos({
+    versiculos,
+    referencia,
+    livroAbrev,
+    livroNome,
+    capitulo,
+}: {
+    versiculos: Versiculo[];
+    referencia: string;
+    livroAbrev: string;
+    livroNome: string;
+    capitulo: number;
+}) {
+    const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
+    const [mostrarCores, setMostrarCores] = useState(false);
+    const [mostrarNota, setMostrarNota] = useState(false);
+    const [textoNota, setTextoNota] = useState('');
+    const [interacoesMap, setInteracoesMap] = useState<InteracoesMapPlano>({ destaques: {}, favoritos: {}, notas: {} });
+    const [estudoAberto, setEstudoAberto] = useState(false);
+    const [estudoTexto, setEstudoTexto] = useState('');
+    const [estudoLoading, setEstudoLoading] = useState(false);
+    const [estudoVersiculo, setEstudoVersiculo] = useState<Versiculo | null>(null);
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const versiculoAnteriorRef = useRef<number | null>(null);
+    const { toasts, removeToast, success } = useToast();
+
+    // Carregar interações do capítulo
+    const carregarInteracoes = useCallback(async () => {
+        const dados = await getInteracoesPorCapitulo(livroAbrev, capitulo);
+        const map: InteracoesMapPlano = { destaques: {}, favoritos: {}, notas: {} };
+        dados.forEach((item: BibliaInteracao) => {
+            if (item.tipo === 'destaque') map.destaques[item.versiculo] = item;
+            else if (item.tipo === 'favorito') map.favoritos[item.versiculo] = item;
+            else if (item.tipo === 'nota') map.notas[item.versiculo] = item;
+        });
+        setInteracoesMap(map);
+    }, [livroAbrev, capitulo]);
+
+    useEffect(() => { carregarInteracoes(); }, [carregarInteracoes]);
+
+    // Fechar toolbar ao clicar fora
+    useEffect(() => {
+        const handleClickFora = (e: MouseEvent) => {
+            if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+                const target = e.target as HTMLElement;
+                const versiculoDiv = target.closest('[id^="plano-verse-"]');
+                if (!versiculoDiv) {
+                    setVersiculoSelecionado(null);
+                    setMostrarCores(false);
+                    setMostrarNota(false);
+                    versiculoAnteriorRef.current = null;
+                }
+            }
+        };
+        document.addEventListener('mousedown', handleClickFora);
+        return () => document.removeEventListener('mousedown', handleClickFora);
+    }, []);
+
+    const handleVersiculoClick = (verse: number) => {
+        if (versiculoAnteriorRef.current === verse) {
+            setVersiculoSelecionado(null);
+            setMostrarCores(false);
+            setMostrarNota(false);
+            versiculoAnteriorRef.current = null;
+            return;
+        }
+        setVersiculoSelecionado(verse);
+        versiculoAnteriorRef.current = verse;
+        setMostrarCores(false);
+        setMostrarNota(false);
+        const notaExistente = interacoesMap.notas[verse];
+        setTextoNota(notaExistente?.nota || '');
+    };
+
+    const getVersiculoObj = (verse: number) => versiculos.find(v => v.verse === verse);
+    const getCorClasse = (verse: number): string => {
+        const destaque = interacoesMap.destaques[verse];
+        if (!destaque) return '';
+        const cor = CORES_DESTAQUE_PLANO.find(c => c.id === destaque.cor);
+        return cor ? `${cor.bg} ${cor.border} border-l-2` : '';
+    };
+    const isFavorito = (verse: number) => !!interacoesMap.favoritos[verse];
+    const temNota = (verse: number) => !!interacoesMap.notas[verse];
+
+    const handleDestacar = async (cor: string) => {
+        if (!versiculoSelecionado) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        const existente = interacoesMap.destaques[versiculoSelecionado];
+        if (existente && existente.cor === cor) {
+            await removerInteracaoBiblia(existente.id!);
+            success('Destaque removido');
+        } else {
+            if (existente) await removerInteracaoBiblia(existente.id!);
+            await salvarInteracaoBiblia({
+                tipo: 'destaque', livro_abrev: livroAbrev, livro_nome: livroNome,
+                capitulo, versiculo: v.verse, texto_versiculo: v.text, cor
+            });
+            success('Versículo destacado!');
+        }
+        await carregarInteracoes();
+        setMostrarCores(false);
+    };
+
+    const handleFavoritar = async () => {
+        if (!versiculoSelecionado) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        const existente = interacoesMap.favoritos[versiculoSelecionado];
+        if (existente) {
+            await removerInteracaoBiblia(existente.id!);
+            success('Removido dos favoritos');
+        } else {
+            await salvarInteracaoBiblia({
+                tipo: 'favorito', livro_abrev: livroAbrev, livro_nome: livroNome,
+                capitulo, versiculo: v.verse, texto_versiculo: v.text
+            });
+            success('Salvo nos favoritos!');
+        }
+        await carregarInteracoes();
+    };
+
+    const handleCopiar = async () => {
+        if (!versiculoSelecionado) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        const texto = `"${v.text}" — ${livroNome} ${capitulo}:${v.verse}`;
+        await navigator.clipboard.writeText(texto);
+        success('Versículo copiado!');
+    };
+
+    const handleCompartilhar = async () => {
+        if (!versiculoSelecionado) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        const texto = `"${v.text}"\n— ${livroNome} ${capitulo}:${v.verse}`;
+        if (navigator.share) {
+            try { await navigator.share({ title: `${livroNome} ${capitulo}:${v.verse}`, text: texto }); } catch { /* cancelled */ }
+        } else {
+            await navigator.clipboard.writeText(texto);
+            success('Copiado para compartilhar!');
+        }
+    };
+
+    const handleEstudar = async () => {
+        if (!versiculoSelecionado) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        setEstudoVersiculo(v);
+        setEstudoAberto(true);
+        setEstudoLoading(true);
+        setEstudoTexto('');
+        setVersiculoSelecionado(null);
+        versiculoAnteriorRef.current = null;
+        try {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    modo_id: 'explicar_passagem',
+                    data: new Date().toISOString().split('T')[0],
+                    referencia: `${livroNome} ${capitulo}:${v.verse}`,
+                    versiculos: `(${v.verse}) ${v.text}`,
+                    parte: 1
+                })
+            });
+            const data = await resp.json();
+            if (data.ok && data.resultado) setEstudoTexto(data.resultado);
+            else setEstudoTexto('Erro ao gerar explicação. Tente novamente.');
+        } catch { setEstudoTexto('Erro de conexão. Tente novamente.'); }
+        finally { setEstudoLoading(false); }
+    };
+
+    const handleSalvarNota = async () => {
+        if (!versiculoSelecionado || !textoNota.trim()) return;
+        const v = getVersiculoObj(versiculoSelecionado);
+        if (!v) return;
+        const existente = interacoesMap.notas[versiculoSelecionado];
+        if (existente) {
+            await atualizarNotaBiblia(existente.id!, textoNota.trim());
+        } else {
+            await salvarInteracaoBiblia({
+                tipo: 'nota', livro_abrev: livroAbrev, livro_nome: livroNome,
+                capitulo, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
+            });
+        }
+        success('Nota salva!');
+        setMostrarNota(false);
+        await carregarInteracoes();
+    };
+
+    return (
+        <>
+            <div className="space-y-1 relative" ref={containerRef}>
+                {versiculos.map(v => (
+                    <div
+                        key={v.verse}
+                        id={`plano-verse-${v.verse}`}
+                        onClick={() => handleVersiculoClick(v.verse)}
+                        className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
+                            ${getCorClasse(v.verse)}
+                            ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
+                        `}
+                    >
+                        <p className="inline text-lg md:text-xl leading-relaxed text-slate-200 font-serif">
+                            <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
+                            {v.text}
+                        </p>
+                        <span className="inline-flex items-center gap-1 ml-1.5">
+                            {isFavorito(v.verse) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
+                            {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
+                        </span>
+
+                        {/* MINI-TOOLBAR */}
+                        {versiculoSelecionado === v.verse && (
+                            <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center gap-1 bg-slate-900/95 border border-white/15 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
+                                        <Palette className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-slate-300 hover:text-red-400'}`} title="Favoritar">
+                                        <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
+                                    </button>
+                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors" title="Copiar">
+                                        <Copy className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors" title="Compartilhar">
+                                        <Share2 className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
+                                        <Lightbulb className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
+                                        <StickyNote className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {mostrarCores && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                        {CORES_DESTAQUE_PLANO.map(cor => (
+                                            <button key={cor.id} onClick={() => handleDestacar(cor.id)}
+                                                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
+                                                title={cor.nome} />
+                                        ))}
+                                        {interacoesMap.destaques[v.verse] && (
+                                            <button onClick={() => handleDestacar(interacoesMap.destaques[v.verse].cor || 'yellow')}
+                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400" title="Remover destaque">
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {mostrarNota && (
+                                    <div className="mt-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
+                                        <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
+                                            placeholder="Escreva sua anotação..."
+                                            className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-base placeholder-slate-500 focus:outline-none focus:border-amber-500/50 resize-none"
+                                            rows={3} autoFocus />
+                                        <div className="flex justify-end gap-2 mt-2">
+                                            {interacoesMap.notas[v.verse] && (
+                                                <button onClick={async () => {
+                                                    await removerInteracaoPorVersiculoETipo('nota', livroAbrev, capitulo, v.verse);
+                                                    success('Nota removida');
+                                                    setMostrarNota(false);
+                                                    await carregarInteracoes();
+                                                }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
+                                                    Apagar
+                                                </button>
+                                            )}
+                                            <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
+                                                className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
+                                                Salvar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Modal de Estudo IA */}
+            {estudoAberto && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-white/10">
+                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                            <div className="flex items-center gap-2">
+                                <Lightbulb className="w-5 h-5 text-amber-400" />
+                                <span className="font-bold text-white text-sm">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
+                            </div>
+                            <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                        </div>
+                        {estudoVersiculo && (
+                            <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
+                                <p className="text-amber-200 text-sm italic">&ldquo;{estudoVersiculo.text}&rdquo;</p>
+                            </div>
+                        )}
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {estudoLoading ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                    <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                                    <p className="text-slate-400 text-sm">Gerando explicação...</p>
+                                </div>
+                            ) : (
+                                <div className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+        </>
+    );
+}
 
 // ===========================================
 // TIPOS
@@ -75,11 +424,53 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     );
 }
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({ message, versiculosInterativos, livroInfo }: {
+    message: ChatMessage;
+    versiculosInterativos?: Versiculo[];
+    livroInfo?: { abrev: string; nome: string; capitulo: number };
+}) {
     const isUser = message.role === 'user';
+    const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
 
     // Mensagens do assistente ocupam a tela toda (como a Biblioteca)
     if (!isUser) {
+        if (temVersiculosInterativos) {
+            // Renderiza com versículos interativos
+            const partes = message.content.split('%%VERSICULOS_INTERATIVOS%%');
+            return (
+                <div className="animate-enter mb-6">
+                    <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-visible">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+                        <div className="relative z-10">
+                            {/* Texto antes dos versículos */}
+                            {partes[0] && (
+                                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
+                                    <ReactMarkdown>{partes[0]}</ReactMarkdown>
+                                </div>
+                            )}
+
+                            {/* Versículos interativos */}
+                            <VersiculosInterativos
+                                versiculos={versiculosInterativos!}
+                                referencia={`${livroInfo!.nome} ${livroInfo!.capitulo}`}
+                                livroAbrev={livroInfo!.abrev}
+                                livroNome={livroInfo!.nome}
+                                capitulo={livroInfo!.capitulo}
+                            />
+
+                            {/* Texto depois dos versículos */}
+                            {partes[1] && (
+                                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
+                                    <ReactMarkdown>{partes[1]}</ReactMarkdown>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="animate-enter mb-6">
                 <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-hidden">
@@ -120,6 +511,8 @@ export default function PlanoLeituraPage() {
     const [currentPage, setCurrentPage] = useState(1);  // Track reading progress
     const currentPageRef = useRef(1);  // Ref for immediate access
     const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
+    const [versiculosPaginaAtual, setVersiculosPaginaAtual] = useState<Versiculo[]>([]);
+    const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number }>({ abrev: '', nome: '', capitulo: 0 });
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
@@ -218,7 +611,8 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         if (['menu', 'voltar', 'voltar ao menu'].includes(cmdLower)) {
             setActiveOption(null);
             setCurrentPage(1);
-            currentPageRef.current = 1;  // Reset ref too
+            currentPageRef.current = 1;
+            setVersiculosPaginaAtual([]);
             return gerarRespostaMenuInicial();
         }
 
@@ -278,19 +672,33 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
     const gerarLeituraGuiada = (): string => {
         if (!passagem) return '';
 
-        // Usa os versículos da API se disponíveis
-        const versiculosTexto = bibleData
-            ? formatarVersiculosParte(bibleData.versiculos, 0, 10)
-            : '(Carregando versículos...)';
-
         const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
+
+        // Salvar versículos da página atual para renderização interativa
+        if (bibleData) {
+            const slice = bibleData.versiculos.slice(0, 10);
+            setVersiculosPaginaAtual(slice);
+            // Extrair info do livro
+            const parsed = parseReferencia(passagem.referencia);
+            if (parsed) {
+                const abrev = getAbrevFromId(parsed.livroId);
+                // Pegar nome do livro da referência original (ex: "Isaías 16-18" → "Isaías")
+                const refParts = passagem.referencia.trim().match(/^(.+?)\s+\d/);
+                const nomeOriginal = refParts ? refParts[1] : parsed.livro;
+                setLivroInfoAtual({
+                    abrev,
+                    nome: nomeOriginal,
+                    capitulo: parsed.capituloInicio
+                });
+            }
+        }
 
         return `📖 **${passagem.referencia}**
 📍 *Parte 1 de ${totalPartes}*
 
 ---
 
-${versiculosTexto}
+%%VERSICULOS_INTERATIVOS%%
 
 ---
 
@@ -811,9 +1219,12 @@ Digite **MENU** para voltar e explorar outras opções.`;
             setCurrentPage(nextPage);
 
             const startIndex = page * 10;  // page=1 -> start=10, page=2 -> start=20, etc.
-            const versiculosProximos = bibleData
-                ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
-                : '(Carregando versículos...)';
+
+            // Atualizar versículos interativos da página
+            if (bibleData) {
+                const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
+                setVersiculosPaginaAtual(slice);
+            }
 
             const ehUltimaParte = nextPage >= totalPartes;
 
@@ -822,7 +1233,7 @@ Digite **MENU** para voltar e explorar outras opções.`;
 
 ---
 
-${versiculosProximos}
+%%VERSICULOS_INTERATIVOS%%
 
 ---
 
@@ -1160,9 +1571,19 @@ Digite **MENU** para continuar estudando.`;
 
                             {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                {messages.map((msg, idx) => (
-                                    <ChatBubble key={idx} message={msg} />
-                                ))}
+                                {messages.map((msg, idx) => {
+                                    // Passa versículos interativos para a última mensagem com placeholder
+                                    const isLastMsg = idx === messages.length - 1;
+                                    const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
+                                    return (
+                                        <ChatBubble
+                                            key={idx}
+                                            message={msg}
+                                            versiculosInterativos={isLastMsg && temPlaceholder ? versiculosPaginaAtual : undefined}
+                                            livroInfo={isLastMsg && temPlaceholder ? livroInfoAtual : undefined}
+                                        />
+                                    );
+                                })}
 
                                 {isProcessing && (
                                     <div className="flex justify-start animate-pulse">

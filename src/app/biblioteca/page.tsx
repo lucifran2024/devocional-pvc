@@ -398,6 +398,7 @@ export default function BibliotecaPage() {
     const { toasts, removeToast, success, error: toastError } = useToast();
     const toolbarRef = useRef<HTMLDivElement>(null);
     const versiculosRef = useRef<HTMLDivElement>(null);
+    const versiculoAnteriorRef = useRef<number | null>(null);
 
     // ==========================================
     // INICIALIZAÇÃO: Carregar última leitura
@@ -557,14 +558,17 @@ export default function BibliotecaPage() {
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
         const containerRect = versiculosRef.current?.getBoundingClientRect();
 
-        if (versiculoSelecionado === verse) {
+        // Se clicou no mesmo versículo que estava aberto, fecha
+        if (versiculoAnteriorRef.current === verse) {
             setVersiculoSelecionado(null);
             setMostrarCores(false);
             setMostrarNota(false);
+            versiculoAnteriorRef.current = null;
             return;
         }
 
         setVersiculoSelecionado(verse);
+        versiculoAnteriorRef.current = verse;
         setMostrarCores(false);
         setMostrarNota(false);
 
@@ -582,9 +586,15 @@ export default function BibliotecaPage() {
     useEffect(() => {
         const handleClickFora = (e: MouseEvent) => {
             if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
-                setVersiculoSelecionado(null);
-                setMostrarCores(false);
-                setMostrarNota(false);
+                // Verifica se clicou em algum versículo (não fechar se vai abrir outro)
+                const target = e.target as HTMLElement;
+                const versiculoDiv = target.closest('[id^="verse-"]');
+                if (!versiculoDiv) {
+                    setVersiculoSelecionado(null);
+                    setMostrarCores(false);
+                    setMostrarNota(false);
+                    versiculoAnteriorRef.current = null;
+                }
             }
         };
         document.addEventListener('mousedown', handleClickFora);
