@@ -6,12 +6,13 @@ import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
-    CheckSquare, Square, XCircle, Wifi, WifiOff, Database
+    CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { getCachedChapter, cacheChapter } from '@/lib/bible-db';
+import { OfflineManager } from './components/OfflineManager';
 import {
     salvarInteracaoBiblia,
     removerInteracaoBiblia,
@@ -451,6 +452,7 @@ export default function BibliotecaPage() {
     // Offline
     const [isOnline, setIsOnline] = useState(true);
     const [cameFromCache, setCameFromCache] = useState(false);
+    const [offlineManagerAberto, setOfflineManagerAberto] = useState(false);
 
     // Fonte e versão
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
@@ -1123,6 +1125,9 @@ export default function BibliotecaPage() {
                         <button onClick={() => setBuscaAberta(!buscaAberta)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-amber-400 transition-colors" title="Buscar">
                             <Search className="w-5 h-5" />
                         </button>
+                        <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-amber-400 transition-colors" title="Offline">
+                            <Download className="w-5 h-5" />
+                        </button>
                         <button onClick={() => abrirPainel('favoritos')} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-amber-400 transition-colors" title="Salvos">
                             <BookmarkIcon className="w-5 h-5" />
                         </button>
@@ -1692,6 +1697,14 @@ export default function BibliotecaPage() {
                     </button>
                 </div>
             </main>
+
+            {/* --- OFFLINE MANAGER --- */}
+            {offlineManagerAberto && (
+                <OfflineManager
+                    versoes={VERSOES_BIBLIA}
+                    onClose={() => setOfflineManagerAberto(false)}
+                />
+            )}
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </CosmicBackground>
