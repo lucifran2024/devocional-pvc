@@ -6,11 +6,12 @@ import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
-    CheckSquare, Square, XCircle
+    CheckSquare, Square, XCircle, Wifi, WifiOff, Database
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { getCachedChapter, cacheChapter } from '@/lib/bible-db';
 import {
     salvarInteracaoBiblia,
     removerInteracaoBiblia,
@@ -447,6 +448,10 @@ export default function BibliotecaPage() {
     const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
     const [buscaLoading, setBuscaLoading] = useState(false);
 
+    // Offline
+    const [isOnline, setIsOnline] = useState(true);
+    const [cameFromCache, setCameFromCache] = useState(false);
+
     // Fonte e versão
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
@@ -490,7 +495,7 @@ export default function BibliotecaPage() {
     };
 
     // ==========================================
-    // INICIALIZAÇÃO: Carregar última leitura + prefs
+    // INICIALIZAÇÃO: Carregar última leitura + prefs + online listener
     // ==========================================
     useEffect(() => {
         async function init() {
@@ -506,6 +511,9 @@ export default function BibliotecaPage() {
                 if (v) setVersaoBiblia(v);
             }
 
+            // Status de conectividade
+            setIsOnline(navigator.onLine);
+
             const ultima = await getUltimaLeitura();
             if (ultima) {
                 const livro = LIVROS_BIBLIA.find(l => l.abrev === ultima.livro_abrev);
@@ -517,6 +525,16 @@ export default function BibliotecaPage() {
             setInicializado(true);
         }
         init();
+
+        // Online/offline listeners
+        const goOnline = () => setIsOnline(true);
+        const goOffline = () => setIsOnline(false);
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
     }, []);
 
     // ==========================================
@@ -526,29 +544,62 @@ export default function BibliotecaPage() {
         setLoading(true);
         setError(null);
         setVersiculoSelecionado(null);
+        setCameFromCache(false);
 
         const codigo = versaoCodigo || versaoBiblia.codigo;
-        try {
-            const bookId = LIVRO_PARA_ID[livro] || 1;
-            const response = await fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`);
+        const bookId = LIVRO_PARA_ID[livro] || 1;
 
+        // 1) Tentar cache local primeiro (instantâneo)
+        try {
+            const cached = await getCachedChapter(codigo, bookId, cap);
+            if (cached && cached.length > 0) {
+                setVersiculos(cached);
+                setCameFromCache(true);
+                setLoading(false);
+
+                // Background: atualiza cache se online (stale-while-revalidate)
+                if (navigator.onLine) {
+                    fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`)
+                        .then(r => r.ok ? r.json() : null)
+                        .then(data => {
+                            if (Array.isArray(data) && data.length > 0) {
+                                const fresh = data.map((v: { verse: number; text: string }) => ({
+                                    verse: v.verse,
+                                    text: v.text.replace(/<[^>]*>/g, ''),
+                                }));
+                                cacheChapter(codigo, bookId, cap, fresh);
+                                // Atualiza UI silenciosamente se mudou
+                                setVersiculos(fresh);
+                            }
+                        })
+                        .catch(() => { /* silencioso */ });
+                }
+                return;
+            }
+        } catch { /* IndexedDB indisponível, continua para fetch */ }
+
+        // 2) Sem cache: buscar da API
+        try {
+            const response = await fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`);
             if (!response.ok) throw new Error('API não disponível');
 
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setVersiculos(data.map((v: { verse: number; text: string }) => ({
+            if (Array.isArray(data) && data.length > 0) {
+                const versiculos = data.map((v: { verse: number; text: string }) => ({
                     verse: v.verse,
-                    text: v.text.replace(/<[^>]*>/g, '')
-                })));
+                    text: v.text.replace(/<[^>]*>/g, ''),
+                }));
+                setVersiculos(versiculos);
+
+                // Salvar no cache para próxima vez
+                cacheChapter(codigo, bookId, cap, versiculos).catch(() => {});
             } else {
                 throw new Error('Formato inválido');
             }
         } catch {
-            setVersiculos([
-                { verse: 1, text: 'No princípio Deus criou os céus e a terra.' },
-                { verse: 2, text: 'A terra era sem forma e vazia; e havia trevas sobre a face do abismo.' },
-                { verse: 3, text: 'E disse Deus: Haja luz. E houve luz.' },
-            ]);
+            // 3) Sem cache + sem internet = mensagem de offline
+            setError('Capítulo não disponível offline. Conecte à internet para baixar.');
+            setVersiculos([]);
         } finally {
             setLoading(false);
         }
@@ -1056,6 +1107,16 @@ export default function BibliotecaPage() {
                     <div className="flex items-center gap-2">
                         <Book className="w-5 h-5 text-amber-400" />
                         <span className="text-sm font-bold text-white">Bíblia Sagrada</span>
+                        {/* Indicador de conectividade */}
+                        {!isOnline ? (
+                            <span className="flex items-center gap-1 text-[10px] text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded-full">
+                                <WifiOff className="w-3 h-3" /> offline
+                            </span>
+                        ) : cameFromCache ? (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded-full">
+                                <Database className="w-3 h-3" /> cache
+                            </span>
+                        ) : null}
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -1506,8 +1567,10 @@ export default function BibliotecaPage() {
                 )}
 
                 {error && !loading && (
-                    <div className="glass-panel rounded-xl p-8 text-center max-w-md mx-auto border border-red-500/30 bg-red-500/10">
-                        <p className="text-red-300 mb-6">{error}</p>
+                    <div className="glass-panel rounded-xl p-8 text-center max-w-md mx-auto border border-orange-500/30 bg-orange-500/10">
+                        <WifiOff className="w-12 h-12 text-orange-400 mx-auto mb-4" />
+                        <p className="text-orange-200 font-bold text-lg mb-2">Sem conexão</p>
+                        <p className="text-slate-400 text-sm mb-6">{error}</p>
                         <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold">Tentar Novamente</button>
                     </div>
                 )}
