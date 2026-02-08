@@ -114,6 +114,229 @@ const CORES_DESTAQUE: { id: string; nome: string; bg: string; border: string }[]
     { id: 'pink', nome: 'Rosa', bg: 'bg-pink-500/20', border: 'border-pink-500/40' },
 ];
 
+// Títulos de seção da Bíblia (livro:capítulo -> versículo -> título)
+const TITULOS_SECAO: Record<string, Record<number, string>> = {
+    // GÊNESIS
+    'gn:1': { 1: 'A Criação do Mundo' },
+    'gn:2': { 1: 'O Sétimo Dia — O Descanso', 4: 'O Jardim do Éden', 18: 'A Criação da Mulher' },
+    'gn:3': { 1: 'A Desobediência do Homem', 14: 'O Castigo', 22: 'A Expulsão do Jardim' },
+    'gn:4': { 1: 'Caim e Abel', 17: 'Os Descendentes de Caim', 25: 'Sete e Enos' },
+    'gn:5': { 1: 'Os Descendentes de Adão' },
+    'gn:6': { 1: 'A Maldade dos Homens', 9: 'Noé e a Arca' },
+    'gn:7': { 1: 'O Dilúvio' },
+    'gn:8': { 1: 'O Fim do Dilúvio', 20: 'O Sacrifício de Noé' },
+    'gn:9': { 1: 'A Aliança de Deus com Noé', 18: 'Noé e seus Filhos' },
+    'gn:10': { 1: 'A Descendência dos Filhos de Noé' },
+    'gn:11': { 1: 'A Torre de Babel', 10: 'Os Descendentes de Sem', 27: 'Os Descendentes de Terá' },
+    'gn:12': { 1: 'O Chamado de Abrão', 10: 'Abrão no Egito' },
+    'gn:13': { 1: 'Abrão e Ló se Separam' },
+    'gn:14': { 1: 'Abrão Salva Ló', 17: 'Melquisedeque Abençoa Abrão' },
+    'gn:15': { 1: 'A Aliança de Deus com Abrão' },
+    'gn:16': { 1: 'Agar e Ismael' },
+    'gn:17': { 1: 'A Circuncisão — Sinal da Aliança', 15: 'Deus Promete um Filho a Sara' },
+    'gn:18': { 1: 'Os Três Visitantes', 16: 'Abraão Intercede por Sodoma' },
+    'gn:19': { 1: 'A Destruição de Sodoma e Gomorra', 30: 'Ló e suas Filhas' },
+    'gn:20': { 1: 'Abraão e Abimeleque' },
+    'gn:21': { 1: 'O Nascimento de Isaque', 8: 'Agar e Ismael são Expulsos', 22: 'Aliança com Abimeleque' },
+    'gn:22': { 1: 'Deus Prova Abraão', 20: 'Os Filhos de Naor' },
+    'gn:23': { 1: 'A Morte de Sara' },
+    'gn:24': { 1: 'Isaque e Rebeca' },
+    'gn:25': { 1: 'Os Últimos Anos de Abraão', 12: 'Os Filhos de Ismael', 19: 'Esaú e Jacó', 29: 'Esaú Vende seu Direito' },
+    'gn:26': { 1: 'Isaque em Gerar', 12: 'Isaque Prospera', 34: 'As Esposas de Esaú' },
+    'gn:27': { 1: 'Isaque Abençoa Jacó', 30: 'Esaú Pede a Bênção', 41: 'Jacó Foge para Harã' },
+    'gn:28': { 1: 'Jacó Vai para a Mesopotâmia', 10: 'O Sonho de Jacó' },
+    'gn:29': { 1: 'Jacó Chega à Casa de Labão', 15: 'Jacó Casa com Lia e Raquel', 31: 'Os Filhos de Jacó' },
+    'gn:30': { 1: 'Mais Filhos de Jacó', 25: 'Jacó Enriquece' },
+    'gn:31': { 1: 'Jacó Foge de Labão', 22: 'Labão Persegue Jacó', 43: 'O Acordo entre Jacó e Labão' },
+    'gn:32': { 1: 'Jacó se Prepara para Encontrar Esaú', 22: 'Jacó Luta com Deus' },
+    'gn:33': { 1: 'Jacó e Esaú se Encontram', 18: 'Jacó Chega a Siquém' },
+    'gn:37': { 1: 'José e seus Irmãos', 12: 'José é Vendido', 29: 'Jacó Chora por José' },
+    'gn:39': { 1: 'José na Casa de Potifar', 7: 'José e a Mulher de Potifar', 19: 'José na Prisão' },
+    'gn:40': { 1: 'José Interpreta os Sonhos dos Presos' },
+    'gn:41': { 1: 'Os Sonhos do Faraó', 37: 'José Governa o Egito' },
+    'gn:42': { 1: 'Os Irmãos de José Vão ao Egito' },
+    'gn:43': { 1: 'A Segunda Viagem ao Egito' },
+    'gn:44': { 1: 'A Taça de José' },
+    'gn:45': { 1: 'José se Revela aos Irmãos' },
+    'gn:46': { 1: 'Jacó Vai para o Egito' },
+    'gn:47': { 1: 'Jacó e o Faraó', 27: 'O Último Pedido de Jacó' },
+    'gn:48': { 1: 'Jacó Abençoa os Filhos de José' },
+    'gn:49': { 1: 'A Bênção de Jacó', 29: 'A Morte de Jacó' },
+    'gn:50': { 1: 'O Sepultamento de Jacó', 15: 'José Perdoa seus Irmãos', 22: 'A Morte de José' },
+    // ÊXODO
+    'ex:1': { 1: 'Os Israelitas são Escravizados' },
+    'ex:2': { 1: 'O Nascimento de Moisés', 11: 'Moisés Foge para Midiã' },
+    'ex:3': { 1: 'Moisés e a Sarça Ardente', 13: 'Deus Revela seu Nome' },
+    'ex:4': { 1: 'Os Sinais de Moisés', 18: 'Moisés Volta ao Egito' },
+    'ex:5': { 1: 'Moisés e Arão Diante do Faraó' },
+    'ex:7': { 14: 'A Primeira Praga — Água em Sangue' },
+    'ex:8': { 1: 'A Segunda Praga — As Rãs', 16: 'A Terceira Praga — Os Piolhos', 20: 'A Quarta Praga — As Moscas' },
+    'ex:9': { 1: 'A Quinta Praga — Peste nos Animais', 8: 'A Sexta Praga — As Úlceras', 13: 'A Sétima Praga — A Chuva de Pedras' },
+    'ex:10': { 1: 'A Oitava Praga — Os Gafanhotos', 21: 'A Nona Praga — As Trevas' },
+    'ex:11': { 1: 'A Última Praga Anunciada' },
+    'ex:12': { 1: 'A Páscoa', 29: 'A Décima Praga — Morte dos Primogênitos', 37: 'A Saída do Egito' },
+    'ex:14': { 1: 'A Travessia do Mar Vermelho' },
+    'ex:15': { 1: 'O Cântico de Moisés', 22: 'As Águas Amargas' },
+    'ex:16': { 1: 'O Maná e as Codornizes' },
+    'ex:17': { 1: 'Água da Rocha', 8: 'Vitória sobre os Amalequitas' },
+    'ex:19': { 1: 'O Povo no Monte Sinai' },
+    'ex:20': { 1: 'Os Dez Mandamentos' },
+    'ex:32': { 1: 'O Bezerro de Ouro' },
+    'ex:34': { 1: 'As Novas Tábuas da Lei' },
+    // SALMOS (alguns dos mais conhecidos)
+    'sl:1': { 1: 'O Justo e o Ímpio' },
+    'sl:23': { 1: 'O Senhor é meu Pastor' },
+    'sl:51': { 1: 'Oração de Arrependimento' },
+    'sl:91': { 1: 'A Proteção do Altíssimo' },
+    'sl:119': { 1: 'A Palavra de Deus' },
+    'sl:121': { 1: 'O Protetor de Israel' },
+    'sl:139': { 1: 'Deus Conhece Tudo' },
+    'sl:150': { 1: 'Tudo que Respira Louve ao Senhor' },
+    // PROVÉRBIOS
+    'pv:1': { 1: 'O Propósito dos Provérbios', 8: 'Conselho de um Pai', 20: 'A Sabedoria Clama' },
+    'pv:31': { 1: 'Conselhos ao Rei', 10: 'A Mulher Virtuosa' },
+    // ECLESIASTES
+    'ec:1': { 1: 'Tudo é Vaidade' },
+    'ec:3': { 1: 'Tempo para Tudo' },
+    'ec:12': { 1: 'Lembra do teu Criador', 9: 'Conclusão' },
+    // ISAÍAS
+    'is:6': { 1: 'A Visão de Isaías' },
+    'is:7': { 10: 'O Sinal de Emanuel' },
+    'is:9': { 1: 'O Príncipe da Paz' },
+    'is:40': { 1: 'Consolem o meu Povo' },
+    'is:53': { 1: 'O Servo Sofredor' },
+    'is:55': { 1: 'Convite à Salvação' },
+    // DANIEL
+    'dn:1': { 1: 'Daniel na Babilônia' },
+    'dn:2': { 1: 'O Sonho de Nabucodonosor' },
+    'dn:3': { 1: 'A Fornalha de Fogo' },
+    'dn:5': { 1: 'A Escrita na Parede' },
+    'dn:6': { 1: 'Daniel na Cova dos Leões' },
+    // JONAS
+    'jn:1': { 1: 'Jonas Foge de Deus' },
+    'jn:2': { 1: 'A Oração de Jonas' },
+    'jn:3': { 1: 'Jonas Prega em Nínive' },
+    'jn:4': { 1: 'A Ira de Jonas' },
+    // MATEUS
+    'mt:1': { 1: 'A Genealogia de Jesus', 18: 'O Nascimento de Jesus' },
+    'mt:2': { 1: 'A Visita dos Magos', 13: 'A Fuga para o Egito', 16: 'O Massacre dos Inocentes', 19: 'A Volta do Egito' },
+    'mt:3': { 1: 'João Batista Prepara o Caminho', 13: 'O Batismo de Jesus' },
+    'mt:4': { 1: 'A Tentação de Jesus', 12: 'Jesus Começa a Pregar', 18: 'A Chamada dos Primeiros Discípulos' },
+    'mt:5': { 1: 'O Sermão da Montanha — As Bem-aventuranças', 13: 'Sal da Terra e Luz do Mundo', 17: 'A Lei e os Profetas', 21: 'Sobre a Ira', 27: 'Sobre o Adultério', 33: 'Sobre os Juramentos', 38: 'Sobre a Vingança', 43: 'O Amor aos Inimigos' },
+    'mt:6': { 1: 'Sobre a Caridade', 5: 'Sobre a Oração', 9: 'O Pai Nosso', 16: 'Sobre o Jejum', 19: 'Tesouros no Céu', 25: 'Não se Preocupem' },
+    'mt:7': { 1: 'Não Julguem', 7: 'Peçam, Busquem, Batam', 13: 'A Porta Estreita', 15: 'Pelos Frutos os Conhecereis', 24: 'A Casa na Rocha' },
+    'mt:8': { 1: 'A Cura de um Leproso', 5: 'A Fé do Centurião', 14: 'Jesus Cura Muitos', 23: 'Jesus Acalma a Tempestade', 28: 'Os Endemoninhados Gadarenos' },
+    'mt:13': { 1: 'A Parábola do Semeador', 24: 'A Parábola do Joio', 31: 'A Parábola do Grão de Mostarda', 44: 'A Parábola do Tesouro Escondido', 47: 'A Parábola da Rede' },
+    'mt:14': { 1: 'A Morte de João Batista', 13: 'A Multiplicação dos Pães', 22: 'Jesus Anda sobre as Águas' },
+    'mt:17': { 1: 'A Transfiguração' },
+    'mt:19': { 16: 'O Jovem Rico' },
+    'mt:20': { 1: 'A Parábola dos Trabalhadores', 29: 'Dois Cegos Recebem a Visão' },
+    'mt:21': { 1: 'A Entrada Triunfal em Jerusalém', 12: 'Jesus Purifica o Templo' },
+    'mt:22': { 1: 'A Parábola das Bodas', 15: 'O Tributo a César', 34: 'O Maior Mandamento' },
+    'mt:25': { 1: 'A Parábola das Dez Virgens', 14: 'A Parábola dos Talentos', 31: 'O Juízo Final' },
+    'mt:26': { 1: 'A Conspiração contra Jesus', 17: 'A Última Ceia', 36: 'O Getsêmani', 47: 'A Prisão de Jesus', 57: 'Jesus Diante do Sinédrio', 69: 'Pedro Nega Jesus' },
+    'mt:27': { 1: 'Jesus Diante de Pilatos', 15: 'A Sentença de Morte', 27: 'Os Soldados Zombam de Jesus', 32: 'A Crucificação', 45: 'A Morte de Jesus', 57: 'O Sepultamento' },
+    'mt:28': { 1: 'A Ressurreição', 16: 'A Grande Comissão' },
+    // MARCOS
+    'mc:1': { 1: 'João Batista Prepara o Caminho', 9: 'O Batismo de Jesus', 12: 'A Tentação no Deserto', 14: 'Jesus Começa a Pregar', 16: 'A Chamada dos Primeiros Discípulos', 21: 'Jesus Expulsa um Espírito Mau', 29: 'Jesus Cura Muitos' },
+    'mc:4': { 35: 'Jesus Acalma a Tempestade' },
+    'mc:5': { 1: 'O Endemoninhado Gadareno', 21: 'A Filha de Jairo e a Mulher com Hemorragia' },
+    'mc:6': { 14: 'A Morte de João Batista', 30: 'A Multiplicação dos Pães', 45: 'Jesus Anda sobre as Águas' },
+    'mc:10': { 17: 'O Jovem Rico', 46: 'O Cego Bartimeu' },
+    'mc:11': { 1: 'A Entrada Triunfal', 15: 'Jesus Purifica o Templo' },
+    'mc:14': { 1: 'A Conspiração', 12: 'A Última Ceia', 32: 'O Getsêmani', 43: 'A Prisão de Jesus', 53: 'Jesus Diante do Sinédrio', 66: 'Pedro Nega Jesus' },
+    'mc:15': { 1: 'Jesus Diante de Pilatos', 21: 'A Crucificação', 33: 'A Morte de Jesus', 42: 'O Sepultamento' },
+    'mc:16': { 1: 'A Ressurreição', 9: 'Jesus Aparece a Maria Madalena', 14: 'A Grande Comissão', 19: 'A Ascensão' },
+    // LUCAS
+    'lc:1': { 1: 'Introdução', 5: 'O Anúncio do Nascimento de João', 26: 'O Anúncio do Nascimento de Jesus', 46: 'O Cântico de Maria', 57: 'O Nascimento de João Batista' },
+    'lc:2': { 1: 'O Nascimento de Jesus', 8: 'Os Pastores', 21: 'A Apresentação no Templo', 41: 'O Menino Jesus no Templo' },
+    'lc:3': { 1: 'A Pregação de João Batista', 21: 'O Batismo de Jesus', 23: 'A Genealogia de Jesus' },
+    'lc:4': { 1: 'A Tentação de Jesus', 14: 'Jesus Começa a Pregar', 16: 'Jesus em Nazaré' },
+    'lc:10': { 25: 'A Parábola do Bom Samaritano', 38: 'Jesus Visita Marta e Maria' },
+    'lc:15': { 1: 'A Parábola da Ovelha Perdida', 8: 'A Parábola da Moeda Perdida', 11: 'A Parábola do Filho Pródigo' },
+    'lc:18': { 1: 'A Parábola do Juiz Iníquo', 9: 'O Fariseu e o Publicano', 15: 'Jesus e as Crianças', 18: 'O Jovem Rico' },
+    'lc:19': { 1: 'Zaqueu', 28: 'A Parábola das Dez Minas', 41: 'Jesus Chora por Jerusalém', 45: 'Jesus Purifica o Templo' },
+    'lc:22': { 1: 'A Conspiração', 7: 'A Última Ceia', 39: 'O Getsêmani', 47: 'A Prisão de Jesus', 54: 'Pedro Nega Jesus', 66: 'Jesus Diante do Sinédrio' },
+    'lc:23': { 1: 'Jesus Diante de Pilatos', 26: 'A Crucificação', 44: 'A Morte de Jesus', 50: 'O Sepultamento' },
+    'lc:24': { 1: 'A Ressurreição', 13: 'No Caminho de Emaús', 36: 'Jesus Aparece aos Discípulos', 50: 'A Ascensão' },
+    // JOÃO
+    'jo:1': { 1: 'O Verbo se Fez Carne', 19: 'O Testemunho de João Batista', 35: 'Os Primeiros Discípulos' },
+    'jo:2': { 1: 'As Bodas de Caná', 13: 'Jesus Purifica o Templo' },
+    'jo:3': { 1: 'Jesus e Nicodemos', 16: 'O Amor de Deus pelo Mundo', 22: 'Jesus e João Batista' },
+    'jo:4': { 1: 'Jesus e a Mulher Samaritana', 43: 'Jesus Cura o Filho do Oficial' },
+    'jo:5': { 1: 'A Cura no Tanque de Betesda' },
+    'jo:6': { 1: 'A Multiplicação dos Pães', 16: 'Jesus Anda sobre as Águas', 22: 'O Pão da Vida' },
+    'jo:8': { 1: 'A Mulher Adúltera', 12: 'Jesus — A Luz do Mundo' },
+    'jo:9': { 1: 'Jesus Cura o Cego de Nascença' },
+    'jo:10': { 1: 'O Bom Pastor', 22: 'Jesus e os Judeus' },
+    'jo:11': { 1: 'A Morte de Lázaro', 17: 'Jesus — A Ressurreição e a Vida', 38: 'Jesus Ressuscita Lázaro' },
+    'jo:13': { 1: 'Jesus Lava os Pés dos Discípulos', 21: 'Jesus Anuncia a Traição' },
+    'jo:14': { 1: 'Jesus — O Caminho, a Verdade e a Vida', 15: 'A Promessa do Espírito Santo' },
+    'jo:15': { 1: 'A Videira e os Ramos', 18: 'O Mundo Odeia os Discípulos' },
+    'jo:17': { 1: 'A Oração de Jesus' },
+    'jo:18': { 1: 'A Prisão de Jesus', 12: 'Jesus Diante de Anás e Caifás', 15: 'Pedro Nega Jesus', 28: 'Jesus Diante de Pilatos' },
+    'jo:19': { 1: 'Jesus é Flagelado', 17: 'A Crucificação', 28: 'A Morte de Jesus', 38: 'O Sepultamento' },
+    'jo:20': { 1: 'A Ressurreição', 10: 'Jesus Aparece a Maria Madalena', 19: 'Jesus Aparece aos Discípulos', 24: 'Jesus e Tomé' },
+    'jo:21': { 1: 'Jesus Aparece na Galileia', 15: 'Jesus e Pedro' },
+    // ATOS
+    'at:1': { 1: 'A Promessa do Espírito Santo', 6: 'A Ascensão de Jesus', 12: 'A Escolha de Matias' },
+    'at:2': { 1: 'O Dia de Pentecostes', 14: 'O Sermão de Pedro', 37: 'A Primeira Comunidade' },
+    'at:3': { 1: 'A Cura do Coxo' },
+    'at:7': { 54: 'A Morte de Estêvão' },
+    'at:8': { 26: 'Filipe e o Etíope' },
+    'at:9': { 1: 'A Conversão de Saulo', 32: 'Pedro Cura Enéias e Ressuscita Dorcas' },
+    'at:10': { 1: 'Pedro e Cornélio' },
+    'at:12': { 1: 'Pedro é Preso e Libertado' },
+    'at:16': { 16: 'Paulo e Silas na Prisão' },
+    'at:17': { 16: 'Paulo em Atenas' },
+    'at:27': { 1: 'A Viagem de Paulo a Roma' },
+    'at:28': { 1: 'Paulo em Malta', 16: 'Paulo em Roma' },
+    // ROMANOS
+    'rm:1': { 1: 'Saudação', 16: 'O Poder do Evangelho' },
+    'rm:3': { 21: 'A Justiça pela Fé' },
+    'rm:5': { 1: 'Paz com Deus', 12: 'Adão e Cristo' },
+    'rm:6': { 1: 'Mortos para o Pecado' },
+    'rm:8': { 1: 'Vida no Espírito', 28: 'Mais que Vencedores' },
+    'rm:12': { 1: 'O Sacrifício Vivo', 9: 'O Amor Sincero' },
+    'rm:13': { 1: 'Submissão às Autoridades', 8: 'O Amor ao Próximo' },
+    // 1 CORÍNTIOS
+    '1co:13': { 1: 'O Amor' },
+    '1co:15': { 1: 'A Ressurreição de Cristo', 35: 'O Corpo Ressuscitado' },
+    // GÁLATAS
+    'gl:5': { 1: 'A Liberdade em Cristo', 16: 'As Obras da Carne e o Fruto do Espírito' },
+    // EFÉSIOS
+    'ef:6': { 10: 'A Armadura de Deus' },
+    // FILIPENSES
+    'fp:2': { 1: 'A Humildade de Cristo', 12: 'Brilhem como Estrelas' },
+    'fp:4': { 4: 'Alegrem-se no Senhor', 10: 'Deus Supre as Necessidades' },
+    // HEBREUS
+    'hb:11': { 1: 'Os Heróis da Fé' },
+    'hb:12': { 1: 'A Corrida da Fé' },
+    // TIAGO
+    'tg:1': { 1: 'Saudação', 2: 'Provações e Tentações', 19: 'Praticantes da Palavra' },
+    'tg:2': { 1: 'A Fé e as Obras' },
+    'tg:3': { 1: 'O Poder da Língua' },
+    // 1 PEDRO
+    '1pe:1': { 1: 'Esperança Viva' },
+    '1pe:2': { 1: 'A Pedra Viva', 11: 'Vivam como Servos de Deus' },
+    // 1 JOÃO
+    '1jo:1': { 1: 'A Palavra da Vida', 5: 'Deus é Luz' },
+    '1jo:4': { 1: 'O Amor de Deus', 7: 'Deus é Amor' },
+    // APOCALIPSE
+    'ap:1': { 1: 'Introdução', 9: 'A Visão de Cristo Glorificado' },
+    'ap:2': { 1: 'Carta a Éfeso', 8: 'Carta a Esmirna', 12: 'Carta a Pérgamo', 18: 'Carta a Tiatira' },
+    'ap:3': { 1: 'Carta a Sardes', 7: 'Carta a Filadélfia', 14: 'Carta a Laodiceia' },
+    'ap:4': { 1: 'O Trono no Céu' },
+    'ap:5': { 1: 'O Cordeiro e o Livro' },
+    'ap:6': { 1: 'Os Selos' },
+    'ap:7': { 1: 'Os 144 Mil Selados' },
+    'ap:12': { 1: 'A Mulher e o Dragão' },
+    'ap:19': { 1: 'O Cavaleiro no Cavalo Branco', 11: 'A Vitória Final' },
+    'ap:20': { 1: 'Os Mil Anos', 11: 'O Juízo Final' },
+    'ap:21': { 1: 'O Novo Céu e a Nova Terra', 9: 'A Nova Jerusalém' },
+    'ap:22': { 1: 'O Rio da Vida', 6: 'A Vinda de Jesus', 16: 'Palavras Finais' },
+};
+
 interface Versiculo {
     verse: number;
     text: string;
@@ -569,6 +792,13 @@ export default function BibliotecaPage() {
     const isFavorito = (verse: number): boolean => !!interacoesMap.favoritos[verse];
     const temNota = (verse: number): boolean => !!interacoesMap.notas[verse];
 
+    const getTituloSecao = (verse: number): string | null => {
+        const chave = `${livroAtual.abrev}:${capituloAtual}`;
+        const titulos = TITULOS_SECAO[chave];
+        if (!titulos) return null;
+        return titulos[verse] || null;
+    };
+
     return (
         <CosmicBackground className="min-h-screen">
             {/* Header */}
@@ -793,16 +1023,16 @@ export default function BibliotecaPage() {
                             ) : painelItens.length === 0 ? (
                                 <p className="text-center text-slate-500 py-8">Nenhum item salvo</p>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="space-y-2.5">
                                     {painelItens.map(item => (
-                                        <div key={item.id} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                                        <div key={item.id} className="flex items-start gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                                             <button onClick={() => navegarParaItem(item)} className="flex-1 text-left">
-                                                <div className="text-amber-400 text-xs font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
-                                                <div className="text-slate-300 text-sm mt-1 line-clamp-2">{item.texto_versiculo}</div>
-                                                {item.nota && <div className="text-slate-500 text-xs mt-1 italic">{item.nota}</div>}
+                                                <div className="text-amber-400 text-sm font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
+                                                <div className="text-slate-300 text-base mt-1.5 line-clamp-3 leading-relaxed">{item.texto_versiculo}</div>
+                                                {item.nota && <div className="text-slate-400 text-sm mt-2 italic bg-white/5 rounded-lg px-3 py-2">{item.nota}</div>}
                                             </button>
-                                            <button onClick={() => removerItemPainel(item.id!)} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all">
-                                                <Trash2 className="w-4 h-4" />
+                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all">
+                                                <Trash2 className="w-5 h-5" />
                                             </button>
                                         </div>
                                     ))}
@@ -839,103 +1069,112 @@ export default function BibliotecaPage() {
 
                         <div className="space-y-1 text-lg md:text-xl leading-relaxed text-slate-200 font-serif relative">
                             {versiculos.map(v => (
-                                <div
-                                    key={v.verse}
-                                    id={`verse-${v.verse}`}
-                                    onClick={(e) => handleVersiculoClick(v.verse, e)}
-                                    className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
-                                        ${getCorClasse(v.verse)}
-                                        ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
-                                    `}
-                                >
-                                    <p className="inline">
-                                        <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
-                                        {v.text}
-                                    </p>
-
-                                    {/* Indicadores visuais */}
-                                    <span className="inline-flex items-center gap-1 ml-1.5">
-                                        {isFavorito(v.verse) && <Heart className="w-3 h-3 text-red-400 fill-red-400 inline" />}
-                                        {temNota(v.verse) && <StickyNote className="w-3 h-3 text-blue-400 inline" />}
-                                    </span>
-
-                                    {/* MINI-TOOLBAR */}
-                                    {versiculoSelecionado === v.verse && (
-                                        <div ref={toolbarRef} className="absolute -top-14 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                            <div className="flex items-center gap-0.5 bg-slate-900/95 border border-white/15 rounded-xl p-1 shadow-2xl backdrop-blur-xl">
-                                                {/* Cores */}
-                                                <button onClick={() => setMostrarCores(!mostrarCores)} className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
-                                                    <Palette className="w-4 h-4" />
-                                                </button>
-                                                {/* Favoritar */}
-                                                <button onClick={handleFavoritar} className={`p-2 rounded-lg hover:bg-white/10 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-slate-300 hover:text-red-400'}`} title="Favoritar">
-                                                    <Heart className={`w-4 h-4 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
-                                                </button>
-                                                {/* Copiar */}
-                                                <button onClick={handleCopiar} className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors" title="Copiar">
-                                                    <Copy className="w-4 h-4" />
-                                                </button>
-                                                {/* Compartilhar */}
-                                                <button onClick={handleCompartilhar} className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors" title="Compartilhar">
-                                                    <Share2 className="w-4 h-4" />
-                                                </button>
-                                                {/* Estudar */}
-                                                <button onClick={handleEstudar} className="p-2 rounded-lg hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
-                                                    <Lightbulb className="w-4 h-4" />
-                                                </button>
-                                                {/* Nota */}
-                                                <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-2 rounded-lg hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
-                                                    <StickyNote className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            {/* Seletor de cores expandido */}
-                                            {mostrarCores && (
-                                                <div className="mt-1 flex items-center gap-1 bg-slate-900/95 border border-white/15 rounded-xl p-1.5 justify-center animate-in fade-in duration-100">
-                                                    {CORES_DESTAQUE.map(cor => (
-                                                        <button key={cor.id} onClick={() => handleDestacar(cor.id)}
-                                                            className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
-                                                            title={cor.nome} />
-                                                    ))}
-                                                    {interacoesMap.destaques[v.verse] && (
-                                                        <button onClick={() => handleDestacar(interacoesMap.destaques[v.verse].cor || 'yellow')}
-                                                            className="p-1 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400" title="Remover destaque">
-                                                            <X className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* Campo de nota expandido */}
-                                            {mostrarNota && (
-                                                <div className="mt-1 bg-slate-900/95 border border-white/15 rounded-xl p-2 animate-in fade-in duration-100">
-                                                    <textarea
-                                                        value={textoNota}
-                                                        onChange={e => setTextoNota(e.target.value)}
-                                                        placeholder="Escreva sua anotação..."
-                                                        className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500/50 resize-none"
-                                                        rows={3}
-                                                        autoFocus
-                                                    />
-                                                    <div className="flex justify-end gap-2 mt-1.5">
-                                                        {interacoesMap.notas[v.verse] && (
-                                                            <button onClick={async () => {
-                                                                await removerInteracaoPorVersiculoETipo('nota', livroAtual.abrev, capituloAtual, v.verse);
-                                                                success('Nota removida');
-                                                                setMostrarNota(false);
-                                                                await carregarInteracoes();
-                                                            }} className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30">
-                                                                Apagar
-                                                            </button>
-                                                        )}
-                                                        <button onClick={handleSalvarNota} disabled={!textoNota.trim()} className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
-                                                            Salvar
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
+                                <div key={v.verse}>
+                                    {/* Título de seção */}
+                                    {getTituloSecao(v.verse) && (
+                                        <div className="pt-6 pb-3 first:pt-0">
+                                            <h2 className="text-xl md:text-2xl font-black text-amber-400/90 font-sans tracking-tight border-b border-amber-500/20 pb-2">
+                                                {getTituloSecao(v.verse)}
+                                            </h2>
                                         </div>
                                     )}
+                                    <div
+                                        id={`verse-${v.verse}`}
+                                        onClick={(e) => handleVersiculoClick(v.verse, e)}
+                                        className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
+                                            ${getCorClasse(v.verse)}
+                                            ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
+                                        `}
+                                    >
+                                        <p className="inline">
+                                            <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
+                                            {v.text}
+                                        </p>
+
+                                        {/* Indicadores visuais */}
+                                        <span className="inline-flex items-center gap-1 ml-1.5">
+                                            {isFavorito(v.verse) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
+                                            {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
+                                        </span>
+
+                                        {/* MINI-TOOLBAR */}
+                                        {versiculoSelecionado === v.verse && (
+                                            <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center gap-1 bg-slate-900/95 border border-white/15 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                                    {/* Cores */}
+                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
+                                                        <Palette className="w-5 h-5" />
+                                                    </button>
+                                                    {/* Favoritar */}
+                                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-slate-300 hover:text-red-400'}`} title="Favoritar">
+                                                        <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
+                                                    </button>
+                                                    {/* Copiar */}
+                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors" title="Copiar">
+                                                        <Copy className="w-5 h-5" />
+                                                    </button>
+                                                    {/* Compartilhar */}
+                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors" title="Compartilhar">
+                                                        <Share2 className="w-5 h-5" />
+                                                    </button>
+                                                    {/* Estudar */}
+                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
+                                                        <Lightbulb className="w-5 h-5" />
+                                                    </button>
+                                                    {/* Nota */}
+                                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
+                                                        <StickyNote className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+
+                                                {/* Seletor de cores expandido */}
+                                                {mostrarCores && (
+                                                    <div className="mt-1.5 flex items-center gap-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                                        {CORES_DESTAQUE.map(cor => (
+                                                            <button key={cor.id} onClick={() => handleDestacar(cor.id)}
+                                                                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
+                                                                title={cor.nome} />
+                                                        ))}
+                                                        {interacoesMap.destaques[v.verse] && (
+                                                            <button onClick={() => handleDestacar(interacoesMap.destaques[v.verse].cor || 'yellow')}
+                                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400" title="Remover destaque">
+                                                                <X className="w-5 h-5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Campo de nota expandido */}
+                                                {mostrarNota && (
+                                                    <div className="mt-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
+                                                        <textarea
+                                                            value={textoNota}
+                                                            onChange={e => setTextoNota(e.target.value)}
+                                                            placeholder="Escreva sua anotação..."
+                                                            className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-base placeholder-slate-500 focus:outline-none focus:border-amber-500/50 resize-none"
+                                                            rows={3}
+                                                            autoFocus
+                                                        />
+                                                        <div className="flex justify-end gap-2 mt-2">
+                                                            {interacoesMap.notas[v.verse] && (
+                                                                <button onClick={async () => {
+                                                                    await removerInteracaoPorVersiculoETipo('nota', livroAtual.abrev, capituloAtual, v.verse);
+                                                                    success('Nota removida');
+                                                                    setMostrarNota(false);
+                                                                    await carregarInteracoes();
+                                                                }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
+                                                                    Apagar
+                                                                </button>
+                                                            )}
+                                                            <button onClick={handleSalvarNota} disabled={!textoNota.trim()} className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
+                                                                Salvar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
