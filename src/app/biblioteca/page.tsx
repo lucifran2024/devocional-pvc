@@ -5,7 +5,8 @@ import Link from 'next/link';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
-    Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages
+    Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
+    CheckSquare, Square, XCircle
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -22,77 +23,103 @@ import {
     type BibliaInteracao
 } from '@/lib/supabase';
 
-// Lista de livros da Bíblia
-const LIVROS_BIBLIA = [
-    // Antigo Testamento
-    { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
-    { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
-    { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
-    { nome: 'Números', abrev: 'nm', capitulos: 36 },
-    { nome: 'Deuteronômio', abrev: 'dt', capitulos: 34 },
-    { nome: 'Josué', abrev: 'js', capitulos: 24 },
-    { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
-    { nome: 'Rute', abrev: 'rt', capitulos: 4 },
-    { nome: '1 Samuel', abrev: '1sm', capitulos: 31 },
-    { nome: '2 Samuel', abrev: '2sm', capitulos: 24 },
-    { nome: '1 Reis', abrev: '1rs', capitulos: 22 },
-    { nome: '2 Reis', abrev: '2rs', capitulos: 25 },
-    { nome: '1 Crônicas', abrev: '1cr', capitulos: 29 },
-    { nome: '2 Crônicas', abrev: '2cr', capitulos: 36 },
-    { nome: 'Esdras', abrev: 'ed', capitulos: 10 },
-    { nome: 'Neemias', abrev: 'ne', capitulos: 13 },
-    { nome: 'Ester', abrev: 'et', capitulos: 10 },
-    { nome: 'Jó', abrev: 'jó', capitulos: 42 },
-    { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
-    { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
-    { nome: 'Eclesiastes', abrev: 'ec', capitulos: 12 },
-    { nome: 'Cantares', abrev: 'ct', capitulos: 8 },
-    { nome: 'Isaías', abrev: 'is', capitulos: 66 },
-    { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
-    { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
-    { nome: 'Ezequiel', abrev: 'ez', capitulos: 48 },
-    { nome: 'Daniel', abrev: 'dn', capitulos: 12 },
-    { nome: 'Oséias', abrev: 'os', capitulos: 14 },
-    { nome: 'Joel', abrev: 'jl', capitulos: 3 },
-    { nome: 'Amós', abrev: 'am', capitulos: 9 },
-    { nome: 'Obadias', abrev: 'ob', capitulos: 1 },
-    { nome: 'Jonas', abrev: 'jn', capitulos: 4 },
-    { nome: 'Miquéias', abrev: 'mq', capitulos: 7 },
-    { nome: 'Naum', abrev: 'na', capitulos: 3 },
-    { nome: 'Habacuque', abrev: 'hc', capitulos: 3 },
-    { nome: 'Sofonias', abrev: 'sf', capitulos: 3 },
-    { nome: 'Ageu', abrev: 'ag', capitulos: 2 },
-    { nome: 'Zacarias', abrev: 'zc', capitulos: 14 },
-    { nome: 'Malaquias', abrev: 'ml', capitulos: 4 },
-    // Novo Testamento
-    { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
-    { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
-    { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
-    { nome: 'João', abrev: 'jo', capitulos: 21 },
-    { nome: 'Atos', abrev: 'at', capitulos: 28 },
-    { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
-    { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
-    { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
-    { nome: 'Gálatas', abrev: 'gl', capitulos: 6 },
-    { nome: 'Efésios', abrev: 'ef', capitulos: 6 },
-    { nome: 'Filipenses', abrev: 'fp', capitulos: 4 },
-    { nome: 'Colossenses', abrev: 'cl', capitulos: 4 },
-    { nome: '1 Tessalonicenses', abrev: '1ts', capitulos: 5 },
-    { nome: '2 Tessalonicenses', abrev: '2ts', capitulos: 3 },
-    { nome: '1 Timóteo', abrev: '1tm', capitulos: 6 },
-    { nome: '2 Timóteo', abrev: '2tm', capitulos: 4 },
-    { nome: 'Tito', abrev: 'tt', capitulos: 3 },
-    { nome: 'Filemom', abrev: 'fm', capitulos: 1 },
-    { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
-    { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
-    { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
-    { nome: '2 Pedro', abrev: '2pe', capitulos: 3 },
-    { nome: '1 João', abrev: '1jo', capitulos: 5 },
-    { nome: '2 João', abrev: '2jo', capitulos: 1 },
-    { nome: '3 João', abrev: '3jo', capitulos: 1 },
-    { nome: 'Judas', abrev: 'jd', capitulos: 1 },
-    { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
+// Tipo de livro
+interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
+
+// Categorias organizadas da Bíblia
+const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: LivroBiblia[] }[] = [
+    // ===== ANTIGO TESTAMENTO =====
+    { nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', livros: [
+        { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
+        { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
+        { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
+        { nome: 'Números', abrev: 'nm', capitulos: 36 },
+        { nome: 'Deuteronômio', abrev: 'dt', capitulos: 34 },
+    ]},
+    { nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', livros: [
+        { nome: 'Josué', abrev: 'js', capitulos: 24 },
+        { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
+        { nome: 'Rute', abrev: 'rt', capitulos: 4 },
+        { nome: '1 Samuel', abrev: '1sm', capitulos: 31 },
+        { nome: '2 Samuel', abrev: '2sm', capitulos: 24 },
+        { nome: '1 Reis', abrev: '1rs', capitulos: 22 },
+        { nome: '2 Reis', abrev: '2rs', capitulos: 25 },
+        { nome: '1 Crônicas', abrev: '1cr', capitulos: 29 },
+        { nome: '2 Crônicas', abrev: '2cr', capitulos: 36 },
+        { nome: 'Esdras', abrev: 'ed', capitulos: 10 },
+        { nome: 'Neemias', abrev: 'ne', capitulos: 13 },
+        { nome: 'Ester', abrev: 'et', capitulos: 10 },
+    ]},
+    { nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', livros: [
+        { nome: 'Jó', abrev: 'jó', capitulos: 42 },
+        { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
+        { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
+        { nome: 'Eclesiastes', abrev: 'ec', capitulos: 12 },
+        { nome: 'Cantares', abrev: 'ct', capitulos: 8 },
+    ]},
+    { nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', livros: [
+        { nome: 'Isaías', abrev: 'is', capitulos: 66 },
+        { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
+        { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
+        { nome: 'Ezequiel', abrev: 'ez', capitulos: 48 },
+        { nome: 'Daniel', abrev: 'dn', capitulos: 12 },
+    ]},
+    { nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', livros: [
+        { nome: 'Oséias', abrev: 'os', capitulos: 14 },
+        { nome: 'Joel', abrev: 'jl', capitulos: 3 },
+        { nome: 'Amós', abrev: 'am', capitulos: 9 },
+        { nome: 'Obadias', abrev: 'ob', capitulos: 1 },
+        { nome: 'Jonas', abrev: 'jn', capitulos: 4 },
+        { nome: 'Miquéias', abrev: 'mq', capitulos: 7 },
+        { nome: 'Naum', abrev: 'na', capitulos: 3 },
+        { nome: 'Habacuque', abrev: 'hc', capitulos: 3 },
+        { nome: 'Sofonias', abrev: 'sf', capitulos: 3 },
+        { nome: 'Ageu', abrev: 'ag', capitulos: 2 },
+        { nome: 'Zacarias', abrev: 'zc', capitulos: 14 },
+        { nome: 'Malaquias', abrev: 'ml', capitulos: 4 },
+    ]},
+    // ===== NOVO TESTAMENTO =====
+    { nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', livros: [
+        { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
+        { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
+        { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
+        { nome: 'João', abrev: 'jo', capitulos: 21 },
+    ]},
+    { nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', livros: [
+        { nome: 'Atos', abrev: 'at', capitulos: 28 },
+    ]},
+    { nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', livros: [
+        { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
+        { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
+        { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
+        { nome: 'Gálatas', abrev: 'gl', capitulos: 6 },
+        { nome: 'Efésios', abrev: 'ef', capitulos: 6 },
+        { nome: 'Filipenses', abrev: 'fp', capitulos: 4 },
+        { nome: 'Colossenses', abrev: 'cl', capitulos: 4 },
+        { nome: '1 Tessalonicenses', abrev: '1ts', capitulos: 5 },
+        { nome: '2 Tessalonicenses', abrev: '2ts', capitulos: 3 },
+        { nome: '1 Timóteo', abrev: '1tm', capitulos: 6 },
+        { nome: '2 Timóteo', abrev: '2tm', capitulos: 4 },
+        { nome: 'Tito', abrev: 'tt', capitulos: 3 },
+        { nome: 'Filemom', abrev: 'fm', capitulos: 1 },
+    ]},
+    { nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', livros: [
+        { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
+        { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
+        { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
+        { nome: '2 Pedro', abrev: '2pe', capitulos: 3 },
+        { nome: '1 João', abrev: '1jo', capitulos: 5 },
+        { nome: '2 João', abrev: '2jo', capitulos: 1 },
+        { nome: '3 João', abrev: '3jo', capitulos: 1 },
+        { nome: 'Judas', abrev: 'jd', capitulos: 1 },
+    ]},
+    { nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', livros: [
+        { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
+    ]},
 ];
+
+// Lista flat para compatibilidade
+const LIVROS_BIBLIA: LivroBiblia[] = CATEGORIAS_BIBLIA.flatMap(c => c.livros);
 
 const LIVRO_PARA_ID: Record<string, number> = {
     'gn': 1, 'ex': 2, 'lv': 3, 'nm': 4, 'dt': 5, 'js': 6, 'jz': 7, 'rt': 8,
@@ -390,12 +417,20 @@ export default function BibliotecaPage() {
     const [totalVersiculosTemp, setTotalVersiculosTemp] = useState(0);
     const [loadingVersiculosTemp, setLoadingVersiculosTemp] = useState(false);
 
-    // Mini-toolbar
+    // Mini-toolbar (single select)
     const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
     const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
+
+    // Multi-seleção de versículos
+    const [modoMultiSelecao, setModoMultiSelecao] = useState(false);
+    const [versiculosSelecionados, setVersiculosSelecionados] = useState<Set<number>>(new Set());
+
+    // Nota fullscreen
+    const [notaFullscreen, setNotaFullscreen] = useState(false);
+    const [notaFullscreenVerso, setNotaFullscreenVerso] = useState<number | null>(null);
 
     // Interações
     const [interacoesMap, setInteracoesMap] = useState<InteracoesMap>({ destaques: {}, favoritos: {}, notas: {} });
@@ -525,6 +560,10 @@ export default function BibliotecaPage() {
         buscarCapitulo(livroAtual.abrev, capituloAtual);
         carregarInteracoes();
         salvarHistoricoLeitura(livroAtual.abrev, livroAtual.nome, capituloAtual);
+        // Limpar seleções ao mudar de capítulo
+        setModoMultiSelecao(false);
+        setVersiculosSelecionados(new Set());
+        setMostrarCores(false);
     }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia]);
 
     // Scroll para versículo específico quando carregado
@@ -622,6 +661,13 @@ export default function BibliotecaPage() {
     // ==========================================
     const handleVersiculoClick = (verse: number, event: React.MouseEvent) => {
         event.stopPropagation();
+
+        // Modo multi-seleção: toggle do versículo
+        if (modoMultiSelecao) {
+            toggleVersiculoMulti(verse);
+            return;
+        }
+
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
         const containerRect = versiculosRef.current?.getBoundingClientRect();
 
@@ -757,6 +803,128 @@ export default function BibliotecaPage() {
         }
         success('Nota salva!');
         setMostrarNota(false);
+        await carregarInteracoes();
+    };
+
+    // ==========================================
+    // MULTI-SELEÇÃO
+    // ==========================================
+    const toggleMultiSelecao = () => {
+        if (modoMultiSelecao) {
+            // Saindo do modo: limpar
+            setModoMultiSelecao(false);
+            setVersiculosSelecionados(new Set());
+        } else {
+            // Entrando no modo: se tem versículo individual selecionado, migra
+            setModoMultiSelecao(true);
+            if (versiculoSelecionado) {
+                setVersiculosSelecionados(new Set([versiculoSelecionado]));
+                setVersiculoSelecionado(null);
+                setMostrarCores(false);
+                setMostrarNota(false);
+            }
+        }
+    };
+
+    const toggleVersiculoMulti = (verse: number) => {
+        setVersiculosSelecionados(prev => {
+            const next = new Set(prev);
+            if (next.has(verse)) next.delete(verse);
+            else next.add(verse);
+            return next;
+        });
+    };
+
+    const multiSelecionados = Array.from(versiculosSelecionados).sort((a, b) => a - b);
+
+    const handleMultiDestacar = async (cor: string) => {
+        for (const verse of multiSelecionados) {
+            const v = getVersiculoObj(verse);
+            if (!v) continue;
+            const existente = interacoesMap.destaques[verse];
+            if (existente) await removerInteracaoBiblia(existente.id!);
+            await salvarInteracaoBiblia({
+                tipo: 'destaque', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
+                capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, cor
+            });
+        }
+        success(`${multiSelecionados.length} versículos destacados!`);
+        await carregarInteracoes();
+        setMostrarCores(false);
+    };
+
+    const handleMultiFavoritar = async () => {
+        let added = 0;
+        for (const verse of multiSelecionados) {
+            const v = getVersiculoObj(verse);
+            if (!v) continue;
+            const existente = interacoesMap.favoritos[verse];
+            if (!existente) {
+                await salvarInteracaoBiblia({
+                    tipo: 'favorito', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
+                    capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text
+                });
+                added++;
+            }
+        }
+        success(`${added} versículos favoritados!`);
+        await carregarInteracoes();
+    };
+
+    const handleMultiCopiar = async () => {
+        const textos = multiSelecionados.map(verse => {
+            const v = getVersiculoObj(verse);
+            return v ? `(${v.verse}) ${v.text}` : '';
+        }).filter(Boolean);
+        const ref = `${livroAtual.nome} ${capituloAtual}:${multiSelecionados.join(',')} (${versaoBiblia.nome})`;
+        await navigator.clipboard.writeText(`${textos.join('\n')}\n— ${ref}`);
+        success(`${multiSelecionados.length} versículos copiados!`);
+    };
+
+    const handleMultiCompartilhar = async () => {
+        const textos = multiSelecionados.map(verse => {
+            const v = getVersiculoObj(verse);
+            return v ? `(${v.verse}) ${v.text}` : '';
+        }).filter(Boolean);
+        const ref = `${livroAtual.nome} ${capituloAtual}:${multiSelecionados.join(',')} (${versaoBiblia.nome})`;
+        const texto = `${textos.join('\n')}\n— ${ref}`;
+        if (navigator.share) {
+            try { await navigator.share({ title: ref, text: texto }); } catch { /* cancelled */ }
+        } else {
+            await navigator.clipboard.writeText(texto);
+            success('Copiado para compartilhar!');
+        }
+    };
+
+    // ==========================================
+    // NOTA FULLSCREEN
+    // ==========================================
+    const abrirNotaFullscreen = (verse: number) => {
+        const notaExistente = interacoesMap.notas[verse];
+        setTextoNota(notaExistente?.nota || '');
+        setNotaFullscreenVerso(verse);
+        setNotaFullscreen(true);
+        setVersiculoSelecionado(null);
+        setMostrarNota(false);
+    };
+
+    const salvarNotaFullscreen = async () => {
+        if (!notaFullscreenVerso || !textoNota.trim()) return;
+        const v = getVersiculoObj(notaFullscreenVerso);
+        if (!v) return;
+
+        const existente = interacoesMap.notas[notaFullscreenVerso];
+        if (existente) {
+            await atualizarNotaBiblia(existente.id!, textoNota.trim());
+        } else {
+            await salvarInteracaoBiblia({
+                tipo: 'nota', livro_abrev: livroAtual.abrev, livro_nome: livroAtual.nome,
+                capitulo: capituloAtual, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
+            });
+        }
+        success('Nota salva!');
+        setNotaFullscreen(false);
+        setNotaFullscreenVerso(null);
         await carregarInteracoes();
     };
 
@@ -1057,13 +1225,24 @@ export default function BibliotecaPage() {
                         </div>
                         <div className="overflow-y-auto flex-1 p-2">
                             {faseSelecao === 'livros' && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2">
-                                    {LIVROS_BIBLIA.map(livro => (
-                                        <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                            className={`p-3 rounded-xl text-left transition-all border ${livro.abrev === livroAtual.abrev ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-white/5 border-transparent hover:bg-white/10 text-slate-300'}`}>
-                                            <div className="font-bold text-sm truncate">{livro.nome}</div>
-                                            <div className="text-xs text-slate-500 mt-1">{livro.capitulos} caps</div>
-                                        </button>
+                                <div className="space-y-4 p-2">
+                                    {CATEGORIAS_BIBLIA.map(cat => (
+                                        <div key={cat.nome}>
+                                            <div className="flex items-center gap-2 mb-2 sticky top-0 bg-black/40 backdrop-blur-sm py-1.5 px-1 rounded-lg z-10">
+                                                <span className="text-base">{cat.emoji}</span>
+                                                <h4 className={`text-xs font-bold uppercase tracking-wider ${cat.cor}`}>{cat.nome}</h4>
+                                                <div className="flex-1 h-px bg-white/10" />
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                                                {cat.livros.map(livro => (
+                                                    <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
+                                                        className={`p-2.5 rounded-xl text-left transition-all border ${livro.abrev === livroAtual.abrev ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-white/5 border-transparent hover:bg-white/10 text-slate-300'}`}>
+                                                        <div className="font-bold text-sm truncate">{livro.nome}</div>
+                                                        <div className="text-[10px] text-slate-500 mt-0.5">{livro.capitulos} caps</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             )}
@@ -1185,6 +1364,133 @@ export default function BibliotecaPage() {
                 </div>
             )}
 
+            {/* --- NOTA FULLSCREEN --- */}
+            {notaFullscreen && notaFullscreenVerso && (
+                <div className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-xl animate-in fade-in duration-200">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+                        <div className="flex items-center gap-2">
+                            <StickyNote className="w-5 h-5 text-blue-400" />
+                            <span className="font-bold text-white text-sm">
+                                Anotação — {livroAtual.nome} {capituloAtual}:{notaFullscreenVerso}
+                            </span>
+                        </div>
+                        <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {/* Versículo em destaque */}
+                    <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
+                        <p className="text-amber-200 text-sm italic font-serif">
+                            <sup className="text-xs font-bold mr-1 opacity-60">{notaFullscreenVerso}</sup>
+                            {getVersiculoObj(notaFullscreenVerso)?.text}
+                        </p>
+                    </div>
+
+                    {/* Área de texto grande */}
+                    <div className="flex-1 p-4 flex flex-col">
+                        <textarea
+                            value={textoNota}
+                            onChange={e => setTextoNota(e.target.value)}
+                            placeholder="Escreva sua anotação, reflexão, oração, insight..."
+                            className="flex-1 w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500/50 resize-none"
+                            autoFocus
+                        />
+                    </div>
+
+                    {/* Footer com ações */}
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 bg-white/5">
+                        <div className="flex gap-2">
+                            {interacoesMap.notas[notaFullscreenVerso] && (
+                                <button onClick={async () => {
+                                    await removerInteracaoPorVersiculoETipo('nota', livroAtual.abrev, capituloAtual, notaFullscreenVerso);
+                                    success('Nota removida');
+                                    setNotaFullscreen(false);
+                                    setNotaFullscreenVerso(null);
+                                    await carregarInteracoes();
+                                }} className="px-5 py-2.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium text-sm">
+                                    Apagar nota
+                                </button>
+                            )}
+                        </div>
+                        <button onClick={salvarNotaFullscreen} disabled={!textoNota.trim()} className="px-6 py-2.5 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-400 disabled:opacity-50 text-sm transition-colors">
+                            Salvar nota
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* --- BARRA FLUTUANTE MULTI-SELEÇÃO --- */}
+            {modoMultiSelecao && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
+                    <div className="bg-slate-900/98 border border-emerald-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl flex items-center gap-1.5">
+                        {/* Contador */}
+                        <div className="px-3 py-2 text-emerald-400 font-bold text-sm min-w-[60px] text-center">
+                            {versiculosSelecionados.size} sel.
+                        </div>
+
+                        <div className="w-px h-8 bg-white/10" />
+
+                        {/* Ações */}
+                        <button
+                            onClick={() => setMostrarCores(!mostrarCores)}
+                            disabled={versiculosSelecionados.size === 0}
+                            className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors disabled:opacity-30"
+                            title="Destacar"
+                        >
+                            <Palette className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={handleMultiFavoritar}
+                            disabled={versiculosSelecionados.size === 0}
+                            className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-red-400 transition-colors disabled:opacity-30"
+                            title="Favoritar"
+                        >
+                            <Heart className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={handleMultiCopiar}
+                            disabled={versiculosSelecionados.size === 0}
+                            className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors disabled:opacity-30"
+                            title="Copiar"
+                        >
+                            <Copy className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={handleMultiCompartilhar}
+                            disabled={versiculosSelecionados.size === 0}
+                            className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors disabled:opacity-30"
+                            title="Compartilhar"
+                        >
+                            <Share2 className="w-5 h-5" />
+                        </button>
+
+                        <div className="w-px h-8 bg-white/10" />
+
+                        {/* Fechar multi-seleção */}
+                        <button
+                            onClick={toggleMultiSelecao}
+                            className="p-3 rounded-xl hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                            title="Sair da seleção"
+                        >
+                            <XCircle className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {/* Cores para multi-seleção */}
+                    {mostrarCores && versiculosSelecionados.size > 0 && (
+                        <div className="mt-2 flex items-center gap-2 bg-slate-900/98 border border-white/15 rounded-2xl p-2.5 justify-center animate-in fade-in duration-100">
+                            {CORES_DESTAQUE.map(cor => (
+                                <button key={cor.id} onClick={() => handleMultiDestacar(cor.id)}
+                                    className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border}`}
+                                    title={cor.nome} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Conteúdo Principal */}
             <main className="max-w-4xl mx-auto px-4 py-6">
                 <h1 className="text-2xl md:text-3xl font-black text-white mb-6 text-center tracking-tight">
@@ -1226,10 +1532,21 @@ export default function BibliotecaPage() {
                                         onClick={(e) => handleVersiculoClick(v.verse, e)}
                                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                             ${getCorClasse(v.verse)}
-                                            ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
+                                            ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-emerald-500/15 ring-1 ring-emerald-500/40' : ''}
+                                            ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : ''}
+                                            ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-white/5' : ''}
+                                            ${modoMultiSelecao && !versiculosSelecionados.has(v.verse) ? 'hover:bg-emerald-500/5' : ''}
                                         `}
                                     >
                                         <p className="inline">
+                                            {modoMultiSelecao && (
+                                                <span className="inline-block mr-1.5 align-middle">
+                                                    {versiculosSelecionados.has(v.verse)
+                                                        ? <CheckSquare className="w-4 h-4 text-emerald-400 inline" />
+                                                        : <Square className="w-4 h-4 text-slate-500 inline" />
+                                                    }
+                                                </span>
+                                            )}
                                             <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
                                             {v.text}
                                         </p>
@@ -1264,9 +1581,13 @@ export default function BibliotecaPage() {
                                                     <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
                                                         <Lightbulb className="w-5 h-5" />
                                                     </button>
-                                                    {/* Nota */}
-                                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
+                                                    {/* Nota (abre fullscreen) */}
+                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
                                                         <StickyNote className="w-5 h-5" />
+                                                    </button>
+                                                    {/* Multi-seleção */}
+                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-emerald-400 transition-colors" title="Selecionar vários">
+                                                        <CheckSquare className="w-5 h-5" />
                                                     </button>
                                                 </div>
 
@@ -1287,34 +1608,6 @@ export default function BibliotecaPage() {
                                                     </div>
                                                 )}
 
-                                                {/* Campo de nota expandido */}
-                                                {mostrarNota && (
-                                                    <div className="mt-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
-                                                        <textarea
-                                                            value={textoNota}
-                                                            onChange={e => setTextoNota(e.target.value)}
-                                                            placeholder="Escreva sua anotação..."
-                                                            className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-base placeholder-slate-500 focus:outline-none focus:border-amber-500/50 resize-none"
-                                                            rows={3}
-                                                            autoFocus
-                                                        />
-                                                        <div className="flex justify-end gap-2 mt-2">
-                                                            {interacoesMap.notas[v.verse] && (
-                                                                <button onClick={async () => {
-                                                                    await removerInteracaoPorVersiculoETipo('nota', livroAtual.abrev, capituloAtual, v.verse);
-                                                                    success('Nota removida');
-                                                                    setMostrarNota(false);
-                                                                    await carregarInteracoes();
-                                                                }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
-                                                                    Apagar
-                                                                </button>
-                                                            )}
-                                                            <button onClick={handleSalvarNota} disabled={!textoNota.trim()} className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
-                                                                Salvar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                     </div>
