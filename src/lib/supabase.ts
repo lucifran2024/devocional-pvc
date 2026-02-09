@@ -637,7 +637,8 @@ export async function saveDnaGeracoes(
     categoria?: string,
     filtros?: Record<string, unknown>,
     temaPrincipal?: string,
-    anguloUsado?: string
+    anguloUsado?: string,
+    buildStyle?: string
 ): Promise<string | null> {
     const batchId = crypto.randomUUID();
     console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}`);
@@ -668,7 +669,8 @@ export async function saveDnaGeracoes(
                 imagem_central: imagemCentral,
                 abertura_tipo: aberturaTipo,
                 fechamento_tipo: fechamentoTipo,
-                punchline: punchline
+                punchline: punchline,
+                build_style: buildStyle || 'favoritas'
             };
         });
 

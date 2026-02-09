@@ -106,12 +106,22 @@ async function buildAntiRepeticaoContext(
   const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
 
   // Busca expandida: agora inclui os novos campos de anti-repetição profunda
-  const { data: geracoesRecentes, error: genError } = await supabase
+  // Filtra por build_style para que cada modo veja apenas suas próprias gerações
+  let query = supabase
     .from("dna_geracoes")
-    .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline")
+    .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline, build_style")
     .gte("created_at", dataCorte.toISOString())
     .order("created_at", { ascending: false })
     .limit(100);
+
+  // Filtrar por modo: cada modo só vê suas próprias gerações
+  if (style === 'favoritas') {
+    query = query.or('build_style.eq.favoritas,build_style.is.null');
+  } else if (style === 'estilo') {
+    query = query.eq('build_style', 'estilo');
+  }
+
+  const { data: geracoesRecentes, error: genError } = await query;
 
   if (genError || !geracoesRecentes || geracoesRecentes.length === 0) {
     // Sem gerações recentes — só crosscheck de DNA se houver
@@ -138,7 +148,7 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
     return { contexto: '', temasUnicos: [], versiculosUnicos: [], versiculosDnaUnicos: [], contAT: 0, contNT: 0 };
   }
 
-  console.log(`🔄 [ANTI-REPETIÇÃO] Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias`);
+  console.log(`🔄 [ANTI-REPETIÇÃO] Modo: ${style} | Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias (filtradas por build_style)`);
 
   const temasColetados: string[] = [];
   const versiculosColetados: string[] = [];
@@ -205,7 +215,7 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
     if (/^(a|o)\s+\w+\s+(d[aoe]|n[ao])\s+/i.test(tLow)) padroesTitle['a_de']++;
     if (/^(a|o)\s+\w+\s+e\s+/i.test(tLow)) padroesTitle['a_e']++;
   });
-  const tituloPatternSaturado = padroesTitle['a_de'] + padroesTitle['a_e'] >= 5;
+  const tituloPatternSaturado = padroesTitle['a_de'] + padroesTitle['a_e'] >= 4;
 
   // Pegar as últimas 3 imagens (para evitar repetição imediata)
   const ultimas3Imagens = imagensColetadas.slice(0, 3);
@@ -277,10 +287,10 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
 4. ⛔ PROIBIDO: Fechar com frase curta imperativa ("Celebre.", "Descanse.", "Avance.") em mais de 2 mensagens.
 5. ⛔ PROIBIDO título no formato "A ___ da/na/e ___" em mais de 2 mensagens do lote.`;
 
-  if (aberturaDominante && aberturaDominante[1] >= 4) {
+  if (aberturaDominante && aberturaDominante[1] >= 3) {
     blocoAntiMolde += `\n\n🚨 **ALERTA CRÍTICO**: Abertura tipo "${aberturaDominante[0]}" foi usada ${aberturaDominante[1]}x nas últimas gerações. PROIBIDO usar "${aberturaDominante[0]}" em mais de 1 mensagem neste lote! Use: ${TIPOS_ABERTURA.filter(t => t !== aberturaDominante[0]).join(', ')}.`;
   }
-  if (fechamentoDominante && fechamentoDominante[1] >= 4) {
+  if (fechamentoDominante && fechamentoDominante[1] >= 3) {
     blocoAntiMolde += `\n🚨 **ALERTA CRÍTICO**: Fechamento tipo "${fechamentoDominante[0]}" foi usado ${fechamentoDominante[1]}x nas últimas gerações. PROIBIDO usar "${fechamentoDominante[0]}" em mais de 1 mensagem neste lote! Use: ${TIPOS_FECHAMENTO.filter(t => t !== fechamentoDominante[0]).join(', ')}.`;
   }
 
@@ -357,36 +367,23 @@ REGRA: Se precisar expressar essas ideias, reescreva com linguagem DIRETA, COLOQ
   let contexto = '';
 
   if (style === 'favoritas') {
+    // MODO FAVORITAS = REMIX — anti-repetição LEVE
+    // Só evita repetir a mesma IDEIA/VERSO, NÃO restringe estrutura/imagem/fechamento
     contexto = `
 
-## 🛡️ SISTEMA ANTI-REPETIÇÃO PROFUNDA (EVITE A MESMICE):
+## 🔄 ANTI-REPETIÇÃO MODO REMIX (leve):
 
-### 🔸 TEMAS RECENTES (atenção):
-Os temas abaixo foram abordados nos últimos 7 dias:
-${temasUnicos.length > 0 ? temasUnicos.map(t => `- ${t}`).join('\n') : '- Nenhum tema registrado ainda'}
-
-### 🚫 VERSÍCULOS PROIBIDOS (já usados recentemente):
+### 🚫 VERSÍCULOS JÁ USADOS (não repita o mesmo verso no lote):
 ${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenhum'}
-${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
-${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
 
-### 📋 TÍTULOS RECENTES (não repita padrão):
+### 🔸 TEMAS GERADOS RECENTEMENTE (varie a ideia central):
+${temasUnicos.length > 0 ? temasUnicos.slice(0, 10).map(t => `- ${t}`).join('\n') : '- (sem dados)'}
+
+### 📋 ÚLTIMAS GERAÇÕES (evite remixar a mesma ideia):
 ${resumoGeracoes}
-${blocoAntiMolde}
-${blocoImagens}
-${blocoFrasesSaturadas}
 
-### ⚠️ DIRETRIZES DE ORIGINALIDADE:
-1. **NÃO REPITA A ABORDAGEM GENÉRICA** dos temas acima.
-   - ⛔ **Proibido:** Fazer mais do mesmo (ex: "Fé" genérica).
-   - ✅ **Permitido:** Explorar uma **NUANCE ESPECÍFICA** ou um ângulo inédito (ex: "Fé em meio ao luto" ou "A dúvida que fortalece a Fé").
-2. **CADA MENSAGEM DEVE TER UM TEMA/VERSÍCULO DIFERENTE**.
-3. **CRUZE O DNA COM NOVAS PASSAGENS** - Expanda o repertório bíblico.
-4. **VARIE O ÂNGULO** - Misture exortação, consolo, ensino e poesia.
-
-${blocoChecklist}
-
-**OBJETIVO**: Queremos profundidade, VARIEDADE ESTRUTURAL e novidade, não repetição.
+**REGRA REMIX:** Você pode (e deve) manter o TOM, o VOCABULÁRIO e a ESTRUTURA das favoritas.
+O que NÃO pode é gerar a mesma IDEIA/MENSAGEM que já foi gerada nos últimos 7 dias.
 `;
   } else {
     // estilo
@@ -554,9 +551,9 @@ Deno.serve(async (req) => {
         favoritasFiltradas = fonteInspiracao.slice(0, 5);
       }
 
-      // 3. Preparar DNA das favoritas (texto completo para análise)
+      // 3. Preparar DNA das favoritas como SEMENTES numeradas para REMIX
       const dnaFavoritas = favoritasFiltradas
-        .map((f: any, i: number) => `### FAVORITA ${i + 1}:\n${f.texto_msg}`)
+        .map((f: any, i: number) => `### [SEMENTE ${i + 1}]:\n${f.texto_msg}`)
         .join("\n\n---\n\n");
 
       // 3. Processar filtros
@@ -837,116 +834,86 @@ Cada mensagem DEVE seguir esta estrutura:
       const totalReferencias = favoritasFiltradas.length;
 
       const promptFavoritas = `
-# MODO FAVORITAS — GERADOR DE DNA
-${formatoPassagemDoDia ? '\n## 🔀 MODO: FAVORITAS + PASSAGEM DO DIA' : ''}
+# MODO REMIX — REMIXADOR DE FAVORITAS
+${formatoPassagemDoDia ? '\n## 🔀 MODO: REMIX + PASSAGEM DO DIA' : ''}
 
-Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
+Você é um DJ de textos devocionais. Sua função é **REMIXAR** as mensagens favoritas abaixo.
 
-## SUA MISSÃO:
+## 🎯 SUA MISSÃO:
+Gere **EXATAMENTE ${quantidade} MENSAGENS REMIXADAS** a partir das SEMENTES abaixo.
 ${isReferenciaUnica
-          ? `**ATENÇÃO: MODO REFERÊNCIA ÚNICA!**
-Você tem apenas ${totalReferencias} mensagem(ns) como referência.
-Gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que REPLICAM FIELMENTE o estilo, tom e estrutura dessa(s) referência(s).
-**COPIE O ESTILO EXATO**: mesmo tamanho de frases, mesma pontuação, mesma estrutura, mesmo vocabulário.`
-          : `Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.`}
+          ? `Você tem ${totalReferencias} semente(s). REPLIQUE o estilo exato e gere variações.`
+          : `Você tem ${favoritasFiltradas.length} sementes. MISTURE-AS para criar remixes.`}
 ${formatoPassagemDoDia}${instrucoesFiltro}
-## REGRAS CRÍTICAS:
-1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
-${isReferenciaUnica
-          ? `2. **REPLIQUE O ESTILO**: Como há apenas ${totalReferencias} referência(s), SIGA EXATAMENTE o mesmo padrão de escrita. Cada nova mensagem deve parecer escrita pela mesma pessoa.`
-          : '2. **MISTURE** elementos de diferentes favoritas para criar algo novo'}
-3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
-4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
-${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
-${filtros?.usarPassagemDia ? '6. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
-7. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)" ou similares.${neutro ? ' Como o MODO NEUTRO está ativo, NÃO use NENHUMA saudação (Bom dia, Boa tarde, etc). Comece direto com o conteúdo.' : ' Se houver saudação, use apenas "Bom dia!", "Boa tarde!" ou "Boa noite!" sem complementos.'}
-${isReferenciaUnica ? `
-## ⚠️ IMPORTANTE - MODO REFERÊNCIA ÚNICA:
-- Analise CADA DETALHE da mensagem de referência: comprimento das frases, uso de maiúsculas, pontuação, emojis
-- Se a referência usa frases curtas, USE frases curtas
-- Se a referência usa "..." ou "—", USE esses mesmos recursos
-- O leitor deve sentir que TODAS as mensagens geradas vieram do mesmo autor da referência` : ''}
 
-## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
-${(() => {
+## 🔧 COMO FAZER O REMIX (OBRIGATÓRIO):
+Para CADA mensagem gerada, siga este processo:
+
+1. **ESCOLHA 1 SEMENTE PRIMÁRIA** — a base da mensagem (a ideia central vem dela)
+2. **ESCOLHA 1 SEMENTE SECUNDÁRIA** — para misturar um elemento (1 frase, 1 contraste, 1 versículo diferente)
+3. **COPIE 3–6 PALAVRAS/EXPRESSÕES EXATAS** da semente primária (literal, sem mudar)
+   Exemplos: se a semente diz "rasga tudo", use "rasga tudo". Se diz "fundo do poço", use "fundo do poço".
+4. **MISTURE 1 FRASE OU IDEIA** da semente secundária, adaptando ao contexto
+5. **NÃO COPIE parágrafos inteiros** — remixe, reorganize, recombine
+6. **MANTENHA** o tamanho, tom, ritmo e pontuação da semente primária
+   - Se a semente é curta (2 frases), o remix é curto
+   - Se a semente usa CAPS, o remix usa CAPS
+   - Se a semente usa "...", o remix usa "..."
+   - Se a semente é oração, o remix é oração
+   - Se a semente é confrontacional, o remix é confrontacional
+
+## ⚠️ REGRAS DO REMIX:
+1. **FIDELIDADE AO DNA**: O resultado deve parecer que veio do MESMO AUTOR das favoritas. Mesmo vocabulário, mesma pegada, mesma energia.
+2. **NÃO INVENTE ESTILO NOVO**: Não adicione floreios poéticos se as favoritas não têm. Não adicione cenas narrativas se as favoritas são diretas.
+3. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)".${neutro ? ' MODO NEUTRO: NÃO use saudações.' : ' Se a semente tem saudação, mantenha igual.'}
+4. **VERSÍCULOS**: ${(() => {
           const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
           const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
           if (isVersiculoMode) {
-            return `- **100% DAS MENSAGENS (TODAS AS ${quantidade})** DEVEM conter um versículo bíblico como elemento CENTRAL. O versículo é o PROTAGONISTA de cada mensagem.
-- CADA mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma breve reflexão sobre ele
-- **USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo`;
+            return `TODAS as mensagens devem ter versículo como protagonista.`;
           } else {
-            return `- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
-- ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : '**USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo'}`;
+            return `Se a semente tem versículo, o remix tem versículo (pode ser outro). Se não tem, não force.`;
           }
         })()}
-- Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
-- **CRUZE LIVROS**: Se o DNA cita Salmos, use também Provérbios, Isaías, João, Romanos, etc.
+${filtros?.usarPassagemDia ? '5. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
+6. **USE VERSÍCULOS DIFERENTES** entre as mensagens — NÃO repita o mesmo verso.
 
-${quantidade === 1 ? `## 🎯 MENSAGEM ÚNICA:
-Gere **1 mensagem** com máxima qualidade e profundidade.
-- Escolha um tema forte e original
-- Inclua um versículo bíblico relevante
-- Capriche na estrutura e no impacto` : `## 🎯 DIVERSIDADE OBRIGATÓRIA NO LOTE (${quantidade} MENSAGENS):
-**CADA MENSAGEM DEVE SER RADICALMENTE DIFERENTE!**
+## 📋 DISTRIBUIÇÃO NO LOTE (${quantidade} MENSAGENS):
+${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `- **Cada mensagem usa uma semente primária DIFERENTE** (distribua entre as ${favoritasFiltradas.length} sementes)
+- Se tem mais mensagens que sementes, reutilize sementes mas com secundárias diferentes
+- **NÃO remixe a mesma dupla (primária+secundária) duas vezes**
+- Os remixes devem PARECER as favoritas — mesmo tamanho, mesma linguagem, mesma energia`}
 
-### TAMANHOS (MISTURE OBRIGATORIAMENTE):
-- **${Math.ceil(quantidade * 0.3)} mensagens MICRO** (1-3 frases, máx 30 palavras) — tipo "Deus te fez diferente. Não estrague isso."
-- **${Math.ceil(quantidade * 0.4)} mensagens CURTAS** (4-6 frases, 40-60 palavras)
-- **${Math.floor(quantidade * 0.3)} mensagens MÉDIAS** (7-10 frases, 60-80 palavras)
-- ⛔ NENHUMA mensagem pode ter mais de 80 palavras
-
-### ESTRUTURAS (USE PELO MENOS 3 DIFERENTES):
-- A) SOCO DIRETO: Afirmação forte + contraste (2-3 frases, sem cena)
-- B) TWIST/REVIRAVOLTA: Setup + inversão surpreendente
-- C) CONTRASTE: "Não é X. É Y." em staccato
-- D) CONFRONTO + VERSO: Confronta crença + verso como prova
-- E) CENA COTIDIANA: Cena breve (1 frase) + reflexão curta
-- F) ORAÇÃO: Fala direta com Deus
-- G) COMANDO EM CAPS: Declaração profética forte
-
-### DISTRIBUIÇÃO:
-- **TEMAS**: ${quantidade} temas DIFERENTES
-- **TONS**: Pelo menos 1 CONFRONTACIONAL ("tapa na cara"), 1 CONSOLADOR, 1 REFLEXIVO
-- **LIVROS**: ${Math.min(quantidade, 5)} livros bíblicos diferentes
-- **TÍTULOS**: Máximo 2 podem seguir "A ___ da ___". O resto: verbos, comandos, perguntas, frases de impacto.
-  Bons exemplos: "BASTA", "NÃO ESTRAGUE ISSO", "PARA DE FINGIR", "QUEM TE DISSE ISSO?"`}
-
-**CHECKPOINT FINAL**: Releia ${quantidade === 1 ? 'a mensagem' : `as ${quantidade} mensagens`} e confirme:
-${quantidade > 1 ? '✓ Nenhum tema se repete\n✓ Nenhum versículo se repete\n✓ Pelo menos 1 mensagem tem menos de 30 palavras (MICRO)\n✓ Pelo menos 1 mensagem é CONFRONTACIONAL (incomoda, provoca)\n✓ Pelo menos 3 estruturas DIFERENTES foram usadas\n✓ Nenhuma palavra se repete em 3+ fechamentos\n✓ Cada uma tem uma "personalidade" diferente' : '✓ A mensagem é original e impactante'}
-${neutro ? '✓ NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações (MODO NEUTRO ATIVO)' : ''}
-${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana} (NENHUM outro dia)` : ''}
+**CHECKPOINT REMIX**: Antes de entregar, valide:
+${quantidade > 1 ? '✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS da semente primária\n✓ Cada mensagem mistura um elemento da semente secundária\n✓ O tamanho é similar ao da semente primária (não inflou, não encolheu)\n✓ O tom é fiel às favoritas (direto = direto, oração = oração, confronto = confronto)\n✓ Nenhum versículo se repete\n✓ Nenhuma mensagem ficou genérica/sem DNA' : '✓ A mensagem tem DNA claro da semente'}
+${neutro ? '✓ NENHUMA saudação (MODO NEUTRO ATIVO)' : ''}
+${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana}` : ''}
 
 ## FORMATO DE SAÍDA:
-Para cada mensagem, use o formato:
+Para cada mensagem:
 ${filtros?.usarPassagemDia ? `
 **📖 LEITURA DO DIA — ${passagemRef}**
 
 **[TÍTULO EM CAPS]**
 
-[Cabeçalho]
-
-[Corpo]
-
-> "Versículo" — Ref
-
-[Fechamento]
+[Corpo remixado]
 
 ---
 ` : `
 **MENSAGEM 01 — [TÍTULO EM CAPS]**
+(Sementes: primária=#X, secundária=#Y)
 
-[Corpo da mensagem]
+[Corpo remixado]
 
 ---
 `}
 (continue até MENSAGEM ${quantidade})
 
 ${contextoAntiRepeticao}
-## MENSAGENS FAVORITAS(DNA BASE):
+## 🧬 SEMENTES DISPONÍVEIS PARA REMIX:
 ${dnaFavoritas}
 
-## GERE AGORA ${quantidade} MENSAGENS NOVAS:
+## GERE AGORA ${quantidade} REMIXES:
     `;
 
       // 4. Chamar Gemini

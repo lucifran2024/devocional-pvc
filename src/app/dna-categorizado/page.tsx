@@ -273,7 +273,7 @@ export default function DnaCategorizadoPage() {
                 if (mensagens.length > 0) {
                     const categoriaStr = filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined;
                     const temaUsado = result.tema_usado || filtroTema || undefined;
-                    await saveDnaGeracoes(mensagens, categoriaStr, filtros, temaUsado);
+                    await saveDnaGeracoes(mensagens, categoriaStr, filtros, temaUsado, undefined, 'favoritas');
                     // Recarregar lista de gerações recentes
                     const novasGeracoes = await getDnaGeracoes(3);
                     setRecentGenerations(novasGeracoes);
@@ -368,7 +368,7 @@ export default function DnaCategorizadoPage() {
                 const mensagens = parseMessages(result.resultado);
                 if (mensagens.length > 0) {
                     const temaUsado = result.tema_usado || filtroTema || undefined;
-                    await saveDnaGeracoes(mensagens, selectedStyleCategory, filtros, temaUsado);
+                    await saveDnaGeracoes(mensagens, selectedStyleCategory, filtros, temaUsado, undefined, 'estilo');
                     const novasGeracoes = await getDnaGeracoes(3);
                     setRecentGenerations(novasGeracoes);
                 }
