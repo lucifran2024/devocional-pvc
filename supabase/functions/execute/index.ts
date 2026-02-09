@@ -222,60 +222,106 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
   const aberturaDominante = Object.entries(contAbertura).sort((a, b) => b[1] - a[1])[0];
   const fechamentoDominante = Object.entries(contFechamento).sort((a, b) => b[1] - a[1])[0];
 
-  let blocoAntiMolde = `
-### 🚫 PROIBIÇÕES DE ESTRUTURA (ANTI-MOLDE):
-- NÃO repita o mesmo formato de construção em mensagens consecutivas.
-- Proibido usar "X é Y" (definição tipo staccato) em mais de 1 mensagem por lote.
-- Proibido fechar 3+ mensagens com "Deus + verbo" (ex: "Deus transforma...", "Deus restaura...").
-- Proibido abrir 3+ mensagens com o mesmo tipo de abertura.`;
+  // Calcular distribuição ideal de aberturas/fechamentos para o lote
+  const TIPOS_ABERTURA = ['cena', 'afirmacao', 'biblica', 'imperativo', 'pergunta', 'narrativa'];
+  const TIPOS_FECHAMENTO = ['oracao', 'imperativo', 'declaracao', 'presenca', 'punchline', 'promessa'];
 
-  if (aberturaDominante && aberturaDominante[1] >= 5) {
-    blocoAntiMolde += `\n- ⚠️ EXCESSO: Tipo de abertura "${aberturaDominante[0]}" foi usado ${aberturaDominante[1]} vezes recentemente. USE OUTRO TIPO neste lote.`;
+  let blocoAntiMolde = `
+### 🚫 PROIBIÇÕES DE ESTRUTURA (ANTI-MOLDE) — ⭐ PRIORIDADE MÁXIMA:
+
+**TIPOS DE ABERTURA** (como a mensagem COMEÇA após o título):
+- cena: descreve uma situação do cotidiano ("A notificação...", "O quarto escuro...", "Sabe aquele momento...")
+- afirmacao: declaração forte tipo "X é Y" ("A fé não é sentimento, é decisão")
+- biblica: abre com versículo ou referência direta
+- pergunta: abre com pergunta reflexiva
+- narrativa: conta uma história curta
+- imperativo: ordem/chamado direto ("Pare.", "Olhe.", "Levante-se.")
+
+**TIPOS DE FECHAMENTO** (como a mensagem TERMINA):
+- oracao: termina como oração ("Senhor...", "Amém")
+- imperativo: termina com comando ("Descanse.", "Avance.", "Solte.")
+- declaracao: termina com declaração de fé em 1ª pessoa
+- presenca: termina mencionando Deus agindo ("Deus está...", "Ele te sustenta...")
+- promessa: termina com promessa bíblica
+- punchline: termina com frase de impacto/efeito
+
+**REGRAS OBRIGATÓRIAS PARA O LOTE DE ${quantidade} MENSAGENS:**
+1. ⛔ MÁXIMO 2 mensagens podem ter a MESMA abertura no lote. Distribua entre pelo menos 3 tipos.
+2. ⛔ MÁXIMO 2 mensagens podem ter o MESMO fechamento no lote. Distribua entre pelo menos 3 tipos.
+3. ⛔ PROIBIDO: "Boa noite!" + cena curta em TODAS as mensagens. Alterne: umas sem saudação, umas com "Boa noite!" direto na reflexão.
+4. ⛔ PROIBIDO: Fechar com frase curta imperativa ("Celebre.", "Descanse.", "Avance.") em mais de 2 mensagens.
+5. ⛔ PROIBIDO título no formato "A ___ da/na/e ___" em mais de 2 mensagens do lote.`;
+
+  if (aberturaDominante && aberturaDominante[1] >= 4) {
+    blocoAntiMolde += `\n\n🚨 **ALERTA CRÍTICO**: Abertura tipo "${aberturaDominante[0]}" foi usada ${aberturaDominante[1]}x nas últimas gerações. PROIBIDO usar "${aberturaDominante[0]}" em mais de 1 mensagem neste lote! Use: ${TIPOS_ABERTURA.filter(t => t !== aberturaDominante[0]).join(', ')}.`;
   }
-  if (fechamentoDominante && fechamentoDominante[1] >= 5) {
-    blocoAntiMolde += `\n- ⚠️ EXCESSO: Tipo de fechamento "${fechamentoDominante[0]}" foi usado ${fechamentoDominante[1]} vezes recentemente. USE OUTRO TIPO neste lote.`;
+  if (fechamentoDominante && fechamentoDominante[1] >= 4) {
+    blocoAntiMolde += `\n🚨 **ALERTA CRÍTICO**: Fechamento tipo "${fechamentoDominante[0]}" foi usado ${fechamentoDominante[1]}x nas últimas gerações. PROIBIDO usar "${fechamentoDominante[0]}" em mais de 1 mensagem neste lote! Use: ${TIPOS_FECHAMENTO.filter(t => t !== fechamentoDominante[0]).join(', ')}.`;
   }
 
   // =====================================================
   // BLOCO IMAGENS/METÁFORAS USADAS
   // =====================================================
+  // Imagens mais usadas (para forçar variedade)
+  const contImagem: Record<string, number> = {};
+  imagensColetadas.forEach(i => { contImagem[i] = (contImagem[i] || 0) + 1; });
+  const imagensSaturadas = Object.entries(contImagem).filter(([_, c]) => c >= 3).map(([i, c]) => `${i} (${c}x)`);
+
   let blocoImagens = '';
   if (imagensUnicas.length > 0) {
     blocoImagens = `
-### 🧠 IMAGENS/METÁFORAS USADAS RECENTEMENTE (evitar repetir):
-${imagensUnicas.map(i => `- ${i}`).join('\n')}
-REGRA: NÃO repetir a mesma imagem central no mesmo lote. NÃO repetir nenhuma das últimas 3 imagens usadas${ultimas3Imagens.length > 0 ? ` (${ultimas3Imagens.join(', ')})` : ''}.
-Use imagens NOVAS: espelho, escada, vela, carta, tecido, janela, âncora, pérola, ponte, raiz, etc.`;
+### 🧠 IMAGENS/METÁFORAS USADAS RECENTEMENTE:
+${imagensUnicas.map(i => `- ${i} (${contImagem[i] || 1}x)`).join('\n')}
+${imagensSaturadas.length > 0 ? `\n🚨 **SATURADAS (PROIBIDAS neste lote)**: ${imagensSaturadas.join(', ')}` : ''}
+${ultimas3Imagens.length > 0 ? `⛔ **Últimas 3 usadas (PROIBIDAS)**: ${ultimas3Imagens.join(', ')}` : ''}
+
+**REGRAS:**
+- NÃO repetir a mesma imagem central no mesmo lote (CADA mensagem = imagem diferente).
+- NÃO usar imagens saturadas listadas acima.
+- EXPLORE imagens NOVAS como: carta, tecido, janela, pérola, ponte, relógio, chave, escada, poço, vela, argila, sal, pedra preciosa, mapa, bússola interna, moldura.`;
   }
 
   // =====================================================
   // BLOCO FRASES SATURADAS
   // =====================================================
   const blocoFrasesSaturadas = `
-### 🚫 FRASES/PADRÕES SATURADOS (evitar):
+### 🚫 FRASES/PADRÕES SATURADOS (PROIBIDOS):
+**Clichês proibidos:**
 - "Deus está no controle"
-- "confie no processo"
-- "abrace o processo"
+- "confie no processo" / "abrace o processo"
 - "porto seguro"
 - "obra-prima"
 - "farol na tempestade"
-- "A fé é..."
-- "A gratidão transforma..."
-- "Deus transforma..."
-REGRA: Se precisar expressar essas ideias, reescreva com linguagem bíblica concreta e original.`;
+- "A fé é..." / "A gratidão transforma..." / "Deus transforma..."
+- "canteiro de obras" / "gente em construção"
+- "sua singularidade é..." / "design divino"
+
+**Padrões de fechamento proibidos (muito repetidos):**
+- Fechar com frase curta tipo "A [substantivo] [verbo]." (ex: "A honestidade edifica.", "A fragilidade revela.", "A gratidão floresce.")
+- Fechar com "Celebre sua/o...", "Abrace o/a...", "Solte o que..."
+
+REGRA: Se precisar expressar essas ideias, reescreva com linguagem bíblica CONCRETA, usando verbos e substantivos DIFERENTES dos listados.`;
 
   // =====================================================
   // BLOCO CHECKLIST DE VALIDAÇÃO
   // =====================================================
+  // Montar distribuição sugerida para o lote
+  const aberturasSugeridas = TIPOS_ABERTURA.filter(t => t !== aberturaDominante?.[0]).slice(0, 4);
+  const fechamentosSugeridos = TIPOS_FECHAMENTO.filter(t => t !== fechamentoDominante?.[0]).slice(0, 4);
+
   const blocoChecklist = `
-### ✅ CHECKLIST ANTI-REPETIÇÃO (valide ANTES de finalizar):
-1) Meu título NÃO segue o padrão "A ___ da ___" nem "A ___ e ___" se já apareceu nos títulos recentes.
-2) Minha imagem central NÃO repete as últimas 3 usadas.
-3) Minha última frase NÃO repete o padrão "Deus + verbo".
-4) Meu tipo de abertura NÃO é o mesmo das últimas 3 mensagens.
-5) Meu tipo de fechamento NÃO é o mesmo das últimas 3 mensagens.
-6) Meu versículo NÃO está na lista proibida.
-7) Meu lote tem pelo menos 3 tipos DIFERENTES de abertura e 3 tipos DIFERENTES de fechamento.`;
+### ✅ CHECKLIST OBRIGATÓRIO (valide CADA mensagem ANTES de finalizar):
+1) ⬜ Meu título NÃO segue o padrão "A ___ da ___" nem "A ___ e ___" se já apareceu mais de 2x.
+2) ⬜ Minha imagem central NÃO é uma das saturadas/proibidas acima.
+3) ⬜ Minha última frase NÃO segue o padrão "[Substantivo] + [verbo]." curto.
+4) ⬜ Minha abertura NÃO é do tipo "${aberturaDominante?.[0] || 'imperativo'}" (já saturado).
+5) ⬜ Meu fechamento NÃO é do tipo "${fechamentoDominante?.[0] || 'imperativo'}" (já saturado).
+6) ⬜ Meu versículo NÃO está na lista proibida.
+7) ⬜ No lote completo: pelo menos 3 tipos DIFERENTES de abertura E 3 tipos DIFERENTES de fechamento.
+
+📋 **DISTRIBUIÇÃO SUGERIDA PARA O LOTE:**
+- Aberturas: use principalmente ${aberturasSugeridas.join(', ')}
+- Fechamentos: use principalmente ${fechamentosSugeridos.join(', ')}`;
 
   // =====================================================
   // MONTAR CONTEXTO FINAL
