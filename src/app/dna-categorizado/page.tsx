@@ -85,12 +85,14 @@ export default function DnaCategorizadoPage() {
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [filtroTema, setFiltroTema] = useState('');
     const [filtroFormato, setFiltroFormato] = useState('');
+    const [filtroTamanho, setFiltroTamanho] = useState('');
+    const [filtroTom, setFiltroTom] = useState('');
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
     const [filtroMomento, setFiltroMomento] = useState('');
     const [usarDnaBase, setUsarDnaBase] = useState(true);
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
     const [filtroNeutro, setFiltroNeutro] = useState(false);
-    const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'mixed'>('recent_5');
+    const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'>('recent_5');
     const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
 
     // MANUAL CURATION STATE
@@ -137,7 +139,9 @@ export default function DnaCategorizadoPage() {
     const [deletingGenId, setDeletingGenId] = useState<number | null>(null);
 
     // Opções de filtros
-    const FORMATOS = ['Curto', 'Médio', 'Longo'];
+    const TAMANHOS = ['Curto', 'Médio', 'Longo'];
+    const FORMATOS_TEXTO = ['Staccato', 'Narrativo', 'Lista'];
+    const TONS = ['Confrontacional', 'Poético', 'Direto', 'Consolador', 'Profético'];
     const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
     const MOMENTOS = ['Começo de Semana', 'Fim de Semana', 'Início do Mês', 'Fim do Mês'];
 
@@ -249,6 +253,8 @@ export default function DnaCategorizadoPage() {
             categoria: filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined,
             tema: filtroTema || undefined,
             formato: filtroFormato || undefined,
+            tamanho: filtroTamanho || undefined,
+            tom: filtroTom || undefined,
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
@@ -347,6 +353,8 @@ export default function DnaCategorizadoPage() {
             quantidade: filtroQuantidade,
             tema: filtroTema || undefined,
             formato: filtroFormato || undefined,
+            tamanho: filtroTamanho || undefined,
+            tom: filtroTom || undefined,
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
@@ -415,33 +423,30 @@ export default function DnaCategorizadoPage() {
                             <div className="flex flex-wrap gap-2 mb-6 p-1 bg-black/30 rounded-xl border border-white/10 w-fit">
                                 <button
                                     onClick={() => setActiveTab('gerenciar')}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                                        activeTab === 'gerenciar'
-                                            ? 'bg-violet-500/30 text-violet-200 border border-violet-500/30'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerenciar'
+                                        ? 'bg-violet-500/30 text-violet-200 border border-violet-500/30'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
                                 >
                                     <Layers className="w-4 h-4" />
                                     Gerenciar DNA
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('gerar-dna')}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                                        activeTab === 'gerar-dna'
-                                            ? 'bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-500/30'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-dna'
+                                        ? 'bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-500/30'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
                                 >
                                     <Wand2 className="w-4 h-4" />
                                     Gerar DNA
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('gerar-estilo')}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                                        activeTab === 'gerar-estilo'
-                                            ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-estilo'
+                                        ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
                                 >
                                     <Sparkles className="w-4 h-4" />
                                     Gerar por Estilo
@@ -450,149 +455,149 @@ export default function DnaCategorizadoPage() {
 
                             {/* ESTATÍSTICAS POR CATEGORIA - Só mostra na aba Gerenciar */}
                             {activeTab === 'gerenciar' && (
-                            <>
-                            <div className="flex flex-wrap items-center gap-2 mb-6">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm">
-                                    <Layers className="w-4 h-4 text-violet-400" />
-                                    <span className="text-slate-300">{totalItems} mensagens</span>
-                                </div>
-                                {stats.map(s => {
-                                    const cat = getCategoriaInfo(s.categoria);
-                                    return (
-                                        <button
-                                            key={s.categoria}
-                                            onClick={() => setFiltroCategoria(s.categoria)}
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filtroCategoria === s.categoria ? cat.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
-                                                }`}
-                                        >
-                                            <cat.icon className="w-3 h-3" />
-                                            {cat.nome} ({s.total})
-                                        </button>
-                                    );
-                                })}
-                                {filtroCategoria !== 'todas' && (
-                                    <button
-                                        onClick={() => setFiltroCategoria('todas')}
-                                        className="text-xs text-violet-400 hover:text-violet-300"
-                                    >
-                                        ✕ Ver todas
-                                    </button>
-                                )}
-                            </div>
+                                <>
+                                    <div className="flex flex-wrap items-center gap-2 mb-6">
+                                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm">
+                                            <Layers className="w-4 h-4 text-violet-400" />
+                                            <span className="text-slate-300">{totalItems} mensagens</span>
+                                        </div>
+                                        {stats.map(s => {
+                                            const cat = getCategoriaInfo(s.categoria);
+                                            return (
+                                                <button
+                                                    key={s.categoria}
+                                                    onClick={() => setFiltroCategoria(s.categoria)}
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filtroCategoria === s.categoria ? cat.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                                                        }`}
+                                                >
+                                                    <cat.icon className="w-3 h-3" />
+                                                    {cat.nome} ({s.total})
+                                                </button>
+                                            );
+                                        })}
+                                        {filtroCategoria !== 'todas' && (
+                                            <button
+                                                onClick={() => setFiltroCategoria('todas')}
+                                                className="text-xs text-violet-400 hover:text-violet-300"
+                                            >
+                                                ✕ Ver todas
+                                            </button>
+                                        )}
+                                    </div>
 
-                            {/* AÇÕES DA ABA GERENCIAR */}
-                            <div className="flex flex-wrap items-center gap-3 mt-4">
-                                <button
-                                    onClick={() => setShowAddForm(!showAddForm)}
-                                    className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/20 transition-all"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                    Adicionar Mensagem
-                                </button>
-                            </div>
-                            </>
+                                    {/* AÇÕES DA ABA GERENCIAR */}
+                                    <div className="flex flex-wrap items-center gap-3 mt-4">
+                                        <button
+                                            onClick={() => setShowAddForm(!showAddForm)}
+                                            className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/20 transition-all"
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                            Adicionar Mensagem
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* === ABA GERAR DNA === */}
                             {activeTab === 'gerar-dna' && (
-                            <>
-                            <p className="text-slate-400 mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
-                            <div className="flex flex-wrap items-center gap-3">
-                                <button
-                                    onClick={handleGerar}
-                                    disabled={generating || items.length === 0}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
-                                >
-                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                                    {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
-                                </button>
+                                <>
+                                    <p className="text-slate-400 mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <button
+                                            onClick={handleGerar}
+                                            disabled={generating || items.length === 0}
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                        >
+                                            {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
+                                            {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
+                                        </button>
 
-                                <select
-                                    value={filtroQuantidade}
-                                    onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
-                                >
-                                    {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
-                                </select>
+                                        <select
+                                            value={filtroQuantidade}
+                                            onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
+                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                        >
+                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
+                                        </select>
 
-                                <select
-                                    value={filtroCategoriaGerar}
-                                    onChange={(e) => setFiltroCategoriaGerar(e.target.value as CategoriaDna | 'todas')}
-                                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
-                                >
-                                    <option value="todas" className="bg-slate-900">Todas categorias</option>
-                                    {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nome}</option>)}
-                                </select>
+                                        <select
+                                            value={filtroCategoriaGerar}
+                                            onChange={(e) => setFiltroCategoriaGerar(e.target.value as CategoriaDna | 'todas')}
+                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                        >
+                                            <option value="todas" className="bg-slate-900">Todas categorias</option>
+                                            {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nome}</option>)}
+                                        </select>
 
-                                <button
-                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
-                                >
-                                    <Filter className="w-4 h-4" />
-                                    Filtros Avançados
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
-                                </button>
-                            </div>
-                            </>
+                                        <button
+                                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                        >
+                                            <Filter className="w-4 h-4" />
+                                            Filtros Avançados
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* === ABA GERAR POR ESTILO === */}
                             {activeTab === 'gerar-estilo' && (
-                            <>
-                            <p className="text-slate-400 mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
+                                <>
+                                    <p className="text-slate-400 mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
 
-                            {/* Seleção de Estilo */}
-                            <div className="mb-4">
-                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">1. Escolha o Estilo de Saída</label>
-                                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                                    {CATEGORIAS.filter(c => c.id !== 'outro').map(cat => {
-                                        const isSelected = selectedStyleCategory === cat.id;
-                                        return (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => setSelectedStyleCategory(cat.id)}
-                                                className={`p-3 rounded-xl border text-center transition-all ${isSelected
-                                                    ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
-                                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                                                }`}
-                                            >
-                                                <cat.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? 'text-current' : 'text-slate-400'}`} />
-                                                <span className={`text-xs font-bold ${isSelected ? 'text-current' : 'text-slate-300'}`}>{cat.nome}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                                    {/* Seleção de Estilo */}
+                                    <div className="mb-4">
+                                        <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">1. Escolha o Estilo de Saída</label>
+                                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                            {CATEGORIAS.filter(c => c.id !== 'outro').map(cat => {
+                                                const isSelected = selectedStyleCategory === cat.id;
+                                                return (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => setSelectedStyleCategory(cat.id)}
+                                                        className={`p-3 rounded-xl border text-center transition-all ${isSelected
+                                                            ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
+                                                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                            }`}
+                                                    >
+                                                        <cat.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? 'text-current' : 'text-slate-400'}`} />
+                                                        <span className={`text-xs font-bold ${isSelected ? 'text-current' : 'text-slate-300'}`}>{cat.nome}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
 
-                            {/* Ações do Gerador por Estilo */}
-                            <div className="flex flex-wrap items-center gap-3">
-                                <button
-                                    onClick={handleGerarEstilo}
-                                    disabled={generating || !selectedStyleCategory}
-                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
-                                >
-                                    {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                    {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
-                                </button>
+                                    {/* Ações do Gerador por Estilo */}
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <button
+                                            onClick={handleGerarEstilo}
+                                            disabled={generating || !selectedStyleCategory}
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                        >
+                                            {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                            {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
+                                        </button>
 
-                                <select
-                                    value={filtroQuantidade}
-                                    onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
-                                >
-                                    {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
-                                </select>
+                                        <select
+                                            value={filtroQuantidade}
+                                            onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
+                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                        >
+                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
+                                        </select>
 
-                                <button
-                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
-                                >
-                                    <Filter className="w-4 h-4" />
-                                    Filtros Avançados
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
-                                </button>
-                            </div>
-                            </>
+                                        <button
+                                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                        >
+                                            <Filter className="w-4 h-4" />
+                                            Filtros Avançados
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* FILTROS AVANÇADOS - Visível em ambas abas de geração */}
@@ -615,16 +620,42 @@ export default function DnaCategorizadoPage() {
                                             />
                                         </div>
 
-                                        {/* Formato */}
+                                        {/* Tamanho */}
                                         <div>
                                             <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tamanho</label>
+                                            <select
+                                                value={filtroTamanho}
+                                                onChange={(e) => setFiltroTamanho(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer tamanho</option>
+                                                {TAMANHOS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Formato */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Formato</label>
                                             <select
                                                 value={filtroFormato}
                                                 onChange={(e) => setFiltroFormato(e.target.value)}
                                                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer tamanho</option>
-                                                {FORMATOS.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                                <option value="" className="bg-slate-900">Qualquer formato</option>
+                                                {FORMATOS_TEXTO.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                            </select>
+                                        </div>
+
+                                        {/* Tom */}
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tom</label>
+                                            <select
+                                                value={filtroTom}
+                                                onChange={(e) => setFiltroTom(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-900">Qualquer tom</option>
+                                                {TONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
                                             </select>
                                         </div>
 
@@ -704,30 +735,29 @@ export default function DnaCategorizadoPage() {
                                         {/* Estratégia de Contexto */}
                                         <div>
                                             <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Fonte de Inspiração (Contexto)</label>
-                                            <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
-                                                <button
-                                                    onClick={() => setContextoEstrategia('recent_5')}
-                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'recent_5' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                                                >
-                                                    5 Últimas
-                                                </button>
-                                                <button
-                                                    onClick={() => setContextoEstrategia('recent_10')}
-                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'recent_10' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                                                >
-                                                    10 Últimas
-                                                </button>
-                                                <button
-                                                    onClick={() => setContextoEstrategia('mixed')}
-                                                    className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === 'mixed' ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                                                >
-                                                    Misturado
-                                                </button>
+                                            <div className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+                                                {([
+                                                    { key: 'recent_5' as const, label: '5 Últimas' },
+                                                    { key: 'recent_10' as const, label: '10 Últimas' },
+                                                    { key: 'recent_20' as const, label: '20 Últimas' },
+                                                    { key: 'all' as const, label: 'Todas' },
+                                                    { key: 'mixed' as const, label: 'Misturado' },
+                                                ]).map(opt => (
+                                                    <button
+                                                        key={opt.key}
+                                                        onClick={() => setContextoEstrategia(opt.key)}
+                                                        className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === opt.key ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
                                             </div>
                                             <p className="text-[10px] text-slate-500 mt-1.5">
-                                                {contextoEstrategia === 'recent_5' && 'Usa as 5 mensagens favoritas mais recentes.'}
-                                                {contextoEstrategia === 'recent_10' && 'Usa as 10 mais recentes.'}
-                                                {contextoEstrategia === 'mixed' && 'Pega 10 aleatórias do histórico para variedade.'}
+                                                {contextoEstrategia === 'recent_5' && 'Usa as 5 mensagens mais recentes como sementes.'}
+                                                {contextoEstrategia === 'recent_10' && 'Usa as 10 mais recentes como sementes.'}
+                                                {contextoEstrategia === 'recent_20' && 'Usa as 20 mais recentes — mais variedade de DNA.'}
+                                                {contextoEstrategia === 'all' && 'Usa TODAS as suas favoritas/DNA — máxima variedade.'}
+                                                {contextoEstrategia === 'mixed' && 'Pega 15 aleatórias do histórico para variedade.'}
                                             </p>
                                         </div>
 
@@ -751,9 +781,16 @@ export default function DnaCategorizadoPage() {
 
 
                                     {/* Limpar Filtros */}
-                                    {(filtroTema || filtroFormato || filtroPeriodo || filtroMomento) && (
+                                    {(filtroTema || filtroFormato || filtroTamanho || filtroTom || filtroPeriodo || filtroMomento) && (
                                         <button
-                                            onClick={() => { setFiltroTema(''); setFiltroFormato(''); setFiltroPeriodo(''); setFiltroMomento(''); }}
+                                            onClick={() => {
+                                                setFiltroTema('');
+                                                setFiltroFormato('');
+                                                setFiltroTamanho('');
+                                                setFiltroTom('');
+                                                setFiltroPeriodo('');
+                                                setFiltroMomento('');
+                                            }}
                                             className="mt-3 text-xs text-violet-400 hover:text-violet-300"
                                         >
                                             ✕ Limpar filtros avançados
@@ -1103,44 +1140,44 @@ export default function DnaCategorizadoPage() {
                                     ) : (
                                         /* === MODO VISUALIZAÇÃO === */
                                         <>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cat.cor}`}>
-                                                <cat.icon className="w-3 h-3" />
-                                                {cat.nome}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cat.cor}`}>
+                                                        <cat.icon className="w-3 h-3" />
+                                                        {cat.nome}
+                                                    </div>
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[10px] font-bold uppercase">
+                                                        <Calendar className="w-3 h-3 text-violet-500" />
+                                                        {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleStartEdit(item)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 text-xs font-bold"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                        Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCopy(item.texto_msg, item.id)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 text-xs font-bold"
+                                                    >
+                                                        <Copy className="w-3 h-3" />
+                                                        {copiedId === item.id ? 'Copiado!' : 'Copiar'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(item.id)}
+                                                        disabled={deletingId === item.id}
+                                                        className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/5"
+                                                    >
+                                                        {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[10px] font-bold uppercase">
-                                                <Calendar className="w-3 h-3 text-violet-500" />
-                                                {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                                            <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                                <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleStartEdit(item)}
-                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/20 text-xs font-bold"
-                                            >
-                                                <Pencil className="w-3 h-3" />
-                                                Editar
-                                            </button>
-                                            <button
-                                                onClick={() => handleCopy(item.texto_msg, item.id)}
-                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 text-xs font-bold"
-                                            >
-                                                <Copy className="w-3 h-3" />
-                                                {copiedId === item.id ? 'Copiado!' : 'Copiar'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(item.id)}
-                                                disabled={deletingId === item.id}
-                                                className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/5"
-                                            >
-                                                {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
-                                        <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
-                                    </div>
                                         </>
                                     )}
                                 </div>

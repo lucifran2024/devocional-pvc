@@ -537,10 +537,18 @@ Deno.serve(async (req) => {
         // MODO MANUAL: Usa o que o usuário selecionou
         console.log(`👆 [DNA] Usando CONTEXTO MANUAL: ${contextoManual.length} mensagens selecionadas.`);
         favoritasFiltradas = contextoManual.map(texto => ({ texto_msg: texto }));
+      } else if (contextoEstrategia === 'all') {
+        // TODAS: Usa todo o acervo disponível
+        console.log(`📚 [DNA] Estratégia ALL: Usando TODAS as ${fonteInspiracao.length} mensagens.`);
+        favoritasFiltradas = fonteInspiracao;
       } else if (contextoEstrategia === 'mixed') {
-        // Misturado: Embaralha e pega 10
-        console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando e pegando 10 aleatórios.`);
-        favoritasFiltradas = [...fonteInspiracao].sort(() => 0.5 - Math.random()).slice(0, 10);
+        // Misturado: Embaralha e pega 15
+        console.log(`🎲 [DNA] Estratégia MIXED: Embaralhando e pegando 15 aleatórios.`);
+        favoritasFiltradas = [...fonteInspiracao].sort(() => 0.5 - Math.random()).slice(0, 15);
+      } else if (contextoEstrategia === 'recent_20') {
+        // 20 mais recentes
+        console.log(`🔍 [DNA] Estratégia RECENT_20: Usando as 20 mais novas.`);
+        favoritasFiltradas = fonteInspiracao.slice(0, 20);
       } else if (contextoEstrategia === 'recent_10') {
         // 10 mais recentes
         console.log(`🔍 [DNA] Estratégia RECENT_10: Usando as 10 mais novas.`);
@@ -866,17 +874,18 @@ Para CADA mensagem gerada, siga este processo:
 1. **FIDELIDADE AO DNA**: O resultado deve parecer que veio do MESMO AUTOR das favoritas. Mesmo vocabulário, mesma pegada, mesma energia.
 2. **NÃO INVENTE ESTILO NOVO**: Não adicione floreios poéticos se as favoritas não têm. Não adicione cenas narrativas se as favoritas são diretas.
 3. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)".${neutro ? ' MODO NEUTRO: NÃO use saudações.' : ' Se a semente tem saudação, mantenha igual.'}
-4. **VERSÍCULOS**: ${(() => {
+4. **VERSÍCULOS (OBRIGATÓRIO)**: ${(() => {
           const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
           const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
           if (isVersiculoMode) {
             return `TODAS as mensagens devem ter versículo como protagonista.`;
           } else {
-            return `Se a semente tem versículo, o remix tem versículo (pode ser outro). Se não tem, não force.`;
+            return `Pelo menos **${Math.ceil(quantidade * 0.4)} mensagens (40%)** devem conter um versículo bíblico EXPLÍCITO (referência completa tipo "João 3:16" ou citação entre aspas). Use versículos reais da Bíblia, não invente. ISSO É CRÍTICO.`;
           }
         })()}
 ${filtros?.usarPassagemDia ? '5. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 6. **USE VERSÍCULOS DIFERENTES** entre as mensagens — NÃO repita o mesmo verso.
+7. **SAÍDA LIMPA**: NÃO inclua metadados técnicos como "(Sementes: ...)", "(primária=#X)", "MENSAGEM 01 —" ou qualquer marcação interna. A saída deve ser apenas TÍTULO + CORPO, pronta para enviar.
 
 ## 📋 DISTRIBUIÇÃO NO LOTE (${quantidade} MENSAGENS):
 ${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `- **Cada mensagem usa uma semente primária DIFERENTE** (distribua entre as ${favoritasFiltradas.length} sementes)
@@ -900,14 +909,14 @@ ${filtros?.usarPassagemDia ? `
 
 ---
 ` : `
-**MENSAGEM 01 — [TÍTULO EM CAPS]**
-(Sementes: primária=#X, secundária=#Y)
+**[TÍTULO EM CAPS]**
 
 [Corpo remixado]
 
 ---
 `}
-(continue até MENSAGEM ${quantidade})
+(continue até a mensagem ${quantidade})
+⚠️ NÃO inclua metadata como "(Sementes: ...)" ou "(primária=#X)" na saída. O resultado final deve ser LIMPO, como se fosse uma mensagem real pronta para enviar.
 
 ${contextoAntiRepeticao}
 ## 🧬 SEMENTES DISPONÍVEIS PARA REMIX:
@@ -944,7 +953,10 @@ ${dnaFavoritas}
       }
 
       const aiData = await resp.json();
-      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+      let resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+
+      // CLEANER: Remover metadados de sementes (ex: "(Sementes: primária=#1...)")
+      resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
 
       console.log(`✅ [MODO FAVORITAS] Geração concluída!`);
 
@@ -1014,7 +1026,8 @@ ${dnaFavoritas}
           dnaSourceType = "MANUAL";
         } else {
           // Definir limites baseados na estratégia
-          const limitFetch = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
+          const limitMap: Record<string, number> = { 'recent_5': 5, 'recent_10': 10, 'recent_20': 20, 'all': 200, 'mixed': 50 };
+          const limitFetch = limitMap[contextoEstrategia] || 5;
 
           // Tenta buscar do DNA Categorizado (que já é filtrado por tipo: oração, versículo, etc)
           const { data: dnaEspecifico } = await supabase
@@ -1027,9 +1040,9 @@ ${dnaFavoritas}
           if (dnaEspecifico && dnaEspecifico.length > 0) {
             let selecionados = dnaEspecifico;
 
-            // Se for MIXED, embaralha e pega 10
+            // Se for MIXED, embaralha e pega 15
             if (contextoEstrategia === 'mixed') {
-              selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 10);
+              selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 15);
             }
 
             dnaEssencia = selecionados.map((d: any) => d.texto_msg).join("\n\n---\n\n");
@@ -1150,12 +1163,31 @@ ${dnaFavoritas}
       const contextoAntiRepeticao = antiRepEstilo.contexto;
 
       let temaAutopilotEstilo = '';
+      let instrucaoTematicaDinamicaEstilo = '';
       if (!filtros?.tema) {
-        const temasUsadosLower = antiRepEstilo.temasUnicos.map(t => t.toLowerCase());
-        const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
-        const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
-        temaAutopilotEstilo = pool[Math.floor(Math.random() * pool.length)];
-        console.log(`🎯 [AUTOPILOT ESTILO] Tema sorteado: "${temaAutopilotEstilo}" (${temasDisponiveis.length} disponíveis)`);
+        // Se tem DNA carregado, extrair temas do próprio DNA (evita temas genéricos)
+        if (dnaEssencia && dnaEssencia.length > 100) {
+          instrucaoTematicaDinamicaEstilo = `
+## 🧬 AUTOPILOT DE TEMAS (EXTRAÇÃO DE DNA):
+O usuário NÃO definiu um tema específico. Sua missão é **EXTRAIR A ESSÊNCIA** do DNA/exemplos acima e criar mensagens que **EXPLOREM SUB-TEMAS E NUANCES** presentes neles.
+
+**NÃO USE TEMAS GENÉRICOS** (como apenas "Fé", "Gratidão", "Amor") a menos que o DNA seja estritamente sobre isso.
+EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por exemplo:
+- Se o DNA fala de fé na prova → "Fé inabalável em meio ao silêncio de Deus"
+- Se o DNA fala de gratidão → "A alegria oculta nas pequenas provisões diárias"
+- Se o DNA fala de identidade → "A segurança de ser filho(a) amado(a) independente das falhas"
+
+**CADA MENSAGEM deve ter um sub-tema DIFERENTE** extraído do DNA.
+`;
+          console.log(`🧬 [AUTOPILOT ESTILO] Modo Dinâmico: Extraindo temas do DNA (${dnaEssencia.length} chars).`);
+        } else {
+          // Fallback para pool se não tiver DNA
+          const temasUsadosLower = antiRepEstilo.temasUnicos.map(t => t.toLowerCase());
+          const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
+          const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
+          temaAutopilotEstilo = pool[Math.floor(Math.random() * pool.length)];
+          console.log(`🎯 [AUTOPILOT ESTILO] Fallback Pool: "${temaAutopilotEstilo}" (${temasDisponiveis.length} disponíveis)`);
+        }
       }
       const temaFinalEstilo = filtros?.tema || temaAutopilotEstilo;
 
@@ -1167,13 +1199,15 @@ ${dnaFavoritas}
       const tamanhoEstilo = filtros?.tamanho || (TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros.formato : null);
       const formatoEstilo = !TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros?.formato : null;
 
-      const temFiltrosExtras = filtros && (temaFinalEstilo || tamanhoEstilo || formatoEstilo || filtros.periodo || filtros.momento || diasSemana || neutro);
+      const temFiltrosExtras = (temaFinalEstilo || instrucaoTematicaDinamicaEstilo || tamanhoEstilo || formatoEstilo || filtros?.periodo || filtros?.momento || diasSemana || neutro);
 
       if (temFiltrosExtras) {
         instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
 
         if (temaFinalEstilo) {
           instrucoesFiltro += `• **TEMA**: O assunto principal deve ser "${temaFinalEstilo}"${!filtros?.tema ? ' (tema surpresa — explore com profundidade!)' : ''}\n`;
+        } else if (instrucaoTematicaDinamicaEstilo) {
+          instrucoesFiltro += instrucaoTematicaDinamicaEstilo;
         }
         if (tamanhoEstilo) {
           const sizeInstructions: Record<string, string> = {

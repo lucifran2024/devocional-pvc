@@ -243,14 +243,14 @@ export interface FiltrosGeracao {
     estilosApresentacao?: string[]; // Categorias para definir o formato de apresentação
     estilo?: string; // NOVO: Estilo único forçado (modo_estilo)
     neutro?: boolean; // NOVO: Filtro para remover saudações
-    contextoEstrategia?: 'recent_5' | 'recent_10' | 'mixed'; // NOVO: Estratégia de contexto
+    contextoEstrategia?: 'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'; // Estratégia de contexto
     contextoManual?: string[]; // NOVO: Inspiração curada manualmente
 }
 
 // ==================== HELPERS DE INSPIRAÇÃO (MANUAL CURATION) ====================
 export const fetchInspirationCandidates = async (
     source: 'dna' | 'favoritos',
-    contextoEstrategia: 'recent_5' | 'recent_10' | 'mixed',
+    contextoEstrategia: 'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed',
     categoria?: string
 ): Promise<{ id: number; texto: string; selected: boolean }[]> => {
     let query = supabase.from(source === 'dna' ? 'dna_categorizado' : 'favoritos_mensagens').select('id, texto_msg, created_at');
@@ -259,8 +259,15 @@ export const fetchInspirationCandidates = async (
         query = query.eq('categoria', categoria);
     }
 
-    // Para MIXED, buscamos mais para embaralhar. Para outros, normal.
-    const limit = contextoEstrategia === 'mixed' ? 50 : (contextoEstrategia === 'recent_10' ? 10 : 5);
+    // Limites baseados na estratégia
+    const limitMap: Record<string, number> = {
+        'recent_5': 5,
+        'recent_10': 10,
+        'recent_20': 20,
+        'all': 200,
+        'mixed': 50,
+    };
+    const limit = limitMap[contextoEstrategia] || 5;
 
     const { data, error } = await query
         .order('created_at', { ascending: false })
@@ -275,7 +282,7 @@ export const fetchInspirationCandidates = async (
 
     // Aplicar lógica MIXED no cliente
     if (contextoEstrategia === 'mixed') {
-        result = data.sort(() => 0.5 - Math.random()).slice(0, 10);
+        result = data.sort(() => 0.5 - Math.random()).slice(0, 15);
     }
 
     return result.map(item => ({
