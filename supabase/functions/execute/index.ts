@@ -692,16 +692,18 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
 6. **🧬 ESTILO (DNA OBRIGATÓRIO):**
    - **ZERO PERGUNTAS (TOTAL):** Não use "?" em nenhum lugar.
      (Se precisar de reflexão, use afirmação direta.)
+   ${modo_id === 'modo_favoritas' ? `
+   - **SEM CENAS INVENTADAS (CRÍTICO):** NÃO crie "ambientação" (ex: "o dia amanheceu", "a chuva cai", "na fila do banco", "notificação no celular").
+     **Use APENAS o vocabulário e a imagética JÁ PRESENTES nas sementes.**
+     Se a semente é abstrata, o remix é abstrato. Se a semente é direta, o remix é direto.
+   - **ABERTURA:** Comece direto ao ponto, com a frase mais forte da semente.` : `
    - **ABERTURA FORTE (1ª LINHA):** A primeira linha deve ser:
-     **(A)** uma AFIRMAÇÃO DE IMPACTO, ou **(B)** uma CENA CONCRETA do cotidiano,
-     ou **(C)** uma MINI-CENA BÍBLICA (1 personagem + 1 ação em 1–2 linhas).
+     **(A)** uma AFIRMAÇÃO DE IMPACTO, ou **(B)** uma CENA CONCRETA, ou **(C)** uma MINI-CENA BÍBLICA.
+   - **GANCHO VISUAL:** Use imagens concretas para ilustrar, mas evite clichês (café, chuva).
+     Prefira cenas bíblicas ou metáforas de construção/batalha/caminho.`}
    - **STACCATO COM VIDA:** Frases curtas. Ritmo. Pausas.
      **Máx. 1 frase longa** por mensagem (quando necessário).
      Evite explicar demais a metáfora.
-   - **GANCHO VISUAL (SEM PACOTE FIXO):** Use **1 imagem concreta** por mensagem,
-     mas não se limite a: deserto/poço/tempestade. Varie com cenas reais:
-     madrugada, notificação, mesa, fila, trabalho, quarto escuro, conversa difícil.
-     (Imagem serve para puxar a verdade, não para virar poesia abstrata.)
    - **ÂNCORA BÍBLICA:** Inclua **1 versículo curto OU 1 referência bíblica** que sustente a ideia.
      Evite “mensagem bonita” sem base bíblica.
    - **PALAVRAS SATURADAS (EVITAR):**
