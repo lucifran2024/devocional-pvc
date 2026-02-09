@@ -511,6 +511,123 @@ function extrairTema(texto: string): string | null {
 }
 
 /**
+ * Extrai o título limpo da mensagem (primeira linha formatada)
+ */
+function extrairTitulo(texto: string): string | null {
+    const linhas = texto.split('\n').filter(l => l.trim());
+    const primeiraLinha = linhas[0] || '';
+    const limpo = primeiraLinha
+        .replace(/\*+/g, '')
+        .replace(/MENSAGEM\s*\d+\s*[-—]/gi, '')
+        .trim();
+    return limpo.length > 3 ? limpo.substring(0, 200) : null;
+}
+
+/**
+ * Detecta o tipo de abertura da mensagem
+ * Tipos: cena, afirmacao, biblica, imperativo, pergunta, narrativa
+ */
+function detectarAbertura(texto: string): string {
+    const linhas = texto.split('\n').filter(l => l.trim());
+    // Pula título (primeira linha) e pega o corpo
+    const corpo = linhas.slice(1).find(l => l.replace(/\*+/g, '').trim().length > 10) || '';
+    const corpoLimpo = corpo.replace(/\*+/g, '').trim();
+
+    if (!corpoLimpo) return 'outro';
+
+    // Pergunta
+    if (corpoLimpo.includes('?')) return 'pergunta';
+    // Imperativo (começa com verbo no imperativo)
+    if (/^(Pare|Olhe|Pense|Imagine|Lembre|Abra|Feche|Levante|Creia|Confie|Descanse)/i.test(corpoLimpo)) return 'imperativo';
+    // Cena (começa descrevendo situação)
+    if (/^(Quando|Era|Naquele|Havia|No meio|Na hora|Às vezes|Tem dias|Sabe aquele)/i.test(corpoLimpo)) return 'cena';
+    // Bíblica (começa com citação ou referência)
+    if (/^["">]|^(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+/.test(corpoLimpo)) return 'biblica';
+    // Afirmação tipo "X é Y"
+    if (/^(A |O |Deus |Jesus |Fé |Graça |Amor )\w+.{5,30}(é |não é |significa |transforma)/i.test(corpoLimpo)) return 'afirmacao';
+
+    return 'narrativa';
+}
+
+/**
+ * Detecta o tipo de fechamento da mensagem
+ * Tipos: oracao, imperativo, declaracao, presenca, punchline, promessa
+ */
+function detectarFechamento(texto: string): string {
+    const linhas = texto.split('\n').filter(l => l.trim());
+    const ultimaLinha = linhas[linhas.length - 1]?.replace(/\*+/g, '').trim() || '';
+
+    if (!ultimaLinha) return 'outro';
+
+    // Oração (fala com Deus)
+    if (/^(Senhor|Pai|Deus,|Em nome|Amém)/i.test(ultimaLinha) || ultimaLinha.toLowerCase().includes('amém')) return 'oracao';
+    // Imperativo (ordem/chamado)
+    if (/^(Creia|Confie|Descanse|Levante|Ande|Siga|Pare|Avance|Entregue|Abrace)/i.test(ultimaLinha)) return 'imperativo';
+    // Declaração de fé (1ª pessoa)
+    if (/^(Eu creio|Eu declaro|Eu confio|Nós cremos|Nós declaramos)/i.test(ultimaLinha)) return 'declaracao';
+    // Presença de Deus (Deus + verbo)
+    if (/^(Deus |Ele |O Senhor |Jesus |Cristo )\w+/i.test(ultimaLinha)) return 'presenca';
+    // Promessa
+    if (/^(Porque |Pois |A promessa|Está escrito)/i.test(ultimaLinha)) return 'promessa';
+
+    return 'punchline';
+}
+
+/**
+ * Extrai a última frase significativa (punchline)
+ */
+function extrairPunchline(texto: string): string | null {
+    const linhas = texto.split('\n').filter(l => {
+        const limpa = l.replace(/\*+/g, '').replace(/[-—]+/g, '').trim();
+        return limpa.length > 5;
+    });
+    if (linhas.length === 0) return null;
+    const ultima = linhas[linhas.length - 1].replace(/\*+/g, '').trim();
+    return ultima.substring(0, 300);
+}
+
+/**
+ * Detecta a imagem/metáfora central da mensagem
+ */
+function detectarImagemCentral(texto: string): string | null {
+    const textoLower = texto.toLowerCase();
+
+    const IMAGENS_CONHECIDAS: [string, string[]][] = [
+        ['mesa', ['mesa', 'banquete', 'pão', 'alimenta', 'ceiar']],
+        ['silêncio', ['silêncio', 'silencio', 'quieto', 'calado', 'espera silenciosa']],
+        ['deserto', ['deserto', 'seco', 'aridez', 'árido']],
+        ['construção', ['construção', 'construir', 'alicerce', 'fundamento', 'obra', 'edifica']],
+        ['quarto escuro', ['escuro', 'escuridão', 'trevas', 'noite escura', 'madrugada']],
+        ['tempestade', ['tempestade', 'temporal', 'ventania', 'ondas', 'mar revolto']],
+        ['jardim', ['jardim', 'plantio', 'semente', 'florescer', 'brotar', 'colheita']],
+        ['fogo', ['fogo', 'fornalha', 'brasa', 'chama', 'queima', 'refinar']],
+        ['caminho', ['caminho', 'trilha', 'estrada', 'jornada', 'passo', 'pegadas']],
+        ['rio', ['rio', 'água', 'fonte', 'nascente', 'correnteza', 'sede']],
+        ['montanha', ['montanha', 'monte', 'topo', 'vale', 'subida', 'cume']],
+        ['porta', ['porta', 'abrir', 'fechar', 'chave', 'entrada', 'saída']],
+        ['batalha', ['batalha', 'guerra', 'luta', 'arma', 'escudo', 'espada']],
+        ['pastor', ['pastor', 'ovelha', 'rebanho', 'aprisco', 'cajado']],
+        ['refúgio', ['refúgio', 'abrigo', 'esconderijo', 'fortaleza', 'rocha']],
+        ['cura', ['cura', 'ferida', 'cicatriz', 'restaura', 'sarar']],
+        ['coroa', ['coroa', 'trono', 'reinado', 'reino', 'cetro']],
+        ['âncora', ['âncora', 'ancora', 'firme', 'porto', 'seguro']],
+    ];
+
+    let melhorMatch: string | null = null;
+    let maxHits = 0;
+
+    for (const [imagem, keywords] of IMAGENS_CONHECIDAS) {
+        const hits = keywords.filter(k => textoLower.includes(k)).length;
+        if (hits > maxHits) {
+            maxHits = hits;
+            melhorMatch = imagem;
+        }
+    }
+
+    return maxHits >= 1 ? melhorMatch : null;
+}
+
+/**
  * Salva um lote de gerações do DNA Categorizado
  * Extrai automaticamente versículos e temas de cada mensagem
  * @returns O batch_id gerado ou null em caso de erro
@@ -532,6 +649,12 @@ export async function saveDnaGeracoes(
             const versiculosExtraidos = extrairVersiculos(textoLimpo);
             // Extrai tema do título se não foi fornecido
             const temaExtraido = temaPrincipal || extrairTema(textoLimpo);
+            // Novos campos anti-repetição profunda
+            const tituloExtraido = extrairTitulo(textoLimpo);
+            const imagemCentral = detectarImagemCentral(textoLimpo);
+            const aberturaTipo = detectarAbertura(textoLimpo);
+            const fechamentoTipo = detectarFechamento(textoLimpo);
+            const punchline = extrairPunchline(textoLimpo);
 
             return {
                 batch_id: batchId,
@@ -540,7 +663,12 @@ export async function saveDnaGeracoes(
                 filtros: filtros || null,
                 tema_principal: temaExtraido,
                 angulo_usado: anguloUsado || null,
-                versiculos_usados: versiculosExtraidos.length > 0 ? versiculosExtraidos : null
+                versiculos_usados: versiculosExtraidos.length > 0 ? versiculosExtraidos : null,
+                titulo: tituloExtraido,
+                imagem_central: imagemCentral,
+                abertura_tipo: aberturaTipo,
+                fechamento_tipo: fechamentoTipo,
+                punchline: punchline
             };
         });
 

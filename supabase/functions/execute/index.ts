@@ -81,7 +81,7 @@ async function buildAntiRepeticaoContext(
   supabase: any,
   quantidade: number,
   dnaTextsParaCrosscheck?: string[],
-  buildStyle: 'favoritas' | 'estilo' = 'favoritas'
+  buildStyle: string = 'favoritas'
 ): Promise<{
   contexto: string;
   temasUnicos: string[];
@@ -90,6 +90,9 @@ async function buildAntiRepeticaoContext(
   contAT: number;
   contNT: number;
 }> {
+  // Normalização do buildStyle para evitar bugs case-sensitive
+  const style = (buildStyle || 'favoritas').toLowerCase().trim();
+
   const dataCorte = new Date();
   dataCorte.setDate(dataCorte.getDate() - 7);
 
@@ -102,9 +105,10 @@ async function buildAntiRepeticaoContext(
   }
   const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
 
+  // Busca expandida: agora inclui os novos campos de anti-repetição profunda
   const { data: geracoesRecentes, error: genError } = await supabase
     .from("dna_geracoes")
-    .select("texto_msg, tema_principal, versiculos_usados")
+    .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline")
     .gte("created_at", dataCorte.toISOString())
     .order("created_at", { ascending: false })
     .limit(100);
@@ -138,33 +142,63 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
 
   const temasColetados: string[] = [];
   const versiculosColetados: string[] = [];
+  const imagensColetadas: string[] = [];
+  const aberturasColetadas: string[] = [];
+  const fechamentosColetados: string[] = [];
+  const punchlinesColetadas: string[] = [];
+  const titulosColetados: string[] = [];
 
   geracoesRecentes.forEach((g: any) => {
+    // Temas
     if (g.tema_principal) {
       temasColetados.push(g.tema_principal);
     } else {
       const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
       if (temaExtraido) temasColetados.push(temaExtraido);
     }
+    // Versículos
     if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
       versiculosColetados.push(...g.versiculos_usados);
     } else {
       versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
     }
+    // Novos campos profundos
+    if (g.imagem_central) imagensColetadas.push(g.imagem_central);
+    if (g.abertura_tipo) aberturasColetadas.push(g.abertura_tipo);
+    if (g.fechamento_tipo) fechamentosColetados.push(g.fechamento_tipo);
+    if (g.punchline) punchlinesColetadas.push(g.punchline);
+    if (g.titulo) titulosColetados.push(g.titulo);
   });
 
   const temasUnicos = [...new Set(temasColetados)].slice(0, 20);
   const versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
+  const imagensUnicas = [...new Set(imagensColetadas)];
+  const aberturasUnicas = [...new Set(aberturasColetadas)];
+  const fechamentosUnicos = [...new Set(fechamentosColetados)];
 
-  console.log(`📊 [ANTI-REP] Temas: ${temasUnicos.length}, Versículos: ${versiculosUnicos.length}`);
+  // Contagem de frequência de aberturas e fechamentos (para detectar excesso)
+  const contAbertura: Record<string, number> = {};
+  aberturasColetadas.forEach(a => { contAbertura[a] = (contAbertura[a] || 0) + 1; });
+  const contFechamento: Record<string, number> = {};
+  fechamentosColetados.forEach(f => { contFechamento[f] = (contFechamento[f] || 0) + 1; });
 
-  const resumoGeracoes = geracoesRecentes.slice(0, 10)
-    .map((g: any) => {
-      const texto = g.texto_msg || '';
-      const linhas = texto.split('\n').filter((l: string) => l.trim());
-      return linhas[0]?.substring(0, 60) || '';
-    })
-    .join('\n- ');
+  // Pegar as últimas 3 imagens (para evitar repetição imediata)
+  const ultimas3Imagens = imagensColetadas.slice(0, 3);
+  // Pegar os últimos 3 fechamentos
+  const ultimos3Fechamentos = fechamentosColetados.slice(0, 3);
+
+  console.log(`📊 [ANTI-REP] Temas: ${temasUnicos.length}, Versículos: ${versiculosUnicos.length}, Imagens: ${imagensUnicas.length}, Aberturas: ${aberturasUnicas.length}, Fechamentos: ${fechamentosUnicos.length}`);
+
+  // Limitar resumo de títulos a 15
+  const resumoGeracoes = titulosColetados.length > 0
+    ? titulosColetados.slice(0, 15).map(t => `- ${t.substring(0, 60)}`).join('\n')
+    : geracoesRecentes.slice(0, 15)
+      .map((g: any) => {
+        const texto = g.texto_msg || '';
+        const linhas = texto.split('\n').filter((l: string) => l.trim());
+        return `- ${linhas[0]?.substring(0, 60) || ''}`;
+      })
+      .join('\n');
 
   // Rotação AT/NT
   let contAT = 0, contNT = 0;
@@ -182,12 +216,76 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
     instrucaoTestamento = `\n### 📖 EQUILÍBRIO BÍBLICO:\nDistribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50).\n`;
   }
 
+  // =====================================================
+  // BLOCO ANTI-MOLDE: Proibições de estrutura repetitiva
+  // =====================================================
+  const aberturaDominante = Object.entries(contAbertura).sort((a, b) => b[1] - a[1])[0];
+  const fechamentoDominante = Object.entries(contFechamento).sort((a, b) => b[1] - a[1])[0];
+
+  let blocoAntiMolde = `
+### 🚫 PROIBIÇÕES DE ESTRUTURA (ANTI-MOLDE):
+- NÃO repita o mesmo formato de construção em mensagens consecutivas.
+- Proibido usar "X é Y" (definição tipo staccato) em mais de 1 mensagem por lote.
+- Proibido fechar 3+ mensagens com "Deus + verbo" (ex: "Deus transforma...", "Deus restaura...").
+- Proibido abrir 3+ mensagens com o mesmo tipo de abertura.`;
+
+  if (aberturaDominante && aberturaDominante[1] >= 5) {
+    blocoAntiMolde += `\n- ⚠️ EXCESSO: Tipo de abertura "${aberturaDominante[0]}" foi usado ${aberturaDominante[1]} vezes recentemente. USE OUTRO TIPO neste lote.`;
+  }
+  if (fechamentoDominante && fechamentoDominante[1] >= 5) {
+    blocoAntiMolde += `\n- ⚠️ EXCESSO: Tipo de fechamento "${fechamentoDominante[0]}" foi usado ${fechamentoDominante[1]} vezes recentemente. USE OUTRO TIPO neste lote.`;
+  }
+
+  // =====================================================
+  // BLOCO IMAGENS/METÁFORAS USADAS
+  // =====================================================
+  let blocoImagens = '';
+  if (imagensUnicas.length > 0) {
+    blocoImagens = `
+### 🧠 IMAGENS/METÁFORAS USADAS RECENTEMENTE (evitar repetir):
+${imagensUnicas.map(i => `- ${i}`).join('\n')}
+REGRA: NÃO repetir a mesma imagem central no mesmo lote. NÃO repetir nenhuma das últimas 3 imagens usadas${ultimas3Imagens.length > 0 ? ` (${ultimas3Imagens.join(', ')})` : ''}.
+Use imagens NOVAS: espelho, escada, vela, carta, tecido, janela, âncora, pérola, ponte, raiz, etc.`;
+  }
+
+  // =====================================================
+  // BLOCO FRASES SATURADAS
+  // =====================================================
+  const blocoFrasesSaturadas = `
+### 🚫 FRASES/PADRÕES SATURADOS (evitar):
+- "Deus está no controle"
+- "confie no processo"
+- "abrace o processo"
+- "porto seguro"
+- "obra-prima"
+- "farol na tempestade"
+- "A fé é..."
+- "A gratidão transforma..."
+- "Deus transforma..."
+REGRA: Se precisar expressar essas ideias, reescreva com linguagem bíblica concreta e original.`;
+
+  // =====================================================
+  // BLOCO CHECKLIST DE VALIDAÇÃO
+  // =====================================================
+  const blocoChecklist = `
+### ✅ CHECKLIST ANTI-REPETIÇÃO (valide ANTES de finalizar):
+1) Meu título NÃO segue o padrão "A ___ da ___" nem "A ___ e ___" se já apareceu nos títulos recentes.
+2) Minha imagem central NÃO repete as últimas 3 usadas.
+3) Minha última frase NÃO repete o padrão "Deus + verbo".
+4) Meu tipo de abertura NÃO é o mesmo das últimas 3 mensagens.
+5) Meu tipo de fechamento NÃO é o mesmo das últimas 3 mensagens.
+6) Meu versículo NÃO está na lista proibida.
+7) Meu lote tem pelo menos 3 tipos DIFERENTES de abertura e 3 tipos DIFERENTES de fechamento.`;
+
+  // =====================================================
+  // MONTAR CONTEXTO FINAL
+  // =====================================================
   let contexto = '';
 
-  if (buildStyle === 'favoritas') {
+  if (style === 'favoritas') {
     contexto = `
 
-## 🛡️ SISTEMA ANTI-REPETIÇÃO (EVITE A MESMICE):
+## 🛡️ SISTEMA ANTI-REPETIÇÃO PROFUNDA (EVITE A MESMICE):
 
 ### 🔸 TEMAS RECENTES (atenção):
 Os temas abaixo foram abordados nos últimos 7 dias:
@@ -198,8 +296,11 @@ ${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenh
 ${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
 ${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
 
-### 📋 TÍTULOS RECENTES:
-- ${resumoGeracoes}
+### 📋 TÍTULOS RECENTES (não repita padrão):
+${resumoGeracoes}
+${blocoAntiMolde}
+${blocoImagens}
+${blocoFrasesSaturadas}
 
 ### ⚠️ DIRETRIZES DE ORIGINALIDADE:
 1. **NÃO REPITA A ABORDAGEM GENÉRICA** dos temas acima.
@@ -209,12 +310,14 @@ ${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
 3. **CRUZE O DNA COM NOVAS PASSAGENS** - Expanda o repertório bíblico.
 4. **VARIE O ÂNGULO** - Misture exortação, consolo, ensino e poesia.
 
-**OBJETIVO**: Queremos profundidade e novidade, não repetição.
+${blocoChecklist}
+
+**OBJETIVO**: Queremos profundidade, VARIEDADE ESTRUTURAL e novidade, não repetição.
 `;
   } else {
     // estilo
     contexto = `
-## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO):
+## ⛔ SISTEMA ANTI-REPETIÇÃO PROFUNDA (CRÍTICO):
 
 ### 🚫 TEMAS PROIBIDOS (últimos 7 dias):
 ${temasUnicos.map(t => `- ${t}`).join('\n')}
@@ -223,14 +326,18 @@ ${temasUnicos.map(t => `- ${t}`).join('\n')}
 ${versiculosUnicos.slice(0, 15).join(', ')}
 
 ### 📋 TÍTULOS RECENTES (não repita):
-- ${resumoGeracoes}
+${resumoGeracoes}
+${blocoAntiMolde}
+${blocoImagens}
+${blocoFrasesSaturadas}
+${blocoChecklist}
 `;
   }
 
   contexto += instrucaoTestamento;
 
-  if (buildStyle === 'estilo') {
-    contexto += `\n**PENALIDADE**: Se repetir tema ou versículo da lista, a mensagem será DESCARTADA.\n`;
+  if (style === 'estilo') {
+    contexto += `\n**PENALIDADE**: Se repetir tema, versículo, imagem central ou padrão de abertura/fechamento da lista, a mensagem será DESCARTADA.\n`;
   }
 
   return { contexto, temasUnicos, versiculosUnicos, versiculosDnaUnicos, contAT, contNT };
@@ -504,10 +611,26 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         // REGRAS DE ESTILO (DNA DO USUÁRIO)
         instrucoesFiltro += `
 6. **🧬 ESTILO (DNA OBRIGATÓRIO):**
-   - **ZERO PERGUNTAS NO INÍCIO:** NUNCA comece com "Você já se sentiu...?" ou "Sabe quando...?". Comece com uma **AFIRMAÇÃO DE IMPACTO** ou uma **CENA CONCRETA**.
-   - **ESTILO "STACCATO":** Use frases curtas. Ponto final. Respire. Impacte. Evite orações subordinadas longas e cansativas.
-   - **GANCHO VISUAL:** Use imagens concretas (deserto, poço, alicerce, tempestade, silêncio) em vez de conceitos abstratos.
-   - **IMPACTO FINAL:** Termine cada mensagem com uma frase "punchline" que resuma a ideia e fique na cabeça. 
+   - **ZERO PERGUNTAS (TOTAL):** Não use "?" em nenhum lugar.
+     (Se precisar de reflexão, use afirmação direta.)
+   - **ABERTURA FORTE (1ª LINHA):** A primeira linha deve ser:
+     **(A)** uma AFIRMAÇÃO DE IMPACTO, ou **(B)** uma CENA CONCRETA do cotidiano,
+     ou **(C)** uma MINI-CENA BÍBLICA (1 personagem + 1 ação em 1–2 linhas).
+   - **STACCATO COM VIDA:** Frases curtas. Ritmo. Pausas.
+     **Máx. 1 frase longa** por mensagem (quando necessário).
+     Evite explicar demais a metáfora.
+   - **GANCHO VISUAL (SEM PACOTE FIXO):** Use **1 imagem concreta** por mensagem,
+     mas não se limite a: deserto/poço/tempestade. Varie com cenas reais:
+     madrugada, notificação, mesa, fila, trabalho, quarto escuro, conversa difícil.
+     (Imagem serve para puxar a verdade, não para virar poesia abstrata.)
+   - **ÂNCORA BÍBLICA:** Inclua **1 versículo curto OU 1 referência bíblica** que sustente a ideia.
+     Evite “mensagem bonita” sem base bíblica.
+   - **PALAVRAS SATURADAS (EVITAR):**
+     Evite: "confie no processo", "Deus está no controle", "abrace o processo",
+     "obra-prima", "plenitude do ser", "porto seguro", "melhor versão".
+     Use linguagem bíblica simples e concreta.
+   - **IMPACTO FINAL (PUNCHLINE):** Termine com 1 frase final memorável,
+     **máx. 12 palavras**, sem clichê e sem repetir a última ideia do versículo.
 `;
 
         if (filtros.formato) {
