@@ -510,7 +510,7 @@ Deno.serve(async (req) => {
       // Se não tem categoria OU categoria vazia, busca das Favoritas
       if (fonteInspiracao.length === 0) {
         const { data: favoritas, error: favError } = await supabase
-          .from("favoritos_mensagens")
+          .from("dna_categorizado")
           .select("texto_msg, created_at")
           .order("created_at", { ascending: false })
           .limit(100);
@@ -1053,7 +1053,7 @@ ${dnaFavoritas}
           } else {
             // Fallback para Favoritas Gerais (mistureba, mas garante teologia)
             const { data: favoritas, error: favError } = await supabase
-              .from("favoritos_mensagens")
+              .from("dna_categorizado")
               .select("texto_msg")
               .order("created_at", { ascending: false })
               .limit(60);
@@ -1498,7 +1498,7 @@ Gere a explicação agora:
 
       // 1.1 BUSCAR FAVORITAS (CRÍTICO PARA MODO HÍBRIDO)
       const { data: favoritas } = await supabase
-        .from("favoritos_mensagens")
+        .from("dna_categorizado")
         .select("texto_msg")
         .order("created_at", { ascending: false })
         .limit(20);
@@ -1699,7 +1699,7 @@ Gere as 10 mensagens agora:
 
       // 4. Buscar Favoritas (DNA BASE)
       const { data: favoritas } = await supabase
-        .from("favoritos_mensagens")
+        .from("dna_categorizado")
         .select("texto_msg")
         .order("created_at", { ascending: false })
         .limit(20);
@@ -2104,7 +2104,7 @@ REGRAS FINAIS DE NUANCE:
 
     // 7a. Busca TODOS os favoritos individuais
     const { data: todosFavoritos } = await supabase
-      .from("favoritos_mensagens")
+      .from("dna_categorizado")
       .select("texto_msg, created_at");
 
     // 7b. Função para detectar categoria do texto

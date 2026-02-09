@@ -14,7 +14,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 async function fetchFavorites() {
     console.log('Fetching last 10 favorites...');
     const { data, error } = await supabase
-        .from('favoritos_mensagens')
+        .from('dna_categorizado')
         .select('texto_msg, categoria, id')
         .order('created_at', { ascending: false })
         .limit(10);

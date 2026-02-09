@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Book, Heart, Loader2, Sparkles, X, Share2, Quote, Filter, ArrowRight, LayoutTemplate, Trash2, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getHistorico, toggleLike, deleteHistoricoItem, addFavoritoMensagem, removeFavoritoMensagem, getFavoritosByHistorico } from '@/lib/supabase';
+import { getHistorico, toggleLike, deleteHistoricoItem, addFavoritoMensagem, removeFavoritoMensagem, getFavoritosByHistorico, CategoriaDna } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { ShareButton } from '@/components/ui/ShareButton';
@@ -26,6 +26,20 @@ export default function HistoricoPage() {
     const [expandedItem, setExpandedItem] = useState<HistoricoItem | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [favoritosIndividuais, setFavoritosIndividuais] = useState<number[]>([]);
+
+    // Category Picker para favoritar mensagens individuais
+    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+    const [pendingFavorite, setPendingFavorite] = useState<{ historicoId: number; indice: number; texto: string } | null>(null);
+
+    const CATEGORIAS_DNA: { value: CategoriaDna; label: string; icon: string }[] = [
+        { value: 'devocional', label: 'Devocional', icon: '📖' },
+        { value: 'oração', label: 'Oração', icon: '🙏' },
+        { value: 'versículo', label: 'Versículo', icon: '📜' },
+        { value: 'reflexão', label: 'Reflexão', icon: '💭' },
+        { value: 'exortação', label: 'Exortação', icon: '💪' },
+        { value: 'declaração', label: 'Declaração', icon: '🔥' },
+        { value: 'outro', label: 'Outro', icon: '✨' },
+    ];
 
     // Parsear mensagens individuais do texto
     const parseMensagens = (texto: string): string[] => {
@@ -141,14 +155,28 @@ export default function HistoricoPage() {
         const isFavorito = favoritosIndividuais.includes(indice);
 
         if (isFavorito) {
-            // Remover
+            // Remover direto
             setFavoritosIndividuais(prev => prev.filter(i => i !== indice));
             await removeFavoritoMensagem(historicoId, indice);
         } else {
-            // Adicionar
-            setFavoritosIndividuais(prev => [...prev, indice]);
-            await addFavoritoMensagem(historicoId, indice, texto);
+            // Abrir picker de categoria antes de salvar
+            setPendingFavorite({ historicoId, indice, texto });
+            setShowCategoryPicker(true);
         }
+    };
+
+    // Handler quando o usuário escolhe a categoria
+    const handleCategorySelected = async (categoria: CategoriaDna) => {
+        if (!pendingFavorite) return;
+        setFavoritosIndividuais(prev => [...prev, pendingFavorite.indice]);
+        await addFavoritoMensagem(
+            pendingFavorite.historicoId,
+            pendingFavorite.indice,
+            pendingFavorite.texto,
+            categoria
+        );
+        setShowCategoryPicker(false);
+        setPendingFavorite(null);
     };
 
     // Carregar favoritos quando abre o modal
@@ -426,6 +454,35 @@ export default function HistoricoPage() {
                                         <Heart className={`w-4 h-4 ${expandedItem.aprovado ? 'fill-white' : ''}`} />
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Category Picker Modal */}
+                    {showCategoryPicker && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={() => { setShowCategoryPicker(false); setPendingFavorite(null); }}>
+                            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+                            <div className="relative bg-[#0f172a] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+                                <h3 className="text-lg font-black text-white mb-1 tracking-tight">Escolha a categoria</h3>
+                                <p className="text-xs text-slate-500 mb-4">Em qual categoria esta mensagem se encaixa?</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {CATEGORIAS_DNA.map(cat => (
+                                        <button
+                                            key={cat.value}
+                                            onClick={() => handleCategorySelected(cat.value)}
+                                            className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-300 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-white transition-all font-semibold"
+                                        >
+                                            <span>{cat.icon}</span>
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => { setShowCategoryPicker(false); setPendingFavorite(null); }}
+                                    className="mt-4 w-full py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
                             </div>
                         </div>
                     )}

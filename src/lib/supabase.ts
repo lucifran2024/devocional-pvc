@@ -253,9 +253,9 @@ export const fetchInspirationCandidates = async (
     contextoEstrategia: 'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed',
     categoria?: string
 ): Promise<{ id: number; texto: string; selected: boolean }[]> => {
-    let query = supabase.from(source === 'dna' ? 'dna_categorizado' : 'favoritos_mensagens').select('id, texto_msg, created_at');
+    let query = supabase.from('dna_categorizado').select('id, texto_msg, created_at');
 
-    if (source === 'dna' && categoria && categoria !== 'todas') {
+    if (categoria && categoria !== 'todas') {
         query = query.eq('categoria', categoria);
     }
 
@@ -1014,31 +1014,30 @@ export async function getPassagemUnificada(dataPreferida: string): Promise<Passa
 // FAVORITOS DE MENSAGENS INDIVIDUAIS
 // ===========================================
 
-export interface FavoritoMensagem {
-    id: number;
-    historico_id: number;
-    indice_msg: number;
-    texto_msg: string;
-    created_at: string;
-}
+// CONSOLIDADO: FavoritoMensagem agora é alias de DnaCategorizado
+// Mantido para compatibilidade com imports existentes
+export type FavoritoMensagem = DnaCategorizado;
 
 /**
- * Adiciona uma mensagem individual aos favoritos
+ * Adiciona uma mensagem individual aos favoritos (agora em dna_categorizado)
  */
 export async function addFavoritoMensagem(
     historicoId: number,
     indiceMensagem: number,
-    textoMensagem: string
-): Promise<FavoritoMensagem | null> {
-    console.log(`⭐ [FAVORITO] Adicionando mensagem ${indiceMensagem} do histórico ${historicoId}`);
+    textoMensagem: string,
+    categoria: CategoriaDna = 'outro'
+): Promise<DnaCategorizado | null> {
+    console.log(`⭐ [FAVORITO] Adicionando mensagem ${indiceMensagem} do histórico ${historicoId} (${categoria})`);
 
     try {
         const { data, error } = await supabase
-            .from('favoritos_mensagens')
+            .from('dna_categorizado')
             .insert({
                 historico_id: historicoId,
                 indice_msg: indiceMensagem,
-                texto_msg: textoMensagem
+                texto_msg: textoMensagem,
+                categoria,
+                tags: ['favorito_gerador']
             })
             .select()
             .single();
@@ -1049,7 +1048,7 @@ export async function addFavoritoMensagem(
         }
 
         console.log('✅ [FAVORITO] Adicionado com sucesso:', data.id);
-        return data as FavoritoMensagem;
+        return data as DnaCategorizado;
     } catch (err) {
         console.error('💥 [FAVORITO] Exceção:', err);
         return null;
@@ -1057,7 +1056,7 @@ export async function addFavoritoMensagem(
 }
 
 /**
- * Remove uma mensagem individual dos favoritos
+ * Remove uma mensagem individual dos favoritos (agora de dna_categorizado)
  */
 export async function removeFavoritoMensagem(
     historicoId: number,
@@ -1067,7 +1066,7 @@ export async function removeFavoritoMensagem(
 
     try {
         const { error } = await supabase
-            .from('favoritos_mensagens')
+            .from('dna_categorizado')
             .delete()
             .eq('historico_id', historicoId)
             .eq('indice_msg', indiceMensagem);
@@ -1086,12 +1085,12 @@ export async function removeFavoritoMensagem(
 }
 
 /**
- * Busca todos os favoritos de um histórico específico
+ * Busca todos os favoritos de um histórico específico (agora de dna_categorizado)
  */
 export async function getFavoritosByHistorico(historicoId: number): Promise<number[]> {
     try {
         const { data, error } = await supabase
-            .from('favoritos_mensagens')
+            .from('dna_categorizado')
             .select('indice_msg')
             .eq('historico_id', historicoId);
 
@@ -1108,113 +1107,39 @@ export async function getFavoritosByHistorico(historicoId: number): Promise<numb
 }
 
 /**
- * Busca todos os favoritos individuais (para usar no prompt)
+ * Busca todos os favoritos individuais (agora delega para dna_categorizado)
  */
-export async function getAllFavoritosMensagens(limit: number = 10): Promise<FavoritoMensagem[]> {
+export async function getAllFavoritosMensagens(limit: number = 10): Promise<DnaCategorizado[]> {
     console.log(`📜 [FAVORITOS] Buscando últimos ${limit} favoritos individuais...`);
-
-    try {
-        const { data, error } = await supabase
-            .from('favoritos_mensagens')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-        if (error) {
-            console.error('❌ [FAVORITOS] Erro ao buscar:', error);
-            return [];
-        }
-
-        console.log(`✅ [FAVORITOS] Encontrados: ${data?.length || 0}`);
-        return data as FavoritoMensagem[];
-    } catch (err) {
-        console.error('💥 [FAVORITOS] Exceção:', err);
-        return [];
-    }
+    return getDnaCategorizado(undefined, limit);
 }
 
 /**
- * Busca APENAS os favoritos manuais (Mensagens Externas/Banco de Ouro Manual)
- * Onde historico_id IS NULL
+ * Busca TODAS as mensagens do Banco de Ouro (agora = tudo de dna_categorizado)
+ * Consolidado: não filtra mais por historico_id IS NULL
  */
-export async function getFavoritosManuais(limit: number = 50): Promise<FavoritoMensagem[]> {
-    console.log(`🏆 [BANCO DE OURO] Buscando mensagens manuais (limit: ${limit})...`);
-
-    try {
-        const { data, error } = await supabase
-            .from('favoritos_mensagens')
-            .select('*')
-            .is('historico_id', null) // Filtro crucial: apenas manuais
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-        if (error) {
-            console.error('❌ [BANCO DE OURO] Erro ao buscar:', error);
-            return [];
-        }
-
-        console.log(`✅ [BANCO DE OURO] Encontrados: ${data?.length || 0}`);
-        return data as FavoritoMensagem[];
-    } catch (err) {
-        console.error('💥 [BANCO DE OURO] Exceção:', err);
-        return [];
-    }
+export async function getFavoritosManuais(limit: number = 100): Promise<DnaCategorizado[]> {
+    console.log(`🏆 [BANCO DE OURO] Buscando todas as mensagens (limit: ${limit})...`);
+    return getDnaCategorizado(undefined, limit);
 }
 
 /**
- * Adiciona uma mensagem MANUAL aos favoritos (sem vínculo com histórico)
+ * Adiciona uma mensagem MANUAL aos favoritos (agora em dna_categorizado)
  * Para quando o usuário quer adicionar texto externo
  */
-export async function addFavoritoManual(textoMensagem: string): Promise<FavoritoMensagem | null> {
-    console.log(`📝 [FAVORITO MANUAL] Adicionando mensagem de ${textoMensagem.length} caracteres`);
-
-    try {
-        const { data, error } = await supabase
-            .from('favoritos_mensagens')
-            .insert({
-                historico_id: null, // Mensagem manual, sem vínculo
-                indice_msg: 0,      // Índice padrão para manuais
-                texto_msg: textoMensagem
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('❌ [FAVORITO MANUAL] Erro ao adicionar:', error);
-            return null;
-        }
-
-        console.log('✅ [FAVORITO MANUAL] Adicionado com sucesso:', data.id);
-        return data as FavoritoMensagem;
-    } catch (err) {
-        console.error('💥 [FAVORITO MANUAL] Exceção:', err);
-        return null;
-    }
+export async function addFavoritoManual(
+    textoMensagem: string,
+    categoria: CategoriaDna = 'outro'
+): Promise<DnaCategorizado | null> {
+    console.log(`📝 [FAVORITO MANUAL] Adicionando mensagem de ${textoMensagem.length} caracteres (${categoria})`);
+    return addDnaCategorizado(textoMensagem, categoria, []);
 }
 
 /**
- * Remove um favorito pelo ID primário (útil para manuais e gerais)
+ * Remove um favorito pelo ID primário (agora delega para removeDnaById)
  */
 export async function removeFavoritoById(id: number): Promise<boolean> {
-    console.log(`🗑️ [FAVORITO] Removendo favorito ID ${id}`);
-
-    try {
-        const { error } = await supabase
-            .from('favoritos_mensagens')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            console.error('❌ [FAVORITO] Erro ao remover por ID:', error);
-            return false;
-        }
-
-        console.log('✅ [FAVORITO] Removido com sucesso');
-        return true;
-    } catch (err) {
-        console.error('💥 [FAVORITO] Exceção:', err);
-        return false;
-    }
+    return removeDnaById(id);
 }
 
 // ===========================================
@@ -1228,6 +1153,8 @@ export interface DnaCategorizado {
     texto_msg: string;
     categoria: CategoriaDna;
     tags: string[];
+    historico_id?: number | null;
+    indice_msg?: number;
     created_at: string;
 }
 
@@ -1273,23 +1200,29 @@ export async function getDnaCategorizado(
 }
 
 /**
- * Adiciona nova mensagem ao DNA Categorizado
+ * Adiciona nova mensagem ao DNA Categorizado (tabela unificada)
  */
 export async function addDnaCategorizado(
     textoMensagem: string,
     categoria: CategoriaDna,
-    tags: string[] = []
+    tags: string[] = [],
+    historicoId?: number | null,
+    indiceMensagem?: number
 ): Promise<DnaCategorizado | null> {
     console.log(`🧬 [DNA] Adicionando mensagem (${categoria}): ${textoMensagem.substring(0, 50)}...`);
 
     try {
+        const insertData: Record<string, unknown> = {
+            texto_msg: textoMensagem,
+            categoria,
+            tags
+        };
+        if (historicoId !== undefined) insertData.historico_id = historicoId;
+        if (indiceMensagem !== undefined) insertData.indice_msg = indiceMensagem;
+
         const { data, error } = await supabase
             .from('dna_categorizado')
-            .insert({
-                texto_msg: textoMensagem,
-                categoria,
-                tags
-            })
+            .insert(insertData)
             .select()
             .single();
 
@@ -1307,25 +1240,19 @@ export async function addDnaCategorizado(
 }
 
 /**
- * FUNÇÃO UNIFICADA: Adiciona mensagem em AMBAS tabelas
- * - favoritos_mensagens (sem categoria)
- * - dna_categorizado (com categoria)
+ * FUNÇÃO UNIFICADA: Agora insere apenas em dna_categorizado (tabela única)
  */
 export async function addFavoritoUnificado(
     textoMensagem: string,
     categoria: CategoriaDna = 'outro',
     tags: string[] = []
-): Promise<{ favorito: FavoritoMensagem | null; dna: DnaCategorizado | null }> {
-    console.log(`🔗 [UNIFICADO] Adicionando em ambas tabelas (${categoria})`);
+): Promise<{ dna: DnaCategorizado | null }> {
+    console.log(`🔗 [UNIFICADO] Adicionando em dna_categorizado (${categoria})`);
 
-    // Insere em paralelo nas duas tabelas
-    const [favorito, dna] = await Promise.all([
-        addFavoritoManual(textoMensagem),
-        addDnaCategorizado(textoMensagem, categoria, tags)
-    ]);
+    const dna = await addDnaCategorizado(textoMensagem, categoria, tags);
 
-    console.log(`✅ [UNIFICADO] Favorito: ${favorito?.id || 'erro'}, DNA: ${dna?.id || 'erro'}`);
-    return { favorito, dna };
+    console.log(`✅ [UNIFICADO] DNA: ${dna?.id || 'erro'}`);
+    return { dna };
 }
 
 /**

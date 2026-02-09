@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getFavoritosManuais, FavoritoMensagem, removeFavoritoById, executarModoComFiltros, getDataHoje } from '@/lib/supabase';
+import { getDnaCategorizado, DnaCategorizado, removeDnaById, executarModoComFiltros, getDataHoje } from '@/lib/supabase';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
@@ -25,7 +25,7 @@ const DIAS_SEMANA = ['Todos', 'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta'
 const MOMENTOS = ['Todos', 'Fim de Semana', 'Começo de Semana', 'Início do Mês', 'Fim do Mês'];
 
 export default function FavoritosPage() {
-    const [favoritos, setFavoritos] = useState<FavoritoMensagem[]>([]);
+    const [favoritos, setFavoritos] = useState<DnaCategorizado[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -49,7 +49,7 @@ export default function FavoritosPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const data = await getFavoritosManuais();
+            const data = await getDnaCategorizado(undefined, 100);
             setFavoritos(data);
         } catch (e) {
             console.error('Erro ao carregar:', e);
@@ -74,7 +74,7 @@ export default function FavoritosPage() {
     const handleDelete = async (id: number) => {
         if (!confirm('Tem certeza que deseja remover esta mensagem?')) return;
         setDeletingId(id);
-        const success = await removeFavoritoById(id);
+        const success = await removeDnaById(id);
         if (success) {
             setFavoritos(prev => prev.filter(item => item.id !== id));
         } else {
@@ -348,9 +348,16 @@ export default function FavoritosPage() {
                         favoritos.map((fav) => (
                             <div key={fav.id} className="group relative bg-[#020617]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition-all">
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[10px] font-bold uppercase">
-                                        <Calendar className="w-3 h-3 text-indigo-500" />
-                                        {new Date(fav.created_at).toLocaleDateString('pt-BR')}
+                                    <div className="flex items-center gap-2">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[10px] font-bold uppercase">
+                                            <Calendar className="w-3 h-3 text-indigo-500" />
+                                            {new Date(fav.created_at).toLocaleDateString('pt-BR')}
+                                        </div>
+                                        {fav.categoria && (
+                                            <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-300 text-[10px] font-bold uppercase">
+                                                {fav.categoria}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button

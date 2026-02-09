@@ -31,7 +31,7 @@ export default function DiarioPage() {
 
         const result = await addFavoritoUnificado(mensagem.trim(), categoria);
 
-        if (result.favorito || result.dna) {
+        if (result.dna) {
             setSucesso(true);
             setMensagem('');
             setCategoria('outro');

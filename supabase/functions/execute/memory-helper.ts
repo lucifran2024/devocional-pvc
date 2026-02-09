@@ -40,10 +40,10 @@ function detectarCategoria(texto: string): string {
  * Carrega memória de favoritos com diversidade de categorias
  */
 export async function loadMemory(supabase: SupabaseClient): Promise<string> {
-    // Busca todos os favoritos individuais
+    // Busca todos os favoritos (tabela unificada dna_categorizado)
     const { data: todosFavoritos } = await supabase
-        .from('favoritos_mensagens')
-        .select('texto_msg, created_at');
+        .from('dna_categorizado')
+        .select('texto_msg, created_at, categoria');
 
     // Agrupa por categoria
     const porCategoria: Record<string, any[]> = {
