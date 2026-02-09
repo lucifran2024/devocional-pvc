@@ -187,9 +187,10 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
   if (buildStyle === 'favoritas') {
     contexto = `
 
-## ⛔ SISTEMA ANTI-REPETIÇÃO (CRÍTICO - LEIA COM ATENÇÃO):
+## 🛡️ SISTEMA ANTI-REPETIÇÃO (EVITE A MESMICE):
 
-### 🚫 TEMAS PROIBIDOS (usados nos últimos 7 dias):
+### 🔸 TEMAS RECENTES (atenção):
+Os temas abaixo foram abordados nos últimos 7 dias:
 ${temasUnicos.length > 0 ? temasUnicos.map(t => `- ${t}`).join('\n') : '- Nenhum tema registrado ainda'}
 
 ### 🚫 VERSÍCULOS PROIBIDOS (já usados recentemente):
@@ -197,17 +198,18 @@ ${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenh
 ${versiculosDnaUnicos.length > 0 ? `\n\n### 🚫 VERSÍCULOS DO DNA (evite repetir, CRUZE com outros):
 ${versiculosDnaUnicos.slice(0, 10).join(', ')}` : ''}
 
-### 📋 TÍTULOS RECENTES (não repita abordagens):
+### 📋 TÍTULOS RECENTES:
 - ${resumoGeracoes}
 
-### ⚠️ REGRAS OBRIGATÓRIAS:
-1. **CADA MENSAGEM DEVE TER UM TEMA DIFERENTE** - Se gerando 10 mensagens, são 10 temas distintos
-2. **USE VERSÍCULOS NOVOS** - Busque passagens que NÃO estão na lista proibida
-3. **CRUZE O DNA COM PASSAGENS DIFERENTES** - Se o DNA fala de Salmos 23, conecte com Isaías, João, etc
-4. **VARIE O ÂNGULO** - Uma mensagem pode ser exortação, outra consolo, outra reflexão
-5. **NÃO REPITA ESTRUTURAS** - Se uma começa com pergunta, a próxima não deve
+### ⚠️ DIRETRIZES DE ORIGINALIDADE:
+1. **NÃO REPITA A ABORDAGEM GENÉRICA** dos temas acima.
+   - ⛔ **Proibido:** Fazer mais do mesmo (ex: "Fé" genérica).
+   - ✅ **Permitido:** Explorar uma **NUANCE ESPECÍFICA** ou um ângulo inédito (ex: "Fé em meio ao luto" ou "A dúvida que fortalece a Fé").
+2. **CADA MENSAGEM DEVE TER UM TEMA/VERSÍCULO DIFERENTE**.
+3. **CRUZE O DNA COM NOVAS PASSAGENS** - Expanda o repertório bíblico.
+4. **VARIE O ÂNGULO** - Misture exortação, consolo, ensino e poesia.
 
-**PENALIDADE**: Se repetir tema ou versículo da lista proibida, a mensagem será DESCARTADA.
+**OBJETIVO**: Queremos profundidade e novidade, não repetição.
 `;
   } else {
     // estilo
