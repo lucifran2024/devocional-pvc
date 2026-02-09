@@ -61,8 +61,8 @@ const TEMAS_POOL = [
   'Compromisso', 'Arrependimento', 'Restauração', 'Soberania de Deus', 'Eternidade'
 ];
 
-const LIVROS_AT = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','Samuel','Reis','Crônicas','Esdras','Neemias','Ester','Jó','Salmos','Provérbios','Eclesiastes','Cantares','Isaías','Jeremias','Lamentações','Ezequiel','Daniel','Oséias','Joel','Amós','Obadias','Jonas','Miquéias','Naum','Habacuque','Sofonias','Ageu','Zacarias','Malaquias'];
-const LIVROS_NT = ['Mateus','Marcos','Lucas','João','Atos','Romanos','Coríntios','Gálatas','Efésios','Filipenses','Colossenses','Tessalonicenses','Timóteo','Tito','Filemom','Hebreus','Tiago','Pedro','Judas','Apocalipse'];
+const LIVROS_AT = ['Gênesis', 'Êxodo', 'Levítico', 'Números', 'Deuteronômio', 'Josué', 'Juízes', 'Rute', 'Samuel', 'Reis', 'Crônicas', 'Esdras', 'Neemias', 'Ester', 'Jó', 'Salmos', 'Provérbios', 'Eclesiastes', 'Cantares', 'Isaías', 'Jeremias', 'Lamentações', 'Ezequiel', 'Daniel', 'Oséias', 'Joel', 'Amós', 'Obadias', 'Jonas', 'Miquéias', 'Naum', 'Habacuque', 'Sofonias', 'Ageu', 'Zacarias', 'Malaquias'];
+const LIVROS_NT = ['Mateus', 'Marcos', 'Lucas', 'João', 'Atos', 'Romanos', 'Coríntios', 'Gálatas', 'Efésios', 'Filipenses', 'Colossenses', 'Tessalonicenses', 'Timóteo', 'Tito', 'Filemom', 'Hebreus', 'Tiago', 'Pedro', 'Judas', 'Apocalipse'];
 
 function extrairVersiculos(texto: string): string[] {
   const regex = /(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+[:\s]*\d+(?:\s*[-–]\s*\d+)?/g;
@@ -379,7 +379,7 @@ Deno.serve(async (req) => {
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
 
-      // ========== ANTI-REPETIÇÃO + SMART AUTOPILOT ==========
+      // ========== ANTI-REPETIÇÃO + SMART AUTOPILOT 2.0 (DINÂMICO) ==========
       const antiRep = await buildAntiRepeticaoContext(
         supabase,
         quantidade,
@@ -389,22 +389,44 @@ Deno.serve(async (req) => {
       const contextoAntiRepeticao = antiRep.contexto;
 
       let temaAutopilot = '';
+      let instrucaoTematicaDinamica = '';
+
+      // SE NÃO TEM TEMA DEFINIDO PELO USUÁRIO -> TENTA EXTRAIR DO DNA
       if (!filtros?.tema) {
-        const temasUsadosLower = antiRep.temasUnicos.map(t => t.toLowerCase());
-        const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
-        const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
-        temaAutopilot = pool[Math.floor(Math.random() * pool.length)];
-        console.log(`🎯 [AUTOPILOT] Tema sorteado: "${temaAutopilot}" (${temasDisponiveis.length} disponíveis de ${TEMAS_POOL.length})`);
+        // Tenta extrair temas do próprio DNA para manter a "vibe"
+        if (favoritasFiltradas.length > 0) {
+          instrucaoTematicaDinamica = `
+## 🧬 AUTOPILOT DE TEMAS (EXTRAÇÃO DE DNA):
+O usuário NÃO definiu um tema específico. Sua missão é **EXTRAIR A ESSÊNCIA** das mensagens favoritas acima e criar novas mensagens que **EXPLOREM SUB-TEMAS E NUANCES** presentes nelas.
+
+**NÃO USE TEMAS GENÉRICOS** (como apenas "Fé", "Gratidão", "Amor") a menos que o DNA seja estritamente sobre isso.
+EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por exemplo:
+- Se o DNA fala de fé na prova -> Tema: "Fé inabalável em meio ao silêncio de Deus"
+- Se o DNA fala de gratidão -> Tema: "A alegria oculta nas pequenas provisões diárias"
+- Se o DNA fala de identidade -> Tema: "A segurança de ser filho(a) amado(a) independente das falhas"
+
+**CMD:** Analise o DNA e gere mensagens que pareçam **CAPÍTULOS INÉDITOS** do mesmo autor.
+`;
+          console.log(`🧬 [AUTOPILOT] Modo Dinâmico Ativado: Extraindo temas do DNA.`);
+        } else {
+          // Fallback para pool se não tiver DNA (muito raro cair aqui no modo favoritas)
+          const temasUsadosLower = antiRep.temasUnicos.map(t => t.toLowerCase());
+          const temasDisponiveis = TEMAS_POOL.filter(t => !temasUsadosLower.includes(t.toLowerCase()));
+          const pool = temasDisponiveis.length > 3 ? temasDisponiveis : TEMAS_POOL;
+          temaAutopilot = pool[Math.floor(Math.random() * pool.length)];
+          console.log(`🎯 [AUTOPILOT] Fallback para Pool: "${temaAutopilot}"`);
+        }
       }
-      const temaFinal = filtros?.tema || temaAutopilot;
+
+      const temaFinal = filtros?.tema || temaAutopilot; // Se extraiu do DNA, temaFinal fica vazio e vale a instrução
 
       const temFiltros = filtros && (temaFinal || filtros.tipo || filtros.categoria || filtros.formato || filtros.periodo || filtros.diasSemana || filtros.momento || filtros.tamanho || neutro);
 
       // Montar instruções de filtro - MAIS CLARAS E OBRIGATÓRIAS
       let instrucoesFiltro = '';
-      if (temFiltros) {
-        instrucoesFiltro = '\n## 🎯 FILTROS OBRIGATÓRIOS (SIGA TODOS SIMULTANEAMENTE):\n';
-        instrucoesFiltro += '> ⚠️ IMPORTANTE: Você DEVE aplicar TODOS os filtros abaixo EM CADA mensagem.\n\n';
+      if (temFiltros || instrucaoTematicaDinamica) {
+        instrucoesFiltro = '\n## 🎯 FILTROS & DIRETRIZES DE CRIAÇÃO:\n';
+        instrucoesFiltro += '> ⚠️ IMPORTANTE: Siga rigorosamente as instruções abaixo em CADA mensagem.\n\n';
 
         // BUG FIX: O frontend envia "categoria" mas o prompt procurava "tipo".
         // Agora aceita ambos: filtros.tipo OU filtros.categoria
@@ -447,9 +469,14 @@ Deno.serve(async (req) => {
                 : 'mensagem de gratidão e reflexão sobre o mês que encerra';
           instrucoesFiltro += `4. **MOMENTO [${filtros.momento.toUpperCase()}]**: ${descMomento}\n`;
         }
+
+        // LÓGICA DE TEMA (User defined OR Autopilot Dynamic)
         if (temaFinal) {
-          instrucoesFiltro += `5. **TEMA**: Todas mensagens devem abordar "${temaFinal}"${!filtros?.tema ? ' (tema surpresa do dia — explore este assunto!)' : ''}\n`;
+          instrucoesFiltro += `5. **TEMA OBRIGATÓRIO**: Todas mensagens devem abordar "${temaFinal}"${!filtros?.tema ? ' (tema surpresa do dia — explore este assunto!)' : ''}\n`;
+        } else if (instrucaoTematicaDinamica) {
+          instrucoesFiltro += instrucaoTematicaDinamica;
         }
+
         if (filtros.formato) {
           const descFormato = filtros.formato === 'Staccato' ? 'frases curtas, impacto, quebras de linha'
             : filtros.formato === 'Narrativo' ? 'texto fluido como história'
@@ -475,7 +502,7 @@ Deno.serve(async (req) => {
           instrucoesFiltro += `8. **TOM [${filtros.tom.toUpperCase()}]**: ${descTom}\n`;
         }
 
-        instrucoesFiltro += '\n> Aplique TODOS os filtros acima em CADA mensagem gerada.\n';
+        instrucoesFiltro += '\n> Aplique TODOS os filtros e diretrizes acima em CADA mensagem gerada.\n';
       }
 
       // 4. PASSAGEM DO DIA - Buscar se filtro ativo (UNIFICADO: Storage → DB → Fallback)
@@ -600,17 +627,17 @@ Você é um especialista em capturar a ESSÊNCIA de textos devocionais.
 
 ## SUA MISSÃO:
 ${isReferenciaUnica
-  ? `**ATENÇÃO: MODO REFERÊNCIA ÚNICA!**
+          ? `**ATENÇÃO: MODO REFERÊNCIA ÚNICA!**
 Você tem apenas ${totalReferencias} mensagem(ns) como referência.
 Gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que REPLICAM FIELMENTE o estilo, tom e estrutura dessa(s) referência(s).
 **COPIE O ESTILO EXATO**: mesmo tamanho de frases, mesma pontuação, mesma estrutura, mesmo vocabulário.`
-  : `Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.`}
+          : `Analise as mensagens FAVORITAS abaixo e gere **EXATAMENTE ${quantidade} NOVAS MENSAGENS** que capturam o DNA delas.`}
 ${formatoPassagemDoDia}${instrucoesFiltro}
 ## REGRAS CRÍTICAS:
 1. **NÃO COPIE** literalmente — absorva o TOM, RITMO e VOCABULÁRIO
 ${isReferenciaUnica
-  ? `2. **REPLIQUE O ESTILO**: Como há apenas ${totalReferencias} referência(s), SIGA EXATAMENTE o mesmo padrão de escrita. Cada nova mensagem deve parecer escrita pela mesma pessoa.`
-  : '2. **MISTURE** elementos de diferentes favoritas para criar algo novo'}
+          ? `2. **REPLIQUE O ESTILO**: Como há apenas ${totalReferencias} referência(s), SIGA EXATAMENTE o mesmo padrão de escrita. Cada nova mensagem deve parecer escrita pela mesma pessoa.`
+          : '2. **MISTURE** elementos de diferentes favoritas para criar algo novo'}
 3. Cada mensagem deve ter **80-150 palavras** (curta e impactante)
 4. Use a mesma **estrutura** que as favoritas usam (títulos em caps, frases curtas, contrastes)
 ${!filtros?.formato ? '5. **VARIE OS ESTILOS**: algumas curtas (staccato), algumas narrativas, algumas com perguntas' : ''}
@@ -625,17 +652,17 @@ ${isReferenciaUnica ? `
 
 ## ⚠️ COTA DE VERSÍCULOS (OBRIGATÓRIO):
 ${(() => {
-  const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
-  const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
-  if (isVersiculoMode) {
-    return `- **100% DAS MENSAGENS (TODAS AS ${quantidade})** DEVEM conter um versículo bíblico como elemento CENTRAL. O versículo é o PROTAGONISTA de cada mensagem.
+          const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
+          const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
+          if (isVersiculoMode) {
+            return `- **100% DAS MENSAGENS (TODAS AS ${quantidade})** DEVEM conter um versículo bíblico como elemento CENTRAL. O versículo é o PROTAGONISTA de cada mensagem.
 - CADA mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma breve reflexão sobre ele
 - **USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo`;
-  } else {
-    return `- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
+          } else {
+            return `- **MÍNIMO ${Math.ceil(quantidade * 0.4)} MENSAGENS** devem incluir um versículo bíblico
 - ${filtros?.usarPassagemDia ? 'Use versículos da PASSAGEM DO DIA ou relacionados' : '**USE VERSÍCULOS DIFERENTES EM CADA MENSAGEM** - NÃO repita o mesmo versículo'}`;
-  }
-})()}
+          }
+        })()}
 - Formate assim: "Texto do versículo" — Livro Capítulo:Versículo
 - **CRUZE LIVROS**: Se o DNA cita Salmos, use também Provérbios, Isaías, João, Romanos, etc.
 
@@ -1035,8 +1062,8 @@ ${instrucoesFiltro}
 
 ## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
 ${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo')
-  ? `1. **VERSÍCULOS OBRIGATÓRIOS (100%)**: TODAS AS ${quantidade} MENSAGENS devem ser centradas em um versículo bíblico. O versículo é o PROTAGONISTA. Cada mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma reflexão. USE VERSÍCULOS DIFERENTES em cada uma.`
-  : `1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.`}
+          ? `1. **VERSÍCULOS OBRIGATÓRIOS (100%)**: TODAS AS ${quantidade} MENSAGENS devem ser centradas em um versículo bíblico. O versículo é o PROTAGONISTA. Cada mensagem deve: (1) Citar o versículo completo entre aspas, (2) Dar uma reflexão. USE VERSÍCULOS DIFERENTES em cada uma.`
+          : `1. **VERSÍCULOS OBRIGATÓRIOS**: Pelo menos 40% das mensagens geradas (aprox. ${Math.ceil(quantidade * 0.4)}) DEVEM conter um versículo bíblico no corpo ou ao final.`}
 2. **ANTI-REPETIÇÃO RIGOROSA**:
    Abaixo estão as mensagens que você gerou recentemente.
    **Analise os TEMAS, ÂNGULOS e VERSÍCULOS usados nelas.**
