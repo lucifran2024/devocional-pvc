@@ -182,6 +182,31 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
   const contFechamento: Record<string, number> = {};
   fechamentosColetados.forEach(f => { contFechamento[f] = (contFechamento[f] || 0) + 1; });
 
+  // Detecção dinâmica de palavras saturadas nas punchlines
+  const palavrasPunchlines: Record<string, number> = {};
+  punchlinesColetadas.forEach(p => {
+    const palavras = p.toLowerCase()
+      .replace(/[.,!?;:""'"—\-]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 4); // Só palavras significativas
+    palavras.forEach(w => { palavrasPunchlines[w] = (palavrasPunchlines[w] || 0) + 1; });
+  });
+  // Palavras que aparecem em 3+ punchlines = saturadas
+  const palavrasSaturadasDinamicas = Object.entries(palavrasPunchlines)
+    .filter(([_, c]) => c >= 3)
+    .filter(([w]) => !['deus', 'senhor', 'jesus', 'cristo', 'coração', 'porque', 'quando', 'ainda', 'sobre', 'todos', 'entre', 'neste', 'mesmo', 'voces', 'nosso', 'minha'].includes(w))
+    .map(([w, c]) => `"${w}" (${c}x)`)
+    .slice(0, 10);
+
+  // Detectar padrão de título saturado
+  const padroesTitle: Record<string, number> = { 'a_de': 0, 'a_na': 0, 'a_e': 0, 'o_de': 0, 'o_na': 0 };
+  titulosColetados.forEach(t => {
+    const tLow = t.toLowerCase();
+    if (/^(a|o)\s+\w+\s+(d[aoe]|n[ao])\s+/i.test(tLow)) padroesTitle['a_de']++;
+    if (/^(a|o)\s+\w+\s+e\s+/i.test(tLow)) padroesTitle['a_e']++;
+  });
+  const tituloPatternSaturado = padroesTitle['a_de'] + padroesTitle['a_e'] >= 5;
+
   // Pegar as últimas 3 imagens (para evitar repetição imediata)
   const ultimas3Imagens = imagensColetadas.slice(0, 3);
   // Pegar os últimos 3 fechamentos
@@ -295,12 +320,15 @@ ${ultimas3Imagens.length > 0 ? `⛔ **Últimas 3 usadas (PROIBIDAS)**: ${ultimas
 - "A fé é..." / "A gratidão transforma..." / "Deus transforma..."
 - "canteiro de obras" / "gente em construção"
 - "sua singularidade é..." / "design divino"
+- "floresce" / "florescer" (SATURADA — usada em excesso)
 
 **Padrões de fechamento proibidos (muito repetidos):**
 - Fechar com frase curta tipo "A [substantivo] [verbo]." (ex: "A honestidade edifica.", "A fragilidade revela.", "A gratidão floresce.")
 - Fechar com "Celebre sua/o...", "Abrace o/a...", "Solte o que..."
+${palavrasSaturadasDinamicas.length > 0 ? `\n**⚠️ PALAVRAS DETECTADAS COMO SATURADAS NAS ÚLTIMAS GERAÇÕES:**\n${palavrasSaturadasDinamicas.join(', ')}\nEVITE usar essas palavras nos fechamentos.` : ''}
+${tituloPatternSaturado ? `\n**⚠️ PADRÃO DE TÍTULO SATURADO:** "A/O ___ da/na/e ___" apareceu ${padroesTitle['a_de'] + padroesTitle['a_e']}x. USE outros formatos: verbos, comandos, perguntas, frases impactantes.` : ''}
 
-REGRA: Se precisar expressar essas ideias, reescreva com linguagem bíblica CONCRETA, usando verbos e substantivos DIFERENTES dos listados.`;
+REGRA: Se precisar expressar essas ideias, reescreva com linguagem DIRETA, COLOQUIAL, sem poesia.`;
 
   // =====================================================
   // BLOCO CHECKLIST DE VALIDAÇÃO
@@ -859,16 +887,33 @@ ${quantidade === 1 ? `## 🎯 MENSAGEM ÚNICA:
 Gere **1 mensagem** com máxima qualidade e profundidade.
 - Escolha um tema forte e original
 - Inclua um versículo bíblico relevante
-- Capriche na estrutura e no impacto` : `## 🎯 DIVERSIDADE NO LOTE (${quantidade} MENSAGENS):
-**CADA MENSAGEM DEVE SER ÚNICA!** Distribua assim:
-- **TEMAS**: ${quantidade} temas DIFERENTES (Fé, Esperança, Gratidão, Confiança, Paz, Força, Amor, Sabedoria, etc)
-- **ABERTURAS**: Varie como começa (pergunta, afirmação, citação, narrativa, exclamação)
-- **TONS**: Misture consolador, motivacional, reflexivo, celebrativo, exortativo
-- **LIVROS BÍBLICOS**: Use pelo menos ${Math.min(quantidade, 5)} livros diferentes da Bíblia
-- **ESTRUTURAS**: Algumas curtas (3 linhas), outras médias (5-7 linhas), outras com lista`}
+- Capriche na estrutura e no impacto` : `## 🎯 DIVERSIDADE OBRIGATÓRIA NO LOTE (${quantidade} MENSAGENS):
+**CADA MENSAGEM DEVE SER RADICALMENTE DIFERENTE!**
 
-**CHECKPOINT**: Antes de finalizar, releia ${quantidade === 1 ? 'a mensagem' : `as ${quantidade} mensagens`} e confirme que:
-${quantidade > 1 ? '✓ Nenhum tema se repete\n✓ Nenhum versículo se repete\n✓ Cada uma tem uma "personalidade" diferente' : '✓ A mensagem é original e impactante'}
+### TAMANHOS (MISTURE OBRIGATORIAMENTE):
+- **${Math.ceil(quantidade * 0.3)} mensagens MICRO** (1-3 frases, máx 30 palavras) — tipo "Deus te fez diferente. Não estrague isso."
+- **${Math.ceil(quantidade * 0.4)} mensagens CURTAS** (4-6 frases, 40-60 palavras)
+- **${Math.floor(quantidade * 0.3)} mensagens MÉDIAS** (7-10 frases, 60-80 palavras)
+- ⛔ NENHUMA mensagem pode ter mais de 80 palavras
+
+### ESTRUTURAS (USE PELO MENOS 3 DIFERENTES):
+- A) SOCO DIRETO: Afirmação forte + contraste (2-3 frases, sem cena)
+- B) TWIST/REVIRAVOLTA: Setup + inversão surpreendente
+- C) CONTRASTE: "Não é X. É Y." em staccato
+- D) CONFRONTO + VERSO: Confronta crença + verso como prova
+- E) CENA COTIDIANA: Cena breve (1 frase) + reflexão curta
+- F) ORAÇÃO: Fala direta com Deus
+- G) COMANDO EM CAPS: Declaração profética forte
+
+### DISTRIBUIÇÃO:
+- **TEMAS**: ${quantidade} temas DIFERENTES
+- **TONS**: Pelo menos 1 CONFRONTACIONAL ("tapa na cara"), 1 CONSOLADOR, 1 REFLEXIVO
+- **LIVROS**: ${Math.min(quantidade, 5)} livros bíblicos diferentes
+- **TÍTULOS**: Máximo 2 podem seguir "A ___ da ___". O resto: verbos, comandos, perguntas, frases de impacto.
+  Bons exemplos: "BASTA", "NÃO ESTRAGUE ISSO", "PARA DE FINGIR", "QUEM TE DISSE ISSO?"`}
+
+**CHECKPOINT FINAL**: Releia ${quantidade === 1 ? 'a mensagem' : `as ${quantidade} mensagens`} e confirme:
+${quantidade > 1 ? '✓ Nenhum tema se repete\n✓ Nenhum versículo se repete\n✓ Pelo menos 1 mensagem tem menos de 30 palavras (MICRO)\n✓ Pelo menos 1 mensagem é CONFRONTACIONAL (incomoda, provoca)\n✓ Pelo menos 3 estruturas DIFERENTES foram usadas\n✓ Nenhuma palavra se repete em 3+ fechamentos\n✓ Cada uma tem uma "personalidade" diferente' : '✓ A mensagem é original e impactante'}
 ${neutro ? '✓ NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações (MODO NEUTRO ATIVO)' : ''}
 ${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana} (NENHUM outro dia)` : ''}
 

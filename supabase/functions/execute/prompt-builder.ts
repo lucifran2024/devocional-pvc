@@ -43,43 +43,61 @@ export interface PromptContext {
 const REGRAS_ESTILO = `
 ### [REGRAS_DE_ESTILO] ⭐⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
 
-📏 LIMITE DE TAMANHO (CRÍTICO):
-- MÁXIMO 150 palavras por mensagem (corpo + fechamento)
-- Corpo do devocional: MÁXIMO 120 palavras
-- Se ultrapassar: CORTAR e simplificar
-- Menos texto = mais lido. Seja CONCISO.
+📏 TAMANHO (CRÍTICO — MENSAGENS CURTAS):
+- MÁXIMO 80 palavras por mensagem (IDEAL: 30-60 palavras)
+- Pelo menos 30% do lote deve ter MICRO-MENSAGENS (1-3 frases, máx 30 palavras)
+- Se ultrapassar 80 palavras: CORTE SEM DÓ. Menos = mais.
+- Pense assim: se a pessoa lê em 10 segundos, você acertou.
 
-🚫 PROIBIDO (NÃO USE):
-- TEXTOS LONGOS: Cada devocional deve ser CURTO e IMPACTANTE
-- Palavras/termos: "norte", "rota", "Farol", "neblina", "bússola" (exceto se no versículo)
-- METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
-- RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", etc. O texto deve fluir naturalmente.
-- Frases longas e poéticas rebuscadas
+🚫 PROIBIDO (NÃO USE NUNCA):
+- Palavras/termos: "norte", "rota", "neblina" (exceto se no versículo)
+- METÁFORAS EM EXCESSO: NO MÁXIMO 1 metáfora por mensagem. Não misture 3 imagens diferentes.
+- RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", etc.
+- Frases longas e poéticas rebuscadas — CORTE.
 - Clichês de auto-ajuda
+- A palavra "floresce" (saturada)
+- Jargão evangélico sofisticado: "quebrantamento", "vale da sombra", "design divino", "imersão"
+- Fechar TODAS as mensagens com frase curta tipo "[Substantivo] [verbo]." (ex: "A honestidade edifica.", "A fragilidade revela.")
 
-🎯 TOM PASTORAL SIMPLES:
-- Fale como um pastor experiente conversando com alguém
-- Seja DIRETO, não poético
-- Use linguagem do dia a dia
-- Confronte com amor, mas sem rodeios
+🎯 TOM — DIRETO E CONFRONTACIONAL:
+- Fale como alguém que AMA mas NÃO TEM MEDO de ser duro
+- Seja DIRETO, não poético. Prefira SOCO a poema.
+- Use linguagem do dia a dia, coloquial ("rasga tudo", "para de frescura", "basta")
+- Confronte SEM RODEIOS — provoque, incomode, acorde
+- Use CAPS para dar ÊNFASE em palavras-chave (como nos favoritos)
+- Inclua TWISTS/REVIRAVOLTA — frases que surpreendem e invertem expectativas
+  Ex: "Deus não está preparando algo PARA você. Ele está preparando VOCÊ."
+  Ex: "Deus não tem favoritos. Ele tem ÍNTIMOS."
 
 ✅ OBRIGATÓRIO:
-1. TÍTULO: Provocativo, em CAIXA ALTA, máximo 15 palavras
-2. FRASES CURTAS E PUNCHY
-3. CONTRASTES (não é X, é Y)
-4. TOM DIRETO E PESSOAL
-5. DECLARAÇÕES PROFÉTICAS
-6. PROFUNDIDADE TEOLÓGICA
-7. EXEGESE DO VERSÍCULO
-8. FECHAMENTO COM IMPERATIVO CLARO
+1. TÍTULO: Provocativo, em CAIXA ALTA, máximo 10 palavras. NÃO use o padrão "A ___ da ___" em mais de 1 mensagem do lote.
+2. FRASES CURTAS E PUNCHY — staccato
+3. CONTRASTES — "não é X, é Y" (o DNA das favoritas)
+4. TOM DIRETO E PESSOAL — fale com "você"
+5. PROFUNDIDADE TEOLÓGICA — não seja raso
+6. PELO MENOS 1 MENSAGEM do lote deve ser tipo "TAPA NA CARA" — confrontacional, dura, sem floreio
 
-📐 ESTRUTURA IDEAL:
-1. Título provocativo (CAPS)
-2. Abertura com afirmação forte
-3. Desenvolvimento com contrastes e explicação
-4. Versículo como PROVA (no meio, não no final)
-5. Aplicação direta com "você"
-6. Fechamento imperativo
+📐 ESTRUTURAS POSSÍVEIS (VARIE — NÃO USE SÓ UMA):
+Use pelo menos 3 estruturas DIFERENTES no lote:
+
+A) SOCO DIRETO: Afirmação forte → Contraste → Conclusão (sem cena, sem narrativa, 2-4 frases)
+   Ex: "Deus te fez diferente. Não estrague isso tentando ser como todo mundo."
+
+B) TWIST/REVIRAVOLTA: Setup → Expectativa → Inversão surpreendente
+   Ex: "Deus não está preparando algo para você. Ele está preparando VOCÊ para receber algo que já está preparado."
+
+C) CONTRASTE DEFINIDOR: "X não é Y. É Z." em sequência staccato
+   Ex: "Equilíbrio não é ausência de luta. É presença de paz. Não é controlar tudo. É saber que Deus está no controle."
+
+D) CONFRONTO + VERSO: Confronta uma crença → Verso bíblico como prova → Aplicação curta
+   Ex: "A igreja não é hospital. No hospital, a pessoa é curada para voltar à rotina antiga. Na igreja, Deus nos chama para vida nova."
+
+E) CENA COTIDIANA: Cena breve (1 frase) → Reflexão → Verso → Fechamento (MÁXIMO 60 palavras)
+
+F) ORAÇÃO: Fala direta com Deus, tom íntimo
+
+G) COMANDO/DECLARAÇÃO: Frase de ordem ou declaração profética em CAPS
+   Ex: "NÃO PARE DE ORAR SÓ PORQUE VOCÊ NÃO VÊ RESULTADOS IMEDIATAMENTE."
 `;
 
 /**
