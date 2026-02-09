@@ -47,6 +47,14 @@ export default function DnaCategorizadoPage() {
     // === ESTADO DA ABA ATIVA ===
     const [activeTab, setActiveTab] = useState<TabType>('gerenciar');
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        if (tab === 'gerenciar' || tab === 'gerar-dna' || tab === 'gerar-estilo') {
+            setActiveTab(tab);
+        }
+    }, []);
+
     const [items, setItems] = useState<DnaCategorizado[]>([]);
     const [stats, setStats] = useState<CategoriaStats[]>([]);
     const [loading, setLoading] = useState(true);

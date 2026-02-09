@@ -165,17 +165,8 @@ export default function DashboardPage() {
             badge="NOVO"
           />
 
-          {/* Card 7: Banco de Ouro (Favoritos Manuais) */}
-          <DashboardCard
-            href="/favoritos"
-            title="Banco de Ouro"
-            desc="Sua coleção pessoal de mensagens favoritas (Manuais)."
-            icon={Book}
-            accentColor="text-yellow-400"
-            badge="PREMIUM"
-          />
 
-          {/* Card 8: DNA Categorizado */}
+          {/* Card 7: DNA Categorizado */}
           <DashboardCard
             href="/dna-categorizado"
             title="DNA Categorizado"
@@ -185,7 +176,7 @@ export default function DashboardPage() {
             badge="NOVO"
           />
 
-          {/* Card 9: Biblioteca (Bíblia) */}
+          {/* Card 8: Biblioteca (Bíblia) */}
           <DashboardCard
             href="/biblioteca"
             title="Bíblia Sagrada"
