@@ -435,16 +435,38 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         const tipoOuCategoria = filtros.tipo || filtros.categoria;
         if (tipoOuCategoria) {
           const tipoLower = tipoOuCategoria.toLowerCase();
-          const descTipo = (tipoLower === 'versículo' || tipoLower === 'versiculo')
-            ? 'CADA mensagem DEVE ser centrada em um versículo bíblico específico. Formato: cite o versículo completo entre aspas, seguido de uma breve reflexão (2-3 frases). O versículo é o PROTAGONISTA, não coadjuvante.'
-            : tipoLower === 'oração' ? 'escreva como oração/prece falando diretamente com Deus (Senhor, Te peço...)'
-              : tipoLower === 'devocional' ? 'reflexão devocional completa e elaborada'
-                : tipoLower === 'exortação' ? 'mensagem de exortação, encorajamento e chamado à ação espiritual'
-                  : tipoLower === 'declaração' ? 'proclamação de fé em 1ª pessoa ("Eu creio", "Eu declaro")'
-                    : tipoLower === 'reflexão' ? 'reflexão contemplativa e profunda sobre a vida espiritual'
-                      : 'reflexão curta e direta';
+
+          let descTipo = '';
+          switch (tipoLower) {
+            case 'versículo':
+            case 'versiculo':
+              descTipo = 'CADA mensagem DEVE ser centrada em um versículo bíblico específico. Formato: cite o versículo completo entre aspas, seguido de uma breve reflexão (2-3 frases). O versículo é o PROTAGONISTA.';
+              break;
+            case 'oração':
+            case 'oracao':
+              descTipo = 'escreva como oração/prece falando diretamente com Deus (Senhor, Te peço...). Use tom de entrega e confiança.';
+              break;
+            case 'devocional':
+              descTipo = 'reflexão devocional **ROBUSTA (aprox. 90 palavras)**. DEVE ter base bíblica explícita. Use frases de efeito ("Staccato"). Termine com uma frase de impacto.';
+              break;
+            case 'exortação':
+            case 'exortacao':
+              descTipo = 'mensagem de exortação, encorajamento e chamado à ação. Use tom de autoridade amorosa. "Levanta-te", "Creia".';
+              break;
+            case 'declaração':
+            case 'declaracao':
+              descTipo = 'proclamação de fé em 1ª pessoa ("Eu creio", "Eu declaro"). Afirmações poderosas de identidade e promessa.';
+              break;
+            case 'reflexão':
+            case 'reflexao':
+              descTipo = 'reflexão **CURTA e INCISIVA (máx 30-40 palavras)**. Direto ao ponto. Sem rodeios. Uma verdade espiritual nua e crua.';
+              break;
+            default:
+              descTipo = 'reflexão curta e direta.';
+          }
           instrucoesFiltro += `1. **TIPO/CATEGORIA [${tipoOuCategoria.toUpperCase()}]**: ${descTipo}\n`;
         }
+
         if (filtros.periodo && !neutro) {
           // Mapear período para saudação correta
           const saudacaoMap: Record<string, string> = {
@@ -456,55 +478,51 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           const saudacao = saudacaoMap[filtros.periodo] || filtros.periodo;
           instrucoesFiltro += `2. **SAUDAÇÃO [${filtros.periodo.toUpperCase()}]**: COMECE cada mensagem com "${saudacao}!" (sem vocativos como "amado(a)")\n`;
         } else if (neutro) {
-          instrucoesFiltro += `2. **🚫 MODO NEUTRO (OBRIGATÓRIO)**: É PROIBIDO usar qualquer saudação temporal. NÃO escreva "Bom dia", "Boa tarde", "Boa noite", "Bom fim de semana" ou variações. Comece DIRETO com o conteúdo da mensagem (reflexão, versículo, declaração, etc). Esta regra tem PRIORIDADE MÁXIMA sobre qualquer outra instrução.\n`;
+          instrucoesFiltro += `2. **🚫 MODO NEUTRO (OBRIGATÓRIO)**: É PROIBIDO usar qualquer saudação temporal. Comece DIRETO com o gancho/frase de impacto. (Ex: "A maior batalha é...")\n`;
         }
 
         if (filtros.diasSemana) {
           // BUG FIX: Instrução mais restritiva para evitar dias não selecionados
           const diasArray = filtros.diasSemana.split(',').map((d: string) => d.trim());
-          instrucoesFiltro += `3. **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: "${filtros.diasSemana}". NÃO mencione NENHUM outro dia da semana que não esteja nesta lista. Distribua os ${diasArray.length} dia(s) entre as ${quantidade} mensagens. (ex: "Neste(a) ${diasArray[0]} abençoado(a)...")\n`;
+          instrucoesFiltro += `3. **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: "${filtros.diasSemana}". Distribua-os entre as mensagens.\n`;
         }
         if (filtros.momento) {
-          const descMomento = filtros.momento === 'Fim de Semana' ? 'mensagem de descanso e renovação para o fim de semana'
-            : filtros.momento === 'Começo de Semana' ? 'mensagem de força e motivação para iniciar a semana'
-              : filtros.momento === 'Início do Mês' ? 'mensagem de renovação, novos começos e expectativas para o mês que inicia'
-                : 'mensagem de gratidão e reflexão sobre o mês que encerra';
+          const descMomento = filtros.momento === 'Fim de Semana' ? 'foco em descanso e renovação'
+            : filtros.momento === 'Começo de Semana' ? 'foco em força e motivação inicial'
+              : filtros.momento === 'Início do Mês' ? 'foco em novos começos e primícias'
+                : 'foco em gratidão e fechamento de ciclos';
           instrucoesFiltro += `4. **MOMENTO [${filtros.momento.toUpperCase()}]**: ${descMomento}\n`;
         }
 
         // LÓGICA DE TEMA (User defined OR Autopilot Dynamic)
         if (temaFinal) {
-          instrucoesFiltro += `5. **TEMA OBRIGATÓRIO**: Todas mensagens devem abordar "${temaFinal}"${!filtros?.tema ? ' (tema surpresa do dia — explore este assunto!)' : ''}\n`;
+          instrucoesFiltro += `5. **TEMA OBRIGATÓRIO**: Todas mensagens devem abordar "${temaFinal}"${!filtros?.tema ? ' (tema surpresa — explore nuances!)' : ''}\n`;
         } else if (instrucaoTematicaDinamica) {
           instrucoesFiltro += instrucaoTematicaDinamica;
         }
 
+        // REGRAS DE ESTILO (DNA DO USUÁRIO)
+        instrucoesFiltro += `
+6. **🧬 ESTILO (DNA OBRIGATÓRIO):**
+   - **ZERO PERGUNTAS NO INÍCIO:** NUNCA comece com "Você já se sentiu...?" ou "Sabe quando...?". Comece com uma **AFIRMAÇÃO DE IMPACTO** ou uma **CENA CONCRETA**.
+   - **ESTILO "STACCATO":** Use frases curtas. Ponto final. Respire. Impacte. Evite orações subordinadas longas e cansativas.
+   - **GANCHO VISUAL:** Use imagens concretas (deserto, poço, alicerce, tempestade, silêncio) em vez de conceitos abstratos.
+   - **IMPACTO FINAL:** Termine cada mensagem com uma frase "punchline" que resuma a ideia e fique na cabeça. 
+`;
+
         if (filtros.formato) {
-          const descFormato = filtros.formato === 'Staccato' ? 'frases curtas, impacto, quebras de linha'
-            : filtros.formato === 'Narrativo' ? 'texto fluido como história'
+          const descFormato = filtros.formato === 'Staccato' ? 'frases curtas, ritmo rápido (PRIORIDADE)'
+            : filtros.formato === 'Narrativo' ? 'estilo storytelling curto'
               : filtros.formato === 'Lista' ? 'tópicos numerados'
-                : 'use perguntas reflexivas';
-          instrucoesFiltro += `6. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
-        }
-        if (filtros.tamanho) {
-          const sizeInstructions: Record<string, string> = {
-            'Curto': 'MÁXIMO 40 palavras. 1 parágrafo curto. Direto e incisivo. SEM enrolação.',
-            'Médio': 'Entre 60-90 palavras. 2 parágrafos. Equilibrado e objetivo.',
-            'Longo': 'Mais de 120 palavras. 3+ parágrafos. Detalhado, profundo e bem explicado.'
-          };
-          const instruction = sizeInstructions[filtros.tamanho] || filtros.tamanho;
-          instrucoesFiltro += `7. **TAMANHO RIGOROSO**: ${instruction}\n`;
-        }
-        if (filtros.tom) {
-          const descTom = filtros.tom === 'Alegre' ? 'tom positivo, vibrante, celebrando a vida'
-            : filtros.tom === 'Sereno' ? 'tom calmo, pacífico, reconfortante'
-              : filtros.tom === 'Reflexivo' ? 'tom contemplativo, profundo, questionador'
-                : filtros.tom === 'Motivacional' ? 'tom energético, inspirador, que impulsiona ação'
-                  : 'tom pensativo, meditativo, introspectivo';
-          instrucoesFiltro += `8. **TOM [${filtros.tom.toUpperCase()}]**: ${descTom}\n`;
+                : 'direto e incisivo';
+          instrucoesFiltro += `7. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
         }
 
-        instrucoesFiltro += '\n> Aplique TODOS os filtros e diretrizes acima em CADA mensagem gerada.\n';
+        if (filtros.tom) {
+          instrucoesFiltro += `8. **TOM [${filtros.tom.toUpperCase()}]**: ${filtros.tom}\n`;
+        }
+
+        instrucoesFiltro += '\n> Aplique RIGOROSAMENTE as regras de estilo acima.\n';
       }
 
       // 4. PASSAGEM DO DIA - Buscar se filtro ativo (UNIFICADO: Storage → DB → Fallback)
