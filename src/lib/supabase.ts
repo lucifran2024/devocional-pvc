@@ -234,15 +234,21 @@ export function getDataHoje(): string {
 export interface FiltrosGeracao {
     tema?: string;
     tipo?: string;
+    categoria?: string;
     formato?: string;
+    tamanho?: string;
+    tom?: string;
     quantidade?: number;
     dnaBase?: string;
     periodo?: string;
     diaSemana?: string;
+    diasSemana?: string;
     momento?: string;
     estilosApresentacao?: string[]; // Categorias para definir o formato de apresentação
     estilo?: string; // NOVO: Estilo único forçado (modo_estilo)
     neutro?: boolean; // NOVO: Filtro para remover saudações
+    usarDnaBase?: boolean;
+    usarPassagemDia?: boolean;
     contextoEstrategia?: 'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'; // Estratégia de contexto
     contextoManual?: string[]; // NOVO: Inspiração curada manualmente
 }

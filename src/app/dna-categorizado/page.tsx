@@ -103,6 +103,40 @@ export default function DnaCategorizadoPage() {
     const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'>('recent_5');
     const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
 
+    useEffect(() => {
+        if (activeTab === 'gerar-dna' && !usarDnaBase) {
+            setUsarDnaBase(true);
+        }
+    }, [activeTab, usarDnaBase]);
+
+    const temFiltroAvancadoAtivo = Boolean(
+        filtroTema ||
+        filtroFormato ||
+        filtroTamanho ||
+        filtroTom ||
+        filtroPeriodo ||
+        filtroMomento ||
+        diasSelecionados.length > 0 ||
+        filtroNeutro ||
+        usarPassagemDia ||
+        !usarDnaBase ||
+        contextoEstrategia !== 'recent_5'
+    );
+
+    const resetAdvancedFilters = () => {
+        setFiltroTema('');
+        setFiltroFormato('');
+        setFiltroTamanho('');
+        setFiltroTom('');
+        setFiltroPeriodo('');
+        setFiltroMomento('');
+        setDiasSelecionados([]);
+        setFiltroNeutro(false);
+        setUsarPassagemDia(false);
+        setUsarDnaBase(true);
+        setContextoEstrategia('recent_5');
+    };
+
     // MANUAL CURATION STATE
     const [candidates, setCandidates] = useState<{ id: number; texto: string; selected: boolean }[]>([]);
     const [showCandidates, setShowCandidates] = useState(false);
@@ -266,12 +300,13 @@ export default function DnaCategorizadoPage() {
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
-            usarDnaBase,
+            // modo_favoritas depende de DNA por definição; evitar ambiguidade de filtro
+            usarDnaBase: true,
             usarPassagemDia,
             neutro: filtroNeutro,
             contextoEstrategia,
             // Injetar contexto manual selecionado
-            contextoManual: (usarDnaBase && candidates.length > 0)
+            contextoManual: (candidates.length > 0)
                 ? candidates.filter(c => c.selected).map(c => c.texto)
                 : undefined
         };
@@ -697,10 +732,17 @@ export default function DnaCategorizadoPage() {
                                         <div>
                                             <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">DNA Base</label>
                                             <button
-                                                onClick={() => setUsarDnaBase(!usarDnaBase)}
-                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${usarDnaBase ? 'bg-green-500/20 border-green-500/30 text-green-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                                disabled={activeTab === 'gerar-dna'}
+                                                onClick={() => activeTab !== 'gerar-dna' && setUsarDnaBase(!usarDnaBase)}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${activeTab === 'gerar-dna'
+                                                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300 cursor-not-allowed'
+                                                    : usarDnaBase
+                                                        ? 'bg-green-500/20 border-green-500/30 text-green-300'
+                                                        : 'bg-white/5 border-white/10 text-slate-400'}`}
                                             >
-                                                {usarDnaBase ? '✓ Usar DNA Salvo' : '✗ Sem DNA Base'}
+                                                {activeTab === 'gerar-dna'
+                                                    ? '[ON] Sempre ativo no Gerar DNA'
+                                                    : (usarDnaBase ? '[ON] Usar DNA Salvo' : '[OFF] Sem DNA Base')}
                                             </button>
                                         </div>
 
@@ -789,19 +831,12 @@ export default function DnaCategorizadoPage() {
 
 
                                     {/* Limpar Filtros */}
-                                    {(filtroTema || filtroFormato || filtroTamanho || filtroTom || filtroPeriodo || filtroMomento) && (
+                                    {temFiltroAvancadoAtivo && (
                                         <button
-                                            onClick={() => {
-                                                setFiltroTema('');
-                                                setFiltroFormato('');
-                                                setFiltroTamanho('');
-                                                setFiltroTom('');
-                                                setFiltroPeriodo('');
-                                                setFiltroMomento('');
-                                            }}
+                                            onClick={resetAdvancedFilters}
                                             className="mt-3 text-xs text-violet-400 hover:text-violet-300"
                                         >
-                                            ✕ Limpar filtros avançados
+                                            Limpar filtros avancados
                                         </button>
                                     )}
 

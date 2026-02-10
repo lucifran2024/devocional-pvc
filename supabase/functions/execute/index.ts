@@ -76,6 +76,66 @@ function extrairTemaDoTitulo(texto: string): string {
   return titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim().substring(0, 50);
 }
 
+// Trava de léxico: força o modelo a reaproveitar o vocabulário dominante do DNA.
+const STOPWORDS_DNA = new Set([
+  'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas', 'um', 'uma', 'uns', 'umas',
+  'por', 'para', 'com', 'sem', 'que', 'como', 'mas', 'ou', 'se', 'ao', 'aos', 'à', 'às',
+  'e', 'o', 'a', 'os', 'as', 'eu', 'tu', 'ele', 'ela', 'nós', 'nos', 'vós', 'vocês', 'voce',
+  'me', 'te', 'lhe', 'lhes', 'meu', 'minha', 'seu', 'sua', 'teu', 'tua', 'esse', 'essa',
+  'isso', 'isto', 'aquele', 'aquela', 'aqui', 'ali', 'já', 'ja', 'não', 'nao', 'sim',
+  'ser', 'estar', 'ter', 'fazer', 'foi', 'era', 'são', 'sao', 'será', 'sera', 'vai'
+]);
+
+function normalizarLexToken(token: string): string {
+  return token
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function extrairLexicoDominante(textos: string[], limite: number = 24): string[] {
+  const freq = new Map<string, number>();
+  const original = new Map<string, string>();
+
+  for (const texto of textos) {
+    const tokens = texto.match(/[A-Za-zÀ-ÖØ-öø-ÿ0-9]+/g) || [];
+    for (const token of tokens) {
+      const norm = normalizarLexToken(token);
+      if (!norm || norm.length < 4) continue;
+      if (STOPWORDS_DNA.has(norm)) continue;
+      if (/^\d+$/.test(norm)) continue;
+
+      freq.set(norm, (freq.get(norm) || 0) + 1);
+      if (!original.has(norm)) {
+        original.set(norm, token.toLowerCase());
+      }
+    }
+  }
+
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limite)
+    .map(([norm]) => original.get(norm) || norm);
+}
+
+function buildLexicoLockInstruction(textos: string[], minTermosPorMensagem: number): string {
+  const lexico = extrairLexicoDominante(textos, 24);
+  if (lexico.length === 0) return '';
+
+  const termos = lexico.map((t) => `"${t}"`).join(', ');
+  return `
+## 🔒 TRAVA DE LÉXICO DNA (OBRIGATÓRIA):
+Use o vocabulário dominante do DNA abaixo.
+Em CADA mensagem:
+1. Inclua pelo menos ${minTermosPorMensagem} termos DIFERENTES desta lista.
+2. Não troque por sinônimos genéricos quando houver termo equivalente no DNA.
+3. Evite palavras "neutras de IA" se não estiverem nas sementes.
+
+LÉXICO DNA: ${termos}
+`;
+}
+
 // Anti-repetição centralizada: consulta gerações recentes e monta contexto
 async function buildAntiRepeticaoContext(
   supabase: any,
@@ -714,16 +774,26 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
      **máx. 12 palavras**, sem clichê e sem repetir a última ideia do versículo.
 `;
 
+        if (filtros.tamanho) {
+          const tamanhoMap: Record<string, string> = {
+            'Curto': 'MAXIMO 40 palavras por mensagem. Frases objetivas e diretas.',
+            'Médio': 'Entre 60 e 90 palavras por mensagem. Equilibrado e claro.',
+            'Longo': 'Mais de 120 palavras por mensagem. Aprofundado e explicativo.'
+          };
+          const descTamanho = tamanhoMap[filtros.tamanho] || filtros.tamanho;
+          instrucoesFiltro += `7. **TAMANHO [${filtros.tamanho.toUpperCase()}]**: ${descTamanho}\n`;
+        }
+
         if (filtros.formato) {
           const descFormato = filtros.formato === 'Staccato' ? 'frases curtas, ritmo rápido (PRIORIDADE)'
             : filtros.formato === 'Narrativo' ? 'estilo storytelling curto'
               : filtros.formato === 'Lista' ? 'tópicos numerados'
                 : 'direto e incisivo';
-          instrucoesFiltro += `7. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
+          instrucoesFiltro += `8. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
         }
 
         if (filtros.tom) {
-          instrucoesFiltro += `8. **TOM [${filtros.tom.toUpperCase()}]**: ${filtros.tom}\n`;
+          instrucoesFiltro += `9. **TOM [${filtros.tom.toUpperCase()}]**: ${filtros.tom}\n`;
         }
 
         instrucoesFiltro += '\n> Aplique RIGOROSAMENTE as regras de estilo acima.\n';
@@ -842,6 +912,11 @@ Cada mensagem DEVE seguir esta estrutura:
       // Detectar se é modo de referência única (1-2 mensagens selecionadas)
       const isReferenciaUnica = favoritasFiltradas.length <= 2;
       const totalReferencias = favoritasFiltradas.length;
+      const minLexTermFavoritas = isReferenciaUnica ? 3 : 4;
+      const instrucaoLexicoFavoritas = buildLexicoLockInstruction(
+        favoritasFiltradas.map((f: any) => f.texto_msg || ''),
+        minLexTermFavoritas
+      );
 
       const promptFavoritas = `
 # MODO REMIX — REMIXADOR DE FAVORITAS
@@ -855,6 +930,7 @@ ${isReferenciaUnica
           ? `Você tem ${totalReferencias} semente(s). REPLIQUE o estilo exato e gere variações.`
           : `Você tem ${favoritasFiltradas.length} sementes. MISTURE-AS para criar remixes.`}
 ${formatoPassagemDoDia}${instrucoesFiltro}
+${instrucaoLexicoFavoritas}
 
 ## 🔧 COMO FAZER O REMIX (OBRIGATÓRIO):
 Para CADA mensagem gerada, siga este processo:
@@ -897,6 +973,7 @@ ${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `
 
 **CHECKPOINT REMIX**: Antes de entregar, valide:
 ${quantidade > 1 ? '✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS da semente primária\n✓ Cada mensagem mistura um elemento da semente secundária\n✓ O tamanho é similar ao da semente primária (não inflou, não encolheu)\n✓ O tom é fiel às favoritas (direto = direto, oração = oração, confronto = confronto)\n✓ Nenhum versículo se repete\n✓ Nenhuma mensagem ficou genérica/sem DNA' : '✓ A mensagem tem DNA claro da semente'}
+${instrucaoLexicoFavoritas ? `✓ Cada mensagem contém no mínimo ${minLexTermFavoritas} termos do LÉXICO DNA` : ''}
 ${neutro ? '✓ NENHUMA saudação (MODO NEUTRO ATIVO)' : ''}
 ${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana}` : ''}
 
@@ -931,10 +1008,13 @@ ${dnaFavoritas}
       const MODEL_NAME = "gemini-2.0-flash";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
-      // Temperature dinâmica: varia entre 0.7 e 1.0 a cada lote
-      const tempOptions = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0];
-      const tempSorteada = tempOptions[Math.floor(Math.random() * tempOptions.length)];
-      console.log(`🌡️ [FAVORITAS] Temperature sorteada: ${tempSorteada}`);
+      // Temperatura estável por perfil para reduzir variância de qualidade.
+      let tempSorteada = 0.78;
+      if (filtros?.formato === 'Staccato') tempSorteada = 0.72;
+      if (filtros?.formato === 'Lista') tempSorteada = 0.70;
+      if ((filtros?.tom || '').toLowerCase() === 'poético') tempSorteada = 0.82;
+      if ((filtros?.tom || '').toLowerCase() === 'direto') tempSorteada = 0.74;
+      console.log(`🌡️ [FAVORITAS] Temperature: ${tempSorteada}`);
 
       const resp = await fetch(url, {
         method: "POST",
@@ -1201,7 +1281,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
       const tamanhoEstilo = filtros?.tamanho || (TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros.formato : null);
       const formatoEstilo = !TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros?.formato : null;
 
-      const temFiltrosExtras = (temaFinalEstilo || instrucaoTematicaDinamicaEstilo || tamanhoEstilo || formatoEstilo || filtros?.periodo || filtros?.momento || diasSemana || neutro);
+      const temFiltrosExtras = (temaFinalEstilo || instrucaoTematicaDinamicaEstilo || tamanhoEstilo || formatoEstilo || filtros?.tom || filtros?.periodo || filtros?.momento || diasSemana || neutro);
 
       if (temFiltrosExtras) {
         instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
@@ -1230,6 +1310,17 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           const fmtInstruction = formatInstructions[formatoEstilo] || formatoEstilo;
           instrucoesFiltro += `• **FORMATO TEXTUAL [${formatoEstilo.toUpperCase()}]**: ${fmtInstruction}\n`;
         }
+        if (filtros.tom) {
+          const tomInstructions: Record<string, string> = {
+            'Confrontacional': 'voz firme, direta e sem rodeios; confronto amoroso com clareza.',
+            'Poético': 'linguagem imagética e cadência contemplativa, sem perder clareza bíblica.',
+            'Direto': 'frases objetivas, sem floreios; aplicação imediata.',
+            'Consolador': 'acolhimento, compaixão e encorajamento gentil.',
+            'Profético': 'chamado à verdade, urgência espiritual e senso de missão.'
+          };
+          const tomInstruction = tomInstructions[filtros.tom] || filtros.tom;
+          instrucoesFiltro += `• **TOM [${filtros.tom.toUpperCase()}]**: ${tomInstruction}\n`;
+        }
         if (filtros.periodo && !neutro) {
           const saudacaoMap: Record<string, string> = {
             'Manhã': 'Bom dia',
@@ -1251,6 +1342,14 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           instrucoesFiltro += `• **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: ${diasSemana}. NÃO mencione NENHUM outro dia da semana que não esteja nesta lista. Distribua os ${diasArrayEstilo.length} dia(s) entre as ${quantidade} mensagens. (Ex: "Neste(a) ${diasArrayEstilo[0]} abençoado(a)...")\n`;
         }
       }
+
+      const minLexTermEstilo = usarDnaBase ? 3 : 0;
+      const instrucaoLexicoEstilo = usarDnaBase
+        ? buildLexicoLockInstruction(
+          dnaEssencia.split(/\n\s*---\s*\n/g).map((t: string) => t.trim()).filter(Boolean),
+          minLexTermEstilo
+        )
+        : '';
 
       // 6. Montar Prompt Híbrido - AGORA COM INSTRUÇÃO DE GÊNERO EXPLÍCITA
       const promptHibrido = `
@@ -1296,6 +1395,7 @@ Baseie-se nisto:
 ` : ''}
 
 ${instrucoesFiltro}
+${instrucaoLexicoEstilo}
 
 ## 4. REGRAS ESTRUTURAIS (OBRIGATÓRIO):
 ${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo')
@@ -1321,7 +1421,8 @@ Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 4. [FILTROS] ${diasSemana ? `Citou APENAS ${diasSemana}? (NÃO citou outros dias?)` : 'Ok.'}
 5. [SEPARAÇÃO] Use "---" entre as mensagens.
 6. [ANTI-REP] Nenhum tema ou versículo da lista proibida foi repetido?
-${neutro ? '7. [NEUTRO] NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações? CONFIRME!' : ''}
+${instrucaoLexicoEstilo ? `7. [LEXICO DNA] Cada mensagem tem pelo menos ${minLexTermEstilo} termos do léxico DNA?` : ''}
+${neutro ? `${instrucaoLexicoEstilo ? '8' : '7'}. [NEUTRO] NENHUMA mensagem começa com "Bom dia", "Boa tarde", "Boa noite" ou variações? CONFIRME!` : ''}
 
 Gere agora:
 `;
@@ -1330,10 +1431,13 @@ Gere agora:
       const MODEL_NAME = "gemini-2.0-flash";
       const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
-      // Temperature dinâmica: varia entre 0.7 e 1.0 a cada lote
-      const tempOptionsEstilo = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0];
-      const tempSorteadaEstilo = tempOptionsEstilo[Math.floor(Math.random() * tempOptionsEstilo.length)];
-      console.log(`🌡️ [ESTILO] Temperature sorteada: ${tempSorteadaEstilo}`);
+      // Temperatura estável por perfil para reduzir variância de qualidade.
+      let tempSorteadaEstilo = 0.78;
+      if (formatoEstilo === 'Staccato') tempSorteadaEstilo = 0.72;
+      if (formatoEstilo === 'Lista') tempSorteadaEstilo = 0.70;
+      if ((filtros?.tom || '').toLowerCase() === 'poético') tempSorteadaEstilo = 0.82;
+      if ((filtros?.tom || '').toLowerCase() === 'direto') tempSorteadaEstilo = 0.74;
+      console.log(`🌡️ [ESTILO] Temperature: ${tempSorteadaEstilo}`);
 
       const resp = await fetch(genUrl, {
         method: "POST",
