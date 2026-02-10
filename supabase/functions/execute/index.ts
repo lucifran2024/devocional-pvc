@@ -918,9 +918,30 @@ Cada mensagem DEVE seguir esta estrutura:
         minLexTermFavoritas
       );
 
+
+      // REGRAS GLOBAIS DE ESTILO (CENTRALIZADAS)
+      const REGRAS_ESTILO_GLOBAIS = `
+### 🚫 PROIBIÇÕES GLOBAIS (CRÍTICO):
+- **Palavras Banidas**: "norte", "rota", "neblina", "bússola", "farol", "cais", "porto seguro", "âncora" (exceto se no versículo).
+- **Clichês Banidos**: "confie no processo", "Deus está no controle", "tudo tem um tempo", "a tempestade vai passar".
+- **Jargão Banido**: "quebrantamento", "eis que", "varão", "muralha", "gigante", "vitória", "bênção" (sem contexto).
+- **Estrutura Banida**: NÃO comece com "No turbilhão da vida..." ou "Na caminhada da fé...".
+- **Metáforas Banidas**: "Olaria", "Deserto" (se não for o tema), "Tempestade" (se não for o tema).
+
+### ⭐ REGRAS DE OURO (O QUE FAZER):
+1. **STACCATO REAL**: Frases curtas. Ponto. Outra frase. Ponto. Sem vírgulas desnecessárias.
+2. **ZERO EMOJIS NO TEXTO**: Use emojis APENAS no título (se quiser) ou bullet points. Nunca no meio da frase.
+3. **TOM DE CONVERSA**: Escreva como se estivesse mandando um áudio no WhatsApp para um amigo próximo.
+4. **VERSÍCULO INTEGRADO**: Não jogue o versículo. Costure ele no texto. "Como diz em X..." ou "Lembra de Y?".
+5. **TWIST FINAL**: A última frase deve inverter a expectativa ou fechar com chave de ouro.
+`;
+
       const promptFavoritas = `
 # MODO REMIX — REMIXADOR DE FAVORITAS
 ${formatoPassagemDoDia ? '\n## 🔀 MODO: REMIX + PASSAGEM DO DIA' : ''}
+
+${REGRAS_ESTILO_GLOBAIS}
+
 
 Você é um DJ de textos devocionais. Sua função é **REMIXAR** as mensagens favoritas abaixo.
 
@@ -1343,6 +1364,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         }
       }
 
+
       const minLexTermEstilo = usarDnaBase ? 3 : 0;
       const instrucaoLexicoEstilo = usarDnaBase
         ? buildLexicoLockInstruction(
@@ -1351,10 +1373,31 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         )
         : '';
 
+      // REGRAS GLOBAIS DE ESTILO (CENTRALIZADAS)
+      const REGRAS_ESTILO_GLOBAIS = `
+### 🚫 PROIBIÇÕES GLOBAIS (CRÍTICO):
+- **Palavras Banidas**: "norte", "rota", "neblina", "bússola", "farol", "cais", "porto seguro", "âncora" (exceto se no versículo).
+- **Clichês Banidos**: "confie no processo", "Deus está no controle", "tudo tem um tempo", "a tempestade vai passar".
+- **Jargão Banido**: "quebrantamento", "eis que", "varão", "muralha", "gigante", "vitória", "bênção" (sem contexto).
+- **Estrutura Banida**: NÃO comece com "No turbilhão da vida..." ou "Na caminhada da fé...".
+- **Metáforas Banidas**: "Olaria", "Deserto" (se não for o tema), "Tempestade" (se não for o tema).
+
+### ⭐ REGRAS DE OURO (O QUE FAZER):
+1. **STACCATO REAL**: Frases curtas. Ponto. Outra frase. Ponto. Sem vírgulas desnecessárias.
+2. **ZERO EMOJIS NO TEXTO**: Use emojis APENAS no título (se quiser) ou bullet points. Nunca no meio da frase.
+3. **TOM DE CONVERSA**: Escreva como se estivesse mandando um áudio no WhatsApp para um amigo próximo.
+4. **VERSÍCULO INTEGRADO**: Não jogue o versículo. Costure ele no texto. "Como diz em X..." ou "Lembra de Y?".
+5. **TWIST FINAL**: A última frase deve inverter a expectativa ou fechar com chave de ouro.
+`;
+
+
       // 6. Montar Prompt Híbrido - AGORA COM INSTRUÇÃO DE GÊNERO EXPLÍCITA
       const promptHibrido = `
 # GERADOR DE CONTEÚDO CATEGORIZADO
 Data Atual: ${new Date().toLocaleDateString('pt-BR')}
+
+${REGRAS_ESTILO_GLOBAIS || ''}
+
 
 Você atua como um "Ghostwriter Espiritual".
 Sua missão é gerar **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
@@ -1451,8 +1494,13 @@ Gere agora:
         })
       });
 
-      if (!resp.ok) throw new Error(`Erro Gemini: ${resp.status}`);
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        console.error(`❌ MODO ESTILO - Erro Gemini (${resp.status}):`, errorText);
+        throw new Error(`Erro Gemini: ${resp.status} - ${errorText}`);
+      }
       const aiData = await resp.json();
+
       const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
 
       return new Response(
