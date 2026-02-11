@@ -427,11 +427,31 @@ REGRA: Se precisar expressar essas ideias, reescreva com linguagem DIRETA, COLOQ
   let contexto = '';
 
   if (style === 'favoritas') {
-    // MODO FAVORITAS = REMIX — anti-repetição LEVE
-    // Só evita repetir a mesma IDEIA/VERSO, NÃO restringe estrutura/imagem/fechamento
+    // MODO FAVORITAS = REMIX — anti-repetição MODERADA
+    // Evita mesma IDEIA/VERSO E agora também alerta sobre aberturas/fechamentos repetitivos
+
+    // Anti-molde LEVE para favoritas (alerta, não proíbe)
+    let alertaVariedadeFavoritas = '';
+    const aberturaDomFav = Object.entries(contAbertura).sort((a, b) => b[1] - a[1])[0];
+    const fechamentoDomFav = Object.entries(contFechamento).sort((a, b) => b[1] - a[1])[0];
+    if (aberturaDomFav && aberturaDomFav[1] >= 4) {
+      alertaVariedadeFavoritas += `\n⚠️ **VARIEDADE DE ABERTURA**: O tipo "${aberturaDomFav[0]}" foi usado ${aberturaDomFav[1]}x recentemente. VARIE: misture afirmacao, imperativo, cena, biblica.`;
+    }
+    if (fechamentoDomFav && fechamentoDomFav[1] >= 4) {
+      alertaVariedadeFavoritas += `\n⚠️ **VARIEDADE DE FECHAMENTO**: O tipo "${fechamentoDomFav[0]}" foi usado ${fechamentoDomFav[1]}x recentemente. VARIE: misture punchline, oracao, imperativo, presenca.`;
+    }
+    // Detectar saudação repetitiva
+    const saudacaoRepetitiva = geracoesRecentes.filter((g: any) => {
+      const texto = g.texto_msg || '';
+      return /^(Bom dia|Boa tarde|Boa noite|Boa madrugada)/i.test(texto.trim());
+    }).length;
+    if (saudacaoRepetitiva >= 5) {
+      alertaVariedadeFavoritas += `\n⚠️ **SAUDAÇÃO REPETITIVA**: ${saudacaoRepetitiva}/${geracoesRecentes.length} gerações recentes começam com saudação. NÃO comece TODAS com saudação — alterne: umas com, umas sem.`;
+    }
+
     contexto = `
 
-## 🔄 ANTI-REPETIÇÃO MODO REMIX (leve):
+## 🔄 ANTI-REPETIÇÃO MODO REMIX:
 
 ### 🚫 VERSÍCULOS JÁ USADOS (não repita o mesmo verso no lote):
 ${versiculosUnicos.length > 0 ? versiculosUnicos.slice(0, 15).join(', ') : 'Nenhum'}
@@ -441,6 +461,7 @@ ${temasUnicos.length > 0 ? temasUnicos.slice(0, 10).map(t => `- ${t}`).join('\n'
 
 ### 📋 ÚLTIMAS GERAÇÕES (evite remixar a mesma ideia):
 ${resumoGeracoes}
+${alertaVariedadeFavoritas}
 
 **REGRA REMIX:** Você pode (e deve) manter o TOM, o VOCABULÁRIO e a ESTRUTURA das favoritas.
 O que NÃO pode é gerar a mesma IDEIA/MENSAGEM que já foi gerada nos últimos 7 dias.
@@ -793,7 +814,15 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         }
 
         if (filtros.tom) {
-          instrucoesFiltro += `9. **TOM [${filtros.tom.toUpperCase()}]**: ${filtros.tom}\n`;
+          const tomInstructions: Record<string, string> = {
+            'Confrontacional': 'voz firme, direta e sem rodeios; confronto amoroso com clareza.',
+            'Poético': 'linguagem imagética e cadência contemplativa, sem perder clareza bíblica.',
+            'Direto': 'frases objetivas, sem floreios; aplicação imediata.',
+            'Consolador': 'acolhimento, compaixão e encorajamento gentil.',
+            'Profético': 'chamado à verdade, urgência espiritual e senso de missão.'
+          };
+          const tomInstruction = tomInstructions[filtros.tom] || filtros.tom;
+          instrucoesFiltro += `9. **TOM [${filtros.tom.toUpperCase()}]**: ${tomInstruction}\n`;
         }
 
         instrucoesFiltro += '\n> Aplique RIGOROSAMENTE as regras de estilo acima.\n';
@@ -1168,19 +1197,26 @@ ${dnaFavoritas}
       }
 
       // 2. Buscar Exemplos do Estilo - FONTE DE ESTRUTURA
-      const { data: exemplosEstilo, error: styleError } = await supabase
-        .from("dna_categorizado")
-        .select("texto_msg")
-        .eq("categoria", estiloAlvo)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
+      // FIX 5: Se já buscamos DNA da mesma categoria, REUSAR resultado (evita query duplicada)
       let exemplosEstrutura = "";
-      if (exemplosEstilo && exemplosEstilo.length > 0) {
-        exemplosEstrutura = exemplosEstilo.map((e: any) => e.texto_msg).join("\n\n---\n\n");
-        console.log(`🎨 [ESTILO] ${exemplosEstilo.length} exemplos de '${estiloAlvo}' carregados.`);
+      if (dnaSourceType === 'ESPECIFICO' && dnaEssencia) {
+        // DNA já foi buscado da mesma categoria — reusar como exemplos de estrutura
+        exemplosEstrutura = dnaEssencia;
+        console.log(`🎨 [ESTILO] Reusando DNA da mesma categoria '${estiloAlvo}' como exemplos de estrutura (query otimizada).`);
       } else {
-        console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
+        const { data: exemplosEstilo, error: styleError } = await supabase
+          .from("dna_categorizado")
+          .select("texto_msg")
+          .eq("categoria", estiloAlvo)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (exemplosEstilo && exemplosEstilo.length > 0) {
+          exemplosEstrutura = exemplosEstilo.map((e: any) => e.texto_msg).join("\n\n---\n\n");
+          console.log(`🎨 [ESTILO] ${exemplosEstilo.length} exemplos de '${estiloAlvo}' carregados (query separada).`);
+        } else {
+          console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
+        }
       }
 
       // 3. Buscar Passagem do Dia (SE CHECADO) - UNIFICADO: Storage → DB → Fallback
@@ -1421,8 +1457,12 @@ ${exemplosEstrutura}
 --- FIM EXEMPLOS ---
 
 ${usarDnaBase ? `
-## 2. FONTE DE CONTEÚDO (INSPIRAÇÃO):
-Use a base abaixo para entender o TOM e a TEOLOGIA.
+## 2. FONTE DE CONTEÚDO (INSPIRAÇÃO + VOCABULÁRIO):
+Use a base abaixo para:
+- Entender o TOM e a TEOLOGIA.
+- **COPIAR O VOCABULÁRIO**: Use as MESMAS PALAVRAS e EXPRESSÕES do DNA. Não troque por sinônimos genéricos de IA.
+- **PROIBIDO**: palavras como "genuina", "calmaria", "jornada", "propósito divino", "liberada" (se não estão no DNA).
+- **USE**: palavras do DNA como aparecem lá (ex: se o DNA diz "rasga tudo" use "rasga tudo", não "transforma tudo").
 ${dnaSourceType === 'ESPECIFICO' ? 'Estes são exemplos PERFEITOS do mesmo tipo. Use como forte inspiração.' : 'Estes são exemplos gerais. Adapte a teologia para o formato de ' + estiloAlvo + '.'}
 
 --- INÍCIO DNA (INSPIRAÇÃO) ---
@@ -1502,6 +1542,14 @@ Gere agora:
       const aiData = await resp.json();
 
       const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
+
+      // FIX 3: Pós-processamento — verificar palavras banidas
+      const PALAVRAS_BANIDAS_CHECK = ['norte', 'rota', 'neblina', 'bússola', 'farol', 'cais', 'porto seguro', 'âncora', 'obra-prima', 'confie no processo', 'jornada de fé', 'propósito divino'];
+      const textoLower = resultado.toLowerCase();
+      const banidasEncontradas = PALAVRAS_BANIDAS_CHECK.filter(p => textoLower.includes(p));
+      if (banidasEncontradas.length > 0) {
+        console.warn(`⚠️ [PÓS-CHECK] Palavras banidas detectadas na geração: ${banidasEncontradas.join(', ')}`);
+      }
 
       return new Response(
         JSON.stringify({

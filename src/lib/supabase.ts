@@ -512,14 +512,23 @@ function extrairVersiculos(texto: string): string[] {
  * Extrai tema/título principal de uma mensagem
  */
 function extrairTema(texto: string): string | null {
-    const linhas = texto.split('\n').filter(l => l.trim());
-    const primeiraLinha = linhas[0] || '';
-    // Remove asteriscos, emojis, números e "MENSAGEM XX"
-    const limpo = primeiraLinha
-        .replace(/\*+/g, '')
-        .replace(/[📖🌟✨💫🙏❤️💪🔥⭐️🌅🌙]/g, '')
-        .replace(/MENSAGEM\s*\d+\s*[-—]/gi, '')
-        .trim();
+    const SAUDACOES = /^(bom dia|boa tarde|boa noite|boa madrugada|paz nesta|paz na)/i;
+    const linhas = texto.split('\n')
+        .map(l => l.replace(/\*+/g, '').replace(/[📖🌟✨💫🙏❤️💪🔥⭐️🌅🌙🚨⚡]/g, '').trim())
+        .filter(l => l.length > 3);
+    
+    // Pular saudações para encontrar o tema real
+    let linhasTema = linhas;
+    if (linhasTema.length > 1 && SAUDACOES.test(linhasTema[0])) {
+        linhasTema = linhasTema.slice(1);
+    }
+    // Pular separadores e linhas muito curtas
+    const linhaTema = linhasTema.find(l => {
+        const limpa = l.replace(/MENSAGEM\s*\d+\s*[-—]/gi, '').replace(/[-—=]+/g, '').trim();
+        return limpa.length > 5 && !/^---+$/.test(limpa);
+    });
+    if (!linhaTema) return null;
+    const limpo = linhaTema.replace(/MENSAGEM\s*\d+\s*[-—]/gi, '').trim();
     return limpo.length > 3 ? limpo.substring(0, 100) : null;
 }
 
@@ -541,25 +550,33 @@ function extrairTitulo(texto: string): string | null {
  * Tipos: cena, afirmacao, biblica, imperativo, pergunta, narrativa
  */
 function detectarAbertura(texto: string): string {
+    const SAUDACOES = /^(bom dia|boa tarde|boa noite|boa madrugada|paz nesta|paz na)/i;
     const linhas = texto.split('\n').filter(l => l.trim());
-    // Pula título (primeira linha) e pega o corpo
-    const corpo = linhas.slice(1).find(l => l.replace(/\*+/g, '').trim().length > 10) || '';
-    const corpoLimpo = corpo.replace(/\*+/g, '').trim();
+    // Pula título (primeira linha), saudações, e linhas curtas para encontrar o corpo real
+    let corpoLinhas = linhas.slice(1).map(l => l.replace(/\*+/g, '').trim()).filter(l => l.length > 10);
+    // Pular saudação se for a primeira linha do corpo
+    if (corpoLinhas.length > 1 && SAUDACOES.test(corpoLinhas[0])) {
+        corpoLinhas = corpoLinhas.slice(1);
+    }
+    const corpoLimpo = corpoLinhas[0] || '';
 
     if (!corpoLimpo) return 'outro';
 
     // Pergunta
     if (corpoLimpo.includes('?')) return 'pergunta';
-    // Imperativo (começa com verbo no imperativo)
-    if (/^(Pare|Olhe|Pense|Imagine|Lembre|Abra|Feche|Levante|Creia|Confie|Descanse)/i.test(corpoLimpo)) return 'imperativo';
-    // Cena (começa descrevendo situação)
-    if (/^(Quando|Era|Naquele|Havia|No meio|Na hora|Às vezes|Tem dias|Sabe aquele)/i.test(corpoLimpo)) return 'cena';
-    // Bíblica (começa com citação ou referência)
-    if (/^["">]|^(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+/.test(corpoLimpo)) return 'biblica';
-    // Afirmação tipo "X é Y"
-    if (/^(A |O |Deus |Jesus |Fé |Graça |Amor )\w+.{5,30}(é |não é |significa |transforma)/i.test(corpoLimpo)) return 'afirmacao';
+    // Imperativo (começa com verbo no imperativo — lista expandida)
+    if (/^(Pare|Olhe|Pense|Imagine|Lembre|Abra|Feche|Levante|Creia|Confie|Descanse|Entregue|Solte|Vá|Ouça|Decida|Ande|Declare|Profetize|Receba|Desperte|Celebre|Guarde|Cuide|Treine|Desvie)/i.test(corpoLimpo)) return 'imperativo';
+    // Cena (começa descrevendo situação — lista expandida)
+    if (/^(Quando|Era |Naquele|Havia|No meio|Na hora|Às vezes|Tem dias|Sabe aquele|Naquele momento|O dia|A noite|Nesta|Neste|Ontem|Hoje )/i.test(corpoLimpo)) return 'cena';
+    // Bíblica (começa com citação ou referência bíblica)
+    if (/^[""“”>]|^(?:\d\s)?[A-ZÀ-Ú][a-zà-ú]+\s+\d+|^(A Bíblia|A Palavra|Está escrito|Diz o Senhor|Jesus disse|Paulo disse)/i.test(corpoLimpo)) return 'biblica';
+    // Narrativa real (conta história com sujeito + ação)
+    if (/^(Ele |Ela |Eles |Um homem|Uma mulher|Certo |Aquele |Pedro |Moisés |Davi |José |Abraão )/i.test(corpoLimpo)) return 'narrativa';
+    // Afirmação — padrão ampliado (frases declarativas)
+    if (/^(A |O |Deus |Jesus |Fé |Graça |Amor |Sua |Seu |Não |Nenhum|Todo |Cada |Quem |Somente |Ninguém)/i.test(corpoLimpo)) return 'afirmacao';
 
-    return 'narrativa';
+    // Default: afirmacao (maioria dos textos devocionais são afirmações, não narrativas)
+    return 'afirmacao';
 }
 
 /**
@@ -596,7 +613,10 @@ function extrairPunchline(texto: string): string | null {
     });
     if (linhas.length === 0) return null;
     const ultima = linhas[linhas.length - 1].replace(/\*+/g, '').trim();
-    return ultima.substring(0, 300);
+    // Extrair apenas a última FRASE significativa (split por pontuação final)
+    const frases = ultima.split(/(?<=[.!?])\s+/).filter(f => f.trim().length > 3);
+    const ultimaFrase = frases.length > 0 ? frases[frases.length - 1].trim() : ultima;
+    return ultimaFrase.substring(0, 100);
 }
 
 /**
