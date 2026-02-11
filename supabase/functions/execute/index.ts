@@ -588,13 +588,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Se não tem categoria OU categoria vazia, busca das Favoritas
+      // Se não tem categoria OU categoria vazia, busca TODAS com categoria para distribuição
+      let _contagemPorCat: Record<string, number> = {};
       if (fonteInspiracao.length === 0) {
         const { data: favoritas, error: favError } = await supabase
           .from("dna_categorizado")
-          .select("texto_msg, created_at")
+          .select("categoria, texto_msg, created_at")
           .order("created_at", { ascending: false })
-          .limit(100);
+          .limit(200);
 
         if (favError || !favoritas || favoritas.length === 0) {
           return new Response(
@@ -606,7 +607,13 @@ Deno.serve(async (req) => {
           );
         }
         fonteInspiracao = favoritas;
-        fonteNome = 'Favoritas Gerais';
+        fonteNome = 'Todas as Categorias (Mix)';
+        // Contar categorias para distribuição proporcional
+        for (const item of favoritas) {
+          const cat = (item as any).categoria || 'outro';
+          _contagemPorCat[cat] = (_contagemPorCat[cat] || 0) + 1;
+        }
+        console.log(`📊 [CATEGORIAS] ${Object.entries(_contagemPorCat).map(([c, n]) => `${c}:${n}`).join(', ')}`);
       }
 
       console.log(`📚 [FONTE] Usando: ${fonteNome} (${fonteInspiracao.length} mensagens)`);
@@ -647,6 +654,48 @@ Deno.serve(async (req) => {
 
       // 3. Processar filtros
       const quantidade = filtros?.quantidade || 10;
+
+      // Calcular distribuição proporcional por categoria (se sem filtro)
+      let distribuicaoCategoria = '';
+      const hasCatDistrib = Object.keys(_contagemPorCat).length > 0;
+      if (hasCatDistrib) {
+        const totalDna = Object.values(_contagemPorCat).reduce((a, b) => a + b, 0);
+        const catsOrdenadas = Object.entries(_contagemPorCat).sort((a, b) => b[1] - a[1]);
+        let restante = quantidade;
+        const distrib: { cat: string; qtd: number; pct: number }[] = [];
+
+        for (let i = 0; i < catsOrdenadas.length; i++) {
+          const [cat, count] = catsOrdenadas[i];
+          const pct = Math.round((count / totalDna) * 100);
+          if (i === catsOrdenadas.length - 1) {
+            if (restante > 0) distrib.push({ cat, qtd: restante, pct });
+          } else {
+            const qtd = Math.max(0, Math.round((count / totalDna) * quantidade));
+            if (qtd > 0 && restante > 0) {
+              const real = Math.min(qtd, restante);
+              distrib.push({ cat, qtd: real, pct });
+              restante -= real;
+            }
+          }
+        }
+        // Garantir top 3 categorias presentes
+        if (distrib.length < 3 && catsOrdenadas.length >= 3) {
+          const faltando = catsOrdenadas.filter(([c]) => !distrib.find(d => d.cat === c)).slice(0, 3 - distrib.length);
+          for (const [c] of faltando) {
+            if (distrib[0] && distrib[0].qtd > 1) {
+              distrib[0].qtd--;
+              distrib.push({ cat: c, qtd: 1, pct: Math.round((_contagemPorCat[c] / totalDna) * 100) });
+            }
+          }
+        }
+
+        const tamanhos = ['Curto (2-3 frases)', 'Médio (4-6 frases)', 'Longo (7-10 frases)'];
+        const formatos = ['Staccato (frases curtas)', 'Fluido (frases conectadas)', 'Lista (pontos)', 'Oração (a Deus)'];
+
+        distribuicaoCategoria = `\n## 📊 DISTRIBUIÇÃO OBRIGATÓRIA DO LOTE (${quantidade} MENSAGENS):\n\nDistribua as mensagens entre categorias conforme esta tabela:\n\n| # | Categoria | Qtd | DNA% | Tamanho | Formato |\n|---|-----------|-----|------|---------|---------|\n${distrib.map((d, i) => `| ${i + 1} | **${d.cat.toUpperCase()}** | ${d.qtd} | ${d.pct}% | ${tamanhos[i % tamanhos.length]} | ${formatos[i % formatos.length]} |`).join('\n')}\n\n### Guia de Categoria → Estilo:\n- REFLEXÃO: Contemplativo, convida a pensar\n- ORAÇÃO: Dirigido a Deus ("Senhor..."), fecha com Amém\n- VERSÍCULO: Verso bíblico protagonista + aplicação\n- DEVOCIONAL: Mais longo, introdução+desenvolvimento+aplicação\n- EXORTAÇÃO: Direto, confrontacional com amor\n- DECLARAÇÃO: 1ª pessoa ("Eu creio...")\n\n### Guia de Tamanho:\n- Curto: 2-3 frases | Médio: 4-6 frases | Longo: 7-10 frases\n\n⚠️ Marque a categoria no TÍTULO: **[CATEGORIA] TÍTULO EM CAPS**\n`;
+
+        console.log(`📊 [DISTRIBUIÇÃO] ${distrib.map(d => `${d.cat}:${d.qtd}`).join(', ')}`);
+      }
 
       // ========== ANTI-REPETIÇÃO + SMART AUTOPILOT 2.0 (DINÂMICO) ==========
       const antiRep = await buildAntiRepeticaoContext(
@@ -1057,7 +1106,7 @@ ${dnaFavoritas}
 A MAIORIA das mensagens (50%+) DEVE conter versículo bíblico com referência (ex: João 3:16).
 Se ao revisar você perceber que faltam versículos, VOLTE e adicione antes de entregar.
 Uma mensagem devocional SEM versículo é INCOMPLETA.
-
+${distribuicaoCategoria}
 ## GERE AGORA ${quantidade} REMIXES:
     `;
 
