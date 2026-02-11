@@ -1002,17 +1002,19 @@ Para CADA mensagem gerada, siga este processo:
 1. **FIDELIDADE AO DNA**: O resultado deve parecer que veio do MESMO AUTOR das favoritas. Mesmo vocabulário, mesma pegada, mesma energia.
 2. **NÃO INVENTE ESTILO NOVO**: Não adicione floreios poéticos se as favoritas não têm. Não adicione cenas narrativas se as favoritas são diretas.
 3. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)".${neutro ? ' MODO NEUTRO: NÃO use saudações.' : ' Se a semente tem saudação, mantenha igual.'}
-4. **VERSÍCULOS (OBRIGATÓRIO)**: ${(() => {
+4. 📖📖📖 **VERSÍCULOS — REGRA INEGOCIÁVEL**: ${(() => {
           const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
           const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
+          const minComVersiculo = Math.ceil(quantidade * 0.5);
           if (isVersiculoMode) {
             return `TODAS as mensagens devem ter versículo como protagonista.`;
           } else {
-            return `Pelo menos **${Math.ceil(quantidade * 0.4)} mensagens (40%)** devem conter um versículo bíblico EXPLÍCITO (referência completa tipo "João 3:16" ou citação entre aspas). Use versículos reais da Bíblia, não invente. ISSO É CRÍTICO.`;
+            return `NO MÍNIMO **${minComVersiculo} de ${quantidade} mensagens (50%+)** DEVEM conter versículo bíblico EXPLÍCITO com referência completa (ex: "João 3:16", "Salmos 23:1", "Romanos 8:28"). Use versículos REAIS da Bíblia. SE UMA MENSAGEM NÃO TEM VERSÍCULO, é porque ela é exceção — a MAIORIA deve ter.`;
           }
         })()}
 ${filtros?.usarPassagemDia ? '5. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 6. **USE VERSÍCULOS DIFERENTES** entre as mensagens — NÃO repita o mesmo verso.
+7. **FORMATO DO VERSÍCULO**: Sempre cite com referência: > "Texto do versículo" — Livro Cap:Vers (ex: > "Porque Deus amou o mundo..." — João 3:16)
 7. **SAÍDA LIMPA**: NÃO inclua metadados técnicos como "(Sementes: ...)", "(primária=#X)", "MENSAGEM 01 —" ou qualquer marcação interna. A saída deve ser apenas TÍTULO + CORPO, pronta para enviar.
 
 ## 📋 DISTRIBUIÇÃO NO LOTE (${quantidade} MENSAGENS):
@@ -1022,7 +1024,7 @@ ${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `
 - Os remixes devem PARECER as favoritas — mesmo tamanho, mesma linguagem, mesma energia`}
 
 **CHECKPOINT REMIX**: Antes de entregar, valide:
-${quantidade > 1 ? '✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS da semente primária\n✓ Cada mensagem mistura um elemento da semente secundária\n✓ O tamanho é similar ao da semente primária (não inflou, não encolheu)\n✓ O tom é fiel às favoritas (direto = direto, oração = oração, confronto = confronto)\n✓ Nenhum versículo se repete\n✓ Nenhuma mensagem ficou genérica/sem DNA' : '✓ A mensagem tem DNA claro da semente'}
+${quantidade > 1 ? `✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS da semente primária\n✓ Cada mensagem mistura um elemento da semente secundária\n✓ O tamanho é similar ao da semente primária (não inflou, não encolheu)\n✓ O tom é fiel às favoritas (direto = direto, oração = oração, confronto = confronto)\n✓ Nenhum versículo se repete\n✓ Nenhuma mensagem ficou genérica/sem DNA\n📖 **CONTE OS VERSÍCULOS**: No mínimo ${Math.ceil(quantidade * 0.5)} de ${quantidade} mensagens TÊM versículo com referência bíblica. Se não tem, ADICIONE.` : '✓ A mensagem tem DNA claro da semente\n📖 A mensagem contém pelo menos 1 versículo bíblico com referência'}
 ${instrucaoLexicoFavoritas ? `✓ Cada mensagem contém no mínimo ${minLexTermFavoritas} termos do LÉXICO DNA` : ''}
 ${neutro ? '✓ NENHUMA saudação (MODO NEUTRO ATIVO)' : ''}
 ${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana}` : ''}
@@ -1050,6 +1052,11 @@ ${filtros?.usarPassagemDia ? `
 ${contextoAntiRepeticao}
 ## 🧬 SEMENTES DISPONÍVEIS PARA REMIX:
 ${dnaFavoritas}
+
+## 📖📖📖 LEMBRETE FINAL (LEIA ANTES DE GERAR):
+A MAIORIA das mensagens (50%+) DEVE conter versículo bíblico com referência (ex: João 3:16).
+Se ao revisar você perceber que faltam versículos, VOLTE e adicione antes de entregar.
+Uma mensagem devocional SEM versículo é INCOMPLETA.
 
 ## GERE AGORA ${quantidade} REMIXES:
     `;
@@ -1089,6 +1096,16 @@ ${dnaFavoritas}
 
       // CLEANER: Remover metadados de sementes (ex: "(Sementes: primária=#1...)")
       resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
+
+      // VALIDAÇÃO: Verificar presença de versículos bíblicos nas mensagens
+      const mensagensGeradas = resultado.split(/---/).filter((m: string) => m.trim().length > 20);
+      const regexVersiculo = /(?:Gn|Gênesis|Ex|Êxodo|Lv|Nm|Dt|Js|Jz|Rt|1\s?Sm|2\s?Sm|1\s?Rs|2\s?Rs|1\s?Cr|2\s?Cr|Ed|Ne|Et|Jó|Sl|Salmos?|Pv|Provérbios|Ec|Ct|Is|Isaías|Jr|Lm|Ez|Dn|Os|Jl|Am|Ob|Jn|Mq|Na|Hc|Sf|Ag|Zc|Ml|Mt|Mateus|Mc|Marcos|Lc|Lucas|Jo|João|At|Atos|Rm|Romanos|1\s?Co|2\s?Co|Gl|Gálatas|Ef|Efésios|Fp|Filipenses|Cl|Colossenses|1\s?Ts|2\s?Ts|1\s?Tm|2\s?Tm|Tt|Fm|Hb|Hebreus|Tg|Tiago|1\s?Pe|2\s?Pe|1\s?Jo|2\s?Jo|3\s?Jo|Jd|Ap|Apocalipse)\s+\d+[:.\s]\d+/i;
+      const msgsComVersiculo = mensagensGeradas.filter((m: string) => regexVersiculo.test(m));
+      const percentual = mensagensGeradas.length > 0 ? Math.round((msgsComVersiculo.length / mensagensGeradas.length) * 100) : 0;
+      console.log(`📖 [VERSÍCULOS] ${msgsComVersiculo.length}/${mensagensGeradas.length} mensagens com versículo (${percentual}%)`);
+      if (percentual < 40) {
+        console.warn(`⚠️ [VERSÍCULOS] ABAIXO DO MÍNIMO! Apenas ${percentual}% das mensagens têm versículo (mínimo: 50%)`);
+      }
 
       console.log(`✅ [MODO FAVORITAS] Geração concluída!`);
 
