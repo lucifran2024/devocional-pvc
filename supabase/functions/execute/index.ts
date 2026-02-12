@@ -1061,6 +1061,7 @@ ${isReferenciaUnica
           ? `Você tem ${totalReferencias} semente(s). REPLIQUE o estilo exato e gere variações.`
           : `Você tem ${favoritasFiltradas.length} sementes. MISTURE-AS para criar remixes.`}
 ${formatoPassagemDoDia}${instrucoesFiltro}
+${distribuicaoCategoria}
 ${instrucaoLexicoFavoritas}
 
 ## 🔧 COMO FAZER O REMIX (OBRIGATÓRIO):
