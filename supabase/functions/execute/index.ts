@@ -1980,7 +1980,7 @@ Gere as 10 mensagens agora:
         1: { dia: 'Segunda', categoria: 'ORACAO', formato: 'Curto', extra: 'Início da Semana' },
         2: { dia: 'Terça', categoria: 'VERSICULO', formato: 'Médio', extra: '' },
         3: { dia: 'Quarta', categoria: 'REFLEXAO', formato: 'Médio', extra: '' },
-        4: { dia: 'Quinta', categoria: 'DEVOCIONAL', formato: 'Longo', extra: 'Passagem do Dia' },
+        4: { dia: 'Quinta', categoria: 'DEVOCIONAL', formato: 'Médio', extra: 'Passagem do Dia' },
         5: { dia: 'Sexta', categoria: 'EXORTACAO', formato: 'Médio', extra: '' },
         6: { dia: 'Sábado', categoria: 'MEDITACAO', formato: 'Curto', extra: 'Fim de Semana' },
         0: { dia: 'Domingo', categoria: 'LOUVOR', formato: 'Médio', extra: 'Fim de Semana' }
