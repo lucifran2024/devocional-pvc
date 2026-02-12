@@ -237,7 +237,7 @@ export interface FiltrosGeracao {
     categoria?: string;
     formato?: string;
     tamanho?: string;
-    tom?: string;
+
     quantidade?: number;
     dnaBase?: string;
     periodo?: string;
@@ -516,7 +516,7 @@ function extrairTema(texto: string): string | null {
     const linhas = texto.split('\n')
         .map(l => l.replace(/\*+/g, '').replace(/[📖🌟✨💫🙏❤️💪🔥⭐️🌅🌙🚨⚡]/g, '').trim())
         .filter(l => l.length > 3);
-    
+
     // Pular saudações para encontrar o tema real
     let linhasTema = linhas;
     if (linhasTema.length > 1 && SAUDACOES.test(linhasTema[0])) {

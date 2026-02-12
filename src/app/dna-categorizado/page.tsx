@@ -94,7 +94,7 @@ export default function DnaCategorizadoPage() {
     const [filtroTema, setFiltroTema] = useState('');
     const [filtroFormato, setFiltroFormato] = useState('');
     const [filtroTamanho, setFiltroTamanho] = useState('');
-    const [filtroTom, setFiltroTom] = useState('');
+
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
     const [filtroMomento, setFiltroMomento] = useState('');
     const [usarDnaBase, setUsarDnaBase] = useState(true);
@@ -113,7 +113,7 @@ export default function DnaCategorizadoPage() {
         filtroTema ||
         filtroFormato ||
         filtroTamanho ||
-        filtroTom ||
+
         filtroPeriodo ||
         filtroMomento ||
         diasSelecionados.length > 0 ||
@@ -127,7 +127,7 @@ export default function DnaCategorizadoPage() {
         setFiltroTema('');
         setFiltroFormato('');
         setFiltroTamanho('');
-        setFiltroTom('');
+
         setFiltroPeriodo('');
         setFiltroMomento('');
         setDiasSelecionados([]);
@@ -183,7 +183,7 @@ export default function DnaCategorizadoPage() {
     // Opções de filtros
     const TAMANHOS = ['Curto', 'Médio', 'Longo'];
     const FORMATOS_TEXTO = ['Staccato', 'Narrativo', 'Lista'];
-    const TONS = ['Confrontacional', 'Poético', 'Direto', 'Consolador', 'Profético'];
+
     const PERIODOS = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
     const MOMENTOS = ['Começo de Semana', 'Fim de Semana', 'Início do Mês', 'Fim do Mês'];
 
@@ -296,7 +296,7 @@ export default function DnaCategorizadoPage() {
             tema: filtroTema || undefined,
             formato: filtroFormato || undefined,
             tamanho: filtroTamanho || undefined,
-            tom: filtroTom || undefined,
+
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
@@ -397,7 +397,7 @@ export default function DnaCategorizadoPage() {
             tema: filtroTema || undefined,
             formato: filtroFormato || undefined,
             tamanho: filtroTamanho || undefined,
-            tom: filtroTom || undefined,
+
             periodo: filtroPeriodo || undefined,
             momento: filtroMomento || undefined,
             diasSemana: diasSelecionados.length > 0 ? diasSelecionados.join(', ') : undefined,
@@ -689,18 +689,7 @@ export default function DnaCategorizadoPage() {
                                             </select>
                                         </div>
 
-                                        {/* Tom */}
-                                        <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tom</label>
-                                            <select
-                                                value={filtroTom}
-                                                onChange={(e) => setFiltroTom(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
-                                            >
-                                                <option value="" className="bg-slate-900">Qualquer tom</option>
-                                                {TONS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                            </select>
-                                        </div>
+
 
                                         {/* Período do Dia */}
                                         <div>

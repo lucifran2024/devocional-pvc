@@ -862,17 +862,8 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           instrucoesFiltro += `8. **FORMATO**: Estilo ${filtros.formato} - ${descFormato}\n`;
         }
 
-        if (filtros.tom) {
-          const tomInstructions: Record<string, string> = {
-            'Confrontacional': 'voz firme, direta e sem rodeios; confronto amoroso com clareza.',
-            'Poético': 'linguagem imagética e cadência contemplativa, sem perder clareza bíblica.',
-            'Direto': 'frases objetivas, sem floreios; aplicação imediata.',
-            'Consolador': 'acolhimento, compaixão e encorajamento gentil.',
-            'Profético': 'chamado à verdade, urgência espiritual e senso de missão.'
-          };
-          const tomInstruction = tomInstructions[filtros.tom] || filtros.tom;
-          instrucoesFiltro += `9. **TOM [${filtros.tom.toUpperCase()}]**: ${tomInstruction}\n`;
-        }
+
+
 
         instrucoesFiltro += '\n> Aplique RIGOROSAMENTE as regras de estilo acima.\n';
       }
@@ -1118,8 +1109,7 @@ ${distribuicaoCategoria}
       let tempSorteada = 0.78;
       if (filtros?.formato === 'Staccato') tempSorteada = 0.72;
       if (filtros?.formato === 'Lista') tempSorteada = 0.70;
-      if ((filtros?.tom || '').toLowerCase() === 'poético') tempSorteada = 0.82;
-      if ((filtros?.tom || '').toLowerCase() === 'direto') tempSorteada = 0.74;
+
       console.log(`🌡️ [FAVORITAS] Temperature: ${tempSorteada}`);
 
       const resp = await fetch(url, {
@@ -1404,7 +1394,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
       const tamanhoEstilo = filtros?.tamanho || (TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros.formato : null);
       const formatoEstilo = !TAMANHOS_VALIDOS.includes(filtros?.formato) ? filtros?.formato : null;
 
-      const temFiltrosExtras = (temaFinalEstilo || instrucaoTematicaDinamicaEstilo || tamanhoEstilo || formatoEstilo || filtros?.tom || filtros?.periodo || filtros?.momento || diasSemana || neutro);
+      const temFiltrosExtras = (temaFinalEstilo || instrucaoTematicaDinamicaEstilo || tamanhoEstilo || formatoEstilo || filtros?.periodo || filtros?.momento || diasSemana || neutro);
 
       if (temFiltrosExtras) {
         instrucoesFiltro = '\n## 🎯 INSTRUÇÕES ESPECÍFICAS (FILTROS):\n';
@@ -1433,17 +1423,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           const fmtInstruction = formatInstructions[formatoEstilo] || formatoEstilo;
           instrucoesFiltro += `• **FORMATO TEXTUAL [${formatoEstilo.toUpperCase()}]**: ${fmtInstruction}\n`;
         }
-        if (filtros.tom) {
-          const tomInstructions: Record<string, string> = {
-            'Confrontacional': 'voz firme, direta e sem rodeios; confronto amoroso com clareza.',
-            'Poético': 'linguagem imagética e cadência contemplativa, sem perder clareza bíblica.',
-            'Direto': 'frases objetivas, sem floreios; aplicação imediata.',
-            'Consolador': 'acolhimento, compaixão e encorajamento gentil.',
-            'Profético': 'chamado à verdade, urgência espiritual e senso de missão.'
-          };
-          const tomInstruction = tomInstructions[filtros.tom] || filtros.tom;
-          instrucoesFiltro += `• **TOM [${filtros.tom.toUpperCase()}]**: ${tomInstruction}\n`;
-        }
+
         if (filtros.periodo && !neutro) {
           const saudacaoMap: Record<string, string> = {
             'Manhã': 'Bom dia',
@@ -1584,8 +1564,7 @@ Gere agora:
       let tempSorteadaEstilo = 0.78;
       if (formatoEstilo === 'Staccato') tempSorteadaEstilo = 0.72;
       if (formatoEstilo === 'Lista') tempSorteadaEstilo = 0.70;
-      if ((filtros?.tom || '').toLowerCase() === 'poético') tempSorteadaEstilo = 0.82;
-      if ((filtros?.tom || '').toLowerCase() === 'direto') tempSorteadaEstilo = 0.74;
+
       console.log(`🌡️ [ESTILO] Temperature: ${tempSorteadaEstilo}`);
 
       const resp = await fetch(genUrl, {
