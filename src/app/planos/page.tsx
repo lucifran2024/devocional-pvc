@@ -50,9 +50,14 @@ export default function PlanosPage() {
                 alert('Erro ao inscrever no plano. Tente novamente.');
                 setProcessing(null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Erro ao iniciar plano:", error);
-            alert('Ocorreu um erro inesperado ao iniciar o plano.');
+            if (error.message === 'Usuário não autenticado') {
+                // Redireciona para login se não estiver logado
+                router.push('/entrar?redirectTo=/planos');
+            } else {
+                alert('Ocorreu um erro inesperado ao iniciar o plano.');
+            }
             setProcessing(null);
         }
     }

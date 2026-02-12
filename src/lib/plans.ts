@@ -36,8 +36,7 @@ export async function inscreverEmPlano(plano_id: string): Promise<InscricaoPlano
         throw new Error('Usuário não autenticado');
     }
 
-    // Verificar se já existe (opcional, o banco pode travar ou upsert)
-    // Vamos fazer insert direto
+    // Tenta inserir
     const { data, error } = await supabase
         .from('usuario_inscricoes')
         .insert({
@@ -51,6 +50,23 @@ export async function inscreverEmPlano(plano_id: string): Promise<InscricaoPlano
         .single();
 
     if (error) {
+        // Se já existe (Unique Violation), busca e retorna a existente
+        if (error.code === '23505') {
+            console.log('Usuário já inscrito, recuperando inscrição...');
+            const { data: existente, error: fetchError } = await supabase
+                .from('usuario_inscricoes')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('plano_id', plano_id)
+                .single();
+
+            if (fetchError) {
+                console.error('Erro ao recuperar inscrição existente:', fetchError);
+                return null;
+            }
+            return existente;
+        }
+
         console.error('Erro ao inscrever:', error);
         return null;
     }
