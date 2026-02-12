@@ -136,46 +136,25 @@ LÉXICO DNA: ${termos}
 `;
 }
 
-// Anti-repetição centralizada: consulta gerações recentes e monta contexto
-async function buildAntiRepeticaoContext(
+// Helper para buscar histórico em paralelo
+async function fetchAntiRepeticaoHistory(
   supabase: any,
-  quantidade: number,
-  dnaTextsParaCrosscheck?: string[],
   buildStyle: string = 'favoritas',
   categoriaAlvo?: string
-): Promise<{
-  contexto: string;
-  temasUnicos: string[];
-  versiculosUnicos: string[];
-  versiculosDnaUnicos: string[];
-  contAT: number;
-  contNT: number;
-}> {
-  // Normalização do buildStyle para evitar bugs case-sensitive
+): Promise<{ globalRecentes: any[], catRecentes: any[] }> {
   const style = (buildStyle || 'favoritas').toLowerCase().trim();
-
   const dataCorte = new Date();
   dataCorte.setDate(dataCorte.getDate() - 7);
 
-  // Extrair versículos do DNA Base (crosscheck)
-  const versiculosDoDna: string[] = [];
-  if (dnaTextsParaCrosscheck) {
-    dnaTextsParaCrosscheck.forEach((texto: string) => {
-      versiculosDoDna.push(...extrairVersiculos(texto));
-    });
-  }
-  const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
-
-  // Busca expandida: HÍBRIDA (Global + Categoria)
-  // 1. Busca Global (50 últimas) -> Evitar repetição de versículos recentes em qualquer categoria
-  const { data: globalRecentes } = await supabase
+  // 1. Busca Global (50 últimas)
+  const queryGlobal = supabase
     .from("dna_geracoes")
     .select("texto_msg, versiculos_usados, created_at")
     .gte("created_at", dataCorte.toISOString())
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // 2. Busca por Categoria (50 últimas) -> Evitar repetição de temas/estruturas na MESMA categoria
+  // 2. Busca por Categoria (50 últimas)
   let queryCat = supabase
     .from("dna_geracoes")
     .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline, build_style, categoria")
@@ -189,26 +168,64 @@ async function buildAntiRepeticaoContext(
     queryCat = queryCat.eq('build_style', 'estilo');
   }
 
-  // Se tem categoria alvo, foca nela. Se não, busca geral do modo.
   if (categoriaAlvo && categoriaAlvo !== 'todas') {
     queryCat = queryCat.eq('categoria', categoriaAlvo);
-    console.log(`🎯 [ANTI-REPETIÇÃO] Filtrando redundância específica para categoria: ${categoriaAlvo}`);
   }
 
-  const { data: catRecentes, error: genError } = await queryCat;
+  const [resGlobal, resCat] = await Promise.all([queryGlobal, queryCat]);
+
+  return {
+    globalRecentes: resGlobal.data || [],
+    catRecentes: resCat.data || []
+  };
+}
+
+// Anti-repetição centralizada: consulta gerações recentes e monta contexto
+async function buildAntiRepeticaoContext(
+  supabase: any,
+  quantidade: number,
+  dnaTextsParaCrosscheck?: string[],
+  buildStyle: string = 'favoritas',
+  categoriaAlvo?: string,
+  historicoPreCarregado?: { globalRecentes: any[], catRecentes: any[] } // NOVO: Dados pré-carregados
+): Promise<{
+  contexto: string;
+  temasUnicos: string[];
+  versiculosUnicos: string[];
+  versiculosDnaUnicos: string[];
+  contAT: number;
+  contNT: number;
+}> {
+  // Normalização do buildStyle
+  const style = (buildStyle || 'favoritas').toLowerCase().trim();
+
+  // Extrair versículos do DNA Base (crosscheck)
+  const versiculosDoDna: string[] = [];
+  if (dnaTextsParaCrosscheck) {
+    dnaTextsParaCrosscheck.forEach((texto: string) => {
+      versiculosDoDna.push(...extrairVersiculos(texto));
+    });
+  }
+  const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
+
+  // Busca de Dados (Híbrida: Pre-carregado ou Fallback)
+  let globalRecentes: any[] = [];
+  let catRecentes: any[] = [];
+
+  if (historicoPreCarregado) {
+    globalRecentes = historicoPreCarregado.globalRecentes;
+    catRecentes = historicoPreCarregado.catRecentes;
+  } else {
+    // Fallback: Busca agora se não veio pré-carregado
+    const historico = await fetchAntiRepeticaoHistory(supabase, buildStyle, categoriaAlvo);
+    globalRecentes = historico.globalRecentes;
+    catRecentes = historico.catRecentes;
+  }
 
   // Unificar listas (priorizando dados completos da busca por categoria)
   const geracoesRecentes = [...(catRecentes || [])];
 
-  // Adicionar versículos da busca global (se já não estiverem na lista)
-  if (globalRecentes) {
-    globalRecentes.forEach((g: any) => {
-      // Se este item não está na lista principal, adicionamos apenas para contagem de versículos?
-      // Melhor: extraímos os versículos de TUDO para o pool de "versiculosProibidos"
-    });
-  }
-
-  if (genError || (!catRecentes?.length && !globalRecentes?.length)) {
+  if ((!catRecentes?.length && !globalRecentes?.length)) {
     // Sem gerações recentes — só crosscheck de DNA se houver
     if (versiculosDnaUnicos.length > 0) {
       return {
@@ -600,6 +617,9 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
+      // 🚀 PARALLEL FETCH: Iniciar busca de histórico enquanto processamos DNA
+      const promiseHistorico = fetchAntiRepeticaoHistory(supabase, 'favoritas', filtros?.categoria);
+
       // 1. Buscar fonte de inspiração (DNA Categorizado OU Favoritas)
       const categoriaFiltro = filtros?.categoria; // Categoria selecionada no frontend
       const contextoManual = filtros?.contextoManual; // Array de strings (seleção manual)
@@ -738,12 +758,14 @@ Deno.serve(async (req) => {
       }
 
       // ========== ANTI-REPETIÇÃO + SMART AUTOPILOT 2.0 (DINÂMICO) ==========
+      const { globalRecentes, catRecentes } = await promiseHistorico;
       const antiRep = await buildAntiRepeticaoContext(
         supabase,
         quantidade,
         favoritasFiltradas.map((f: any) => f.texto_msg || ''),
         'favoritas',
-        filtros?.categoria // Passando categoria alvo
+        filtros?.categoria, // Passando categoria alvo
+        { globalRecentes, catRecentes }
       );
       const contextoAntiRepeticao = antiRep.contexto;
 
@@ -1222,6 +1244,9 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 
       const supabase = createClient(supabaseUrl, serviceKey);
 
+      // 🚀 PARALLEL FETCH: Iniciar busca de histórico agora
+      const promiseHistoricoEstilo = fetchAntiRepeticaoHistory(supabase, 'estilo', undefined);
+
       // 1. Buscar DNA (Fonte de TEOLOGIA/ESSÊNCIA)
       // ESTRATÉGIA DE OURO: Tentar buscar DNA da PRÓPRIA CATEGORIA primeiro para garantir o gênero.
       let dnaEssencia = "";
@@ -1376,8 +1401,9 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
       }
 
       // 4. Anti-Repetição + Smart Autopilot (usando função centralizada)
+      const { globalRecentes: grEstilo, catRecentes: crEstilo } = await promiseHistoricoEstilo;
       const dnaTextsEstilo = dnaEssencia ? [dnaEssencia] : [];
-      const antiRepEstilo = await buildAntiRepeticaoContext(supabase, quantidade, dnaTextsEstilo, 'estilo');
+      const antiRepEstilo = await buildAntiRepeticaoContext(supabase, quantidade, dnaTextsEstilo, 'estilo', undefined, { globalRecentes: grEstilo, catRecentes: crEstilo });
       const contextoAntiRepeticao = antiRepEstilo.contexto;
 
       let temaAutopilotEstilo = '';
