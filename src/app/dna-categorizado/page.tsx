@@ -100,7 +100,7 @@ export default function DnaCategorizadoPage() {
     const [usarDnaBase, setUsarDnaBase] = useState(true);
     const [usarPassagemDia, setUsarPassagemDia] = useState(false);
     const [filtroNeutro, setFiltroNeutro] = useState(false);
-    const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'>('recent_5');
+    const [contextoEstrategia, setContextoEstrategia] = useState<'recent_5' | 'recent_10' | 'recent_20' | 'all' | 'mixed'>('mixed');
     const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
 
     useEffect(() => {
