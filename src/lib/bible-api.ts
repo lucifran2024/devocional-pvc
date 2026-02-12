@@ -197,6 +197,7 @@ export async function buscarCapitulo(livroId: number, capitulo: number): Promise
 
 /**
  * Busca múltiplos capítulos para uma referência como "Isaías 16-18"
+ * Suporta referências multi-livro separadas por ";" como "Jeremias 51-52; Lamentações 1"
  * Retorna o texto formatado com números de versículos
  */
 export async function buscarPassagem(referencia: string): Promise<{
@@ -204,37 +205,53 @@ export async function buscarPassagem(referencia: string): Promise<{
     versiculos: Versiculo[];
     capitulosCarregados: number[];
 } | null> {
-    const parsed = parseReferencia(referencia);
-    if (!parsed) return null;
+    // Suporte a referências multi-livro (ex: "Jeremias 51-52; Lamentações 1")
+    const partes = referencia.split(';').map(p => p.trim()).filter(Boolean);
 
-    const { livroId, capituloInicio, capituloFim, versiculoInicio, versiculoFim } = parsed;
-
-    // Busca todos os capítulos em paralelo (máximo 3 para não sobrecarregar)
-    const capitulos: number[] = [];
-    for (let c = capituloInicio; c <= Math.min(capituloFim, capituloInicio + 2); c++) {
-        capitulos.push(c);
-    }
-
-    const resultados = await Promise.all(
-        capitulos.map(cap => buscarCapitulo(livroId, cap))
-    );
-
-    // Junta todos os versículos
     let todosVersiculos: Versiculo[] = [];
     const capitulosCarregados: number[] = [];
 
-    resultados.forEach((versiculos, idx) => {
-        if (versiculos.length > 0) {
-            capitulosCarregados.push(capitulos[idx]);
-            todosVersiculos = todosVersiculos.concat(versiculos);
+    for (const parte of partes) {
+        const parsed = parseReferencia(parte);
+        if (!parsed) {
+            console.warn('⚠️ [BIBLE-API] Não foi possível parsear parte:', parte);
+            continue;
         }
-    });
 
-    // Filtra por versículos se especificado
-    if (versiculoInicio !== undefined && capituloInicio === capituloFim) {
-        todosVersiculos = todosVersiculos.filter(
-            v => v.verse >= versiculoInicio && v.verse <= (versiculoFim || versiculoInicio)
+        const { livroId, capituloInicio, capituloFim, versiculoInicio, versiculoFim } = parsed;
+
+        // Busca todos os capítulos em paralelo (máximo 5 por parte)
+        const capitulos: number[] = [];
+        for (let c = capituloInicio; c <= Math.min(capituloFim, capituloInicio + 4); c++) {
+            capitulos.push(c);
+        }
+
+        const resultados = await Promise.all(
+            capitulos.map(cap => buscarCapitulo(livroId, cap))
         );
+
+        resultados.forEach((versiculos, idx) => {
+            if (versiculos.length > 0) {
+                capitulosCarregados.push(capitulos[idx]);
+                todosVersiculos = todosVersiculos.concat(versiculos);
+            }
+        });
+
+        // Filtra por versículos se especificado
+        if (versiculoInicio !== undefined && capituloInicio === capituloFim) {
+            // Filtra apenas os versículos do último lote adicionado
+            const lastBatchStart = todosVersiculos.length - resultados.flat().length;
+            const lastBatch = todosVersiculos.slice(lastBatchStart);
+            const filteredBatch = lastBatch.filter(
+                v => v.verse >= versiculoInicio && v.verse <= (versiculoFim || versiculoInicio)
+            );
+            todosVersiculos = [...todosVersiculos.slice(0, lastBatchStart), ...filteredBatch];
+        }
+    }
+
+    if (todosVersiculos.length === 0) {
+        console.error('❌ [BIBLE-API] Nenhum versículo carregado para:', referencia);
+        return null;
     }
 
     // Formata como texto legível

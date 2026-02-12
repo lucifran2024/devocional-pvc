@@ -678,12 +678,13 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         if (bibleData) {
             const slice = bibleData.versiculos.slice(0, 10);
             setVersiculosPaginaAtual(slice);
-            // Extrair info do livro
-            const parsed = parseReferencia(passagem.referencia);
+            // Extrair info do livro (usa primeira parte da referência para multi-livro)
+            const primeiraParte = passagem.referencia.split(';')[0].trim();
+            const parsed = parseReferencia(primeiraParte);
             if (parsed) {
                 const abrev = getAbrevFromId(parsed.livroId);
                 // Pegar nome do livro da referência original (ex: "Isaías 16-18" → "Isaías")
-                const refParts = passagem.referencia.trim().match(/^(.+?)\s+\d/);
+                const refParts = primeiraParte.match(/^(.+?)\s+\d/);
                 const nomeOriginal = refParts ? refParts[1] : parsed.livro;
                 setLivroInfoAtual({
                     abrev,
