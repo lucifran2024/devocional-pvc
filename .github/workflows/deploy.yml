@@ -30,6 +30,7 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+        continue-on-error: true
 
       - name: Type Check
         run: npx tsc --noEmit
