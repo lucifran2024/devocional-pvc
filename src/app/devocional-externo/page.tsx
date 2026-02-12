@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft, Loader2, RefreshCw, Globe, BookOpen,
-    Church, Cross, Newspaper, AlertCircle
+    Church, Cross, Newspaper, AlertCircle, Trash
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { supabase, getDataHoje } from '@/lib/supabase';
@@ -31,12 +31,25 @@ const FONTES = [
         color: 'text-amber-400',
         bgColor: 'bg-amber-500/10',
         borderColor: 'border-amber-500/20'
+    },
+    {
+        id: 'instagram',
+        nome: 'Instagram (Evangelho)',
+        desc: 'Posts recentes do @evangelhoparatodos__',
+        icon: Newspaper,
+        color: 'text-pink-400',
+        bgColor: 'bg-pink-500/10',
+        borderColor: 'border-pink-500/20'
     }
 ];
 
 // ============================================
 // PÁGINA DEVOCIONAL EXTERNO
 // ============================================
+// ============================================
+// COMPONENTES AUXILIARES
+// ============================================
+
 // ============================================
 // COMPONENTES AUXILIARES
 // ============================================
@@ -53,6 +66,120 @@ interface DevocionalPost {
     fonte: string;
     created_utc: number;
 }
+
+interface InstagramPost {
+    external_id: string;
+    source: string;
+    content: string;
+    image_url: string;
+    post_url: string;
+    author_name: string;
+    published_at: string;
+}
+
+const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
+    const [copiado, setCopiado] = useState(false);
+    const [salvando, setSalvando] = useState(false);
+
+    const handleCopy = () => {
+        const textoFormatado = `📖 *DEVOCIONAL INSTAGRAM*\n\n${post.content}\n\nVia @${post.author_name}\n${post.post_url}`;
+        navigator.clipboard.writeText(textoFormatado);
+        setCopiado(true);
+        setTimeout(() => setCopiado(false), 2000);
+    };
+
+    const handleSaveToDNA = async () => {
+        setSalvando(true);
+        // Lógica simplificada: salvar direto como 'dna_categorizado' na categoria 'DEVOCIONAL'
+        // Idealmente abriria um modal, mas para manter simples por enquanto:
+        try {
+            const { error } = await supabase.from('dna_categorizado').insert({
+                texto_msg: post.content,
+                categoria: 'DEVOCIONAL',
+                origem: 'instagram',
+                tags: [post.author_name]
+            });
+
+            if (error) alert('Erro ao salvar no DNA: ' + error.message);
+            else alert('Salvo no DNA com sucesso!');
+        } catch (e) {
+            alert('Erro ao salvar.');
+        } finally {
+            setSalvando(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Tem certeza que deseja apagar este post do cache?')) return;
+        try {
+            const { error } = await supabase
+                .from('devocional_externo_posts')
+                .delete()
+                .eq('external_id', post.external_id);
+
+            if (error) alert('Erro ao apagar: ' + error.message);
+            else {
+                // Recarregar página ou atualizar estado (simples reload por enquanto)
+                window.location.reload();
+            }
+        } catch (e) {
+            alert('Erro ao apagar.');
+        }
+    };
+
+    return (
+        <div className="glass-panel p-6 rounded-2xl border-white/10 hover:border-pink-500/30 transition-all flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-2 py-1 rounded-md">
+                        INSTAGRAM
+                    </span>
+                    <span className="text-xs text-slate-500">
+                        {new Date(post.published_at).toLocaleDateString()}
+                    </span>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={handleDelete} className="p-1 hover:bg-white/10 rounded text-slate-500 hover:text-red-400 transition-colors" title="Apagar">
+                        <Trash className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Image */}
+            {post.image_url && (
+                <div className="rounded-xl overflow-hidden aspect-square w-full bg-black/20">
+                    <img src={post.image_url} alt="Post" className="w-full h-full object-cover" />
+                </div>
+            )}
+
+            {/* Content */}
+            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {post.content}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="pt-4 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
+                <button
+                    onClick={handleCopy}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado ? 'bg-green-500 text-white' : 'bg-white/5 hover:bg-white/10 text-white'}`}
+                >
+                    {copiado ? 'Copiado!' : 'Copiar Texto'}
+                </button>
+                <button
+                    onClick={handleSaveToDNA}
+                    disabled={salvando}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white transition-all"
+                >
+                    {salvando ? 'Salvando...' : 'Salvar no DNA'}
+                </button>
+                <Link href={post.post_url} target="_blank" className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                    Link Original
+                </Link>
+            </div>
+        </div>
+    );
+};
 
 const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
     const [copiado, setCopiado] = useState(false);
@@ -118,6 +245,7 @@ export default function DevocionalExternoPage() {
     const [fonteAtiva, setFonteAtiva] = useState<string | null>(null);
     const [carregando, setCarregando] = useState(false);
     const [resultado, setResultado] = useState<string | null>(null);
+    const [postsInstagram, setPostsInstagram] = useState<InstagramPost[]>([]); // Novo estado
     const [erro, setErro] = useState<string | null>(null);
 
     const dataHoje = getDataHoje();
@@ -127,6 +255,8 @@ export default function DevocionalExternoPage() {
         setCarregando(true);
         setErro(null);
         setFonteAtiva(fonteId);
+        setResultado(null);
+        setPostsInstagram([]);
 
         try {
             const { data, error } = await supabase.functions.invoke('execute', {
@@ -140,7 +270,16 @@ export default function DevocionalExternoPage() {
             if (error) throw error;
             if (!data.ok) throw new Error(data.error || 'Erro ao buscar devocional.');
 
-            setResultado(data.resultado);
+            if (fonteId === 'instagram') {
+                if (data.dados_estruturados && Array.isArray(data.dados_estruturados)) {
+                    setPostsInstagram(data.dados_estruturados);
+                } else if (Array.isArray(data.resultado)) { // Compatibilidade caso venha direto no resultado
+                    setPostsInstagram(data.resultado);
+                }
+            } else {
+                setResultado(data.resultado);
+            }
+
         } catch (e: any) {
             console.error('Erro:', e);
             setErro(e.message || 'Erro de conexão.');
@@ -258,14 +397,28 @@ export default function DevocionalExternoPage() {
                             })}
                         </section>
 
-                        {/* Resultado RSS */}
-                        {resultado && !carregando && (
+                        {/* Resultado RSS / Instagram */}
+                        {!carregando && (
                             <section className="animate-enter space-y-6">
-                                <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
-                                    <div className="whitespace-pre-wrap font-medium text-slate-300 leading-relaxed">
-                                        {resultado}
+                                {fonteAtiva === 'instagram' && postsInstagram.length > 0 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {postsInstagram.map((post) => (
+                                            <InstagramFeedCard key={post.external_id} post={post} />
+                                        ))}
                                     </div>
-                                </div>
+                                )}
+
+                                {resultado && fonteAtiva !== 'instagram' && (
+                                    <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
+                                        <div className="whitespace-pre-wrap font-medium text-slate-300 leading-relaxed">
+                                            {resultado}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(fonteAtiva === 'instagram' && postsInstagram.length === 0 && !erro) && (
+                                    <div className="text-center text-slate-500 py-10">Buscando posts...</div>
+                                )}
                             </section>
                         )}
                     </>

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
+import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
 import { formatVoiceSection } from './voice-selector.ts';
@@ -579,10 +580,45 @@ Deno.serve(async (req) => {
     if (modo_id === 'devocional_externo') {
       console.log(`📡 [MODO ESPECIAL] Devocional Externo - fonte: ${fonte_rss}`);
 
-      const fontesValidas = ['voltemos', 'bible_gateway'];
-      const fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'voltemos';
+      // Mapeamento de fontes
+      const fontesValidas = ['voltemos', 'bible_gateway', 'instagram'];
+      let fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'voltemos';
 
-      const conteudoExterno = await consultarRSS(fonteEscolhida);
+      let conteudoExterno: any = "";
+      let postsInstagram: any[] = [];
+
+      if (fonteEscolhida === 'instagram') {
+        const username = "evangelhoparatodos__";
+        // Agora retorna array de objetos
+        postsInstagram = await consultarInstagram(username);
+
+        // Se houver posts, salvar no banco
+        if (postsInstagram.length > 0) {
+          console.log(`💾 [DB] Salvando ${postsInstagram.length} posts do Instagram...`);
+
+          // Inicializar Supabase Client
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+
+          const { error: upsertError } = await supabaseAdmin
+            .from('devocional_externo_posts')
+            .upsert(postsInstagram, { onConflict: 'source, external_id' });
+
+          if (upsertError) {
+            console.error("❌ [DB] Erro ao salvar posts:", upsertError);
+          } else {
+            console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
+          }
+
+          // Para compatibilidade com o frontend atual que espera 'resultado' string ou objeto
+          conteudoExterno = postsInstagram;
+        } else {
+          conteudoExterno = "Nenhum post encontrado ou erro na API.";
+        }
+      } else {
+        conteudoExterno = await consultarRSS(fonteEscolhida);
+      }
 
       console.log(`✅ Devocional externo obtido de: ${fonteEscolhida}`);
 
@@ -591,7 +627,8 @@ Deno.serve(async (req) => {
           ok: true,
           resultado: conteudoExterno,
           fonte: fonteEscolhida,
-          tipo: 'devocional_externo'
+          tipo: 'devocional_externo',
+          dados_estruturados: postsInstagram
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
