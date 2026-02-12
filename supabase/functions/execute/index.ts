@@ -141,7 +141,8 @@ async function buildAntiRepeticaoContext(
   supabase: any,
   quantidade: number,
   dnaTextsParaCrosscheck?: string[],
-  buildStyle: string = 'favoritas'
+  buildStyle: string = 'favoritas',
+  categoriaAlvo?: string
 ): Promise<{
   contexto: string;
   temasUnicos: string[];
@@ -165,25 +166,49 @@ async function buildAntiRepeticaoContext(
   }
   const versiculosDnaUnicos = [...new Set(versiculosDoDna)];
 
-  // Busca expandida: agora inclui os novos campos de anti-repetição profunda
-  // Filtra por build_style para que cada modo veja apenas suas próprias gerações
-  let query = supabase
+  // Busca expandida: HÍBRIDA (Global + Categoria)
+  // 1. Busca Global (50 últimas) -> Evitar repetição de versículos recentes em qualquer categoria
+  const { data: globalRecentes } = await supabase
     .from("dna_geracoes")
-    .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline, build_style")
+    .select("texto_msg, versiculos_usados, created_at")
     .gte("created_at", dataCorte.toISOString())
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(50);
 
-  // Filtrar por modo: cada modo só vê suas próprias gerações
+  // 2. Busca por Categoria (50 últimas) -> Evitar repetição de temas/estruturas na MESMA categoria
+  let queryCat = supabase
+    .from("dna_geracoes")
+    .select("texto_msg, tema_principal, versiculos_usados, titulo, imagem_central, abertura_tipo, fechamento_tipo, punchline, build_style, categoria")
+    .gte("created_at", dataCorte.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(50);
+
   if (style === 'favoritas') {
-    query = query.or('build_style.eq.favoritas,build_style.is.null');
+    queryCat = queryCat.or('build_style.eq.favoritas,build_style.is.null');
   } else if (style === 'estilo') {
-    query = query.eq('build_style', 'estilo');
+    queryCat = queryCat.eq('build_style', 'estilo');
   }
 
-  const { data: geracoesRecentes, error: genError } = await query;
+  // Se tem categoria alvo, foca nela. Se não, busca geral do modo.
+  if (categoriaAlvo && categoriaAlvo !== 'todas') {
+    queryCat = queryCat.eq('categoria', categoriaAlvo);
+    console.log(`🎯 [ANTI-REPETIÇÃO] Filtrando redundância específica para categoria: ${categoriaAlvo}`);
+  }
 
-  if (genError || !geracoesRecentes || geracoesRecentes.length === 0) {
+  const { data: catRecentes, error: genError } = await queryCat;
+
+  // Unificar listas (priorizando dados completos da busca por categoria)
+  const geracoesRecentes = [...(catRecentes || [])];
+
+  // Adicionar versículos da busca global (se já não estiverem na lista)
+  if (globalRecentes) {
+    globalRecentes.forEach((g: any) => {
+      // Se este item não está na lista principal, adicionamos apenas para contagem de versículos?
+      // Melhor: extraímos os versículos de TUDO para o pool de "versiculosProibidos"
+    });
+  }
+
+  if (genError || (!catRecentes?.length && !globalRecentes?.length)) {
     // Sem gerações recentes — só crosscheck de DNA se houver
     if (versiculosDnaUnicos.length > 0) {
       return {
@@ -208,37 +233,52 @@ Distribua versículos entre Antigo e Novo Testamento de forma equilibrada (50/50
     return { contexto: '', temasUnicos: [], versiculosUnicos: [], versiculosDnaUnicos: [], contAT: 0, contNT: 0 };
   }
 
-  console.log(`🔄 [ANTI-REPETIÇÃO] Modo: ${style} | Analisando ${geracoesRecentes.length} gerações dos últimos 7 dias (filtradas por build_style)`);
+  console.log(`🔄 [ANTI-REPETIÇÃO] Modo: ${style} | Analisando ${catRecentes?.length || 0} msgs da categoria + ${globalRecentes?.length || 0} msgs globais`);
 
   const temasColetados: string[] = [];
-  const versiculosColetados: string[] = [];
+  const versiculosColetados: string[] = []; // Este acumula de TODOS (Global + Categoria)
   const imagensColetadas: string[] = [];
   const aberturasColetadas: string[] = [];
   const fechamentosColetados: string[] = [];
   const punchlinesColetadas: string[] = [];
   const titulosColetados: string[] = [];
 
-  geracoesRecentes.forEach((g: any) => {
-    // Temas
-    if (g.tema_principal) {
-      temasColetados.push(g.tema_principal);
-    } else {
-      const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
-      if (temaExtraido) temasColetados.push(temaExtraido);
-    }
-    // Versículos
-    if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
-      versiculosColetados.push(...g.versiculos_usados);
-    } else {
-      versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
-    }
-    // Novos campos profundos
-    if (g.imagem_central) imagensColetadas.push(g.imagem_central);
-    if (g.abertura_tipo) aberturasColetadas.push(g.abertura_tipo);
-    if (g.fechamento_tipo) fechamentosColetados.push(g.fechamento_tipo);
-    if (g.punchline) punchlinesColetadas.push(g.punchline);
-    if (g.titulo) titulosColetados.push(g.titulo);
-  });
+  // 1. Processar Categoria (Contexto Semântico)
+  if (catRecentes) {
+    catRecentes.forEach((g: any) => {
+      // Temas
+      if (g.tema_principal) {
+        temasColetados.push(g.tema_principal);
+      } else {
+        const temaExtraido = extrairTemaDoTitulo(g.texto_msg || '');
+        if (temaExtraido) temasColetados.push(temaExtraido);
+      }
+      // Novos campos profundos
+      if (g.imagem_central) imagensColetadas.push(g.imagem_central);
+      if (g.abertura_tipo) aberturasColetadas.push(g.abertura_tipo);
+      if (g.fechamento_tipo) fechamentosColetados.push(g.fechamento_tipo);
+      if (g.punchline) punchlinesColetadas.push(g.punchline);
+      if (g.titulo) titulosColetados.push(g.titulo);
+
+      // Versículos da categoria também contam
+      if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
+        versiculosColetados.push(...g.versiculos_usados);
+      } else {
+        versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
+      }
+    });
+  }
+
+  // 2. Processar Global (Apenas Versículos)
+  if (globalRecentes) {
+    globalRecentes.forEach((g: any) => {
+      if (g.versiculos_usados && Array.isArray(g.versiculos_usados)) {
+        versiculosColetados.push(...g.versiculos_usados);
+      } else {
+        versiculosColetados.push(...extrairVersiculos(g.texto_msg || ''));
+      }
+    });
+  }
 
   const temasUnicos = [...new Set(temasColetados)].slice(0, 20);
   const versiculosUnicos = [...new Set(versiculosColetados)].slice(0, 30);
@@ -702,7 +742,8 @@ Deno.serve(async (req) => {
         supabase,
         quantidade,
         favoritasFiltradas.map((f: any) => f.texto_msg || ''),
-        'favoritas'
+        'favoritas',
+        filtros?.categoria // Passando categoria alvo
       );
       const contextoAntiRepeticao = antiRep.contexto;
 
@@ -1055,7 +1096,8 @@ Para CADA mensagem gerada, siga este processo:
 ${filtros?.usarPassagemDia ? '5. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
 6. **USE VERSÍCULOS DIFERENTES** entre as mensagens — NÃO repita o mesmo verso.
 7. **FORMATO DO VERSÍCULO**: Sempre cite com referência: > "Texto do versículo" — Livro Cap:Vers (ex: > "Porque Deus amou o mundo..." — João 3:16)
-7. **SAÍDA LIMPA**: NÃO inclua metadados técnicos como "(Sementes: ...)", "(primária=#X)", "MENSAGEM 01 —" ou qualquer marcação interna. A saída deve ser apenas TÍTULO + CORPO, pronta para enviar.
+8. **SAÍDA LIMPA**: NÃO inclua metadados técnicos, nem "MENSAGEM 01". Apenas TÍTULO e CORPO.
+9. **FORMATAÇÃO (IMPORTANTE)**: Use QUEBRA DE LINHA DUPLA entre parágrafos para separar visualmente os blocos de texto. O texto não pode ficar "embuluado" (bloco único denso).
 
 ## 📋 DISTRIBUIÇÃO NO LOTE (${quantidade} MENSAGENS):
 ${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `- **Cada mensagem usa uma semente primária DIFERENTE** (distribua entre as ${favoritasFiltradas.length} sementes)
@@ -1068,6 +1110,7 @@ ${quantidade > 1 ? `✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS 
 ${instrucaoLexicoFavoritas ? `✓ Cada mensagem contém no mínimo ${minLexTermFavoritas} termos do LÉXICO DNA` : ''}
 ${neutro ? '✓ NENHUMA saudação (MODO NEUTRO ATIVO)' : ''}
 ${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana}` : ''}
+✓ O texto tem ESPAÇAMENTO adequado (quebras de linha duplas)
 
 ## FORMATO DE SAÍDA:
 Para cada mensagem:
@@ -1076,16 +1119,19 @@ ${filtros?.usarPassagemDia ? `
 
 **[TÍTULO EM CAPS]**
 
-[Corpo remixado]
+[Corpo remixado com quebras de linha]
 
 ---
 ` : `
 **[TÍTULO EM CAPS]**
 
-[Corpo remixado]
+[Corpo remixado com quebras de linha]
 
 ---
 `}
+
+IMPORTANTE: DEIXE UMA LINHA EM BRANCO ANTES E DEPOIS DO SEPARADOR "---".
+NÃO "cole" o título no corpo. Dê espaço.
 (continue até a mensagem ${quantidade})
 ⚠️ NÃO inclua metadata como "(Sementes: ...)" ou "(primária=#X)" na saída. O resultado final deve ser LIMPO, como se fosse uma mensagem real pronta para enviar.
 
