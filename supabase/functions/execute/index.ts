@@ -1047,106 +1047,81 @@ Cada mensagem DEVE seguir esta estrutura:
 `;
 
       const promptFavoritas = `
-# MODO REMIX — REMIXADOR DE FAVORITAS
-${formatoPassagemDoDia ? '\n## 🔀 MODO: REMIX + PASSAGEM DO DIA' : ''}
+<system_role>
+Você é um Editor Sênior de Devocionais com especialização em remixagem criativa.
+Sua função é analisar o DNA do autor (sementes) e criar novos textos com a MESMA "vibe", vocabulário e energia.
+NÃO seja uma IA genérica. Seja o autor.
+</system_role>
 
-${REGRAS_ESTILO_GLOBAIS}
+<context>
+  <mode>${formatoPassagemDoDia ? 'REMIX + PASSAGEM DO DIA' : 'REMIX PURO (Fidelidade Extrema)'}</mode>
 
-
-Você é um DJ de textos devocionais. Sua função é **REMIXAR** as mensagens favoritas abaixo.
-
-## 🎯 SUA MISSÃO:
-Gere **EXATAMENTE ${quantidade} MENSAGENS REMIXADAS** a partir das SEMENTES abaixo.
-${isReferenciaUnica
-          ? `Você tem ${totalReferencias} semente(s). REPLIQUE o estilo exato e gere variações.`
-          : `Você tem ${favoritasFiltradas.length} sementes. MISTURE-AS para criar remixes.`}
-${formatoPassagemDoDia}${instrucoesFiltro}
-${distribuicaoCategoria}
-${instrucaoLexicoFavoritas}
-
-## 🔧 COMO FAZER O REMIX (OBRIGATÓRIO):
-Para CADA mensagem gerada, siga este processo:
-
-1. **ESCOLHA 1 SEMENTE PRIMÁRIA** — a base da mensagem (a ideia central vem dela)
-2. **ESCOLHA 1 SEMENTE SECUNDÁRIA** — para misturar um elemento (1 frase, 1 contraste, 1 versículo diferente)
-3. **COPIE 3–6 PALAVRAS/EXPRESSÕES EXATAS** da semente primária (literal, sem mudar)
-   Exemplos: se a semente diz "rasga tudo", use "rasga tudo". Se diz "fundo do poço", use "fundo do poço".
-4. **MISTURE 1 FRASE OU IDEIA** da semente secundária, adaptando ao contexto
-5. **NÃO COPIE parágrafos inteiros** — remixe, reorganize, recombine
-6. **MANTENHA** o tamanho, tom, ritmo e pontuação da semente primária
-   - Se a semente é curta (2 frases), o remix é curto
-   - Se a semente usa CAPS, o remix usa CAPS
-   - Se a semente usa "...", o remix usa "..."
-   - Se a semente é oração, o remix é oração
-   - Se a semente é confrontacional, o remix é confrontacional
-
-## ⚠️ REGRAS DO REMIX:
-1. **FIDELIDADE AO DNA**: O resultado deve parecer que veio do MESMO AUTOR das favoritas. Mesmo vocabulário, mesma pegada, mesma energia.
-2. **NÃO INVENTE ESTILO NOVO**: Não adicione floreios poéticos se as favoritas não têm. Não adicione cenas narrativas se as favoritas são diretas.
-3. **SEM VOCATIVOS**: NÃO use "amado(a)", "irmão(ã)", "querido(a)".${neutro ? ' MODO NEUTRO: NÃO use saudações.' : ' Se a semente tem saudação, mantenha igual.'}
-4. 📖📖📖 **VERSÍCULOS — REGRA INEGOCIÁVEL**: ${(() => {
-          const tipoAtivo = (filtros?.tipo || filtros?.categoria || '').toLowerCase();
-          const isVersiculoMode = tipoAtivo === 'versículo' || tipoAtivo === 'versiculo';
-          const minComVersiculo = Math.ceil(quantidade * 0.5);
-          if (isVersiculoMode) {
-            return `TODAS as mensagens devem ter versículo como protagonista.`;
-          } else {
-            return `NO MÍNIMO **${minComVersiculo} de ${quantidade} mensagens (50%+)** DEVEM conter versículo bíblico EXPLÍCITO com referência completa (ex: "João 3:16", "Salmos 23:1", "Romanos 8:28"). Use versículos REAIS da Bíblia. SE UMA MENSAGEM NÃO TEM VERSÍCULO, é porque ela é exceção — a MAIORIA deve ter.`;
-          }
-        })()}
-${filtros?.usarPassagemDia ? '5. **TODAS as mensagens devem referenciar a PASSAGEM DO DIA acima**' : ''}
-6. **USE VERSÍCULOS DIFERENTES** entre as mensagens — NÃO repita o mesmo verso.
-7. **FORMATO DO VERSÍCULO**: Sempre cite com referência: > "Texto do versículo" — Livro Cap:Vers (ex: > "Porque Deus amou o mundo..." — João 3:16)
-8. **SAÍDA LIMPA**: NÃO inclua metadados técnicos, nem "MENSAGEM 01". Apenas TÍTULO e CORPO.
-9. **FORMATAÇÃO (IMPORTANTE)**: Use QUEBRA DE LINHA DUPLA entre parágrafos para separar visualmente os blocos de texto. O texto não pode ficar "embuluado" (bloco único denso).
-
-## 📋 DISTRIBUIÇÃO NO LOTE (${quantidade} MENSAGENS):
-${quantidade === 1 ? `- Remixe a semente mais forte com máxima fidelidade.` : `- **Cada mensagem usa uma semente primária DIFERENTE** (distribua entre as ${favoritasFiltradas.length} sementes)
-- Se tem mais mensagens que sementes, reutilize sementes mas com secundárias diferentes
-- **NÃO remixe a mesma dupla (primária+secundária) duas vezes**
-- Os remixes devem PARECER as favoritas — mesmo tamanho, mesma linguagem, mesma energia`}
-
-**CHECKPOINT REMIX**: Antes de entregar, valide:
-${quantidade > 1 ? `✓ Cada mensagem contém 3-6 palavras/expressões LITERAIS da semente primária\n✓ Cada mensagem mistura um elemento da semente secundária\n✓ O tamanho é similar ao da semente primária (não inflou, não encolheu)\n✓ O tom é fiel às favoritas (direto = direto, oração = oração, confronto = confronto)\n✓ Nenhum versículo se repete\n✓ Nenhuma mensagem ficou genérica/sem DNA\n📖 **CONTE OS VERSÍCULOS**: No mínimo ${Math.ceil(quantidade * 0.5)} de ${quantidade} mensagens TÊM versículo com referência bíblica. Se não tem, ADICIONE.` : '✓ A mensagem tem DNA claro da semente\n📖 A mensagem contém pelo menos 1 versículo bíblico com referência'}
-${instrucaoLexicoFavoritas ? `✓ Cada mensagem contém no mínimo ${minLexTermFavoritas} termos do LÉXICO DNA` : ''}
-${neutro ? '✓ NENHUMA saudação (MODO NEUTRO ATIVO)' : ''}
-${filtros?.diasSemana ? `✓ Mencionou APENAS os dias: ${filtros.diasSemana}` : ''}
-✓ O texto tem ESPAÇAMENTO adequado (quebras de linha duplas)
-
-## FORMATO DE SAÍDA:
-Para cada mensagem:
-${filtros?.usarPassagemDia ? `
-**📖 LEITURA DO DIA — ${passagemRef}**
-
-**[TÍTULO EM CAPS]**
-
-[Corpo remixado com quebras de linha]
-
----
-` : `
-**[TÍTULO EM CAPS]**
-
-[Corpo remixado com quebras de linha]
-
----
-`}
-
-IMPORTANTE: DEIXE UMA LINHA EM BRANCO ANTES E DEPOIS DO SEPARADOR "---".
-NÃO "cole" o título no corpo. Dê espaço.
-(continue até a mensagem ${quantidade})
-⚠️ NÃO inclua metadata como "(Sementes: ...)" ou "(primária=#X)" na saída. O resultado final deve ser LIMPO, como se fosse uma mensagem real pronta para enviar.
-
-${contextoAntiRepeticao}
-## 🧬 SEMENTES DISPONÍVEIS PARA REMIX:
+  <dna_seeds>
+    Abaixo estão as sementes de inspiração (DNA). Use-as como base absoluta.
 ${dnaFavoritas}
+  </dna_seeds>
+  
+  <anti_repetition>
+${contextoAntiRepeticao}
+  </anti_repetition>
+  
+  <lexicon_requirements>
+${instrucaoLexicoFavoritas || 'Copie o vocabulário (palavras exatas) das sementes.'}
+  </lexicon_requirements>
+</context>
 
-## 📖📖📖 LEMBRETE FINAL (LEIA ANTES DE GERAR):
-A MAIORIA das mensagens (50%+) DEVE conter versículo bíblico com referência (ex: João 3:16).
-Se ao revisar você perceber que faltam versículos, VOLTE e adicione antes de entregar.
-Uma mensagem devocional SEM versículo é INCOMPLETA.
-${distribuicaoCategoria}
-## GERE AGORA ${quantidade} REMIXES:
-    `;
+<global_rules>
+${REGRAS_ESTILO_GLOBAIS}
+  <rule priority="critical">VOCATIVOS PROIBIDOS: Nunca use "amado", "querido", "irmão", "filho".${neutro ? ' MODO NEUTRO: Não use saudações temporais.' : ''}</rule>
+  <rule priority="critical">VERSÍCULOS OBRIGATÓRIOS: Pelo menos 50% das mensagens DEVEM ter versículo explícito com referência (ex: João 3:16). Costure o versículo no texto de forma natural.</rule>
+  <rule priority="high">ESTILO: Curto, direto, "staccato". Sem floreios poéticos desnecessários.</rule>
+  <rule priority="high">FORMATO: Use quebra de linha DUPLA entre parágrafos para evitar texto denso.</rule>
+</global_rules>
+
+<task>
+  Gere EXATAMENTE ${quantidade} mensagens remixadas.
+  
+  <distribution>
+${distribuicaoCategoria || 'Distribua o remix variando as sementes usadas (não repita a mesma semente primária seguidas vezes).'}
+  </distribution>
+  
+  <filters>
+${instrucoesFiltro}
+${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
+  </filters>
+  
+  <process_instructions>
+    Para CADA mensagem, siga estritamente este fluxo:
+    
+    1. "THINKING" (Planejamento Mental):
+       Abra uma tag <thinking>. Planeje:
+       - Qual semente primária usar? (cite o ID)
+       - Qual semente secundária misturar?
+       - Qual versículo usar? (se aplicável)
+       - Qual será o tom/título?
+    
+    2. "WRITING" (Escrita Final):
+       Feche a tag </thinking>.
+       Escreva a mensagem final formatada, limpa, pronta para envio.
+  </process_instructions>
+</task>
+
+<output_format>
+  Para cada mensagem, use EXATAMENTE este formato:
+  
+  <thinking>
+  [Seu planejamento breve aqui]
+  </thinking>
+  
+  ${filtros?.usarPassagemDia ? `**📖 LEITURA DO DIA — ${passagemRef}**\n\n` : ''}**[TÍTULO EM CAPS]**
+  
+  [Corpo da mensagem com quebras de linha duplas]
+  
+  ---
+  
+  (Repita para todas as ${quantidade} mensagens. Deixe uma linha em branco antes e depois do separador "---".)
+</output_format>
+`;
 
       // 4. Chamar Gemini
       const MODEL_NAME = "gemini-2.0-flash";
@@ -1180,7 +1155,8 @@ ${distribuicaoCategoria}
       const aiData = await resp.json();
       let resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
 
-      // CLEANER: Remover metadados de sementes (ex: "(Sementes: primária=#1...)")
+      // CLEANER: Remover bloco de pensamento (<thinking>) e metadados de sementes
+      resultado = resultado.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
       resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
 
       // VALIDAÇÃO: Verificar presença de versículos bíblicos nas mensagens
