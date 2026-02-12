@@ -1183,9 +1183,10 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
       resultado = resultado.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
       resultado = resultado.replace(/```(?:xml|json|markdown)?/gi, '').trim();
       resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
-      // CLEANER: Remover Tags de Cabeçalho Vazadas (ex: [ORAÇÃO], [REFLEXÃO])
-      resultado = resultado.replace(/^\s*\*\*?\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]\s*\*\*?/gim, '').trim();
-      resultado = resultado.replace(/^\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]/gim, '').trim();
+      // CLEANER: Remover Tags de Cabeçalho Vazadas (ex: [ORAÇÃO], [REFLEXÃO]) - GLOBAL E AGRESSIVO
+      resultado = resultado.replace(/\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]\s*/gim, '').trim();
+      resultado = resultado.replace(/^\s*\*\*\s*/gim, '**'); // Corrige **  Espaço
+      resultado = resultado.replace(/^\s*\*\*\s*$/gim, ''); // Remove linhas só com **
 
       // VALIDAÇÃO: Verificar presença de versículos bíblicos nas mensagens
       const mensagensGeradas = resultado.split(/---/).filter((m: string) => m.trim().length > 20);
@@ -1328,7 +1329,17 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
           ).join("\n\n---\n\n");
           console.log(`🎨 [ESTILO] ${exemplosEstilo.length} exemplos de '${estiloAlvo}' carregados (LIMPOS).`);
         } else {
-          console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
+          console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback SINTÉTICO LIMPO.`);
+          exemplosEstrutura = `
+**O Milagre do Amanhã**
+
+Não se preocupe com o que virá.
+Deus já está lá.
+Onde seus pés falharem, a graça dEle te sustenta.
+
+Confie no processo.
+O milagre é agora.
+          `.trim();
         }
       }
 

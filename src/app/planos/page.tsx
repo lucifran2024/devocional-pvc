@@ -39,13 +39,20 @@ export default function PlanosPage() {
     }
 
     async function handleIniciar(planoId: string) {
-        setProcessing(planoId);
-        const res = await inscreverEmPlano(planoId);
-        if (res.success) {
-            // Redireciona para o leitor com o plano selecionado
-            router.push(`/plano-de-leitura?plano_id=${planoId}`);
-        } else {
-            alert('Erro ao iniciar plano: ' + res.error);
+        try {
+            setProcessing(planoId);
+            const inscricao = await inscreverEmPlano(planoId);
+
+            if (inscricao) {
+                // Redireciona para o leitor com o plano selecionado
+                router.push(`/plano-de-leitura?plano_id=${planoId}`);
+            } else {
+                alert('Erro ao inscrever no plano. Tente novamente.');
+                setProcessing(null);
+            }
+        } catch (error) {
+            console.error("Erro ao iniciar plano:", error);
+            alert('Ocorreu um erro inesperado ao iniciar o plano.');
             setProcessing(null);
         }
     }

@@ -1,118 +1,90 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Plano, InscricaoPlano, PlanoDia } from './types/plans';
+import { supabase } from '@/lib/supabase';
+import { Plano, PlanoDia, InscricaoPlano } from './types/plans';
 
-const supabase = createClientComponentClient();
-
-/**
- * Retorna todos os planos ativos disponíveis
- */
 export async function getPlanosDisponiveis(): Promise<Plano[]> {
     const { data, error } = await supabase
         .from('planos')
         .select('*')
-        .eq('ativo', true)
-        .order('ordem', { ascending: true });
+        .order('id');
 
     if (error) {
         console.error('Erro ao buscar planos:', error);
         return [];
     }
-
-    return data as Plano[];
+    return data || [];
 }
 
-/**
- * Retorna as inscrições do usuário atual
- */
-export async function getMinhasInscricoes(): Promise<InscricaoPlano[]> {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session?.user) return [];
+export async function getMinhasInscricoes(): Promise<(InscricaoPlano & { plano: Plano })[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
 
-    // Busca inscrições com join no plano
     const { data, error } = await supabase
         .from('usuario_inscricoes')
-        .select(`
-      *,
-      plano:planos(*)
-    `)
-        .eq('user_id', session.session.user.id)
-        .order('ultimo_acesso', { ascending: false });
+        .select('*, plano:planos(*)')
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Erro ao buscar inscrições:', error);
         return [];
     }
-
-    // Calcula progresso
-    return data.map((inscricao: any) => ({
-        ...inscricao,
-        progresso_percent: Math.round((inscricao.dia_atual / (inscricao.plano.duracao_dias || 1)) * 100)
-    })) as InscricaoPlano[];
+    return data as (InscricaoPlano & { plano: Plano })[] || [];
 }
 
-/**
- * Inscreve o usuário em um plano
- */
-export async function inscreverEmPlano(planoId: string): Promise<{ success: boolean; error?: string }> {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session?.user) return { success: false, error: 'Usuário não autenticado' };
-
-    const { error } = await supabase
-        .from('usuario_inscricoes')
-        .insert({
-            user_id: session.session.user.id,
-            plano_id: planoId,
-            dia_atual: 1,
-            status: 'ativo'
-        });
-
-    if (error) {
-        // Se erro for unique violation (já inscrito), retorna sucesso mas avisa
-        if (error.code === '23505') {
-            return { success: true };
-        }
-        console.error('Erro ao inscrever:', error);
-        return { success: false, error: error.message };
+export async function inscreverEmPlano(plano_id: string): Promise<InscricaoPlano | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        throw new Error('Usuário não autenticado');
     }
 
-    return { success: true };
-}
-
-/**
- * Busca o dia atual de um plano específico
- */
-export async function getDiaDoPlano(planoId: string, diaNumero: number): Promise<PlanoDia | null> {
+    // Verificar se já existe (opcional, o banco pode travar ou upsert)
+    // Vamos fazer insert direto
     const { data, error } = await supabase
-        .from('plano_dias')
-        .select('*')
-        .eq('plano_id', planoId)
-        .eq('dia_numero', diaNumero)
+        .from('usuario_inscricoes')
+        .insert({
+            user_id: user.id,
+            plano_id: plano_id,
+            data_inicio: new Date().toISOString(),
+            dia_atual: 1,
+            status: 'ativo'
+        })
+        .select()
         .single();
 
     if (error) {
-        console.error(`Erro ao buscar dia ${diaNumero} do plano ${planoId}:`, error);
+        console.error('Erro ao inscrever:', error);
         return null;
     }
-
-    return data as PlanoDia;
+    return data;
 }
 
-/**
- * Avança o progresso do usuário no plano
- */
-export async function concluirDiaLeitura(inscricaoId: string, user_id: string, novoDia: number): Promise<void> {
+export async function getDiaDoPlano(plano_id: string, dia_numero: number): Promise<PlanoDia | null> {
+    const { data, error } = await supabase
+        .from('plano_dias')
+        .select('*')
+        .eq('plano_id', plano_id)
+        .eq('dia_numero', dia_numero)
+        .single();
 
-    // Atualiza dia_atual e ultimo_acesso
+    if (error) {
+        console.error('Erro ao buscar dia do plano:', error);
+        return null;
+    }
+    return data;
+}
+
+export async function concluirDiaLeitura(inscricao_id: string, user_id: string, proximo_dia: number): Promise<boolean> {
+    // Atualiza o dia_atual da inscrição
     const { error } = await supabase
         .from('usuario_inscricoes')
         .update({
-            dia_atual: novoDia,
-            ultimo_acesso: new Date().toISOString()
+            dia_atual: proximo_dia,
+            updated_at: new Date().toISOString()
         })
-        .eq('id', inscricaoId)
-        .eq('user_id', user_id);
+        .eq('id', inscricao_id);
 
     if (error) {
-        console.error('Erro ao atualizar progresso:', error);
+        console.error('Erro ao concluir leitura:', error);
+        return false;
     }
+    return true;
 }
