@@ -77,21 +77,46 @@ interface InstagramPost {
     published_at: string;
 }
 
-const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
+const InstagramFeedCard = ({ post, onDelete }: { post: InstagramPost; onDelete?: (id: string) => void }) => {
     const [copiado, setCopiado] = useState(false);
     const [salvando, setSalvando] = useState(false);
+    const [imgError, setImgError] = useState(false);
+    const [expandido, setExpandido] = useState(false);
+
+    // Formatar data relativa (ex: "há 2 dias")
+    const formatarData = (dateStr: string) => {
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            const agora = new Date();
+            const diffMs = agora.getTime() - date.getTime();
+            const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDias === 0) return 'Hoje';
+            if (diffDias === 1) return 'Ontem';
+            if (diffDias < 7) return `${diffDias}d atrás`;
+            if (diffDias < 30) return `${Math.floor(diffDias / 7)}sem atrás`;
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+        } catch { return ''; }
+    };
 
     const handleCopy = () => {
         const textoFormatado = `📖 *DEVOCIONAL INSTAGRAM*\n\n${post.content}\n\nVia @${post.author_name}\n${post.post_url}`;
-        navigator.clipboard.writeText(textoFormatado);
+        navigator.clipboard.writeText(textoFormatado).catch(() => {
+            // Fallback para dispositivos que não suportam clipboard API
+            const textarea = document.createElement('textarea');
+            textarea.value = textoFormatado;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        });
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
     };
 
     const handleSaveToDNA = async () => {
         setSalvando(true);
-        // Lógica simplificada: salvar direto como 'dna_categorizado' na categoria 'DEVOCIONAL'
-        // Idealmente abriria um modal, mas para manter simples por enquanto:
         try {
             const { error } = await supabase.from('dna_categorizado').insert({
                 texto_msg: post.content,
@@ -102,7 +127,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
             if (error) alert('Erro ao salvar no DNA: ' + error.message);
             else alert('Salvo no DNA com sucesso!');
-        } catch (e) {
+        } catch {
             alert('Erro ao salvar.');
         } finally {
             setSalvando(false);
@@ -117,64 +142,103 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                 .delete()
                 .eq('external_id', post.external_id);
 
-            if (error) alert('Erro ao apagar: ' + error.message);
-            else {
-                // Recarregar página ou atualizar estado (simples reload por enquanto)
-                window.location.reload();
+            if (error) {
+                alert('Erro ao apagar: ' + error.message);
+            } else if (onDelete) {
+                onDelete(post.external_id);
             }
-        } catch (e) {
+        } catch {
             alert('Erro ao apagar.');
         }
     };
 
+    const CONTENT_LIMIT = 200;
+    const isLong = post.content.length > CONTENT_LIMIT;
+    const textoExibido = (!expandido && isLong)
+        ? post.content.substring(0, CONTENT_LIMIT) + '...'
+        : post.content;
+
     return (
-        <div className="glass-panel p-6 rounded-2xl border-white/10 hover:border-pink-500/30 transition-all flex flex-col gap-4">
+        <div className="glass-panel p-5 rounded-2xl border border-white/10 hover:border-pink-500/30 transition-all duration-300 flex flex-col gap-3 group">
             {/* Header */}
-            <div className="flex justify-between items-start gap-4">
+            <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-2 py-1 rounded-md">
-                        INSTAGRAM
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-2 py-0.5 rounded-md">
+                        @{post.author_name}
                     </span>
-                    <span className="text-xs text-slate-500">
-                        {new Date(post.published_at).toLocaleDateString()}
-                    </span>
+                    {post.published_at && (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                            {formatarData(post.published_at)}
+                        </span>
+                    )}
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={handleDelete} className="p-1 hover:bg-white/10 rounded text-slate-500 hover:text-red-400 transition-colors" title="Apagar">
-                        <Trash className="w-4 h-4" />
-                    </button>
-                </div>
+                <button
+                    onClick={handleDelete}
+                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 rounded-lg text-slate-600 hover:text-red-400 transition-all"
+                    title="Remover do cache"
+                >
+                    <Trash className="w-3.5 h-3.5" />
+                </button>
             </div>
 
-            {/* Image */}
-            {post.image_url && (
-                <div className="rounded-xl overflow-hidden aspect-square w-full bg-black/20">
-                    <img src={post.image_url} alt="Post" className="w-full h-full object-cover" />
+            {/* Image com fallback */}
+            {post.image_url && !imgError ? (
+                <div className="rounded-xl overflow-hidden aspect-square w-full bg-black/20 relative">
+                    <img
+                        src={post.image_url}
+                        alt={`Post de @${post.author_name}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        onError={() => setImgError(true)}
+                        loading="lazy"
+                    />
                 </div>
-            )}
+            ) : post.image_url && imgError ? (
+                <div className="rounded-xl overflow-hidden aspect-video w-full bg-gradient-to-br from-pink-500/10 to-purple-500/10 flex items-center justify-center border border-white/5">
+                    <div className="text-center text-slate-500">
+                        <Newspaper className="w-8 h-8 mx-auto mb-1 opacity-30" />
+                        <span className="text-[10px]">Imagem indisponível</span>
+                    </div>
+                </div>
+            ) : null}
 
             {/* Content */}
-            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {post.content}
+            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                {textoExibido}
+                {isLong && (
+                    <button
+                        onClick={() => setExpandido(!expandido)}
+                        className="text-pink-400 hover:text-pink-300 text-xs font-bold ml-1 transition-colors"
+                    >
+                        {expandido ? ' ver menos' : ' ver mais'}
+                    </button>
+                )}
             </div>
 
             {/* Footer Actions */}
-            <div className="pt-4 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
+            <div className="pt-3 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
                 <button
                     onClick={handleCopy}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado ? 'bg-green-500 text-white' : 'bg-white/5 hover:bg-white/10 text-white'}`}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${copiado
+                        ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/30'
+                        : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
+                    }`}
                 >
-                    {copiado ? 'Copiado!' : 'Copiar Texto'}
+                    {copiado ? '✓ Copiado!' : 'Copiar'}
                 </button>
                 <button
                     onClick={handleSaveToDNA}
                     disabled={salvando}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-pink-500/10 text-pink-400 hover:bg-pink-500/20 disabled:opacity-50 transition-all duration-300"
                 >
-                    {salvando ? 'Salvando...' : 'Salvar no DNA'}
+                    {salvando ? '...' : 'Salvar DNA'}
                 </button>
-                <Link href={post.post_url} target="_blank" className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all">
-                    Link Original
+                <Link
+                    href={post.post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-500 hover:text-white transition-all duration-300"
+                >
+                    ↗
                 </Link>
             </div>
         </div>
@@ -245,18 +309,20 @@ export default function DevocionalExternoPage() {
     const [fonteAtiva, setFonteAtiva] = useState<string | null>(null);
     const [carregando, setCarregando] = useState(false);
     const [resultado, setResultado] = useState<string | null>(null);
-    const [postsInstagram, setPostsInstagram] = useState<InstagramPost[]>([]); // Novo estado
+    const [postsInstagram, setPostsInstagram] = useState<InstagramPost[]>([]);
+    const [instagramFromCache, setInstagramFromCache] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
 
     const dataHoje = getDataHoje();
 
-    // Buscar Devocional RSS (Original)
+    // Buscar Devocional RSS / Instagram
     const buscarDevocional = async (fonteId: string) => {
         setCarregando(true);
         setErro(null);
         setFonteAtiva(fonteId);
         setResultado(null);
         setPostsInstagram([]);
+        setInstagramFromCache(false);
 
         try {
             const { data, error } = await supabase.functions.invoke('execute', {
@@ -271,10 +337,16 @@ export default function DevocionalExternoPage() {
             if (!data.ok) throw new Error(data.error || 'Erro ao buscar devocional.');
 
             if (fonteId === 'instagram') {
-                if (data.dados_estruturados && Array.isArray(data.dados_estruturados)) {
-                    setPostsInstagram(data.dados_estruturados);
-                } else if (Array.isArray(data.resultado)) { // Compatibilidade caso venha direto no resultado
-                    setPostsInstagram(data.resultado);
+                // Suportar ambos os campos (dados_estruturados tem prioridade)
+                const posts = data.dados_estruturados && Array.isArray(data.dados_estruturados)
+                    ? data.dados_estruturados
+                    : Array.isArray(data.resultado) ? data.resultado : [];
+
+                setPostsInstagram(posts);
+                setInstagramFromCache(!!data.from_cache);
+
+                if (posts.length === 0) {
+                    setErro('Nenhum post encontrado. Tente novamente mais tarde.');
                 }
             } else {
                 setResultado(data.resultado);
@@ -286,6 +358,11 @@ export default function DevocionalExternoPage() {
         } finally {
             setCarregando(false);
         }
+    };
+
+    // Remover post da lista local (sem reload)
+    const handleRemovePost = (externalId: string) => {
+        setPostsInstagram(prev => prev.filter(p => p.external_id !== externalId));
     };
 
     // Buscar Devocionais do Mundo
@@ -397,15 +474,60 @@ export default function DevocionalExternoPage() {
                             })}
                         </section>
 
+                        {/* Erro */}
+                        {!carregando && erro && (
+                            <section className="animate-enter">
+                                <div className="glass-panel rounded-2xl p-8 text-center border border-red-500/20">
+                                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
+                                    <p className="text-red-400 text-sm font-medium">{erro}</p>
+                                    <button
+                                        onClick={() => fonteAtiva && buscarDevocional(fonteAtiva)}
+                                        className="mt-4 px-4 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all inline-flex items-center gap-2"
+                                    >
+                                        <RefreshCw className="w-3.5 h-3.5" />
+                                        Tentar novamente
+                                    </button>
+                                </div>
+                            </section>
+                        )}
+
                         {/* Resultado RSS / Instagram */}
-                        {!carregando && (
+                        {!carregando && !erro && (
                             <section className="animate-enter space-y-6">
                                 {fonteAtiva === 'instagram' && postsInstagram.length > 0 && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {postsInstagram.map((post) => (
-                                            <InstagramFeedCard key={post.external_id} post={post} />
-                                        ))}
-                                    </div>
+                                    <>
+                                        {/* Indicador de cache */}
+                                        {instagramFromCache && (
+                                            <div className="flex items-center justify-center gap-2 py-2">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                                                    Exibindo cache salvo (Apify indisponível)
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs text-slate-500 font-medium">
+                                                {postsInstagram.length} post{postsInstagram.length !== 1 ? 's' : ''}
+                                            </span>
+                                            <button
+                                                onClick={() => buscarDevocional('instagram')}
+                                                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-pink-400 transition-colors"
+                                            >
+                                                <RefreshCw className="w-3 h-3" />
+                                                Atualizar
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                            {postsInstagram.map((post) => (
+                                                <InstagramFeedCard
+                                                    key={post.external_id}
+                                                    post={post}
+                                                    onDelete={handleRemovePost}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
                                 )}
 
                                 {resultado && fonteAtiva !== 'instagram' && (
@@ -414,10 +536,6 @@ export default function DevocionalExternoPage() {
                                             {resultado}
                                         </div>
                                     </div>
-                                )}
-
-                                {(fonteAtiva === 'instagram' && postsInstagram.length === 0 && !erro) && (
-                                    <div className="text-center text-slate-500 py-10">Buscando posts...</div>
                                 )}
                             </section>
                         )}

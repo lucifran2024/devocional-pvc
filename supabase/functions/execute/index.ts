@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
-import { consultarInstagram } from './apify-tools.ts';
+import { consultarInstagramComCache } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
 import { formatVoiceSection } from './voice-selector.ts';
@@ -587,19 +587,24 @@ Deno.serve(async (req) => {
       let conteudoExterno: any = "";
       let postsInstagram: any[] = [];
 
+      let fromCache = false;
+
       if (fonteEscolhida === 'instagram') {
         const username = "evangelhoparatodos__";
-        // Agora retorna array de objetos
-        postsInstagram = await consultarInstagram(username);
 
-        // Se houver posts, salvar no banco
-        if (postsInstagram.length > 0) {
-          console.log(`💾 [DB] Salvando ${postsInstagram.length} posts do Instagram...`);
+        // Inicializar Supabase Client (necessário para cache)
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-          // Inicializar Supabase Client
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-          const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+        // Buscar posts com fallback automático para cache
+        const resultado = await consultarInstagramComCache(username, supabaseAdmin);
+        postsInstagram = resultado.posts;
+        fromCache = resultado.fromCache;
+
+        // Se posts vieram do Apify (frescos), salvar no banco
+        if (postsInstagram.length > 0 && !fromCache) {
+          console.log(`💾 [DB] Salvando ${postsInstagram.length} posts frescos do Instagram...`);
 
           const { error: upsertError } = await supabaseAdmin
             .from('devocional_externo_posts')
@@ -610,11 +615,13 @@ Deno.serve(async (req) => {
           } else {
             console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
           }
+        }
 
-          // Para compatibilidade com o frontend atual que espera 'resultado' string ou objeto
+        if (postsInstagram.length > 0) {
           conteudoExterno = postsInstagram;
+          console.log(`📸 [INSTAGRAM] ${postsInstagram.length} posts retornados (cache: ${fromCache})`);
         } else {
-          conteudoExterno = "Nenhum post encontrado ou erro na API.";
+          conteudoExterno = "Nenhum post encontrado. Tente novamente mais tarde.";
         }
       } else {
         conteudoExterno = await consultarRSS(fonteEscolhida);
@@ -628,7 +635,8 @@ Deno.serve(async (req) => {
           resultado: conteudoExterno,
           fonte: fonteEscolhida,
           tipo: 'devocional_externo',
-          dados_estruturados: postsInstagram
+          dados_estruturados: postsInstagram,
+          from_cache: fromCache
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
