@@ -19,13 +19,13 @@ export const APIFY_TOOLS_DEFINITION = [{
     }]
 }];
 
-export async function consultarInstagram(username: string): Promise<string> {
+export async function consultarInstagram(username: string): Promise<any[]> {
     console.log(`📸 [APIFY] Consultando Instagram: @${username}`);
 
     const APIFY_TOKEN = Deno.env.get("APIFY_API_TOKEN");
     if (!APIFY_TOKEN) {
         console.error("❌ [APIFY] Token não configurado (APIFY_API_TOKEN).");
-        return "Erro: Token do Apify não configurado no backend.";
+        return [];
     }
 
     // Actor: apify/instagram-scraper (tenta ser leve e rápido)
@@ -37,7 +37,7 @@ export async function consultarInstagram(username: string): Promise<string> {
 
     const input = {
         "usernames": [username],
-        "resultsLimit": 3,
+        "resultsLimit": 6, // Aumentei para 6 para ter mais opções
         "resultsType": "posts"
     };
 
@@ -53,40 +53,39 @@ export async function consultarInstagram(username: string): Promise<string> {
         if (!response.ok) {
             const errText = await response.text();
             console.error(`❌ [APIFY] Erro na API (${response.status}):`, errText);
-            return `Erro ao consultar Instagram: ${response.status}`;
+            return [];
         }
 
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            return `Nenhum post encontrado para o usuário @${username}.`;
+            console.warn(`[APIFY] Nenhum post encontrado para @${username}`);
+            return [];
         }
 
-        // Processar o primeiro post (o mais recente)
-        const post = data[0];
+        // Mapear para o formato esperado pelo frontend/banco
+        return data.map((post: any) => {
+            const caption = post.caption || post.description || "Sem legenda.";
+            const imageUrl = post.displayUrl || post.url || "";
+            const postUrl = post.url || `https://instagram.com/${username}`;
+            // Apify retorna timestamp em ISO ou time unix? O scraper costuma retornar ISO string ou timestamp
+            // Vamos garantir que seja string ISO ou algo parsável
+            const publishedAt = post.timestamp || new Date().toISOString();
+            const externalId = post.id || post.shortCode || `inst_${Date.now()}_${Math.random()}`;
 
-        // Formatar para o padrão do Devocional Externo
-        // Campos comuns do apify/instagram-scraper: caption, timestamp, displayUrl, url
-        const caption = post.caption || post.description || "Sem legenda.";
-        const imageUrl = post.displayUrl || post.url || "";
-        const postUrl = post.url || `https://instagram.com/${username}`;
-        const date = post.timestamp ? new Date(post.timestamp).toLocaleDateString('pt-BR') : "Data desconhecida";
-
-        // Limita tamanho da legenda
-        const captionResumo = caption.substring(0, 1500) + (caption.length > 1500 ? "..." : "");
-
-        const resultado = `FONTE: INSTAGRAM (@${username})
-DATA: ${date}
-
-${captionResumo}
-
-Imagem: ${imageUrl}
-Link original: ${postUrl}`;
-
-        return resultado;
+            return {
+                external_id: externalId,
+                source: 'instagram',
+                content: caption,
+                image_url: imageUrl,
+                post_url: postUrl,
+                author_name: username,
+                published_at: publishedAt
+            };
+        });
 
     } catch (e: any) {
         console.error("❌ [APIFY] Exception:", e);
-        return `Erro de conexão com Apify: ${e.message}`;
+        return [];
     }
 }
