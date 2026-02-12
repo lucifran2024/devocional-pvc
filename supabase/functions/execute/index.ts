@@ -1061,7 +1061,7 @@ Cada mensagem DEVE seguir esta estrutura:
 - **Metáforas Banidas**: "Olaria", "Deserto" (se não for o tema), "Tempestade" (se não for o tema).
 
 ### ⭐ REGRAS DE OURO (O QUE FAZER):
-1. **STACCATO REAL**: Frases curtas. Ponto. Outra frase. Ponto. Sem vírgulas desnecessárias.
+1. **STACCATO REAL**: Frases curtas e diretas. Mas AGRUPE-AS em parágrafos. Não pule linha a cada ponto.
 2. **ZERO EMOJIS NO TEXTO**: Use emojis APENAS no título (se quiser) ou bullet points. Nunca no meio da frase.
 3. **TOM DE CONVERSA**: Escreva como se estivesse mandando um áudio no WhatsApp para um amigo próximo.
 4. **VERSÍCULO INTEGRADO**: Não jogue o versículo. Costure ele no texto. "Como diz em X..." ou "Lembra de Y?".
@@ -1097,7 +1097,7 @@ ${REGRAS_ESTILO_GLOBAIS}
   <rule priority="critical">VOCATIVOS PROIBIDOS: Nunca use "amado", "querido", "irmão", "filho".${neutro ? ' MODO NEUTRO: Não use saudações temporais.' : ''}</rule>
   <rule priority="critical">VERSÍCULOS OBRIGATÓRIOS: Pelo menos 50% das mensagens DEVEM ter versículo explícito com referência (ex: João 3:16). Costure o versículo no texto de forma natural.</rule>
   <rule priority="high">ESTILO: Curto, direto, "staccato". Sem floreios poéticos desnecessários.</rule>
-  <rule priority="high">FORMATO: Use quebra de linha DUPLA entre parágrafos para evitar texto denso.</rule>
+  <rule priority="critical">FORMATO VISUAL: NÃO escreva uma frase por linha. Agrupe o texto em parágrafos normais (3-4 frases juntas). O texto deve fluir, não parecer uma lista.</rule>
 </global_rules>
 
 <task>
@@ -1464,7 +1464,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         }
         if (formatoEstilo) {
           const formatInstructions: Record<string, string> = {
-            'Staccato': 'frases curtas e impactantes, com quebras de linha entre cada frase',
+            'Staccato': 'frases curtas e impactantes, mas agrupadas em parágrafos (texto corrido, não lista)',
             'Narrativo': 'texto fluido como uma história, com começo, meio e fim',
             'Lista': 'tópicos numerados ou com bullets, organizados logicamente',
             'Perguntas': 'use perguntas reflexivas que levem o leitor a meditar'
