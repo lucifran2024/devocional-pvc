@@ -23,10 +23,11 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import ReactMarkdown from 'react-markdown';
-import { useSearchParams, useRouter } from 'next/navigation'; // Added imports
+import { useSearchParams } from 'next/navigation'; // Added imports
 import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
-import { getDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes } from '@/lib/plans'; // Added plans lib
+import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes } from '@/lib/plans'; // Added plans lib
+import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
 // Cores para destacar versículos
 const CORES_DESTAQUE_PLANO: { id: string; nome: string; bg: string; border: string }[] = [
@@ -522,8 +523,8 @@ export default function PlanoLeituraPage() {
 
 function PlanoLeituraContent() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const planoId = searchParams.get('plano_id');
+    const diaQuery = searchParams.get('dia');
 
     const [passagem, setPassagem] = useState<PassagemSecao6 | null>(null);
     const [loading, setLoading] = useState(true);
@@ -536,7 +537,7 @@ function PlanoLeituraContent() {
     const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
     const [versiculosPaginaAtual, setVersiculosPaginaAtual] = useState<Versiculo[]>([]);
     const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number }>({ abrev: '', nome: '', capitulo: 0 });
-    const [inscricaoAtiva, setInscricaoAtiva] = useState<any>(null); // Type any temporário ou importar
+    const [inscricaoAtiva, setInscricaoAtiva] = useState<(InscricaoPlano & { plano: Plano }) | null>(null);
     const [diaExibido, setDiaExibido] = useState<number>(1);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -550,40 +551,52 @@ function PlanoLeituraContent() {
                 if (planoId) {
                     // MODO PLANO ESPECÍFICO
                     const inscricoes = await getMinhasInscricoes();
-                    const inscricao = inscricoes.find(i => i.plano_id === planoId);
+                    const inscricao = inscricoes.find(i => i.plano_id === planoId) || null;
+                    setInscricaoAtiva(inscricao);
 
-                    if (!inscricao) {
-                        // Se não tiver inscrição, redireciona para planos (ou tenta inscrever auto? melhor não)
-                        // Mas para teste, se não tiver, vamos avisar
-                        console.warn('Inscrição não encontrada. Redirecionando...');
-                        // alert('Inscrição não encontrada. Redirecionando para planos.');
-                        // router.push('/planos');
-                        // return;
-                        // Para evitar loop em dev, vou deixar passar se for teste, mas em prod deve redirecionar
+                    const parsedDia = diaQuery ? Number.parseInt(diaQuery, 10) : NaN;
+                    const diaPreferido = Number.isFinite(parsedDia) && parsedDia > 0
+                        ? parsedDia
+                        : (inscricao?.dia_atual ?? 1);
+
+                    let diaData = await getDiaDoPlano(planoId, diaPreferido);
+                    let diaCarregado = diaPreferido;
+
+                    if (!diaData) {
+                        const primeiroDia = await getPrimeiroDiaDoPlano(planoId);
+                        if (primeiroDia) {
+                            diaData = primeiroDia;
+                            diaCarregado = primeiroDia.dia_numero;
+                        }
                     }
 
-                    if (inscricao) {
-                        setInscricaoAtiva(inscricao);
+                    if (diaData) {
+                        setDiaExibido(diaCarregado);
 
-                        const diaAlvo = searchParams.get('dia') ? parseInt(searchParams.get('dia')!) : inscricao.dia_atual;
-                        setDiaExibido(diaAlvo);
-
-                        const diaData = await getDiaDoPlano(planoId, diaAlvo);
-
-                        if (diaData) {
-                            // Adaptar para PassagemSecao6
-                            const passagemAdaptada: any = {
-                                referencia: diaData.referencia,
-                                versiculos_texto: '',
-                                arquetipo_maestro: 'Leitura do Plano',
-                                insights_pre_minerados: [{ familia: 'Contexto', tese: diaData.titulo_dia || 'Leitura Diária', verso_suporte: '' }],
-                            };
-                            setPassagem(passagemAdaptada);
-                            console.log('✅ [PLANO] Carregado dia', diaAlvo, ':', diaData.referencia);
-                        }
+                        // Adaptar para PassagemSecao6
+                        const passagemAdaptada: PassagemSecao6 = {
+                            data: dataHoje,
+                            referencia: diaData.referencia,
+                            arquetipo_maestro: 'Leitura do Plano',
+                            lexico_do_dia: [],
+                            estrutura_dinamica: [],
+                            insights_pre_minerados: [{
+                                familia: 'Contexto',
+                                tese: diaData.titulo_dia || 'Leitura Diaria',
+                                verso_suporte: '',
+                                voz_performance: 'Mentor'
+                            }],
+                        };
+                        setPassagem(passagemAdaptada);
+                        console.log('[PLANO] Carregado dia', diaCarregado, ':', diaData.referencia);
+                    } else {
+                        console.warn('[PLANO] Nenhum dia disponivel para o plano:', planoId);
+                        setPassagem(null);
                     }
                 } else {
                     // MODO DIÁRIO (Original)
+                    setInscricaoAtiva(null);
+                    setDiaExibido(1);
                     const { getPassagemUnificada } = await import('@/lib/supabase');
                     const dados = await getPassagemUnificada(dataHoje);
 
@@ -609,7 +622,7 @@ function PlanoLeituraContent() {
             }
         }
         loadPassagem();
-    }, [dataHoje]);
+    }, [dataHoje, planoId, diaQuery]);
 
     // Carregar texto bíblico da API quando a passagem estiver disponível
     useEffect(() => {

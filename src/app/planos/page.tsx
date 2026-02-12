@@ -51,11 +51,12 @@ export default function PlanosPage() {
                 alert('Erro ao inscrever no plano. Tente novamente.');
                 setProcessing(null);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro ao iniciar plano:", error);
-            if (error.message === 'Usuário não autenticado') {
-                // Redireciona para login se não estiver logado
-                router.push('/entrar?redirectTo=/planos');
+            const message = error instanceof Error ? error.message : '';
+            if (message === 'USER_NOT_AUTHENTICATED') {
+                // Sem login, abre o plano em modo leitura (sem salvar progresso)
+                router.push('/plano-de-leitura?plano_id=' + planoId);
             } else {
                 alert('Ocorreu um erro inesperado ao iniciar o plano.');
             }

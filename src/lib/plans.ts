@@ -33,7 +33,7 @@ export async function getMinhasInscricoes(): Promise<(InscricaoPlano & { plano: 
 export async function inscreverEmPlano(plano_id: string): Promise<InscricaoPlano | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        throw new Error('Usuário não autenticado');
+        throw new Error('USER_NOT_AUTHENTICATED');
     }
 
     // Tenta inserir
@@ -79,13 +79,29 @@ export async function getDiaDoPlano(plano_id: string, dia_numero: number): Promi
         .select('*')
         .eq('plano_id', plano_id)
         .eq('dia_numero', dia_numero)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Erro ao buscar dia do plano:', error);
         return null;
     }
-    return data;
+    return data || null;
+}
+
+export async function getPrimeiroDiaDoPlano(plano_id: string): Promise<PlanoDia | null> {
+    const { data, error } = await supabase
+        .from('plano_dias')
+        .select('*')
+        .eq('plano_id', plano_id)
+        .order('dia_numero', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Erro ao buscar primeiro dia do plano:', error);
+        return null;
+    }
+    return data || null;
 }
 
 export async function concluirDiaLeitura(inscricao_id: string, user_id: string, proximo_dia: number): Promise<boolean> {
