@@ -66,6 +66,9 @@ export interface DnaGeracao {
     angulo_usado?: string;
     versiculos_usados?: string[];
     created_at: string;
+    // Feedback
+    feedback?: number; // 1 = like, -1 = dislike, 0 = neutro
+    review_reason?: string;
 }
 
 // ===========================================
@@ -470,6 +473,29 @@ export async function deleteDnaGeracao(id: number): Promise<boolean> {
         return true;
     } catch (err) {
         console.error('💥 [DNA_GERACOES] Exceção:', err);
+        return false;
+    }
+}
+
+
+/**
+ * Salva o feedback (like/dislike) de uma geração DNA
+ */
+export async function saveFeedbackDna(id: number, feedback: number, reason?: string): Promise<boolean> {
+    console.log(`👍 [FEEDBACK_DNA] ID ${id} -> Score: ${feedback}`);
+    try {
+        const { error } = await supabase
+            .from('dna_geracoes')
+            .update({ feedback, review_reason: reason })
+            .eq('id', id);
+
+        if (error) {
+            console.error('❌ [FEEDBACK_DNA] Erro:', error);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error('💥 [FEEDBACK_DNA] Exceção:', e);
         return false;
     }
 }

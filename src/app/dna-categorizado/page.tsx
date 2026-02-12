@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check, CheckSquare, Square, Pencil, Save } from 'lucide-react';
+import { ArrowLeft, Book, Sparkles, Copy, Trash2, Calendar, Loader2, Wand2, X, Filter, ChevronDown, Plus, Layers, BookOpen, Heart, MessageCircle, Megaphone, Lightbulb, HelpCircle, RefreshCw, Eye, Check, CheckSquare, Square, Pencil, Save, ThumbsUp, ThumbsDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {
     getDnaCategorizado,
@@ -20,6 +20,7 @@ import {
     deleteDnaGeracao,
     deleteDnaGeracaoBatch,
     saveDnaGeracoes,
+    saveFeedbackDna, // NEW Function
     DnaGeracao,
     fetchInspirationCandidates
 } from '@/lib/supabase';
@@ -345,6 +346,20 @@ export default function DnaCategorizadoPage() {
             setRecentGenerations(prev => prev.filter(g => g.id !== id));
         }
         setDeletingGenId(null);
+    };
+
+    // Handler de Feedback
+    const handleFeedback = async (id: number, feedback: number) => {
+        // Optimistic update
+        setRecentGenerations(prev => prev.map(g =>
+            g.id === id ? { ...g, feedback } : g
+        ));
+
+        // Save to backend
+        const success = await saveFeedbackDna(id, feedback);
+        if (!success) {
+            console.error('Erro ao salvar feedback');
+        }
     };
 
     const handleDeleteBatch = async (batchId: string) => {
@@ -1077,6 +1092,22 @@ export default function DnaCategorizadoPage() {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <span className="text-amber-500 text-xs font-bold">#{gen.id}</span>
                                                     <div className="flex gap-2">
+                                                        {/* Feedback Buttons */}
+                                                        <button
+                                                            onClick={() => handleFeedback(gen.id, 1)}
+                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === 1 ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-green-200'}`}
+                                                            title="Gostei"
+                                                        >
+                                                            <ThumbsUp className="w-3 h-3" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleFeedback(gen.id, -1)}
+                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === -1 ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-red-200'}`}
+                                                            title="Não gostei"
+                                                        >
+                                                            <ThumbsDown className="w-3 h-3" />
+                                                        </button>
+
                                                         <button
                                                             onClick={() => handleCopy(gen.texto_msg, gen.id)}
                                                             className="text-xs px-2 py-1 bg-white/10 rounded text-slate-300 hover:text-white"
