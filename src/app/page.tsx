@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
           {/* Card 2: Plano de Leitura */}
           <DashboardCard
-            href="/plano-de-leitura"
+            href="/planos"
             title="Plano de Leitura"
             desc="Estudo bíblico interativo, comentado e profundo."
             icon={Book}

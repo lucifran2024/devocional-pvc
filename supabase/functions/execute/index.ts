@@ -1135,7 +1135,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
   [Seu planejamento breve aqui]
   </thinking>
   
-  ${filtros?.usarPassagemDia ? `**📖 LEITURA DO DIA — ${passagemRef}**\n\n` : ''}**Título da Mensagem**
+  ${filtros?.usarPassagemDia ? `**📖 LEITURA DO DIA — ${passagemRef}**\n\n` : ''}**Título da Mensagem** (Capitalização Normal, SEM CAPS LOCK)
   
   [Corpo da mensagem com parágrafos bem definidos]
   
@@ -1181,7 +1181,11 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 
       // CLEANER: Remover bloco de pensamento (<thinking>) e metadados de sementes
       resultado = resultado.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
+      resultado = resultado.replace(/```(?:xml|json|markdown)?/gi, '').trim();
       resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
+      // CLEANER: Remover Tags de Cabeçalho Vazadas (ex: [ORAÇÃO], [REFLEXÃO])
+      resultado = resultado.replace(/^\s*\*\*?\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]\s*\*\*?/gim, '').trim();
+      resultado = resultado.replace(/^\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]/gim, '').trim();
 
       // VALIDAÇÃO: Verificar presença de versículos bíblicos nas mensagens
       const mensagensGeradas = resultado.split(/---/).filter((m: string) => m.trim().length > 20);
@@ -1283,7 +1287,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
               selecionados = dnaEspecifico.sort(() => 0.5 - Math.random()).slice(0, 15);
             }
 
-            dnaEssencia = selecionados.map((d: any) => d.texto_msg).join("\n\n---\n\n");
+            dnaEssencia = selecionados.map((d: any) => d.texto_msg.replace(/^\s*\*\*?\[.*?\]\s*\*\*?/gim, '').trim()).join("\n\n---\n\n");
             dnaSourceType = "ESPECIFICO";
             console.log(`📚 [DNA] Usando estratégia '${contextoEstrategia}': ${selecionados.length} exemplos.`);
           } else {
@@ -1294,7 +1298,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
               .order("created_at", { ascending: false })
               .limit(60);
 
-            dnaEssencia = favoritas?.map((f: any) => f.texto_msg).join("\n\n---\n\n") || "";
+            dnaEssencia = favoritas?.map((f: any) => f.texto_msg.replace(/^\s*\*\*?\[.*?\]\s*\*\*?/gim, '').trim()).join("\n\n---\n\n") || "";
             console.log(`📚 [DNA] Usando ${favoritas?.length || 0} favoritas GERAIS (Fallback).`);
           }
         }
@@ -1318,8 +1322,11 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
           .limit(10);
 
         if (exemplosEstilo && exemplosEstilo.length > 0) {
-          exemplosEstrutura = exemplosEstilo.map((e: any) => e.texto_msg).join("\n\n---\n\n");
-          console.log(`🎨 [ESTILO] ${exemplosEstilo.length} exemplos de '${estiloAlvo}' carregados (query separada).`);
+          // CLEANER: Limpar exemplos para não contaminar o prompt com tags antigas
+          exemplosEstrutura = exemplosEstilo.map((e: any) =>
+            e.texto_msg.replace(/^\s*\*\*?\[.*?\]\s*\*\*?/gim, '').trim()
+          ).join("\n\n---\n\n");
+          console.log(`🎨 [ESTILO] ${exemplosEstilo.length} exemplos de '${estiloAlvo}' carregados (LIMPOS).`);
         } else {
           console.log(`⚠️ [ESTILO] Nenhum exemplo encontrado para '${estiloAlvo}'. Usando fallback.`);
         }

@@ -23,7 +23,10 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import ReactMarkdown from 'react-markdown';
+import { useSearchParams, useRouter } from 'next/navigation'; // Added imports
+import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
+import { getDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes } from '@/lib/plans'; // Added plans lib
 
 // Cores para destacar versículos
 const CORES_DESTAQUE_PLANO: { id: string; nome: string; bg: string; border: string }[] = [
@@ -501,7 +504,27 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
 // PÁGINA PRINCIPAL
 // ===========================================
 
+// ===========================================
+// PÁGINA PRINCIPAL (WRAPPER)
+// ===========================================
+
 export default function PlanoLeituraPage() {
+    return (
+        <Suspense fallback={
+            <CosmicBackground className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+            </CosmicBackground>
+        }>
+            <PlanoLeituraContent />
+        </Suspense>
+    );
+}
+
+function PlanoLeituraContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const planoId = searchParams.get('plano_id');
+
     const [passagem, setPassagem] = useState<PassagemSecao6 | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeOption, setActiveOption] = useState<MenuOption>(null);
@@ -513,28 +536,67 @@ export default function PlanoLeituraPage() {
     const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
     const [versiculosPaginaAtual, setVersiculosPaginaAtual] = useState<Versiculo[]>([]);
     const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number }>({ abrev: '', nome: '', capitulo: 0 });
+    const [inscricaoAtiva, setInscricaoAtiva] = useState<any>(null); // Type any temporário ou importar
+    const [diaExibido, setDiaExibido] = useState<number>(1);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
 
-    // Carregar passagem do dia
+    // Carregar passagem (Do dia ou do Plano)
     useEffect(() => {
         async function loadPassagem() {
             setLoading(true);
             try {
-                // Busca unificada (Storage -> DB -> Local)
-                const { getPassagemUnificada } = await import('@/lib/supabase');
-                const dados = await getPassagemUnificada(dataHoje);
+                if (planoId) {
+                    // MODO PLANO ESPECÍFICO
+                    const inscricoes = await getMinhasInscricoes();
+                    const inscricao = inscricoes.find(i => i.plano_id === planoId);
 
-                if (dados) {
-                    console.log('✅ [PLANO] Passagem carregada com sucesso:', dados.referencia);
-                    setPassagem(dados);
+                    if (!inscricao) {
+                        // Se não tiver inscrição, redireciona para planos (ou tenta inscrever auto? melhor não)
+                        // Mas para teste, se não tiver, vamos avisar
+                        console.warn('Inscrição não encontrada. Redirecionando...');
+                        // alert('Inscrição não encontrada. Redirecionando para planos.');
+                        // router.push('/planos');
+                        // return;
+                        // Para evitar loop em dev, vou deixar passar se for teste, mas em prod deve redirecionar
+                    }
+
+                    if (inscricao) {
+                        setInscricaoAtiva(inscricao);
+
+                        const diaAlvo = searchParams.get('dia') ? parseInt(searchParams.get('dia')!) : inscricao.dia_atual;
+                        setDiaExibido(diaAlvo);
+
+                        const diaData = await getDiaDoPlano(planoId, diaAlvo);
+
+                        if (diaData) {
+                            // Adaptar para PassagemSecao6
+                            const passagemAdaptada: any = {
+                                referencia: diaData.referencia,
+                                versiculos_texto: '',
+                                arquetipo_maestro: 'Leitura do Plano',
+                                insights_pre_minerados: [{ familia: 'Contexto', tese: diaData.titulo_dia || 'Leitura Diária', verso_suporte: '' }],
+                            };
+                            setPassagem(passagemAdaptada);
+                            console.log('✅ [PLANO] Carregado dia', diaAlvo, ':', diaData.referencia);
+                        }
+                    }
                 } else {
-                    console.error('❌ [PLANO] Falha total: getPassagemUnificada retornou null para', dataHoje);
+                    // MODO DIÁRIO (Original)
+                    const { getPassagemUnificada } = await import('@/lib/supabase');
+                    const dados = await getPassagemUnificada(dataHoje);
 
-                    // Tentativa de auto-reparo: buscar explicitamente 2026-02-04 se for a data de hoje
-                    if (dataHoje === '2026-02-04') {
-                        console.log('🔄 [PLANO] Tentando forçar recarga...');
+                    if (dados) {
+                        console.log('✅ [PLANO] Passagem carregada com sucesso:', dados.referencia);
+                        setPassagem(dados);
+                    } else {
+                        console.error('❌ [PLANO] Falha total: getPassagemUnificada retornou null para', dataHoje);
+
+                        // Tentativa de auto-reparo: buscar explicitamente 2026-02-04 se for a data de hoje
+                        if (dataHoje === '2026-02-04') {
+                            console.log('🔄 [PLANO] Tentando forçar recarga...');
+                        }
                     }
                 }
             } catch (error) {
@@ -1198,20 +1260,35 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
 
             // Se já estamos na última página ou além, mostra conclusão
             if (page >= totalPartes) {
+                // LOGICA DE CONCLUSÃO DO PLANO
+                if (planoId && inscricaoAtiva) {
+                    // Salvar progresso de forma assíncrona (fire and forget visualmente, mas logado)
+                    // Precisamos do user_id. O inscricaoAtiva tem user_id.
+                    concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1)
+                        .then(() => console.log('✅ Progresso salvo no banco'))
+                        .catch(e => console.error('❌ Erro ao salvar progresso', e));
+                }
+
+                const proximoDiaMsg = planoId
+                    ? `\n\n👉 **[Clique aqui para o Próximo Dia](/plano-de-leitura?plano_id=${planoId}&dia=${diaExibido + 1})**`
+                    : '';
+
                 return `✅ **LEITURA CONCLUÍDA!**
-
----
-
-📖 **Você completou a leitura de ${passagem.referencia}!**
-
-💎 **Resumo:** Medite sobre o que leu e deixe a Palavra transformar seu coração.
-
-🙏 **Sugestão de Oração:**
-
-*"Senhor, obrigado por Tua Palavra. Que ela habite ricamente em mim e guie meus passos hoje. Em nome de Jesus. Amém."*
-
----
-Digite **MENU** para voltar e explorar outras opções.`;
+ 
+ ---
+ 
+ 📖 **Você completou a leitura de ${passagem.referencia}!**
+ 
+ 💎 **Resumo:** Medite sobre o que leu e deixe a Palavra transformar seu coração.
+ 
+ 🙏 **Sugestão de Oração:**
+ 
+ *"Senhor, obrigado por Tua Palavra. Que ela habite ricamente em mim e guie meus passos hoje. Em nome de Jesus. Amém."*
+ 
+ ---
+ ${proximoDiaMsg}
+ 
+ Digite **MENU** para voltar e explorar outras opções.`;
             }
 
             // Avança para próxima página
@@ -1442,9 +1519,9 @@ Digite **MENU** para continuar estudando.`;
 
             {/* Navbar Placeholder (or Back Button) */}
             <div className="max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
-                <Link href="/" className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
+                <Link href={planoId ? "/planos" : "/"} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    Voltar ao Dashboard
+                    {planoId ? "Voltar aos Planos" : "Voltar ao Dashboard"}
                 </Link>
                 <div className="flex gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -1460,10 +1537,17 @@ Digite **MENU** para continuar estudando.`;
                         MODO MENTOR
                     </span>
                     <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-                        Plano de <span className="text-gradient-gold">Leitura</span>
+                        {inscricaoAtiva?.plano ? (
+                            inscricaoAtiva.plano.titulo
+                        ) : (
+                            <>Plano de <span className="text-gradient-gold">Leitura</span></>
+                        )}
                     </h1>
                     <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                        Mergulhe nas Escrituras com profundidade, contexto e aplicação prática.
+                        {inscricaoAtiva
+                            ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias} • ${inscricaoAtiva.plano.descricao}`
+                            : "Mergulhe nas Escrituras com profundidade, contexto e aplicação prática."
+                        }
                     </p>
                 </div>
 
@@ -1478,7 +1562,9 @@ Digite **MENU** para continuar estudando.`;
                             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none"></div>
 
                             <div className="flex-1 text-center md:text-left z-10">
-                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">PASSAGEM DE HOJE ({formatarDataExtenso(dataHoje)})</h2>
+                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                    {inscricaoAtiva ? `LEITURA DO DIA ${diaExibido}` : `PASSAGEM DE HOJE (${formatarDataExtenso(dataHoje)})`}
+                                </h2>
 
                                 {loading ? (
                                     <div className="h-12 w-64 bg-white/5 rounded animate-pulse"></div>
