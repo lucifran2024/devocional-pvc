@@ -1129,19 +1129,21 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 </task>
 
 <output_format>
-  Para cada mensagem, use EXATAMENTE este formato:
+  Para cada mensagem, use este formato LIMPO:
   
   <thinking>
   [Seu planejamento breve aqui]
   </thinking>
   
-  ${filtros?.usarPassagemDia ? `**📖 LEITURA DO DIA — ${passagemRef}**\n\n` : ''}**[TÍTULO EM CAPS]**
+  ${filtros?.usarPassagemDia ? `**📖 LEITURA DO DIA — ${passagemRef}**\n\n` : ''}**Título da Mensagem**
   
-  [Corpo da mensagem com quebras de linha duplas]
+  [Corpo da mensagem com parágrafos bem definidos]
+  
+  (NÃO use tags como [REFLEXÃO] ou [ORAÇÃO]. Comece direto.)
   
   ---
   
-  (Repita para todas as ${quantidade} mensagens. Deixe uma linha em branco antes e depois do separador "---".)
+  (Repita para todas as ${quantidade} mensagens.)
 </output_format>
 `;
 
@@ -1542,6 +1544,10 @@ ${estiloAlvo === 'declaração' ? 'O texto DEVE ser uma proclamação de fé em 
 ${estiloAlvo === 'reflexão' ? 'O texto DEVE ser uma reflexão contemplativa e profunda sobre a vida espiritual e a jornada de fé.' : ''}
 ${estiloAlvo === 'exortação' ? 'O texto DEVE ser uma exortação — mensagem de encorajamento forte, chamado à ação, motivação espiritual.' : ''}
 NÃO GERE OUTRO TIPO DE TEXTO. SE É ${estiloAlvo}, FAÇA ${estiloAlvo}!
+1545: 
+1546: 🚫 **PROIBIDO USAR TAGS/RÓTULOS NO INÍCIO**:
+1547: NÃO comece escrevendo **[ORAÇÃO]**, **[REFLEXÃO]** ou similar.
+1548: O texto deve ser LIMPO. O leitor saberá o que é pelo conteúdo.
 
 ## 1. FONTE DE ESTRUTURA VISUAL (COPIAR FORMATO):
 Use os exemplos abaixo APENAS para copiar a formatação (emojis, quebras de linha, estrutura visual).
