@@ -12,6 +12,7 @@ import { Plano, InscricaoPlano } from '@/lib/types/plans';
 import Link from 'next/link';
 
 export default function PlanosPage() {
+    console.log('Planos Page Mounted');
     const router = useRouter();
     const [planos, setPlanos] = useState<Plano[]>([]);
     const [inscricoes, setInscricoes] = useState<InscricaoPlano[]>([]);
