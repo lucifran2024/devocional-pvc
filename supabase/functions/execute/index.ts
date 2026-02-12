@@ -581,37 +581,60 @@ Deno.serve(async (req) => {
       console.log(`📡 [MODO ESPECIAL] Devocional Externo - fonte: ${fonte_rss}`);
 
       // Mapeamento de fontes
-      const fontesValidas = ['voltemos', 'bible_gateway', 'instagram'];
+
+      const fontesValidas = ['voltemos', 'bible_gateway', 'instagram', 'tribo_juda'];
       let fonteEscolhida = fontesValidas.includes(fonte_rss) ? fonte_rss : 'voltemos';
 
       let conteudoExterno: any = "";
       let postsInstagram: any[] = [];
 
-      if (fonteEscolhida === 'instagram') {
-        const username = "evangelhoparatodos__";
-        // Agora retorna array de objetos
-        postsInstagram = await consultarInstagram(username);
+      if (fonteEscolhida === 'instagram' || fonteEscolhida === 'tribo_juda') {
+        const username = fonteEscolhida === 'tribo_juda' ? "tribodejuda20" : "evangelhoparatodos__";
+        // Inicializar Supabase Client para cache
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-        // Se houver posts, salvar no banco
-        if (postsInstagram.length > 0) {
-          console.log(`💾 [DB] Salvando ${postsInstagram.length} posts do Instagram...`);
+        // 1. Tentar buscar do CACHE (posts de hoje, últimas 24h)
+        const umDiaAtras = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-          // Inicializar Supabase Client
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-          const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+        console.log(`🔍 [CACHE] Buscando posts de @${username} desde ${umDiaAtras}...`);
 
-          const { error: upsertError } = await supabaseAdmin
-            .from('devocional_externo_posts')
-            .upsert(postsInstagram, { onConflict: 'source, external_id' });
+        const { data: cachedPosts, error: cacheError } = await supabaseAdmin
+          .from('devocional_externo_posts')
+          .select('*')
+          .eq('author_name', username) // Filtrar pelo username correto
+          .gt('created_at', umDiaAtras)
+          .order('published_at', { ascending: false })
+          .limit(6);
 
-          if (upsertError) {
-            console.error("❌ [DB] Erro ao salvar posts:", upsertError);
-          } else {
-            console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
+        if (cachedPosts && cachedPosts.length > 0) {
+          console.log(`✅ [CACHE] ${cachedPosts.length} posts encontrados no banco. (Bypass Apify)`);
+          postsInstagram = cachedPosts;
+        } else {
+          console.log(`⚠️ [CACHE] Nenhum post recente encontrado. Buscando do Instagram (Apify)...`);
+
+          // 2. Se não tiver cache, buscar do APIFY + OCR
+          postsInstagram = await consultarInstagram(username);
+
+          // Se houver posts, salvar no banco
+          if (postsInstagram.length > 0) {
+            console.log(`💾 [DB] Salvando ${postsInstagram.length} posts do Instagram...`);
+
+            const { error: upsertError } = await supabaseAdmin
+              .from('devocional_externo_posts')
+              .upsert(postsInstagram, { onConflict: 'source, external_id' });
+
+            if (upsertError) {
+              console.error("❌ [DB] Erro ao salvar posts:", upsertError);
+            } else {
+              console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
+            }
           }
+        }
 
-          // Para compatibilidade com o frontend atual que espera 'resultado' string ou objeto
+        // Para compatibilidade com o frontend atual que espera 'resultado' string ou objeto
+        if (postsInstagram.length > 0) {
           conteudoExterno = postsInstagram;
         } else {
           conteudoExterno = "Nenhum post encontrado ou erro na API.";

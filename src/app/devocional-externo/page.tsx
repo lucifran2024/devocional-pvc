@@ -40,6 +40,15 @@ const FONTES = [
         color: 'text-pink-400',
         bgColor: 'bg-pink-500/10',
         borderColor: 'border-pink-500/20'
+    },
+    {
+        id: 'tribo_juda',
+        nome: 'Tribo de Judá',
+        desc: 'Inspiração via @tribodejuda20',
+        icon: Globe,
+        color: 'text-purple-400',
+        bgColor: 'bg-purple-500/10',
+        borderColor: 'border-purple-500/20'
     }
 ];
 
@@ -82,7 +91,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
     const [salvando, setSalvando] = useState(false);
 
     const handleCopy = () => {
-        const textoFormatado = `📖 *DEVOCIONAL INSTAGRAM*\n\n${post.content}\n\nVia @${post.author_name}\n${post.post_url}`;
+        const textoFormatado = `${post.content}`; // Copia exatamente o que veio do backend (OCR + Legenda)
         navigator.clipboard.writeText(textoFormatado);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
@@ -270,7 +279,7 @@ export default function DevocionalExternoPage() {
             if (error) throw error;
             if (!data.ok) throw new Error(data.error || 'Erro ao buscar devocional.');
 
-            if (fonteId === 'instagram') {
+            if (fonteId === 'instagram' || fonteId === 'tribo_juda') {
                 if (data.dados_estruturados && Array.isArray(data.dados_estruturados)) {
                     setPostsInstagram(data.dados_estruturados);
                 } else if (Array.isArray(data.resultado)) { // Compatibilidade caso venha direto no resultado
@@ -400,7 +409,7 @@ export default function DevocionalExternoPage() {
                         {/* Resultado RSS / Instagram */}
                         {!carregando && (
                             <section className="animate-enter space-y-6">
-                                {fonteAtiva === 'instagram' && postsInstagram.length > 0 && (
+                                {(fonteAtiva === 'instagram' || fonteAtiva === 'tribo_juda') && postsInstagram.length > 0 && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {postsInstagram.map((post) => (
                                             <InstagramFeedCard key={post.external_id} post={post} />
@@ -408,7 +417,7 @@ export default function DevocionalExternoPage() {
                                     </div>
                                 )}
 
-                                {resultado && fonteAtiva !== 'instagram' && (
+                                {resultado && fonteAtiva !== 'instagram' && fonteAtiva !== 'tribo_juda' && (
                                     <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
                                         <div className="whitespace-pre-wrap font-medium text-slate-300 leading-relaxed">
                                             {resultado}
@@ -416,7 +425,7 @@ export default function DevocionalExternoPage() {
                                     </div>
                                 )}
 
-                                {(fonteAtiva === 'instagram' && postsInstagram.length === 0 && !erro) && (
+                                {((fonteAtiva === 'instagram' || fonteAtiva === 'tribo_juda') && postsInstagram.length === 0 && !erro) && (
                                     <div className="text-center text-slate-500 py-10">Buscando posts...</div>
                                 )}
                             </section>
