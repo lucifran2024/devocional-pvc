@@ -525,6 +525,7 @@ function PlanoLeituraContent() {
     const searchParams = useSearchParams();
     const planoId = searchParams.get('plano_id');
     const diaQuery = searchParams.get('dia');
+    const isPlanoMode = Boolean(planoId);
 
     const [passagem, setPassagem] = useState<PassagemSecao6 | null>(null);
     const [loading, setLoading] = useState(true);
@@ -539,6 +540,7 @@ function PlanoLeituraContent() {
     const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number }>({ abrev: '', nome: '', capitulo: 0 });
     const [inscricaoAtiva, setInscricaoAtiva] = useState<(InscricaoPlano & { plano: Plano }) | null>(null);
     const [diaExibido, setDiaExibido] = useState<number>(1);
+    const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
@@ -624,6 +626,23 @@ function PlanoLeituraContent() {
         loadPassagem();
     }, [dataHoje, planoId, diaQuery]);
 
+    useEffect(() => {
+        if (!isPlanoMode) {
+            setLeituraDiaConcluida(false);
+            return;
+        }
+        setLeituraDiaConcluida(lerLeituraConcluidaLocal());
+    }, [isPlanoMode, planoId, diaExibido, dataHoje]);
+
+    useEffect(() => {
+        if (!isPlanoMode) return;
+        setMessages([]);
+        setVersiculosPaginaAtual([]);
+        setActiveOption(null);
+        setCurrentPage(1);
+        currentPageRef.current = 1;
+    }, [isPlanoMode, planoId, diaExibido]);
+
     // Carregar texto bíblico da API quando a passagem estiver disponível
     useEffect(() => {
         async function loadBibleText() {
@@ -655,6 +674,124 @@ function PlanoLeituraContent() {
         });
     };
 
+    const getPlanoProgressKey = () => {
+        if (!planoId) return null;
+        return `plano-progress:${planoId}:${diaExibido}`;
+    };
+
+    const getPlanoCompletedKey = () => {
+        if (!planoId) return null;
+        return `plano-completed:${planoId}:${diaExibido}:${dataHoje}`;
+    };
+
+    const getTotalPartesLeitura = () => {
+        const totalVersiculos = bibleData?.versiculos.length || 30;
+        return Math.max(1, Math.ceil(totalVersiculos / 10));
+    };
+
+    const atualizarContextoVersiculos = (parte: number) => {
+        if (!bibleData || !passagem) return;
+
+        const startIndex = (parte - 1) * 10;
+        const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
+        setVersiculosPaginaAtual(slice);
+
+        const primeiraParte = passagem.referencia.split(';')[0].trim();
+        const parsed = parseReferencia(primeiraParte);
+        if (parsed) {
+            const abrev = getAbrevFromId(parsed.livroId);
+            const refParts = primeiraParte.match(/^(.+?)\s+\d/);
+            const nomeOriginal = refParts ? refParts[1] : parsed.livro;
+            setLivroInfoAtual({
+                abrev,
+                nome: nomeOriginal,
+                capitulo: parsed.capituloInicio
+            });
+        }
+    };
+
+    const salvarProgressoPlanoLocal = (parte: number) => {
+        const progressKey = getPlanoProgressKey();
+        if (!isPlanoMode || !progressKey || typeof window === 'undefined') return;
+
+        const payload = {
+            data: dataHoje,
+            parte: Math.max(1, parte)
+        };
+        localStorage.setItem(progressKey, JSON.stringify(payload));
+    };
+
+    const salvarLeituraConcluidaLocal = () => {
+        const completedKey = getPlanoCompletedKey();
+        if (!isPlanoMode || !completedKey || typeof window === 'undefined') return;
+        localStorage.setItem(completedKey, '1');
+    };
+
+    const lerLeituraConcluidaLocal = () => {
+        const completedKey = getPlanoCompletedKey();
+        if (!isPlanoMode || !completedKey || typeof window === 'undefined') return false;
+        return localStorage.getItem(completedKey) === '1';
+    };
+
+    const lerProgressoPlanoLocal = () => {
+        const progressKey = getPlanoProgressKey();
+        if (!isPlanoMode || !progressKey || typeof window === 'undefined') return 1;
+
+        const raw = localStorage.getItem(progressKey);
+        if (!raw) return 1;
+
+        try {
+            const parsed = JSON.parse(raw) as { data?: string; parte?: number };
+            if (parsed?.data !== dataHoje) {
+                localStorage.removeItem(progressKey);
+                return 1;
+            }
+
+            const parte = Number(parsed?.parte ?? 1);
+            if (!Number.isFinite(parte) || parte < 1) return 1;
+
+            return Math.min(parte, getTotalPartesLeitura());
+        } catch {
+            return 1;
+        }
+    };
+
+    const gerarLeituraParte = (parteDesejada: number): string => {
+        if (!passagem) return '';
+
+        const totalPartes = getTotalPartesLeitura();
+        const parteAtual = Math.min(Math.max(parteDesejada, 1), totalPartes);
+        const ehUltimaParte = parteAtual >= totalPartes;
+
+        currentPageRef.current = parteAtual;
+        setCurrentPage(parteAtual);
+        atualizarContextoVersiculos(parteAtual);
+        if (isPlanoMode) {
+            salvarProgressoPlanoLocal(parteAtual);
+        }
+
+        const linhaExplicar = isPlanoMode
+            ? ''
+            : '\nDigite **EXPLICAR** para gerar contexto e explicação desta parte.';
+        const linhaPersistencia = isPlanoMode
+            ? '\nSeu progresso desta leitura fica salvo até o fim do dia.'
+            : '';
+
+        return `📖 **${passagem.referencia}**
+📍 *Parte ${parteAtual} de ${totalPartes}*
+
+---
+
+%%VERSICULOS_INTERATIVOS%%
+
+---
+
+${ehUltimaParte
+                ? 'Digite **CONTINUAR** para finalizar a leitura.'
+                : 'Digite **CONTINUAR** para os próximos versículos.'}${linhaExplicar}
+Ou **MENU** para voltar.${linhaPersistencia}`;
+    };
+
     // Gerar resposta do menu inicial
     const gerarRespostaMenuInicial = (): string => {
         if (!passagem) return 'Preparando ambiente de estudo...';
@@ -684,6 +821,10 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
         // Comandos de navegação
         if (['menu', 'voltar', 'voltar ao menu'].includes(cmdLower)) {
+            if (isPlanoMode) {
+                setActiveOption('1');
+                return gerarLeituraParte(lerProgressoPlanoLocal());
+            }
             setActiveOption(null);
             setCurrentPage(1);
             currentPageRef.current = 1;
@@ -694,6 +835,9 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         // Números do menu
         const numMatch = cmdLower.match(/^[1-9]$/);
         if (numMatch) {
+            if (isPlanoMode) {
+                return 'Neste plano, use **CONTINUAR** para seguir a leitura do dia.';
+            }
             const optionId = numMatch[0] as MenuOption;
             setActiveOption(optionId);
             setCurrentPage(1);
@@ -709,6 +853,9 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
         // Comando EXPLICAR (só funciona na Opção 1)
         if (['explicar', 'explicação', 'explicacao', 'contexto'].includes(cmdLower)) {
+            if (isPlanoMode) {
+                return 'No plano de leitura, o modo está simplificado. Use **CONTINUAR** para avançar.';
+            }
             if (activeOption === '1') {
                 return gerarExplicacaoAtual();
             }
@@ -716,6 +863,9 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         }
 
         // Comando não reconhecido
+        if (isPlanoMode) {
+            return 'Comando não reconhecido. Use **CONTINUAR** para avançar na leitura.';
+        }
         return `Não entendi o comando. Digite um número de **1 a 7** ou **MENU** para ver as opções.`;
     };
 
@@ -745,42 +895,8 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
     // Opção 1: Leitura Pura (Sem Explicação)
     const gerarLeituraGuiada = (): string => {
-        if (!passagem) return '';
-
-        const totalPartes = bibleData ? Math.ceil(bibleData.versiculos.length / 10) : 3;
-
-        // Salvar versículos da página atual para renderização interativa
-        if (bibleData) {
-            const slice = bibleData.versiculos.slice(0, 10);
-            setVersiculosPaginaAtual(slice);
-            // Extrair info do livro (usa primeira parte da referência para multi-livro)
-            const primeiraParte = passagem.referencia.split(';')[0].trim();
-            const parsed = parseReferencia(primeiraParte);
-            if (parsed) {
-                const abrev = getAbrevFromId(parsed.livroId);
-                // Pegar nome do livro da referência original (ex: "Isaías 16-18" → "Isaías")
-                const refParts = primeiraParte.match(/^(.+?)\s+\d/);
-                const nomeOriginal = refParts ? refParts[1] : parsed.livro;
-                setLivroInfoAtual({
-                    abrev,
-                    nome: nomeOriginal,
-                    capitulo: parsed.capituloInicio
-                });
-            }
-        }
-
-        return `📖 **${passagem.referencia}**
-📍 *Parte 1 de ${totalPartes}*
-
----
-
-%%VERSICULOS_INTERATIVOS%%
-
----
-
-Digite **CONTINUAR** para os próximos versículos.
-Digite **EXPLICAR** para gerar contexto e explicação desta parte.
-Ou **MENU** para voltar.`;
+        const parteInicial = isPlanoMode ? lerProgressoPlanoLocal() : 1;
+        return gerarLeituraParte(parteInicial);
     };
 
     // Gerar explicação sob demanda via IA (comando EXPLICAR)
@@ -1265,7 +1381,7 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
         console.log('🔄 processarContinuar - activeOption:', activeOption, 'currentPage (ref):', page);
 
         // OPÇÃO 1: LEITURA GUIADA (Paginação Dinâmica)
-        if (activeOption === '1') {
+        if (activeOption === '1' || isPlanoMode) {
             const totalVersiculos = bibleData?.versiculos.length || 30;
             const totalPartes = Math.ceil(totalVersiculos / 10);
 
@@ -1274,12 +1390,25 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
             // Se já estamos na última página ou além, mostra conclusão
             if (page >= totalPartes) {
                 // LOGICA DE CONCLUSÃO DO PLANO
-                if (planoId && inscricaoAtiva) {
-                    // Salvar progresso de forma assíncrona (fire and forget visualmente, mas logado)
-                    // Precisamos do user_id. O inscricaoAtiva tem user_id.
-                    concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1)
-                        .then(() => console.log('✅ Progresso salvo no banco'))
-                        .catch(e => console.error('❌ Erro ao salvar progresso', e));
+                if (isPlanoMode && !leituraDiaConcluida) {
+                    setLeituraDiaConcluida(true);
+                    salvarLeituraConcluidaLocal();
+
+                    if (planoId && inscricaoAtiva) {
+                        // Salvar progresso do dia no banco uma única vez.
+                        concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1)
+                            .then(() => {
+                                console.log('✅ Progresso salvo no banco');
+                                setInscricaoAtiva(prev => {
+                                    if (!prev) return prev;
+                                    return {
+                                        ...prev,
+                                        dia_atual: Math.max(prev.dia_atual, diaExibido + 1)
+                                    };
+                                });
+                            })
+                            .catch(e => console.error('❌ Erro ao salvar progresso', e));
+                    }
                 }
 
                 const proximoDiaMsg = planoId
@@ -1306,33 +1435,7 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
 
             // Avança para próxima página
             const nextPage = page + 1;
-            currentPageRef.current = nextPage;
-            setCurrentPage(nextPage);
-
-            const startIndex = page * 10;  // page=1 -> start=10, page=2 -> start=20, etc.
-
-            // Atualizar versículos interativos da página
-            if (bibleData) {
-                const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
-                setVersiculosPaginaAtual(slice);
-            }
-
-            const ehUltimaParte = nextPage >= totalPartes;
-
-            return `📖 **${passagem.referencia}**
-📍 *Parte ${nextPage} de ${totalPartes}*
-
----
-
-%%VERSICULOS_INTERATIVOS%%
-
----
-
-${ehUltimaParte
-                    ? 'Digite **CONTINUAR** para finalizar a leitura.'
-                    : 'Digite **CONTINUAR** para os próximos versículos.'}
-Digite **EXPLICAR** para gerar contexto e explicação desta parte.
-Ou **MENU** para voltar.`;
+            return gerarLeituraParte(nextPage);
         }
 
         // OPÇÃO 7: EXPOSIÇÃO DETALHADA
@@ -1514,6 +1617,19 @@ Digite **MENU** para continuar estudando.`;
     // Iniciar com mensagem de boas-vindas
     useEffect(() => {
         if (!loading && passagem && messages.length === 0) {
+            if (isPlanoMode) {
+                if (!bibleData) return;
+                setActiveOption('1');
+                const parteSalva = lerProgressoPlanoLocal();
+                const primeiraMensagemPlano: ChatMessage = {
+                    role: 'assistant',
+                    content: gerarLeituraParte(parteSalva),
+                    timestamp: new Date()
+                };
+                setMessages([primeiraMensagemPlano]);
+                return;
+            }
+
             const welcomeMessage: ChatMessage = {
                 role: 'assistant',
                 content: gerarRespostaMenuInicial(),
@@ -1521,11 +1637,31 @@ Digite **MENU** para continuar estudando.`;
             };
             setMessages([welcomeMessage]);
         }
-    }, [loading, passagem]);
+    }, [loading, passagem, messages.length, isPlanoMode, bibleData]);
 
     // ===========================================
     // RENDER
     // ===========================================
+
+    if (!loading && isPlanoMode && !passagem) {
+        return (
+            <CosmicBackground className="min-h-screen px-6 py-10">
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <Link href="/planos" className="btn-glass px-4 py-2 rounded-full inline-flex items-center gap-2 text-sm font-medium">
+                        <ArrowLeft className="w-4 h-4" />
+                        Voltar aos Planos
+                    </Link>
+                    <div className="glass-panel rounded-3xl p-8 border border-amber-500/20">
+                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">Plano sem leitura cadastrada</h1>
+                        <p className="text-slate-300 leading-relaxed">
+                            Este plano ainda não possui conteúdo do dia para abrir.
+                            Assim que os dias forem cadastrados, ele passa a funcionar normalmente.
+                        </p>
+                    </div>
+                </div>
+            </CosmicBackground>
+        );
+    }
 
     return (
         <CosmicBackground className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
@@ -1564,7 +1700,7 @@ Digite **MENU** para continuar estudando.`;
                     </p>
                 </div>
 
-                {!activeOption ? (
+                {!activeOption && !isPlanoMode ? (
                     // -------------------------------------------
                     // VISTA INICIAL (MENU GRID)
                     // -------------------------------------------
@@ -1657,7 +1793,9 @@ Digite **MENU** para continuar estudando.`;
                                     </button>
                                     <div>
                                         <h2 className="font-bold text-white text-lg">
-                                            {MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                            {isPlanoMode
+                                                ? 'Leitura do Plano'
+                                                : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
                                         </h2>
                                         <p className="text-xs text-slate-400">
                                             {passagem?.referencia} • {passagem?.arquetipo_maestro}
@@ -1711,7 +1849,7 @@ Digite **MENU** para continuar estudando.`;
                                     </button>
 
                                     {/* Botão Explicar (só na Opção 1) */}
-                                    {activeOption === '1' && (
+                                    {!isPlanoMode && activeOption === '1' && (
                                         <button
                                             type="button"
                                             onClick={() => submitMessage('Explicar')}
