@@ -39,11 +39,10 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         const arrayBuffer = await imgBlob.arrayBuffer();
         const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-        // TENTATIVA 3: Usando gemini-1.5-flash-latest que é o alias para a versão mais atual
-        // Se ainda der 404, o problema é a chave de API que não tem acesso a modelos pagos/novos?
-        // Mas o flash é free tier. 
-        // Vou usar 'gemini-1.5-flash-latest' explicito.
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
+        // TENTATIVA FINAL: Usando O MESMO MODELO DO INDEX.TS (gemini-2.0-flash)
+        // O usuário confirmou que este funciona para a geração de texto.
+        const MODEL_NAME = "gemini-2.0-flash";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_KEY}`;
 
         const body = {
             contents: [{
@@ -67,7 +66,6 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
         if (!resp.ok) {
             const errText = await resp.text();
-            // Retorna erro curto. JSON.parse para tentar limpar se for JSON
             let cleanError = errText.substring(0, 100);
             try {
                 const jsonErr = JSON.parse(errText);
@@ -86,7 +84,6 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         return text ? text.trim() : "";
 
     } catch (e) {
-        // Garantir que erro não cause recursão ou objeto circular
         return `[DEBUG] Exceção: ${String(e)}`;
     }
 }
@@ -100,18 +97,15 @@ export async function consultarInstagram(username: string): Promise<any[]> {
         return [];
     }
 
-    // Actor: apify/instagram-scraper (tenta ser leve e rápido)
-    // Se falhar ou for muito caro, podemos tentar apify/instagram-profile-scraper
+    // Actor: apify/instagram-scraper
     const ACTOR_ID = "apify~instagram-scraper";
-
-    // URL para rodar o actor e esperar o resultado (síncrono para simplicidade, mas com timeout)
     const url = `https://api.apify.com/v2/acts/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}`;
 
     const input = {
         "directUrls": [`https://www.instagram.com/${username}/`],
-        "resultsLimit": 6, // Aumentei para 6 para ter mais opções
+        "resultsLimit": 6,
         "resultsType": "posts",
-        "searchType": "hashtag", // Ignorado para directUrls, mas bom deixar explicito se mudar
+        "searchType": "hashtag",
         "search": username
     };
 
@@ -137,7 +131,6 @@ export async function consultarInstagram(username: string): Promise<any[]> {
             return [];
         }
 
-        // Processamento paralelo com OCR
         const postsPromises = data.map(async (post: any) => {
             const caption = post.caption || post.description || "";
             const imageUrl = post.displayUrl || post.url || "";
@@ -145,15 +138,14 @@ export async function consultarInstagram(username: string): Promise<any[]> {
             const publishedAt = post.timestamp || new Date().toISOString();
             const externalId = post.id || post.shortCode || `inst_${Date.now()}_${Math.random()}`;
 
-            // OCR da imagem
             let ocrText = "";
             if (imageUrl) {
+                // Delay aleatório pequeno para não bater rate limit se tiver muitos
+                await new Promise(r => setTimeout(r, Math.random() * 1000));
                 console.log(`🔍 [OCR] Processando imagem de ${externalId}...`);
                 ocrText = await extractTextFromImage(imageUrl);
             }
 
-            // Unificar conteúdo: OCR + Legenda
-            // Se tiver OCR, coloca ele primeiro. Se tiver legenda, concatena.
             let fullContent = "";
             if (ocrText) fullContent += `${ocrText}\n\n`;
             if (caption) fullContent += `${caption}`;
@@ -162,7 +154,7 @@ export async function consultarInstagram(username: string): Promise<any[]> {
 
             return {
                 external_id: externalId,
-                source: 'instagram', // ou tribo_juda, será ajustado no insert ou query se precisar, mas aqui é generico
+                source: 'instagram',
                 content: fullContent,
                 image_url: imageUrl,
                 post_url: postUrl,
