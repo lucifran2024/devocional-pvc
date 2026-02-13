@@ -153,7 +153,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
             </div>
 
             {/* Content - Usando ReactMarkdown para renderizar negrito/italico se houver */}
-            <div className="text-slate-300 text-sm leading-relaxed max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="text-slate-300 text-base leading-relaxed">
                 <ReactMarkdown
                     components={{
                         p: ({ node, ...props }) => <p className="mb-4 whitespace-pre-wrap" {...props} />
