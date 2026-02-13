@@ -30,22 +30,25 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
     }
 
     try {
-        console.log(`🔍 [OCR] Baixando imagem: ${imageUrl.substring(0, 50)}...`);
         // Baixar a imagem e converter para base64
         const imgResp = await fetch(imageUrl);
         if (!imgResp.ok) {
-            return `[DEBUG] Erro ao baixar imagem: ${imgResp.status} ${imgResp.statusText}`;
+            return `[DEBUG] Erro ao baixar imagem: ${imgResp.status}`;
         }
         const imgBlob = await imgResp.blob();
         const arrayBuffer = await imgBlob.arrayBuffer();
         const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`;
+        // Trocando para o modelo mais estável para visão: gemini-1.5-flash
+        // Se der 404, significa que a chave não tem acesso a esse modelo ou o endpoint mudou? 
+        // Mas a doc oficial é essa. Vamos tentar manter flash pois ele é o mais indicado.
+        // Se falhar de novo, o problema pode ser a chave/projeto.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
 
         const body = {
             contents: [{
                 parts: [
-                    { text: "Extraia TODO o texto desta imagem. Retorne APENAS o texto extraído, sem comentários, sem aspas, sem introdução." },
+                    { text: "Extraia TODO o texto desta imagem. Retorne APENAS o texto extraído." },
                     {
                         inline_data: {
                             mime_type: imgResp.headers.get("content-type") || "image/jpeg",
@@ -64,18 +67,17 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
         if (!resp.ok) {
             const errText = await resp.text();
+            // Retorna erro curto
             return `[DEBUG] Erro API Gemini (${resp.status}): ${errText.substring(0, 100)}`;
         }
 
         const data = await resp.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-        if (!text) return "[DEBUG] Gemini retornou texto vazio.";
-
-        return text.trim();
+        return text ? text.trim() : "";
 
     } catch (e) {
-        return `[DEBUG] Exceção processamento: ${e}`;
+        return `[DEBUG] Exceção: ${e}`;
     }
 }
 
