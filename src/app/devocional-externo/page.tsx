@@ -87,21 +87,44 @@ interface InstagramPost {
 }
 
 const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
-    const [copiado, setCopiado] = useState(false);
+    const [copiado, setCopiado] = useState<'geral' | 'ocr' | 'legenda' | null>(null);
     const [salvando, setSalvando] = useState(false);
 
-    const handleCopy = () => {
-        const textoFormatado = `${post.content}`; // Copia exatamente o que veio do backend
-        navigator.clipboard.writeText(textoFormatado);
-        setCopiado(true);
-        setTimeout(() => setCopiado(false), 2000);
+    // Parse do conteúdo para separar OCR e Legenda
+    const parseContent = (content: string) => {
+        let ocrText = '';
+        let captionText = '';
+
+        if (content.includes('[OCR]:')) {
+            const parts = content.split('[LEGENDA]:');
+            ocrText = parts[0].replace('[OCR]:', '').trim();
+            if (parts.length > 1) {
+                captionText = parts[1].trim();
+            }
+        } else {
+            // Fallback para posts antigos ou sem OCR
+            captionText = content;
+        }
+
+        return { ocrText, captionText };
+    };
+
+    const { ocrText, captionText } = parseContent(post.content);
+
+    const handleCopy = (text: string, type: 'geral' | 'ocr' | 'legenda') => {
+        navigator.clipboard.writeText(text);
+        setCopiado(type);
+        setTimeout(() => setCopiado(null), 2000);
     };
 
     const handleSaveToDNA = async () => {
         setSalvando(true);
         try {
+            // Salva de preferência o texto do OCR, ou a legenda se não tiver OCR
+            const textToSave = ocrText || captionText;
+
             const { error } = await supabase.from('dna_categorizado').insert({
-                texto_msg: post.content,
+                texto_msg: textToSave,
                 categoria: 'DEVOCIONAL',
                 origem: 'instagram',
                 tags: [post.author_name]
@@ -152,25 +175,63 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                 </div>
             </div>
 
-            {/* Content - Usando ReactMarkdown para renderizar negrito/italico se houver */}
-            <div className="text-slate-300 text-base leading-relaxed">
-                <ReactMarkdown
-                    components={{
-                        p: ({ node, ...props }) => <p className="mb-4 whitespace-pre-wrap" {...props} />
-                    }}
-                >
-                    {post.content}
-                </ReactMarkdown>
+            {/* Content Display */}
+            <div className="text-slate-300 text-base leading-relaxed flex flex-col gap-6">
+
+                {/* Seção OCR (Mensagem da Imagem) */}
+                {ocrText && (
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-[10px] font-bold text-pink-400/70 uppercase tracking-widest">Mensagem na Imagem</span>
+                            <button
+                                onClick={() => handleCopy(ocrText, 'ocr')}
+                                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                            >
+                                {copiado === 'ocr' ? <CheckSquare className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                {copiado === 'ocr' ? 'Copiado' : 'Copiar Msg'}
+                            </button>
+                        </div>
+                        <ReactMarkdown
+                            components={{ p: ({ node, ...props }) => <p className="mb-2 whitespace-pre-wrap last:mb-0" {...props} /> }}
+                        >
+                            {ocrText}
+                        </ReactMarkdown>
+                    </div>
+                )}
+
+                {/* Seção Legenda */}
+                {captionText && (
+                    <div className={ocrText ? "pl-4 border-l-2 border-white/10" : ""}>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Legenda do Post</span>
+                            <button
+                                onClick={() => handleCopy(captionText, 'legenda')}
+                                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                            >
+                                {copiado === 'legenda' ? <CheckSquare className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                {copiado === 'legenda' ? 'Copiado' : 'Copiar Legenda'}
+                            </button>
+                        </div>
+                        <div className="text-slate-400 text-sm whitespace-pre-wrap">
+                            {captionText}
+                        </div>
+                    </div>
+                )}
+
+                {/* Caso não tenha nem OCR nem Legenda (raro) */}
+                {!ocrText && !captionText && (
+                    <div className="text-slate-500 italic">Conteúdo indisponível</div>
+                )}
             </div>
 
-            {/* Footer Actions - Padronizados com DevocionalCard */}
+            {/* Footer Actions */}
             <div className="pt-4 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
                 <button
-                    onClick={handleCopy}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                    onClick={() => handleCopy(post.content, 'geral')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado === 'geral' ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/10 text-white'}`}
                 >
-                    {copiado ? <CheckSquare className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copiado ? 'Copiado!' : 'Copiar Texto'}
+                    {copiado === 'geral' ? <CheckSquare className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copiado === 'geral' ? 'Tudo Copiado!' : 'Copiar Tudo'}
                 </button>
 
                 <button
