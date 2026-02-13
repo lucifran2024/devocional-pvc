@@ -9,6 +9,7 @@ import {
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { supabase, getDataHoje } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
+import { SermonRecorderCard } from '@/components/SermonRecorderCard';
 
 // ============================================
 // FONTES DISPONÍVEIS
@@ -432,6 +433,10 @@ export default function DevocionalExternoPage() {
                                 Escolha uma fonte e leia o devocional original, direto do site.
                             </p>
                         </section>
+
+                        <div className="mb-8 animate-enter">
+                            {/* SermonRecorderCard removido daqui */}
+                        </div>
 
                         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-enter">
                             {FONTES.map((fonte) => {

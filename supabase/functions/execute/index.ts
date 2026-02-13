@@ -7,6 +7,7 @@ import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
 import { formatVoiceSection } from './voice-selector.ts';
 import { getArchetype, formatArchetypeSection } from './archetype-selector.ts';
+import { transcreverAudioGemini, transcreverYoutubeApify } from './audio-tools.ts';
 
 // 1. Configuração de CORS (RESTRITIVO - apenas origens permitidas)
 const ALLOWED_ORIGINS = [
@@ -652,6 +653,42 @@ Deno.serve(async (req) => {
           fonte: fonteEscolhida,
           tipo: 'devocional_externo',
           dados_estruturados: postsInstagram
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+
+    // ========================================
+    // MODO: TRANSCREVER AUDIO / YOUTUBE
+    // ========================================
+    if (modo_id === 'transcrever_audio') {
+      console.log(`🎙️ [TRANSCRIÇÃO] Iniciando... Tipo: ${filtros?.tipo}`);
+      const { tipo, url } = filtros || {}; // tipo: 'arquivo' | 'youtube'
+
+      if (!url) throw new Error("URL do áudio/vídeo obrigatória.");
+
+      let resultado = { texto: "", resumo: "", titulo: "" };
+
+      if (tipo === 'youtube') {
+        const ytData = await transcreverYoutubeApify(url);
+        resultado = { ...ytData };
+      } else {
+        // Arquivo de áudio (Storage URL)
+        const audioData = await transcreverAudioGemini(url);
+        resultado = { ...audioData, titulo: "Gravação de Áudio" };
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: resultado.texto, // Compatibilidade
+          transcricao: resultado.texto,
+          resumo: resultado.resumo,
+          titulo: resultado.titulo,
+          tipo: 'transcricao'
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

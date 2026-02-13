@@ -43,6 +43,11 @@ export interface ExecuteResponse {
     tema_usado?: string;
     categoria_usada?: string;
     estilo_usado?: string;
+    titulo?: string; // Para transcrição
+    resumo?: string; // Para transcrição
+    transcricao?: string; // Para transcrição
+    fonte?: string;
+    dados_estruturados?: any[];
 }
 
 export interface PalavraManhaCache {
@@ -71,9 +76,85 @@ export interface DnaGeracao {
     review_reason?: string;
 }
 
+export interface Sermon {
+    id: string;
+    title: string;
+    audio_url: string | null;
+    youtube_url: string | null;
+    transcription: string;
+    summary: string;
+    created_at: string;
+    user_id: string;
+}
+
 // ===========================================
 // FUNÇÕES
 // ===========================================
+
+// ==================== SERMON RECORDER HELPERS ====================
+
+export async function uploadSermonAudio(file: Blob, userId: string): Promise<string | null> {
+    const fileName = `${userId}_${Date.now()}.webm`;
+    const { data, error } = await supabase.storage
+        .from('sermoes')
+        .upload(fileName, file, {
+            contentType: 'audio/webm',
+            upsert: false
+        });
+
+    if (error) {
+        console.error('❌ [UPLOAD] Erro ao enviar áudio:', error);
+        return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('sermoes')
+        .getPublicUrl(fileName);
+
+    return publicUrl;
+}
+
+export async function saveSermon(sermon: Partial<Sermon>): Promise<Sermon | null> {
+    const { data, error } = await supabase
+        .from('sermoes')
+        .insert(sermon)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('❌ [DB] Erro ao salvar sermão:', error);
+        return null;
+    }
+    return data as Sermon;
+}
+
+export async function getSermons(): Promise<Sermon[]> {
+    const { data, error } = await supabase
+        .from('sermoes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('❌ [DB] Erro ao buscar sermões:', error);
+        return [];
+    }
+    return data as Sermon[];
+}
+
+export async function deleteSermon(id: string): Promise<boolean> {
+    const { error } = await supabase
+        .from('sermoes')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('❌ [DB] Erro ao deletar sermão:', error);
+        return false;
+    }
+    return true;
+}
+
+// =================================================================
 
 /**
  * Busca o payload do dia
@@ -240,6 +321,8 @@ export interface FiltrosGeracao {
     categoria?: string;
     formato?: string;
     tamanho?: string;
+    // tipo já definido abaixo com união
+    url?: string; // Para transcrição
 
     quantidade?: number;
     dnaBase?: string;
