@@ -19,11 +19,14 @@ export const APIFY_TOOLS_DEFINITION = [{
     }]
 }];
 
-
 // Função auxiliar para OCR com Gemini Vision
 async function extractTextFromImage(imageUrl: string): Promise<string> {
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_KEY || !imageUrl) return "";
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+    if (!GEMINI_KEY) {
+        console.error("❌ [OCR] API Key do Gemini não encontrada (GEMINI_API_KEY ou GEMINI_KEY).");
+        return "";
+    }
+    if (!imageUrl) return "";
 
     try {
         // Baixar a imagem e converter para base64
