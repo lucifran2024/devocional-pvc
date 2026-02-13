@@ -156,11 +156,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
             </div>
 
             {/* Image */}
-            {post.image_url && (
-                <div className="rounded-xl overflow-hidden aspect-square w-full bg-black/20">
-                    <img src={post.image_url} alt="Post" className="w-full h-full object-cover" />
-                </div>
-            )}
+            {/* Image removed as per user request to focus on text only */}
 
             {/* Content */}
             <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto pr-2 custom-scrollbar">
