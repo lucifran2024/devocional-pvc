@@ -39,11 +39,11 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         const arrayBuffer = await imgBlob.arrayBuffer();
         const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-        // Trocando para o modelo mais estável para visão: gemini-1.5-flash
-        // Se der 404, significa que a chave não tem acesso a esse modelo ou o endpoint mudou? 
-        // Mas a doc oficial é essa. Vamos tentar manter flash pois ele é o mais indicado.
-        // Se falhar de novo, o problema pode ser a chave/projeto.
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+        // TENTATIVA 3: Usando gemini-1.5-flash-latest que é o alias para a versão mais atual
+        // Se ainda der 404, o problema é a chave de API que não tem acesso a modelos pagos/novos?
+        // Mas o flash é free tier. 
+        // Vou usar 'gemini-1.5-flash-latest' explicito.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
 
         const body = {
             contents: [{
@@ -67,8 +67,17 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
         if (!resp.ok) {
             const errText = await resp.text();
-            // Retorna erro curto
-            return `[DEBUG] Erro API Gemini (${resp.status}): ${errText.substring(0, 100)}`;
+            // Retorna erro curto. JSON.parse para tentar limpar se for JSON
+            let cleanError = errText.substring(0, 100);
+            try {
+                const jsonErr = JSON.parse(errText);
+                if (jsonErr.error && jsonErr.error.message) {
+                    cleanError = jsonErr.error.message;
+                }
+            } catch (e) {
+                // ignore
+            }
+            return `[DEBUG] Erro API Gemini (${resp.status}): ${cleanError}`;
         }
 
         const data = await resp.json();
@@ -77,7 +86,8 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         return text ? text.trim() : "";
 
     } catch (e) {
-        return `[DEBUG] Exceção: ${e}`;
+        // Garantir que erro não cause recursão ou objeto circular
+        return `[DEBUG] Exceção: ${String(e)}`;
     }
 }
 
