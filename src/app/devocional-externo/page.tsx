@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft, Loader2, RefreshCw, Globe, BookOpen,
-    Church, Cross, Newspaper, AlertCircle, Trash
+    Church, Cross, Newspaper, AlertCircle, Trash, Copy, Save, CheckSquare
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { supabase, getDataHoje } from '@/lib/supabase';
@@ -91,7 +91,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
     const [salvando, setSalvando] = useState(false);
 
     const handleCopy = () => {
-        const textoFormatado = `${post.content}`; // Copia exatamente o que veio do backend (OCR + Legenda)
+        const textoFormatado = `${post.content}`; // Copia exatamente o que veio do backend
         navigator.clipboard.writeText(textoFormatado);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 2000);
@@ -99,8 +99,6 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
     const handleSaveToDNA = async () => {
         setSalvando(true);
-        // Lógica simplificada: salvar direto como 'dna_categorizado' na categoria 'DEVOCIONAL'
-        // Idealmente abriria um modal, mas para manter simples por enquanto:
         try {
             const { error } = await supabase.from('dna_categorizado').insert({
                 texto_msg: post.content,
@@ -128,7 +126,6 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
             if (error) alert('Erro ao apagar: ' + error.message);
             else {
-                // Recarregar página ou atualizar estado (simples reload por enquanto)
                 window.location.reload();
             }
         } catch (e) {
@@ -155,31 +152,38 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                 </div>
             </div>
 
-            {/* Image */}
-            {/* Image removed as per user request to focus on text only */}
-
-            {/* Content */}
-            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {post.content}
+            {/* Content - Usando ReactMarkdown para renderizar negrito/italico se houver */}
+            <div className="text-slate-300 text-sm leading-relaxed max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                <ReactMarkdown
+                    components={{
+                        p: ({ node, ...props }) => <p className="mb-4 whitespace-pre-wrap" {...props} />
+                    }}
+                >
+                    {post.content}
+                </ReactMarkdown>
             </div>
 
-            {/* Footer Actions */}
+            {/* Footer Actions - Padronizados com DevocionalCard */}
             <div className="pt-4 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
                 <button
                     onClick={handleCopy}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado ? 'bg-green-500 text-white' : 'bg-white/5 hover:bg-white/10 text-white'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
                 >
+                    {copiado ? <CheckSquare className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     {copiado ? 'Copiado!' : 'Copiar Texto'}
                 </button>
+
                 <button
                     onClick={handleSaveToDNA}
                     disabled={salvando}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white transition-all disabled:opacity-50"
                 >
-                    {salvando ? 'Salvando...' : 'Salvar no DNA'}
+                    {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {salvando ? 'Salvando...' : 'Salvar DNA'}
                 </button>
+
                 <Link href={post.post_url} target="_blank" className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all">
-                    Link Original
+                    Link
                 </Link>
             </div>
         </div>

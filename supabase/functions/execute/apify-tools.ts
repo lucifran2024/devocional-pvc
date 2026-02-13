@@ -22,32 +22,25 @@ export const APIFY_TOOLS_DEFINITION = [{
 // Função auxiliar para OCR com Gemini Vision
 async function extractTextFromImage(imageUrl: string): Promise<string> {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
-    if (!GEMINI_KEY) {
-        return "[DEBUG] Erro: Chave Gemini não encontrada.";
-    }
-    if (!imageUrl) {
-        return "[DEBUG] Erro: URL da imagem vazia.";
-    }
+    if (!GEMINI_KEY || !imageUrl) return "";
 
     try {
         // Baixar a imagem e converter para base64
         const imgResp = await fetch(imageUrl);
-        if (!imgResp.ok) {
-            return `[DEBUG] Erro ao baixar imagem: ${imgResp.status}`;
-        }
+        if (!imgResp.ok) return "";
+
         const imgBlob = await imgResp.blob();
         const arrayBuffer = await imgBlob.arrayBuffer();
         const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-        // TENTATIVA FINAL: Usando O MESMO MODELO DO INDEX.TS (gemini-2.0-flash)
-        // O usuário confirmou que este funciona para a geração de texto.
+        // Usando modelo gemini-2.0-flash (confirmado funcionamento)
         const MODEL_NAME = "gemini-2.0-flash";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_KEY}`;
 
         const body = {
             contents: [{
                 parts: [
-                    { text: "Extraia TODO o texto desta imagem. Retorne APENAS o texto extraído." },
+                    { text: "Extraia TODO o texto desta imagem. Retorne APENAS o texto extraído. Mantenha a formatação original de quebras de linha." },
                     {
                         inline_data: {
                             mime_type: imgResp.headers.get("content-type") || "image/jpeg",
@@ -64,19 +57,7 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
             body: JSON.stringify(body)
         });
 
-        if (!resp.ok) {
-            const errText = await resp.text();
-            let cleanError = errText.substring(0, 100);
-            try {
-                const jsonErr = JSON.parse(errText);
-                if (jsonErr.error && jsonErr.error.message) {
-                    cleanError = jsonErr.error.message;
-                }
-            } catch (e) {
-                // ignore
-            }
-            return `[DEBUG] Erro API Gemini (${resp.status}): ${cleanError}`;
-        }
+        if (!resp.ok) return "";
 
         const data = await resp.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -84,7 +65,7 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         return text ? text.trim() : "";
 
     } catch (e) {
-        return `[DEBUG] Exceção: ${String(e)}`;
+        return "";
     }
 }
 
@@ -140,8 +121,8 @@ export async function consultarInstagram(username: string): Promise<any[]> {
 
             let ocrText = "";
             if (imageUrl) {
-                // Delay aleatório pequeno para não bater rate limit se tiver muitos
-                await new Promise(r => setTimeout(r, Math.random() * 1000));
+                // Delay aleatório pequeno
+                await new Promise(r => setTimeout(r, Math.random() * 500));
                 console.log(`🔍 [OCR] Processando imagem de ${externalId}...`);
                 ocrText = await extractTextFromImage(imageUrl);
             }
