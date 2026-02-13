@@ -23,15 +23,19 @@ export const APIFY_TOOLS_DEFINITION = [{
 async function extractTextFromImage(imageUrl: string): Promise<string> {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
     if (!GEMINI_KEY) {
-        console.error("❌ [OCR] API Key do Gemini não encontrada (GEMINI_API_KEY ou GEMINI_KEY).");
-        return "";
+        return "[DEBUG] Erro: Chave Gemini não encontrada.";
     }
-    if (!imageUrl) return "";
+    if (!imageUrl) {
+        return "[DEBUG] Erro: URL da imagem vazia.";
+    }
 
     try {
+        console.log(`🔍 [OCR] Baixando imagem: ${imageUrl.substring(0, 50)}...`);
         // Baixar a imagem e converter para base64
         const imgResp = await fetch(imageUrl);
-        if (!imgResp.ok) return "";
+        if (!imgResp.ok) {
+            return `[DEBUG] Erro ao baixar imagem: ${imgResp.status} ${imgResp.statusText}`;
+        }
         const imgBlob = await imgResp.blob();
         const arrayBuffer = await imgBlob.arrayBuffer();
         const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -58,15 +62,20 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
             body: JSON.stringify(body)
         });
 
-        if (!resp.ok) return "";
+        if (!resp.ok) {
+            const errText = await resp.text();
+            return `[DEBUG] Erro API Gemini (${resp.status}): ${errText.substring(0, 100)}`;
+        }
 
         const data = await resp.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        if (!text) return "[DEBUG] Gemini retornou texto vazio.";
+
         return text.trim();
 
     } catch (e) {
-        console.error("❌ [OCR] Erro ao extrair texto:", e);
-        return "";
+        return `[DEBUG] Exceção processamento: ${e}`;
     }
 }
 
