@@ -128,8 +128,12 @@ export async function consultarInstagram(username: string): Promise<any[]> {
             }
 
             let fullContent = "";
-            if (ocrText) fullContent += `${ocrText}\n\n`;
-            if (caption) fullContent += `${caption}`;
+            if (ocrText) {
+                fullContent += `[OCR]:\n${ocrText}\n\n`;
+                if (caption) fullContent += `[LEGENDA]:\n${caption}`;
+            } else {
+                if (caption) fullContent += `${caption}`;
+            }
 
             if (!fullContent) fullContent = "Conteúdo não disponível em texto.";
 
