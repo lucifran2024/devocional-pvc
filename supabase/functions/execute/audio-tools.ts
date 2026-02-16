@@ -3,7 +3,7 @@
 // AUDIO TOOLS - Ferramentas para Transcrição e YouTube
 // =====================================================
 
-// Função auxiliar para transcrever áudio com Gemini 1.5 Flash
+// Função auxiliar para transcrever áudio com Gemini 2.0 Flash
 export async function transcreverAudioGemini(audioUrl: string): Promise<{ texto: string; resumo: string }> {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
     if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY não configurada.");
@@ -20,12 +20,19 @@ export async function transcreverAudioGemini(audioUrl: string): Promise<{ texto:
         // Converter para Base64 (Gemini REST API requer inline data ou upload prévio via File API)
         // Para arquivos pequenos (< 20MB) inline funciona. Para maiores, precisaria da File API.
         // Assumindo gravações curtas/médias por enquanto.
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const bytes = new Uint8Array(arrayBuffer);
+        const CHUNK_SIZE = 8192;
+        let binaryString = '';
+        for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+            const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+            binaryString += String.fromCharCode(...chunk);
+        }
+        const base64Audio = btoa(binaryString);
 
         console.log(`🎙️ [AUDIO] Áudio baixado. Tamanho: ${arrayBuffer.byteLength} bytes. Enviando para Gemini...`);
 
-        // 2. Enviar para Gemini 1.5 Flash
-        const MODEL_NAME = "gemini-1.5-flash";
+        // 2. Enviar para Gemini 2.0 Flash
+        const MODEL_NAME = "gemini-2.0-flash";
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_KEY}`;
 
         const body = {
@@ -100,15 +107,20 @@ export async function transcreverYoutubeApify(youtubeUrl: string): Promise<{ tex
         if (!data || data.length === 0) throw new Error("Nenhum dado encontrado para este vídeo.");
 
         const videoData = data[0];
+        console.log(`📺 [YOUTUBE] Campos retornados pelo Apify: ${Object.keys(videoData).join(', ')}`);
         const titulo = videoData.title || "Sem título";
 
-        // Verificar legendas
+        // Verificar legendas (compatível com múltiplos nomes de campo)
         let textoCompleto = "";
 
-        if (videoData.subtitles && videoData.subtitles.length > 0) {
+        const subtitlesArray = videoData.subtitles || videoData.captions || videoData.closedCaptions || [];
+        if (subtitlesArray.length > 0) {
             // Preferir pt-BR ou pt, depois auto-generated
-            const subtitle = videoData.subtitles.find((s: any) => s.languageCode === 'pt-BR' || s.languageCode === 'pt')
-                || videoData.subtitles[0]; // Fallback
+            const subtitle = subtitlesArray.find((s: any) =>
+                    (s.languageCode || s.lang || s.language) === 'pt-BR' ||
+                    (s.languageCode || s.lang || s.language) === 'pt'
+                )
+                || subtitlesArray[0]; // Fallback
 
             if (subtitle && subtitle.url) {
                 console.log(`📜 [YOUTUBE] Baixando legendas de: ${subtitle.url}`);
@@ -152,7 +164,7 @@ async function gerarResumoTexto(texto: string): Promise<string> {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
     if (!GEMINI_KEY) return "Sem resumo (chave ausente).";
 
-    const MODEL_NAME = "gemini-1.5-flash";
+    const MODEL_NAME = "gemini-2.0-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_KEY}`;
 
     const body = {

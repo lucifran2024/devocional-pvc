@@ -31,7 +31,14 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
         const imgBlob = await imgResp.blob();
         const arrayBuffer = await imgBlob.arrayBuffer();
-        const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const bytes = new Uint8Array(arrayBuffer);
+        const CHUNK_SIZE = 8192;
+        let binaryString = '';
+        for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+            const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+            binaryString += String.fromCharCode(...chunk);
+        }
+        const base64Image = btoa(binaryString);
 
         // Usando modelo gemini-2.0-flash (confirmado funcionamento)
         const MODEL_NAME = "gemini-2.0-flash";

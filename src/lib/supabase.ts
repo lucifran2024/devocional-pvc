@@ -85,6 +85,7 @@ export interface Sermon {
     summary: string;
     created_at: string;
     user_id: string;
+    tag?: string[];
 }
 
 // ===========================================

@@ -109,14 +109,13 @@ export function SermonRecorderCard() {
             // 3. Save to DB
             // 3. Save to DB
             const newSermon = await saveSermon({
-                // user_id: user.id, // Auth removida
                 title: resp.titulo || `Gravação de ${new Date().toLocaleString()}`,
                 audio_url: publicUrl,
                 youtube_url: null,
-                transcription: resp.resultado, // resultado = texto completo
+                transcription: resp.resultado,
                 summary: resp.resumo,
                 tag: ['audio', 'app_recorder']
-            } as any); // cast any for partial match
+            });
 
             if (newSermon) {
                 setHistory([newSermon, ...history]);
@@ -152,14 +151,13 @@ export function SermonRecorderCard() {
 
             // 2. Save to DB
             const newSermon = await saveSermon({
-                // user_id: user.id,
                 title: resp.titulo || `Sermão YouTube ${new Date().toLocaleDateString()}`,
                 audio_url: null,
                 youtube_url: youtubeUrl,
                 transcription: resp.resultado,
                 summary: resp.resumo,
                 tag: ['youtube']
-            } as any);
+            });
 
             if (newSermon) {
                 setHistory([newSermon, ...history]);
