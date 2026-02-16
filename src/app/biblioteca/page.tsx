@@ -27,93 +27,113 @@ interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
 // Categorias organizadas da Bíblia
 const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: LivroBiblia[] }[] = [
     // ===== ANTIGO TESTAMENTO =====
-    { nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', livros: [
-        { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
-        { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
-        { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
-        { nome: 'Números', abrev: 'nm', capitulos: 36 },
-        { nome: 'Deuteronômio', abrev: 'dt', capitulos: 34 },
-    ]},
-    { nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', livros: [
-        { nome: 'Josué', abrev: 'js', capitulos: 24 },
-        { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
-        { nome: 'Rute', abrev: 'rt', capitulos: 4 },
-        { nome: '1 Samuel', abrev: '1sm', capitulos: 31 },
-        { nome: '2 Samuel', abrev: '2sm', capitulos: 24 },
-        { nome: '1 Reis', abrev: '1rs', capitulos: 22 },
-        { nome: '2 Reis', abrev: '2rs', capitulos: 25 },
-        { nome: '1 Crônicas', abrev: '1cr', capitulos: 29 },
-        { nome: '2 Crônicas', abrev: '2cr', capitulos: 36 },
-        { nome: 'Esdras', abrev: 'ed', capitulos: 10 },
-        { nome: 'Neemias', abrev: 'ne', capitulos: 13 },
-        { nome: 'Ester', abrev: 'et', capitulos: 10 },
-    ]},
-    { nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', livros: [
-        { nome: 'Jó', abrev: 'jó', capitulos: 42 },
-        { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
-        { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
-        { nome: 'Eclesiastes', abrev: 'ec', capitulos: 12 },
-        { nome: 'Cantares', abrev: 'ct', capitulos: 8 },
-    ]},
-    { nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', livros: [
-        { nome: 'Isaías', abrev: 'is', capitulos: 66 },
-        { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
-        { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
-        { nome: 'Ezequiel', abrev: 'ez', capitulos: 48 },
-        { nome: 'Daniel', abrev: 'dn', capitulos: 12 },
-    ]},
-    { nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', livros: [
-        { nome: 'Oséias', abrev: 'os', capitulos: 14 },
-        { nome: 'Joel', abrev: 'jl', capitulos: 3 },
-        { nome: 'Amós', abrev: 'am', capitulos: 9 },
-        { nome: 'Obadias', abrev: 'ob', capitulos: 1 },
-        { nome: 'Jonas', abrev: 'jn', capitulos: 4 },
-        { nome: 'Miquéias', abrev: 'mq', capitulos: 7 },
-        { nome: 'Naum', abrev: 'na', capitulos: 3 },
-        { nome: 'Habacuque', abrev: 'hc', capitulos: 3 },
-        { nome: 'Sofonias', abrev: 'sf', capitulos: 3 },
-        { nome: 'Ageu', abrev: 'ag', capitulos: 2 },
-        { nome: 'Zacarias', abrev: 'zc', capitulos: 14 },
-        { nome: 'Malaquias', abrev: 'ml', capitulos: 4 },
-    ]},
+    {
+        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', livros: [
+            { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
+            { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
+            { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
+            { nome: 'Números', abrev: 'nm', capitulos: 36 },
+            { nome: 'Deuteronômio', abrev: 'dt', capitulos: 34 },
+        ]
+    },
+    {
+        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', livros: [
+            { nome: 'Josué', abrev: 'js', capitulos: 24 },
+            { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
+            { nome: 'Rute', abrev: 'rt', capitulos: 4 },
+            { nome: '1 Samuel', abrev: '1sm', capitulos: 31 },
+            { nome: '2 Samuel', abrev: '2sm', capitulos: 24 },
+            { nome: '1 Reis', abrev: '1rs', capitulos: 22 },
+            { nome: '2 Reis', abrev: '2rs', capitulos: 25 },
+            { nome: '1 Crônicas', abrev: '1cr', capitulos: 29 },
+            { nome: '2 Crônicas', abrev: '2cr', capitulos: 36 },
+            { nome: 'Esdras', abrev: 'ed', capitulos: 10 },
+            { nome: 'Neemias', abrev: 'ne', capitulos: 13 },
+            { nome: 'Ester', abrev: 'et', capitulos: 10 },
+        ]
+    },
+    {
+        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', livros: [
+            { nome: 'Jó', abrev: 'jó', capitulos: 42 },
+            { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
+            { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
+            { nome: 'Eclesiastes', abrev: 'ec', capitulos: 12 },
+            { nome: 'Cantares', abrev: 'ct', capitulos: 8 },
+        ]
+    },
+    {
+        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', livros: [
+            { nome: 'Isaías', abrev: 'is', capitulos: 66 },
+            { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
+            { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
+            { nome: 'Ezequiel', abrev: 'ez', capitulos: 48 },
+            { nome: 'Daniel', abrev: 'dn', capitulos: 12 },
+        ]
+    },
+    {
+        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', livros: [
+            { nome: 'Oséias', abrev: 'os', capitulos: 14 },
+            { nome: 'Joel', abrev: 'jl', capitulos: 3 },
+            { nome: 'Amós', abrev: 'am', capitulos: 9 },
+            { nome: 'Obadias', abrev: 'ob', capitulos: 1 },
+            { nome: 'Jonas', abrev: 'jn', capitulos: 4 },
+            { nome: 'Miquéias', abrev: 'mq', capitulos: 7 },
+            { nome: 'Naum', abrev: 'na', capitulos: 3 },
+            { nome: 'Habacuque', abrev: 'hc', capitulos: 3 },
+            { nome: 'Sofonias', abrev: 'sf', capitulos: 3 },
+            { nome: 'Ageu', abrev: 'ag', capitulos: 2 },
+            { nome: 'Zacarias', abrev: 'zc', capitulos: 14 },
+            { nome: 'Malaquias', abrev: 'ml', capitulos: 4 },
+        ]
+    },
     // ===== NOVO TESTAMENTO =====
-    { nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', livros: [
-        { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
-        { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
-        { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
-        { nome: 'João', abrev: 'jo', capitulos: 21 },
-    ]},
-    { nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', livros: [
-        { nome: 'Atos', abrev: 'at', capitulos: 28 },
-    ]},
-    { nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', livros: [
-        { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
-        { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
-        { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
-        { nome: 'Gálatas', abrev: 'gl', capitulos: 6 },
-        { nome: 'Efésios', abrev: 'ef', capitulos: 6 },
-        { nome: 'Filipenses', abrev: 'fp', capitulos: 4 },
-        { nome: 'Colossenses', abrev: 'cl', capitulos: 4 },
-        { nome: '1 Tessalonicenses', abrev: '1ts', capitulos: 5 },
-        { nome: '2 Tessalonicenses', abrev: '2ts', capitulos: 3 },
-        { nome: '1 Timóteo', abrev: '1tm', capitulos: 6 },
-        { nome: '2 Timóteo', abrev: '2tm', capitulos: 4 },
-        { nome: 'Tito', abrev: 'tt', capitulos: 3 },
-        { nome: 'Filemom', abrev: 'fm', capitulos: 1 },
-    ]},
-    { nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', livros: [
-        { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
-        { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
-        { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
-        { nome: '2 Pedro', abrev: '2pe', capitulos: 3 },
-        { nome: '1 João', abrev: '1jo', capitulos: 5 },
-        { nome: '2 João', abrev: '2jo', capitulos: 1 },
-        { nome: '3 João', abrev: '3jo', capitulos: 1 },
-        { nome: 'Judas', abrev: 'jd', capitulos: 1 },
-    ]},
-    { nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', livros: [
-        { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
-    ]},
+    {
+        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', livros: [
+            { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
+            { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
+            { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
+            { nome: 'João', abrev: 'jo', capitulos: 21 },
+        ]
+    },
+    {
+        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', livros: [
+            { nome: 'Atos', abrev: 'at', capitulos: 28 },
+        ]
+    },
+    {
+        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', livros: [
+            { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
+            { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
+            { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
+            { nome: 'Gálatas', abrev: 'gl', capitulos: 6 },
+            { nome: 'Efésios', abrev: 'ef', capitulos: 6 },
+            { nome: 'Filipenses', abrev: 'fp', capitulos: 4 },
+            { nome: 'Colossenses', abrev: 'cl', capitulos: 4 },
+            { nome: '1 Tessalonicenses', abrev: '1ts', capitulos: 5 },
+            { nome: '2 Tessalonicenses', abrev: '2ts', capitulos: 3 },
+            { nome: '1 Timóteo', abrev: '1tm', capitulos: 6 },
+            { nome: '2 Timóteo', abrev: '2tm', capitulos: 4 },
+            { nome: 'Tito', abrev: 'tt', capitulos: 3 },
+            { nome: 'Filemom', abrev: 'fm', capitulos: 1 },
+        ]
+    },
+    {
+        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', livros: [
+            { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
+            { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
+            { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
+            { nome: '2 Pedro', abrev: '2pe', capitulos: 3 },
+            { nome: '1 João', abrev: '1jo', capitulos: 5 },
+            { nome: '2 João', abrev: '2jo', capitulos: 1 },
+            { nome: '3 João', abrev: '3jo', capitulos: 1 },
+            { nome: 'Judas', abrev: 'jd', capitulos: 1 },
+        ]
+    },
+    {
+        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', livros: [
+            { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
+        ]
+    },
 ];
 
 // Lista flat para compatibilidade
@@ -599,7 +619,7 @@ export default function BibliotecaPage() {
                 setVersiculos(versiculos);
 
                 // Salvar no cache para próxima vez
-                cacheChapter(codigo, bookId, cap, versiculos).catch(() => {});
+                cacheChapter(codigo, bookId, cap, versiculos).catch(() => { });
             } else {
                 throw new Error('Formato inválido');
             }
@@ -1217,11 +1237,10 @@ export default function BibliotecaPage() {
                                         <button
                                             key={v.codigo}
                                             onClick={() => trocarVersao(v)}
-                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${
-                                                versaoBiblia.codigo === v.codigo
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${versaoBiblia.codigo === v.codigo
                                                     ? 'bg-amber-500/20 border border-amber-500/30'
                                                     : 'hover:bg-white/10 border border-transparent'
-                                            }`}
+                                                }`}
                                         >
                                             <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-400' : 'text-white'}`}>
                                                 {v.nome}
@@ -1379,7 +1398,7 @@ export default function BibliotecaPage() {
                                     <p className="text-slate-400 text-sm">Gerando explicação...</p>
                                 </div>
                             ) : (
-                                <div className="text-slate-200 text-base leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
+                                <div className="text-slate-200 text-lg md:text-xl leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
                             )}
                         </div>
                     </div>

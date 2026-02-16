@@ -449,7 +449,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                         <div className="relative z-10">
                             {/* Texto antes dos versículos */}
                             {partes[0] && (
-                                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
+                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
                                     <ReactMarkdown>{partes[0]}</ReactMarkdown>
                                 </div>
                             )}
@@ -465,7 +465,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
 
                             {/* Texto depois dos versículos */}
                             {partes[1] && (
-                                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
+                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
                                     <ReactMarkdown>{partes[1]}</ReactMarkdown>
                                 </div>
                             )}
@@ -481,7 +481,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                     {/* Glow effect */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                    <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
+                    <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                     </div>
                 </div>
@@ -493,7 +493,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
     return (
         <div className="flex justify-end animate-enter mb-6">
             <div className="max-w-[85%] rounded-2xl px-6 py-4 bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-br-none shadow-lg shadow-amber-900/20">
-                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
+                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
             </div>
