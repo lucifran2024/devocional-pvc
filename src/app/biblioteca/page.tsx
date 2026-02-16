@@ -1604,7 +1604,7 @@ export default function BibliotecaPage() {
                     <div className="glass-panel rounded-2xl p-5 md:p-8 relative overflow-visible" ref={versiculosRef}>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                        <div className={`space-y-1 ${fontConfig.value} leading-relaxed text-slate-200 font-serif relative`}>
+                        <div className={`space-y-1 ${fontConfig.value} leading-relaxed text-text-primary font-serif relative`}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
@@ -1621,9 +1621,9 @@ export default function BibliotecaPage() {
                                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                             ${getCorClasse(v.verse)}
                                             ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-emerald-500/15 ring-1 ring-emerald-500/40' : ''}
-                                            ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : ''}
-                                            ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-white/5' : ''}
-                                            ${modoMultiSelecao && !versiculosSelecionados.has(v.verse) ? 'hover:bg-emerald-500/5' : ''}
+                                            ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : ''}
+                                            ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-surface-1' : ''}
+                                            ${modoMultiSelecao && !versiculosSelecionados.has(v.verse) ? 'hover:bg-surface-1' : ''}
                                         `}
                                     >
                                         <p className="inline">
@@ -1648,40 +1648,40 @@ export default function BibliotecaPage() {
                                         {/* MINI-TOOLBAR */}
                                         {versiculoSelecionado === v.verse && (
                                             <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center gap-1 bg-slate-900/95 border border-white/15 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                                <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
                                                     {/* Cores */}
-                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
+                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
                                                         <Palette className="w-5 h-5" />
                                                     </button>
                                                     {/* Favoritar */}
-                                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-slate-300 hover:text-red-400'}`} title="Favoritar">
+                                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
                                                         <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
                                                     </button>
                                                     {/* Copiar */}
-                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors" title="Copiar">
+                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
                                                         <Copy className="w-5 h-5" />
                                                     </button>
                                                     {/* Compartilhar */}
-                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors" title="Compartilhar">
+                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
                                                         <Share2 className="w-5 h-5" />
                                                     </button>
                                                     {/* Estudar */}
-                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
+                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
                                                         <Lightbulb className="w-5 h-5" />
                                                     </button>
                                                     {/* Nota (abre fullscreen) */}
-                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
+                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
                                                         <StickyNote className="w-5 h-5" />
                                                     </button>
                                                     {/* Multi-seleção */}
-                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-emerald-400 transition-colors" title="Selecionar vários">
+                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-emerald-400 transition-colors" title="Selecionar vários">
                                                         <CheckSquare className="w-5 h-5" />
                                                     </button>
                                                 </div>
 
                                                 {/* Seletor de cores expandido */}
                                                 {mostrarCores && (
-                                                    <div className="mt-1.5 flex items-center gap-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                                    <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
                                                         {CORES_DESTAQUE.map(cor => (
                                                             <button key={cor.id} onClick={() => handleDestacar(cor.id)}
                                                                 className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
@@ -1707,13 +1707,13 @@ export default function BibliotecaPage() {
 
                 {/* Navegação Inferior */}
                 <div className="flex justify-between items-center mt-8 gap-4">
-                    <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors group">
-                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className="font-medium text-sm">Anterior</span>
+                    <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group">
+                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        <span className="font-medium text-sm text-text-primary">Anterior</span>
                     </button>
-                    <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors group">
-                        <span className="font-medium text-sm">Próximo</span>
-                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group">
+                        <span className="font-medium text-sm text-text-primary">Próximo</span>
+                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-text-primary" />
                     </button>
                 </div>
             </main>
