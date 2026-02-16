@@ -339,13 +339,13 @@ function VersiculosInterativos({
                         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-400" />
-                                <span className="font-bold text-white text-sm">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
+                                <span className="font-bold text-white text-base">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
                             </div>
                             <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
                         </div>
                         {estudoVersiculo && (
                             <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
-                                <p className="text-amber-200 text-sm italic">&ldquo;{estudoVersiculo.text}&rdquo;</p>
+                                <p className="text-amber-200 text-base italic">&ldquo;{estudoVersiculo.text}&rdquo;</p>
                             </div>
                         )}
                         <div className="flex-1 overflow-y-auto p-4">
@@ -355,7 +355,7 @@ function VersiculosInterativos({
                                     <p className="text-slate-400 text-sm">Gerando explicação...</p>
                                 </div>
                             ) : (
-                                <div className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
+                                <div className="text-slate-200 text-base leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
                             )}
                         </div>
                     </div>
