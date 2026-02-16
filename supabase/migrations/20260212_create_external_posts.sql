@@ -16,6 +16,8 @@ create table if not exists public.devocional_externo_posts (
 alter table public.devocional_externo_posts enable row level security;
 
 -- Allow read access to everyone (public)
+-- Allow read access to everyone (public)
+drop policy if exists "Allow public read access" on public.devocional_externo_posts;
 create policy "Allow public read access"
   on public.devocional_externo_posts
   for select
@@ -23,6 +25,8 @@ create policy "Allow public read access"
   using (true);
 
 -- Allow write access only to service_role (Edge Functions)
+-- Allow write access only to service_role (Edge Functions)
+drop policy if exists "Allow service_role write access" on public.devocional_externo_posts;
 create policy "Allow service_role write access"
   on public.devocional_externo_posts
   for all

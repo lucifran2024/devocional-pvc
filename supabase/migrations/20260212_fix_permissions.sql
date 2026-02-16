@@ -1,5 +1,7 @@
 -- Allow delete access to public (anon/authenticated) for devocional_externo_posts
 -- This allows the frontend to delete posts from the cache
+-- This allows the frontend to delete posts from the cache
+drop policy if exists "Allow public delete access" on public.devocional_externo_posts;
 create policy "Allow public delete access"
   on public.devocional_externo_posts
   for delete

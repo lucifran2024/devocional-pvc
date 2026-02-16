@@ -17,6 +17,7 @@ create table if not exists public.planos (
 
 -- RLS para planos (leitura pública, escrita restrita)
 alter table public.planos enable row level security;
+drop policy if exists "Planos visíveis para todos" on public.planos;
 create policy "Planos visíveis para todos" on public.planos for select using (true);
 
 -- 2. Tabela de Dias do Plano (Conteúdo)
@@ -34,6 +35,7 @@ create index if not exists idx_plano_dias_plano_dia on public.plano_dias(plano_i
 
 -- RLS para plano_dias
 alter table public.plano_dias enable row level security;
+drop policy if exists "Dias visíveis para todos" on public.plano_dias;
 create policy "Dias visíveis para todos" on public.plano_dias for select using (true);
 
 -- 3. Tabela de Inscrições/Progresso do Usuário
@@ -51,10 +53,15 @@ create table if not exists public.usuario_inscricoes (
 
 -- RLS para inscrições (cada usuário vê a sua)
 alter table public.usuario_inscricoes enable row level security;
+drop policy if exists "Usuário vê suas próprias inscrições" on public.usuario_inscricoes;
 create policy "Usuário vê suas próprias inscrições" on public.usuario_inscricoes 
     for select using (auth.uid() = user_id);
+
+drop policy if exists "Usuário cria suas próprias inscrições" on public.usuario_inscricoes;
 create policy "Usuário cria suas próprias inscrições" on public.usuario_inscricoes 
     for insert with check (auth.uid() = user_id);
+
+drop policy if exists "Usuário atualiza suas próprias inscrições" on public.usuario_inscricoes;
 create policy "Usuário atualiza suas próprias inscrições" on public.usuario_inscricoes 
     for update using (auth.uid() = user_id);
 
