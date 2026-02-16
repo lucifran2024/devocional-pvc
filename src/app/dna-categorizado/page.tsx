@@ -30,11 +30,11 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 // ==================== CATEGORIAS ====================
 const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: string }[] = [
     { id: 'devocional', nome: 'Devocional', icon: BookOpen, cor: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
-    { id: 'oração', nome: 'Oração', icon: Heart, cor: 'text-pink-400 bg-pink-500/20 border-pink-500/30' },
-    { id: 'versículo', nome: 'Versículo', icon: Book, cor: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
-    { id: 'reflexão', nome: 'Reflexão', icon: Lightbulb, cor: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
-    { id: 'exortação', nome: 'Exortação', icon: Megaphone, cor: 'text-green-400 bg-green-500/20 border-green-500/30' },
-    { id: 'declaração', nome: 'Declaração', icon: MessageCircle, cor: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
+    { id: 'oracao', nome: 'Oração', icon: Heart, cor: 'text-pink-400 bg-pink-500/20 border-pink-500/30' },
+    { id: 'versiculo', nome: 'Versículo', icon: Book, cor: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
+    { id: 'reflexao', nome: 'Reflexão', icon: Lightbulb, cor: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
+    { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-green-400 bg-green-500/20 border-green-500/30' },
+    { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
     { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-slate-400 bg-slate-500/20 border-slate-500/30' },
 ];
 
@@ -65,7 +65,7 @@ export default function DnaCategorizadoPage() {
     // Edição inline
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editTexto, setEditTexto] = useState('');
-    const [editCategoria, setEditCategoria] = useState<CategoriaDna>('reflexão');
+    const [editCategoria, setEditCategoria] = useState<CategoriaDna>('reflexao');
     const [saving, setSaving] = useState(false);
 
     // Filtro de categoria
@@ -80,7 +80,7 @@ export default function DnaCategorizadoPage() {
     // Form de adição
     const [showAddForm, setShowAddForm] = useState(false);
     const [novoTexto, setNovoTexto] = useState('');
-    const [novaCategoria, setNovaCategoria] = useState<CategoriaDna>('reflexão');
+    const [novaCategoria, setNovaCategoria] = useState<CategoriaDna>('reflexao');
     const [adding, setAdding] = useState(false);
 
     // Geração

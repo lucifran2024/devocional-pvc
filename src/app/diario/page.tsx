@@ -15,11 +15,11 @@ export default function DiarioPage() {
 
     const CATEGORIAS: { value: CategoriaDna; label: string }[] = [
         { value: 'devocional', label: '📖 Devocional' },
-        { value: 'oração', label: '🙏 Oração' },
-        { value: 'versículo', label: '📜 Versículo' },
-        { value: 'reflexão', label: '💭 Reflexão' },
-        { value: 'exortação', label: '🔥 Exortação' },
-        { value: 'declaração', label: '✨ Declaração' },
+        { value: 'oracao', label: '🙏 Oração' },
+        { value: 'versiculo', label: '📜 Versículo' },
+        { value: 'reflexao', label: '💭 Reflexão' },
+        { value: 'exortacao', label: '🔥 Exortação' },
+        { value: 'declaracao', label: '✨ Declaração' },
         { value: 'outro', label: '📝 Outro' }
     ];
 

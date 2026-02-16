@@ -12,10 +12,10 @@ export function CosmicBackground({
     showOrbs = true
 }: CosmicBackgroundProps) {
     return (
-        <div className={`relative min-h-screen bg-[#020617] text-slate-100 overflow-x-hidden ${className}`}>
+        <div className={`relative min-h-screen text-text-primary overflow-x-hidden ${className}`}>
 
             {/* 1. Divine Gradient Background (Base) - SINGLE TONE */}
-            <div className="absolute inset-0 bg-[#020617] z-0 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-transparent z-0 pointer-events-none"></div>
 
             {/* 2. Stardust Pattern Overlay */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] mix-blend-screen z-0 pointer-events-none"></div>

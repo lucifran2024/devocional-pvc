@@ -11,6 +11,7 @@ import { DashboardCard } from '@/components/ui/DashboardCard';
 import { HeroSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -57,7 +58,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30">
+    <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
+      <header className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </header>
 
       {/* 1. HERO SECTION (Imersiva) */}
       <section className="relative w-full pt-32 pb-20 px-6 overflow-hidden">
@@ -76,9 +80,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Date Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-enter">
-            <Calendar className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-2 border border-border-subtle backdrop-blur-md mb-8 animate-enter">
+            <Calendar className="w-3.5 h-3.5 text-accent-primary" />
+            <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">
               {formatarDataExtenso(dataHoje)}
             </span>
           </div>
@@ -86,11 +90,11 @@ export default function DashboardPage() {
           {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
           <div className="w-full relative z-20">
             <div className="flex flex-col items-center mb-2">
-              <h2 className="text-amber-500/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1">
+              <h2 className="text-accent-primary/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1">
                 Palavra da Manhã
               </h2>
               {/* Data da Leitura */}
-              <div className="text-[10px] text-slate-500 font-medium uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
+              <div className="text-[10px] text-text-muted font-medium uppercase tracking-widest bg-surface-2 px-3 py-1 rounded-full border border-border-subtle">
                 {payload?.passagem_do_dia || "Leitura Sagrada"}
               </div>
             </div>

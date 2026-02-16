@@ -1207,7 +1207,7 @@ export async function removeFavoritoById(id: number): Promise<boolean> {
 // DNA CATEGORIZADO - Novo Sistema de Categorização
 // ===========================================
 
-export type CategoriaDna = 'devocional' | 'oração' | 'versículo' | 'reflexão' | 'exortação' | 'declaração' | 'outro';
+export type CategoriaDna = 'devocional' | 'oracao' | 'versiculo' | 'reflexao' | 'exortacao' | 'declaracao' | 'outro';
 
 export interface DnaCategorizado {
     id: number;
@@ -1229,7 +1229,7 @@ export interface CategoriaStats {
  */
 export async function getDnaCategorizado(
     categoria?: CategoriaDna,
-    limit: number = 50
+    limit: number = 1000
 ): Promise<DnaCategorizado[]> {
     console.log(`🧬 [DNA] Buscando (categoria: ${categoria || 'todas'}, limit: ${limit})...`);
 

@@ -120,9 +120,9 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     return (
         <div className="w-full max-w-3xl mx-auto mt-8 relative group animate-enter">
             {/* Efeito de brilho fundo */}
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-purple-500/5 rounded-3xl blur-2xl -z-10 opacity-50"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/5 to-indigo-500/5 rounded-3xl blur-2xl -z-10 opacity-50"></div>
 
-            <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/10 relative overflow-hidden">
+            <div className="glass-panel p-6 md:p-8 border border-border-subtle relative overflow-hidden">
                 {/* Header do Card */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -130,12 +130,12 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                             <Sun className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-text-muted">
                                 {data.dia_semana} • {data.categoria}
                             </span>
                             {/* Se for dia de Passagem do Dia, mostra referência extra */}
                             {data.passagem_ref && (
-                                <span className="text-xs text-amber-400 font-medium flex items-center gap-1">
+                                <span className="text-xs text-accent-primary font-medium flex items-center gap-1">
                                     <BookOpen className="w-3 h-3" />
                                     Ref: {data.passagem_ref}
                                 </span>
@@ -148,8 +148,8 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                             onClick={handleAmen}
                             disabled={amei}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${amei
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 cursor-default'
-                                : 'bg-white/5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-300 hover:border-rose-500/30'
+                                ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30 cursor-default'
+                                : 'bg-surface-2 text-text-secondary hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30'
                                 }`}
                         >
                             <Heart className={`w-3 h-3 ${amei ? 'fill-current' : ''}`} />
@@ -159,8 +159,8 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                         <button
                             onClick={handleCopy}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${copied
-                                ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/5'
+                                ? 'bg-green-500/20 text-green-600 border border-green-500/30'
+                                : 'bg-surface-2 text-text-secondary hover:bg-surface-3 hover:text-text-primary border border-border-subtle'
                                 }`}
                         >
                             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -170,14 +170,14 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                 </div>
 
                 {/* Conteúdo */}
-                <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-amber-100 prose-blockquote:border-amber-500/50 prose-blockquote:bg-amber-500/5 prose-blockquote:px-4 prose-blockquote:py-1">
+                <div className="prose prose-sm md:prose-base max-w-none text-text-secondary prose-headings:text-text-primary prose-blockquote:border-accent-primary/50 prose-blockquote:bg-accent-primary/5 prose-blockquote:px-4 prose-blockquote:py-1">
                     <ReactMarkdown>{data.mensagem}</ReactMarkdown>
                 </div>
 
                 {/* Footer Decorativo */}
-                <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-slate-500 uppercase tracking-widest">
+                <div className="mt-6 pt-4 border-t border-border-subtle flex justify-between items-center text-[10px] text-text-muted uppercase tracking-widest">
                     <span>Inspirado em seu DNA</span>
-                    <Sparkles className="w-3 h-3 text-amber-500/30" />
+                    <Sparkles className="w-3 h-3 text-accent-primary/30" />
                 </div>
             </div>
         </div>

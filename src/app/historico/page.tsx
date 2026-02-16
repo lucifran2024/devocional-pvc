@@ -33,11 +33,11 @@ export default function HistoricoPage() {
 
     const CATEGORIAS_DNA: { value: CategoriaDna; label: string; icon: string }[] = [
         { value: 'devocional', label: 'Devocional', icon: '📖' },
-        { value: 'oração', label: 'Oração', icon: '🙏' },
-        { value: 'versículo', label: 'Versículo', icon: '📜' },
-        { value: 'reflexão', label: 'Reflexão', icon: '💭' },
-        { value: 'exortação', label: 'Exortação', icon: '💪' },
-        { value: 'declaração', label: 'Declaração', icon: '🔥' },
+        { value: 'oracao', label: 'Oração', icon: '🙏' },
+        { value: 'versiculo', label: 'Versículo', icon: '📜' },
+        { value: 'reflexao', label: 'Reflexão', icon: '💭' },
+        { value: 'exortacao', label: 'Exortação', icon: '💪' },
+        { value: 'declaracao', label: 'Declaração', icon: '🔥' },
         { value: 'outro', label: 'Outro', icon: '✨' },
     ];
 

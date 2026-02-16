@@ -4,6 +4,7 @@ import "./globals.css";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { NotificationManager } from "@/components/NotificationManager";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,16 +46,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-surface-0 text-text-primary transition-colors duration-300`}
         suppressHydrationWarning
       >
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
-        <ServiceWorkerRegistration />
-        <NotificationManager />
+        <ThemeProvider defaultTheme="dark" storageKey="devocional-theme">
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+          <ServiceWorkerRegistration />
+          <NotificationManager />
+        </ThemeProvider>
       </body>
     </html>
   );
