@@ -11,7 +11,6 @@ import { DashboardCard } from '@/components/ui/DashboardCard';
 import { HeroSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
-import { SermonRecorderCard } from '@/components/SermonRecorderCard';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -104,11 +103,6 @@ export default function DashboardPage() {
 
       {/* 2. GRID DE FERRAMENTAS (Design Premium) */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 pb-24 z-10">
-
-        {/* NOVO: Gravador de Sermões (Destaque no topo) */}
-        <div className="mb-8 animate-enter">
-          <SermonRecorderCard />
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 animate-enter" style={{ animationDelay: '0.2s' }}>
 
