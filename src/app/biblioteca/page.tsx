@@ -1111,15 +1111,15 @@ export default function BibliotecaPage() {
     return (
         <CosmicBackground className="min-h-screen">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
+            <header className="sticky top-0 z-50 bg-surface-0/80 backdrop-blur-xl border-b border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                    <Link href="/" className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
 
                     <div className="flex items-center gap-2">
                         <Book className="w-5 h-5 text-amber-400" />
-                        <span className="text-sm font-bold text-white">Bíblia Sagrada</span>
+                        <span className="text-sm font-bold text-text-primary">Bíblia Sagrada</span>
                         {/* Indicador de conectividade */}
                         {!isOnline ? (
                             <span className="flex items-center gap-1 text-[10px] text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded-full">
@@ -1203,14 +1203,14 @@ export default function BibliotecaPage() {
             </header>
 
             {/* Barra de Navegação (Sticky) */}
-            <div className="sticky top-[57px] z-40 bg-black/60 backdrop-blur-xl border-b border-white/5">
+            <div className="sticky top-[57px] z-40 bg-surface-0/80 backdrop-blur-xl border-b border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-                    <button onClick={abrirModal} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors group">
+                    <button onClick={abrirModal} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-surface-2 transition-colors group">
                         <div className="text-left min-w-0">
-                            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Leitura</div>
-                            <div className="text-white font-bold text-sm flex items-center gap-1 truncate">
+                            <div className="text-[10px] text-text-muted uppercase tracking-wider">Leitura</div>
+                            <div className="text-text-primary font-bold text-sm flex items-center gap-1 truncate">
                                 {livroAtual.nome} {capituloAtual}
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                                <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
                             </div>
                         </div>
                     </button>
@@ -1219,7 +1219,7 @@ export default function BibliotecaPage() {
                     <div className="relative">
                         <button
                             onClick={() => setMostrarVersoes(!mostrarVersoes)}
-                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-1.5"
+                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-surface-2 transition-colors flex items-center gap-1.5"
                             title="Versão da Bíblia"
                         >
                             <Languages className="w-4 h-4 text-amber-400" />
@@ -1228,9 +1228,9 @@ export default function BibliotecaPage() {
                         </button>
 
                         {mostrarVersoes && (
-                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-slate-900/98 border border-white/15 rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-surface-2/98 border border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                                 <div className="p-2 border-b border-white/10">
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
                                 </div>
                                 <div className="max-h-64 overflow-y-auto p-1.5">
                                     {VERSOES_BIBLIA.map(v => (
@@ -1238,14 +1238,14 @@ export default function BibliotecaPage() {
                                             key={v.codigo}
                                             onClick={() => trocarVersao(v)}
                                             className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${versaoBiblia.codigo === v.codigo
-                                                    ? 'bg-amber-500/20 border border-amber-500/30'
-                                                    : 'hover:bg-white/10 border border-transparent'
+                                                ? 'bg-amber-500/20 border border-amber-500/30'
+                                                : 'hover:bg-surface-1 border border-transparent'
                                                 }`}
                                         >
-                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-400' : 'text-white'}`}>
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-400' : 'text-text-primary'}`}>
                                                 {v.nome}
                                             </span>
-                                            <span className="text-xs text-slate-400 truncate">{v.nomeCompleto}</span>
+                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -1258,28 +1258,28 @@ export default function BibliotecaPage() {
                         <button
                             onClick={diminuirFonte}
                             disabled={!canDecrease}
-                            className="p-2.5 hover:bg-white/10 transition-colors disabled:opacity-30"
+                            className="p-2.5 hover:bg-surface-2 transition-colors disabled:opacity-30"
                             title="Diminuir fonte"
                         >
-                            <Minus className="w-4 h-4 text-white" />
+                            <Minus className="w-4 h-4 text-text-primary" />
                         </button>
                         <span className="text-[10px] font-bold text-amber-400 px-1 min-w-[20px] text-center">{fontConfig.label}</span>
                         <button
                             onClick={aumentarFonte}
                             disabled={!canIncrease}
-                            className="p-2.5 hover:bg-white/10 transition-colors disabled:opacity-30"
+                            className="p-2.5 hover:bg-surface-2 transition-colors disabled:opacity-30"
                             title="Aumentar fonte"
                         >
-                            <Plus className="w-4 h-4 text-white" />
+                            <Plus className="w-4 h-4 text-text-primary" />
                         </button>
                     </div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
-                            <ChevronLeft className="w-5 h-5 text-white" />
+                        <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
+                            <ChevronLeft className="w-5 h-5 text-text-primary" />
                         </button>
-                        <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-white/10 transition-colors">
-                            <ChevronRight className="w-5 h-5 text-white" />
+                        <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
+                            <ChevronRight className="w-5 h-5 text-text-primary" />
                         </button>
                     </div>
                 </div>
@@ -1292,9 +1292,9 @@ export default function BibliotecaPage() {
 
             {/* --- MODAL DE SELEÇÃO --- */}
             {modalAberto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="glass-panel rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col overflow-hidden border border-white/10 shadow-2xl">
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="glass-panel rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col overflow-hidden border border-border-subtle shadow-2xl">
+                        <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2/50">
                             {faseSelecao === 'capitulos' ? (
                                 <button onClick={() => setFaseSelecao('livros')} className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium">
                                     <ArrowLeft className="w-4 h-4" /> Voltar
@@ -1304,27 +1304,27 @@ export default function BibliotecaPage() {
                                     <ArrowLeft className="w-4 h-4" /> Voltar
                                 </button>
                             ) : <div className="w-16" />}
-                            <h3 className="text-lg font-bold text-white">
+                            <h3 className="text-lg font-bold text-text-primary">
                                 {faseSelecao === 'livros' ? 'Escolha o Livro' : faseSelecao === 'capitulos' ? livroSelecionadoTemp.nome : `${livroSelecionadoTemp.nome} ${capituloSelecionadoTemp}`}
                             </h3>
-                            <button onClick={() => setModalAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                            <button onClick={() => setModalAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="overflow-y-auto flex-1 p-2">
                             {faseSelecao === 'livros' && (
                                 <div className="space-y-4 p-2">
                                     {CATEGORIAS_BIBLIA.map(cat => (
                                         <div key={cat.nome}>
-                                            <div className="flex items-center gap-2 mb-2 sticky top-0 bg-black/40 backdrop-blur-sm py-1.5 px-1 rounded-lg z-10">
+                                            <div className="flex items-center gap-2 mb-2 sticky top-0 bg-surface-0/90 backdrop-blur-sm py-1.5 px-1 rounded-lg z-10">
                                                 <span className="text-base">{cat.emoji}</span>
                                                 <h4 className={`text-xs font-bold uppercase tracking-wider ${cat.cor}`}>{cat.nome}</h4>
-                                                <div className="flex-1 h-px bg-white/10" />
+                                                <div className="flex-1 h-px bg-border-subtle" />
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                                                 {cat.livros.map(livro => (
                                                     <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                        className={`p-2.5 rounded-xl text-left transition-all border ${livro.abrev === livroAtual.abrev ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-white/5 border-transparent hover:bg-white/10 text-slate-300'}`}>
+                                                        className={`p-2.5 rounded-xl text-left transition-all border ${livro.abrev === livroAtual.abrev ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-surface-1 border-transparent hover:bg-surface-2 text-text-secondary'}`}>
                                                         <div className="font-bold text-sm truncate">{livro.nome}</div>
-                                                        <div className="text-[10px] text-slate-500 mt-0.5">{livro.capitulos} caps</div>
+                                                        <div className="text-[10px] text-text-muted mt-0.5">{livro.capitulos} caps</div>
                                                     </button>
                                                 ))}
                                             </div>
@@ -1336,7 +1336,7 @@ export default function BibliotecaPage() {
                                 <div className="grid grid-cols-5 sm:grid-cols-6 gap-3 p-2">
                                     {Array.from({ length: livroSelecionadoTemp.capitulos }, (_, i) => i + 1).map(cap => (
                                         <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
-                                            className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold transition-all border ${(livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual) ? 'bg-amber-500 text-black border-amber-400' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/20'}`}>
+                                            className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold transition-all border ${(livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual) ? 'bg-amber-500 text-black border-amber-400' : 'bg-surface-1 border-border-subtle text-text-secondary hover:bg-surface-2'}`}>
                                             {cap}
                                         </button>
                                     ))}
@@ -1349,7 +1349,7 @@ export default function BibliotecaPage() {
                                         Abrir capítulo inteiro
                                     </button>
 
-                                    <p className="text-slate-500 text-xs text-center mb-3">Ou escolha um versículo para ir direto:</p>
+                                    <p className="text-text-muted text-xs text-center mb-3">Ou escolha um versículo para ir direto:</p>
 
                                     {loadingVersiculosTemp ? (
                                         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-amber-400 animate-spin" /></div>
@@ -1357,13 +1357,13 @@ export default function BibliotecaPage() {
                                         <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
                                             {Array.from({ length: totalVersiculosTemp }, (_, i) => i + 1).map(v => (
                                                 <button key={v} onClick={() => confirmarSelecao(v)}
-                                                    className="aspect-square flex items-center justify-center rounded-lg text-sm font-bold transition-all border bg-white/5 border-white/10 text-slate-300 hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-400">
+                                                    className="aspect-square flex items-center justify-center rounded-lg text-sm font-bold transition-all border bg-surface-1 border-border-subtle text-text-secondary hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-400">
                                                     {v}
                                                 </button>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-center text-slate-500 py-4">Não foi possível carregar versículos</p>
+                                        <p className="text-center text-text-muted py-4">Não foi possível carregar versículos</p>
                                     )}
                                 </div>
                             )}
@@ -1374,14 +1374,14 @@ export default function BibliotecaPage() {
 
             {/* --- MODAL DE ESTUDO IA --- */}
             {estudoAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-white/10">
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-border-subtle">
+                        <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2/50">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-400" />
-                                <span className="font-bold text-white text-base">Estudo — {livroAtual.nome} {capituloAtual}:{estudoVersiculo?.verse}</span>
+                                <span className="font-bold text-text-primary text-base">Estudo — {livroAtual.nome} {capituloAtual}:{estudoVersiculo?.verse}</span>
                             </div>
-                            <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                            <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
                         </div>
 
                         {/* Versículo destacado */}
@@ -1398,7 +1398,7 @@ export default function BibliotecaPage() {
                                     <p className="text-slate-400 text-sm">Gerando explicação...</p>
                                 </div>
                             ) : (
-                                <div className="text-slate-200 text-lg md:text-xl leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
+                                <div className="text-text-primary text-lg md:text-xl leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
                             )}
                         </div>
                     </div>
@@ -1435,10 +1435,10 @@ export default function BibliotecaPage() {
                                         <div key={item.id} className="flex items-start gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                                             <button onClick={() => navegarParaItem(item)} className="flex-1 text-left">
                                                 <div className="text-amber-400 text-sm font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
-                                                <div className={`text-slate-200 ${fontConfig.salvos} mt-1.5 line-clamp-4 leading-relaxed font-serif`}>{item.texto_versiculo}</div>
-                                                {item.nota && <div className="text-slate-400 text-sm mt-2 italic bg-white/5 rounded-lg px-3 py-2">{item.nota}</div>}
+                                                <div className={`text-text-primary ${fontConfig.salvos} mt-1.5 line-clamp-4 leading-relaxed font-serif`}>{item.texto_versiculo}</div>
+                                                {item.nota && <div className="text-text-muted text-sm mt-2 italic bg-surface-2 rounded-lg px-3 py-2">{item.nota}</div>}
                                             </button>
-                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all shrink-0">
+                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-text-muted hover:text-red-400 transition-all shrink-0">
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
                                         </div>
@@ -1480,7 +1480,7 @@ export default function BibliotecaPage() {
                             value={textoNota}
                             onChange={e => setTextoNota(e.target.value)}
                             placeholder="Escreva sua anotação, reflexão, oração, insight..."
-                            className="flex-1 w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-base leading-relaxed placeholder-slate-500 focus:outline-none focus:border-blue-500/50 resize-none"
+                            className="flex-1 w-full bg-surface-1 border border-border-subtle rounded-2xl px-5 py-4 text-text-primary text-base leading-relaxed placeholder-text-muted focus:outline-none focus:border-blue-500/50 resize-none"
                             autoFocus
                         />
                     </div>
@@ -1579,9 +1579,9 @@ export default function BibliotecaPage() {
 
             {/* Conteúdo Principal */}
             <main className="max-w-4xl mx-auto px-4 py-6">
-                <h1 className="text-2xl md:text-3xl font-black text-white mb-6 text-center tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-black text-text-primary mb-6 text-center tracking-tight">
                     {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
-                    <span className="ml-2 text-xs font-medium text-slate-500 bg-white/5 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
+                    <span className="ml-2 text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
                 </h1>
 
                 {loading && (

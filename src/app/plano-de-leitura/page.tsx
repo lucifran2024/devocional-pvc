@@ -253,7 +253,7 @@ function VersiculosInterativos({
                             ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
                         `}
                     >
-                        <p className="inline text-lg md:text-xl leading-relaxed text-slate-200 font-serif">
+                        <p className="inline text-lg md:text-xl leading-relaxed text-text-primary font-serif">
                             <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
                             {v.text}
                         </p>
@@ -265,7 +265,7 @@ function VersiculosInterativos({
                         {/* MINI-TOOLBAR */}
                         {versiculoSelecionado === v.verse && (
                             <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center gap-1 bg-slate-900/95 border border-white/15 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
                                     <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
                                         <Palette className="w-5 h-5" />
                                     </button>
@@ -287,7 +287,7 @@ function VersiculosInterativos({
                                 </div>
 
                                 {mostrarCores && (
-                                    <div className="mt-1.5 flex items-center gap-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                    <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
                                         {CORES_DESTAQUE_PLANO.map(cor => (
                                             <button key={cor.id} onClick={() => handleDestacar(cor.id)}
                                                 className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
@@ -303,10 +303,10 @@ function VersiculosInterativos({
                                 )}
 
                                 {mostrarNota && (
-                                    <div className="mt-1.5 bg-slate-900/95 border border-white/15 rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
+                                    <div className="mt-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
                                         <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
                                             placeholder="Escreva sua anotação..."
-                                            className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-base placeholder-slate-500 focus:outline-none focus:border-amber-500/50 resize-none"
+                                            className="w-full bg-surface-1 border border-border-strong rounded-xl px-4 py-3 text-text-primary text-base placeholder-text-muted focus:outline-none focus:border-amber-500/50 resize-none"
                                             rows={3} autoFocus />
                                         <div className="flex justify-end gap-2 mt-2">
                                             {interacoesMap.notas[v.verse] && (
@@ -339,7 +339,7 @@ function VersiculosInterativos({
                         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-400" />
-                                <span className="font-bold text-white text-base">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
+                                <span className="font-bold text-text-primary text-base">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
                             </div>
                             <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
                         </div>
@@ -352,10 +352,10 @@ function VersiculosInterativos({
                             {estudoLoading ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                                     <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
-                                    <p className="text-slate-400 text-sm">Gerando explicação...</p>
+                                    <p className="text-text-muted text-sm">Gerando explicação...</p>
                                 </div>
                             ) : (
-                                <div className="text-slate-200 text-base leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
+                                <div className="text-text-primary text-base leading-relaxed whitespace-pre-wrap">{estudoTexto}</div>
                             )}
                         </div>
                     </div>
