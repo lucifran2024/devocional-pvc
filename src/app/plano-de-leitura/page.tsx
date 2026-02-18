@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
     Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
-    ChevronRight, RotateCcw, GraduationCap, Clock, Search,
-    Globe, Rocket, Zap, Building, MessageSquare, ClipboardList, ArrowRight,
+    ChevronRight, RotateCcw, GraduationCap, Search,
+    Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X
 } from 'lucide-react';
 import {
@@ -377,7 +377,7 @@ interface ChatMessage {
     timestamp: Date;
 }
 
-type MenuOption = '1' | '2' | '3' | '4' | '5' | '6' | '7' | null;
+type MenuOption = '1' | '2' | '3' | '4' | null;
 
 // ===========================================
 // MENU OPTIONS CONFIG
@@ -385,12 +385,9 @@ type MenuOption = '1' | '2' | '3' | '4' | '5' | '6' | '7' | null;
 
 const MENU_OPTIONS = [
     { id: '1', icon: Book, label: 'Ler Passagem', desc: 'Texto bíblico puro, leitura rápida.' },
-    { id: '2', icon: Clock, label: 'Linha do Tempo', desc: 'Personagens, cenário e sequência dos fatos.' },
-    { id: '3', icon: Search, label: 'Estudo Profundo', desc: 'Teologia, palavras-chave e simbolismos.' },
-    { id: '4', icon: Globe, label: 'Contexto Histórico', desc: 'Cultura, geografia e costumes.' },
-    { id: '5', icon: Rocket, label: 'Aplicação Prática', desc: 'Como viver isso nas próximas 24–48h.' },
-    { id: '6', icon: Zap, label: 'Síntese Completa', desc: 'Visão panorâmica e resumo executivo.' },
-    { id: '7', icon: Building, label: 'Exposição Detalhada', desc: 'Análise verso a verso com profundidade.' },
+    { id: '2', icon: Search, label: 'Estudo Profundo', desc: 'Teologia, palavras-chave e simbolismos.' },
+    { id: '3', icon: Rocket, label: 'Aplicação Prática', desc: 'Como viver isso nas próximas 24–48h.' },
+    { id: '4', icon: Zap, label: 'Síntese Rápida', desc: 'Visão panorâmica e resumo executivo.' },
 ] as const;
 
 // ===========================================
@@ -805,12 +802,9 @@ Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 Escolha uma das opções abaixo:
 
 1. 📖 **Ler Passagem** — Texto bíblico puro
-2. 🧭 **Linha do Tempo** — Personagens e cenário
-3. 🔍 **Estudo Profundo** — Teologia e simbolismos
-4. 🌍 **Contexto Histórico** — Cultura e costumes
-5. 🚀 **Aplicação Prática** — Como viver isso hoje
-6. ⚡ **Síntese Completa** — Resumo executivo
-7. 🏛️ **Exposição Detalhada** — Análise verso a verso
+2. 🔍 **Estudo Profundo** — Teologia e simbolismos
+3. 🚀 **Aplicação Prática** — Como viver isso hoje
+4. ⚡ **Síntese Rápida** — Resumo executivo
 
 Estou pronto para guiá-lo nesta jornada espiritual.`;
     };
@@ -833,7 +827,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         }
 
         // Números do menu
-        const numMatch = cmdLower.match(/^[1-9]$/);
+        const numMatch = cmdLower.match(/^[1-4]$/);
         if (numMatch) {
             if (isPlanoMode) {
                 return 'Neste plano, use **CONTINUAR** para seguir a leitura do dia.';
@@ -866,7 +860,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         if (isPlanoMode) {
             return 'Comando não reconhecido. Use **CONTINUAR** para avançar na leitura.';
         }
-        return `Não entendi o comando. Digite um número de **1 a 7** ou **MENU** para ver as opções.`;
+        return `Não entendi o comando. Digite um número de **1 a 4** ou **MENU** para ver as opções.`;
     };
 
     // Gerar resposta para cada opção
@@ -877,17 +871,11 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
             case '1':
                 return gerarLeituraGuiada();
             case '2':
-                return gerarLinhaTempo();
+                return await gerarEstudoIA('estudo_profundo');
             case '3':
-                return gerarEstudoProfundo();
+                return await gerarEstudoIA('aplicacao_pratica');
             case '4':
-                return gerarContextoHistorico();
-            case '5':
-                return gerarAplicacaoPratica();
-            case '6':
-                return gerarSinteseCompleta();
-            case '7':
-                return gerarExposicaoDetalhada();
+                return await gerarEstudoIA('sintese_rapida');
             default:
                 return 'Opção não reconhecida.';
         }
@@ -961,417 +949,52 @@ Ou **MENU** para voltar.`;
         }
     };
 
-    // Opção 2: Linha do Tempo
-    const gerarLinhaTempo = (): string => {
-        if (!passagem) return '';
-
-        return `🧭 **LINHA DO TEMPO: ${passagem.referencia}**
-
----
-
-**📍 PERSONAGENS PRINCIPAIS**
-
-• **Isaías** — O profeta, porta-voz de Deus, filho de Amoz
-• **Babilônia** — A nação poderosa e orgulhosa (representação do mal)
-• **Moabe** — Reino vizinho de Israel, também sob juízo
-• **O Senhor dos Exércitos** — Deus como comandante supremo
-
----
-
-**🏛️ CENÁRIO**
-
-• **Época:** ~740-700 a.C., durante o reinado de reis de Judá
-• **Local:** Profecia dada em Judá, sobre nações vizinhas
-• **Clima emocional:** Tensão apocalíptica, juízo iminente, advertência severa
-
----
-
-**📜 SEQUÊNCIA DOS FATOS**
-
-1. **Cap. 13:** Anúncio do Dia do Senhor contra Babilônia
-2. **Cap. 14:1-23:** Queda do rei da Babilônia (o "astro brilhante")
-3. **Cap. 14:24-27:** Juízo contra a Assíria
-4. **Cap. 14:28-32:** Profecia contra os filisteus
-5. **Cap. 15:** Lamento sobre a destruição de Moabe
-
----
-
-**⚔️ CONFLITO E RESOLUÇÃO**
-
-• **Conflito:** O orgulho das nações desafia a soberania de Deus
-• **Tensão:** Como o mal pode prosperar enquanto os justos sofrem?
-• **Resolução:** O Dia do Senhor trará justiça — nenhum poder humano permanece
-
----
-
-**✝️ ONDE CRISTO APARECE?**
-
-A queda do "astro brilhante" (Is 14:12) prefigura a vitória de Cristo sobre Satanás. Jesus é o verdadeiro Rei que derrota todo orgulho e estabelece Seu reino eterno.
-
----
-Digite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
-    };
-
-    // Opção 3: Estudo Profundo
-    const gerarEstudoProfundo = (): string => {
-        if (!passagem) return '';
-
-        return `🔍 **ESTUDO PROFUNDO: ${passagem.referencia}**
-
----
-
-**📚 PALAVRAS-CHAVE**
-
-${passagem.lexico_do_dia.map(p => `• **${p}**`).join('\n')}
-
----
-
-**🎓 TERMOS TEOLÓGICOS**
-
-**1. "O Dia do Senhor" (Yom YHWH)**
-Expressão profética para o momento em que Deus intervém diretamente na história para julgar o mal e salvar seu povo. Não é um dia de 24 horas, mas um período de juízo divino.
-
-**2. "Babilônia"**
-Mais que uma cidade, representa o sistema mundial em oposição a Deus. No Apocalipse, "Babilônia" simboliza toda forma de idolatria e orgulho humano (Ap 17-18).
-
----
-
-**🔗 PARALELOS BÍBLICOS**
-
-• **Is 13:10** → **Mt 24:29** — Jesus cita Isaías ao falar do fim dos tempos
-• **Is 14:12-15** → **Lc 10:18** — "Vi Satanás caindo do céu como um relâmpago"
-
----
-
-**❓ PERGUNTAS TEOLÓGICAS**
-
-**1. O que isso revela sobre Deus?**
-Deus é soberano sobre todas as nações. Nenhum poder humano, por maior que seja, escapa do seu juízo. Ele é justo e não deixa o mal impune.
-
-**2. O que revela sobre o coração humano?**
-O orgulho é a raiz de todo pecado. Babilônia queria "subir acima das estrelas" — a ambição de ser Deus. Este é o pecado original repetido.
-
----
-
-**⚠️ O QUE NÃO SIGNIFICA**
-
-• ❌ Não é uma previsão literal sobre o atual país do Iraque
-• ❌ Não significa que Deus é cruel — o juízo é consequência do pecado
-• ❌ Não quer dizer que devemos temer o fim do mundo constantemente
-
----
-Digite outro **NÚMERO** ou **MENU** para voltar.`;
-    };
-
-    // Opção 4: Contexto Histórico
-    const gerarContextoHistorico = (): string => {
-        if (!passagem) return '';
-
-        return `🌍 **CONTEXTO HISTÓRICO: ${passagem.referencia}**
-
----
-
-**🗺️ GEOGRAFIA**
-
-• **Babilônia:** Localizada na Mesopotâmia (atual Iraque), entre os rios Tigre e Eufrates
-• **Moabe:** A leste do Mar Morto, região montanhosa
-• **Distância de Jerusalém:** ~900km até Babilônia, ~80km até Moabe
-
----
-
-**👑 CENÁRIO POLÍTICO**
-
-• **Época:** Século VIII a.C.
-• **Judá:** Reino do sul, ainda independente mas sob ameaça
-• **Assíria:** Superpotência dominante na época de Isaías
-• **Babilônia:** Ainda subordinada à Assíria, mas profetizada como futura conquistadora
-
----
-
-**🏛️ ESTRUTURA SOCIAL**
-
-• **Profecias contra nações:** Prática comum dos profetas (também em Amós, Ezequiel)
-• **Função:** Mostrar que Deus é Senhor de TODAS as nações, não só de Israel
-• **Audiência:** Os israelitas, para ensinar sobre a soberania divina
-
----
-
-**📿 COSTUMES E RELIGIÃO**
-
-• **Babilônia:** Famosa pelos zigurates e adoração a Marduk
-• **Moabe:** Adoravam Quemós, com sacrifícios de crianças
-• **Israel:** Chamado a ser separado dessas práticas pagãs
-
----
-
-**💡 POR QUE FAZ SENTIDO PARA OS PRIMEIROS LEITORES?**
-
-Os israelitas viviam sob constante ameaça de impérios maiores. Ouvir que Deus julgaria até a poderosa Babilônia trazia:
-1. **Consolo:** Deus vê a injustiça e agirá
-2. **Advertência:** Israel também será julgado se pecar
-3. **Esperança:** O Senhor está no controle da história
-
----
-
-**🔄 CONEXÃO COM HOJE**
-
-Assim como Babilônia representava o poder mundano, hoje enfrentamos "babilônias" modernas: sistemas de orgulho, consumismo, e ideologias que desafiam Deus. A mensagem permanece: nenhum poder humano prevalece contra o Senhor.
-
----
-Digite outro **NÚMERO** ou **MENU** para voltar.`;
-    };
-
-    // Opção 5: Aplicação Prática
-    const gerarAplicacaoPratica = (): string => {
-        if (!passagem) return '';
-
-        return `🚀 **APLICAÇÃO PRÁTICA: ${passagem.referencia}**
-
----
-
-**O que posso viver nas próximas 24–48h?**
-
----
-
-**1. 🏠 EM CASA: Examinar meu orgulho**
-
-O rei de Babilônia caiu por querer "subir acima das estrelas". 
-
-**Ação concreta:** Hoje, identifique uma área onde você se sente "superior" a alguém (família, cônjuge, filhos). Peça perdão internamente e demonstre humildade com um ato de serviço (lavar a louça, ouvir sem interromper).
-
----
-
-**2. 💼 NO TRABALHO: Confiar na soberania de Deus**
-
-Isaías mostra que até impérios caem quando Deus decide. Nenhum chefe, empresa ou crise econômica está acima do Senhor.
-
-**Ação concreta:** Se você está ansioso com o trabalho, ore especificamente: "Senhor, Tu és o Senhor dos Exércitos, também sobre minha carreira. Ajuda-me a confiar."
-
----
-
-**3. 💭 NO CORAÇÃO: Abandonar o "astro brilhante" interno**
-
-Todos temos a tentação de querer brilhar mais que os outros. 
-
-**Ação concreta:** Quando receber um elogio hoje, mentalmente redirecione a glória a Deus. Diga internamente: "Obrigado, Senhor, por usar alguém tão falho quanto eu."
-
----
-
-**⚠️ O QUE EVITAR**
-
-• ❌ Não use o texto para julgar outras nações ou pessoas
-• ❌ Não tenha medo paralisante do juízo — a graça de Cristo nos cobre
-• ❌ Não leia como curiosidade apocalíptica, mas como convite à humildade
-
----
-
-**🙏 ORAÇÃO SUGERIDA**
-
-*"Senhor, Tu resististe ao orgulho de Babilônia. Resiste também ao meu. Mostra-me onde estou querendo 'subir acima das estrelas' e me dá a graça de descer como Jesus desceu. Amém."*
-
----
-Digite outro **NÚMERO** ou **MENU** para voltar.`;
-    };
-
-    // Opção 6: Síntese Completa
-    const gerarSinteseCompleta = (): string => {
-        if (!passagem) return '';
-
-        const insights = passagem.insights_pre_minerados;
-
-        return `⚡ **SÍNTESE COMPLETA: ${passagem.referencia}**
-
----
-
-**🎯 A GRANDE IDEIA**
-
-> **${insights[0]?.tese || 'O Dia do Senhor revela que nenhum poder humano permanece diante da soberania divina.'}**
-
----
-
-**📋 PONTOS-CHAVE**
-
-${insights.map((i, idx) => `${idx + 1}. **${i.familia}:** ${i.tese} *(${i.verso_suporte})*`).join('\n')}
-
----
-
-**🔚 DESFECHO**
-
-A tensão entre o orgulho humano e a soberania de Deus se resolve no **Dia do Senhor**:
-- Babilônia cai — o orgulho é humilhado
-- Moabe lamenta — o juízo é inevitável
-- Mas há esperança implícita — quem se humilha diante de Deus encontra graça
-
----
-
-**💎 RESUMO EXECUTIVO (para quem tem 30 segundos)**
-
-Isaías 13-15 profetiza contra nações orgulhosas. **Babilônia**, símbolo do poder humano, cairá no "Dia do Senhor". **Moabe** também será destruída. A mensagem central: **nenhum império resiste a Deus**. Para nós hoje: humildade diante do Senhor é o único caminho seguro.
-
----
-
-**✝️ CONEXÃO COM O EVANGELHO**
-
-Cristo tomou sobre si o juízo que merecíamos. O "Dia do Senhor" que seria nossa condenação tornou-se, pela cruz, nosso dia de salvação.
-
----
-Digite outro **NÚMERO** ou **MENU** para voltar.`;
-    };
-
-    // Opção 7: Exposição Detalhada
-    const gerarExposicaoDetalhada = (): string => {
-        if (!passagem) return '';
-
-        return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
-📍 *Bloco 1 de 3: Isaías 13 — O Dia do Senhor contra Babilônia*
-
----
-
-**VERSÍCULOS 1-5: O Exército Divino**
-
-> "Sentença contra Babilônia, que Isaías, filho de Amoz, recebeu em visão."
-
-**Sentido original:** A palavra "sentença" (hebr. *massa*) significa "peso/fardo". Isaías carrega uma mensagem pesada de juízo. Babilônia, embora ainda não seja a superpotência que será em 586 a.C., já representa o orgulho humano.
-
-**Conexão bíblica:** Este padrão de "sentença contra nações" aparece em Amós 1-2 e Ezequiel 25-32. Deus julga todas as nações, não apenas Israel.
-
-**Apontando para Cristo:** Jesus é o verdadeiro "Senhor dos Exércitos" (Mt 26:53). Ele poderia convocar legiões de anjos, mas escolheu a cruz.
-
----
-
-**VERSÍCULOS 6-9: O Dia Terrível**
-
-> "Gemam, pois o dia do Senhor está perto; ele vem como uma destruição do Todo-Poderoso."
-
-**Sentido original:** O "Dia do Senhor" (Yom YHWH) é o motivo central dos profetas. É quando Deus invade a história para acertar as contas.
-
-**Conexão bíblica:** Joel 2:1, Amós 5:18, Sofonias 1:14 — todos ecoam este tema. O NT o conecta à volta de Cristo (1 Ts 5:2).
-
-**Apontando para Cristo:** Na cruz, Jesus enfrentou o "Dia do Senhor" em nosso lugar. O terror que deveria nos destruir caiu sobre Ele.
-
----
-
-**VERSÍCULOS 10-16: Sinais Cósmicos**
-
-> "As estrelas e constelações dos céus não darão sua luz."
-
-**Sentido original:** Linguagem apocalíptica para descrever a magnitude do juízo. Não é literal, mas poética — o universo reage diante de Deus.
-
-**Conexão bíblica:** Jesus usa estas imagens em Mateus 24:29 ao falar do fim dos tempos.
-
----
-
-Digite **CONTINUAR** para o próximo bloco (Is 14: A Queda do Rei).
-Ou **MENU** para voltar.`;
-    };
-
-    // Opção 9: Quiz
-    const gerarQuiz = (): string => {
-        if (!passagem) return '';
-
-        return `📝 **REVISÃO & QUIZ: ${passagem.referencia}**
-
----
-
-Agora é você que fala! Responda por escrito aqui ou pense/responda em voz alta. Se você escrever, eu consigo te dar feedback.
-
----
-
-**PERGUNTA 1 — Compreensão**
-
-> Qual nação é o principal alvo da profecia em Isaías 13?
-
-*(Pense antes de responder...)*
-
----
-
-**PERGUNTA 2 — Interpretação**
-
-> O que o "Dia do Senhor" ensina sobre o caráter de Deus?
-
-*Dica: pense em justiça, soberania, santidade...*
-
----
-
-**PERGUNTA 3 — Aplicação Pessoal**
-
-> Em que área da sua vida você pode estar agindo como "Babilônia" — com orgulho ou auto-suficiência?
-
-*Seja honesto consigo mesmo...*
-
----
-
-**PERGUNTA 4 — Conexão Bíblica**
-
-> Isaías 14:12 fala de alguém que queria "subir acima das estrelas". Jesus disse algo parecido sobre Satanás. Você lembra onde?
-
-*Dica: Lucas 10...*
-
----
-
-**PERGUNTA 5 — Síntese**
-
-> Se você tivesse que resumir Isaías 13-15 em UMA frase para um amigo, o que diria?
-
----
-
-📬 **Escreva suas respostas abaixo!**
-Eu te darei feedback. Ou digite **MENU** para voltar às opções.`;
-    };
-
-    // Processar pergunta do chat pastoral
-    const processarChatPastoral = async (pergunta: string): Promise<string> => {
+    // Gerar estudo via IA (Edge Function)
+    const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
         if (!passagem) return 'Passagem não carregada.';
 
-        // Simulação de resposta pastoral inteligente baseada no contexto
-        // Em produção, isso seria uma chamada para a Edge Function com IA
+        // Pegar todos os versículos disponíveis como texto
+        const versiculosTexto = bibleData
+            ? bibleData.versiculos.map(v => `${v.verse}. ${v.text?.replace(/<[^>]*>/g, '') || ''}`).join('\n')
+            : '';
 
-        const perguntaLower = pergunta.toLowerCase();
-
-        if (perguntaLower.includes('por que') || perguntaLower.includes('porque')) {
-            return `Ótima pergunta! 
-
-Baseado em **${passagem.referencia}**, posso te ajudar a entender...
-
-${passagem.insights_pre_minerados.slice(0, 2).map(i => `• **${i.verso_suporte}:** ${i.tese}`).join('\n')}
-
-O texto nos ensina que Deus é soberano sobre todas as nações. A Babilônia, por mais poderosa que fosse, não estava fora do alcance do juízo divino.
-
----
-
-Faz sentido para você? Quer que aprofunde mais algum ponto?`;
+        if (!versiculosTexto) {
+            return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
         }
 
-        if (perguntaLower.includes('como aplicar') || perguntaLower.includes('como viver')) {
-            return `Essa é uma pergunta muito prática!
+        try {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    modo_id: 'estudo_biblico',
+                    data: new Date().toISOString().split('T')[0],
+                    referencia: passagem.referencia,
+                    versiculos: versiculosTexto,
+                    tipo_estudo: tipoEstudo
+                })
+            });
 
-De **${passagem.referencia}**, podemos extrair aplicações diretas:
+            if (!resp.ok) {
+                throw new Error(`Erro ${resp.status}`);
+            }
 
-1. **Humildade:** O orgulho de Babilônia foi sua ruína. Onde você pode praticar humildade hoje?
+            const data = await resp.json();
 
-2. **Confiança:** Deus está no controle — mesmo quando nações parecem invencíveis. Você pode descansar nisso.
-
-3. **Vigilância:** O "Dia do Senhor" veio para Babilônia. Estamos vivendo de forma que nos preparamos para encontrar nosso Senhor?
-
----
-
-Qual dessas aplicações ressoa mais com você hoje?`;
+            if (data.ok && data.resultado) {
+                return `${data.resultado}\n\n---\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
+            } else {
+                throw new Error(data.error || 'Erro ao gerar estudo');
+            }
+        } catch (error) {
+            console.error('Erro ao gerar estudo IA:', error);
+            return `❌ **Erro ao gerar estudo**\n\nNão foi possível gerar o conteúdo no momento. Tente novamente.\n\n---\nDigite **MENU** para voltar.`;
         }
-
-        // Resposta genérica
-        return `Obrigado por compartilhar essa reflexão sobre **${passagem.referencia}**!
-
-Deixa eu te ajudar a pensar nisso à luz do texto...
-
-O profeta Isaías nos mostra que:
-${passagem.insights_pre_minerados[0] ? `• ${passagem.insights_pre_minerados[0].tese}` : ''}
-
-A passagem de hoje nos confronta com a soberania de Deus sobre TODAS as nações e circunstâncias.
-
----
-
-Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os versículos ${passagem.insights_pre_minerados[0]?.verso_suporte || '13:1-9'}.`;
     };
+
 
     // Processar comando CONTINUAR
     const processarContinuar = async (): Promise<string> => {
@@ -1438,108 +1061,8 @@ Quer explorar mais algum aspecto específico? Ou posso te sugerir reler os vers�
             return gerarLeituraParte(nextPage);
         }
 
-        // OPÇÃO 7: EXPOSIÇÃO DETALHADA
-        if (activeOption === '7') {
-            if (page === 1) {
-                currentPageRef.current = 2;
-                setCurrentPage(2);
-                return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
-📍 *Bloco 2 de 3: Isaías 14 — A Queda do "Astro Brilhante"*
-
----
-
-**VERSÍCULOS 12-15: O Orgulho Fatal**
-
-> "Como você caiu dos céus, ó estrela da manhã, filho da alvorada!"
-
-**Sentido original:** O "astro brilhante" (hebr. *helel*) refere-se ao rei de Babilônia. A imagem é de alguém que queria ser como Deus e caiu.
-
-**Conexão bíblica:** Jesus em Lucas 10:18: "Eu vi Satanás caindo do céu como um relâmpago." A queda do rei babilônico prefigura a queda do próprio inimigo.
-
-**Apontando para Cristo:** Enquanto Lúcifer/Babilônia subiu e caiu, Cristo desceu e foi exaltado (Fp 2:5-11). O caminho de Deus é a humildade.
-
----
-
-**OS "CINCO EU VOU" (v.13-14)**
-
-1. "Subirei aos céus"
-2. "Erguerei meu trono acima das estrelas"
-3. "Sentarei no monte da assembleia"
-4. "Subirei acima das nuvens"
-5. "Serei como o Altíssimo"
-
-**Significado:** Cada "eu vou" representa um degrau de orgulho. O pecado original foi querer "ser como Deus" (Gn 3:5).
-
----
-
-Digite **CONTINUAR** para o bloco final (Isaías 15: Moabe).
-Ou **MENU** para voltar.`;
-            }
-
-            if (page === 2) {
-                currentPageRef.current = 3;
-                setCurrentPage(3);
-                return `🏛️ **EXPOSIÇÃO DETALHADA: ${passagem.referencia}**
-📍 *Bloco 3 de 3: Isaías 15 — O Lamento sobre Moabe*
-
----
-
-**VERSÍCULOS 1-5: A Destruição de Moabe**
-
-> "Sentença contra Moabe: Numa noite Ar de Moabe foi arrasada, foi destruída!"
-
-**Sentido original:** Moabe era uma nação vizinha de Israel, descendente de Ló. Apesar do parentesco, Moabe frequentemente se opunha a Israel.
-
-**Conexão bíblica:** Rute era moabita — do povo que agora recebe juízo. Deus age em justiça, mas também em graça individual.
-
-**Apontando para Cristo:** Assim como Rute encontrou graça em Israel, nós, sendo "estrangeiros", encontramos graça em Cristo.
-
----
-
-**O LAMENTO (v.5)**
-
-> "O meu coração clama por Moabe..."
-
-Isaías não celebra a destruição — ele lamenta. O profeta tem compaixão mesmo pelo inimigo.
-
-**Aplicação:** Deus julga, mas não se alegra na destruição do ímpio (Ez 33:11). Devemos ter a mesma postura.
-
----
-
-Digite **CONTINUAR** para finalizar.
-Ou **MENU** para voltar.`;
-            }
-
-            // Bloco final
-            return `✅ **EXPOSIÇÃO CONCLUÍDA!**
-
----
-
-📖 **Você completou a exposição detalhada de ${passagem.referencia}!**
-
-💎 **Resumo de Ouro:** Os capítulos 13-15 de Isaías mostram Deus como Juiz de todas as nações. Babilônia e Moabe representam todo poder humano que desafia a Deus.
-
-🙏 **Sugestão de Oração:**
-
-*"Senhor, que eu nunca me esqueça de que Tu estás no trono. Dá-me um coração humilde e compassivo, mesmo diante dos que me perseguem. Em nome de Jesus. Amém."*
-
----
-Digite **MENU** para continuar estudando.`;
-        }
-
-        // Para outras opções, mostra mensagem de conclusão
-        return `✅ **LEITURA CONCLUÍDA!**
-
----
-
-💎 **Resumo de Ouro:** Deus é soberano sobre todas as nações. O orgulho humano sempre será humilhado, mas há graça para os humildes.
-
-🙏 **Sugestão de Oração:**
-
-*"Senhor, obrigado por me lembrar que Tu estás no controle. Que eu não seja como Babilônia, buscando minha própria glória. Ajuda-me a viver com humildade, confiando na Tua soberania. Em nome de Jesus. Amém."*
-
----
-Digite **MENU** para continuar estudando.`;
+        // Para outras opções (2-4 = IA), não tem paginação
+        return `O conteúdo da opção atual já foi gerado por IA.\n\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
     };
 
     // Enviar mensagem (Lógica central)

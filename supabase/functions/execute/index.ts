@@ -566,7 +566,7 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, tipo_estudo } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
@@ -1839,6 +1839,243 @@ Gere a explicação agora:
     }
     // ========================================
     // FIM DO MODO EXPLICAR PASSAGEM
+    // ========================================
+
+    // ========================================
+    // MODO ESTUDO BÍBLICO (3 TIPOS VIA IA)
+    // ========================================
+    if (modo_id === 'estudo_biblico') {
+      console.log(`📚 [ESTUDO BÍBLICO] Tipo: ${tipo_estudo}`);
+
+      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      if (!geminiKey) throw new Error("GEMINI_API_KEY não configurada.");
+
+      const versiculosTexto = versiculos || '';
+      const referenciaPassagem = referencia || 'Passagem bíblica';
+      const tipoEstudo = tipo_estudo || 'estudo_profundo';
+
+      // Prompts específicos por tipo
+      const PROMPTS: Record<string, string> = {
+        estudo_profundo: `
+# ESTUDO PROFUNDO BÍBLICO
+
+Você é um teólogo e estudioso bíblico com profundo conhecimento de hebraico, grego e contexto histórico.
+
+## PASSAGEM: ${referenciaPassagem}
+
+### VERSÍCULOS:
+${versiculosTexto}
+
+## FORMATO OBRIGATÓRIO:
+
+🔍 **ESTUDO PROFUNDO: ${referenciaPassagem}**
+
+---
+
+**📚 PALAVRAS-CHAVE**
+
+• **[Palavra 1]** (*[original hebraico/grego]*) — Significado profundo e como aparece no contexto original.
+• **[Palavra 2]** (*[original]*) — Explicação.
+• **[Palavra 3]** (*[original]*) — Explicação.
+
+---
+
+**🎓 CONCEITOS TEOLÓGICOS**
+
+1. **[Conceito 1]:** Explicação teológica conectada aos versículos específicos desta passagem.
+2. **[Conceito 2]:** Explicação conectada a este trecho.
+
+---
+
+**🔗 PARALELOS BÍBLICOS**
+
+• **[Versículo desta passagem]** → **[Outro versículo]** — Como se conectam.
+• **[Versículo desta passagem]** → **[Outro versículo]** — Conexão.
+
+---
+
+**❓ O QUE ISSO REVELA?**
+
+• **Sobre Deus:** [resposta baseada NESTA passagem]
+• **Sobre o coração humano:** [resposta baseada NESTA passagem]
+• **Conexão com Cristo:** [como isso aponta para Jesus]
+
+---
+
+## REGRAS:
+1. BASEIE-SE EXCLUSIVAMENTE nos versículos fornecidos acima
+2. Cite versículos específicos ("v.3", "v.7") ao explicar
+3. Use termos do hebraico/grego reais (transliterados)
+4. Faça conexões com outras passagens da Bíblia
+5. Linguagem profunda mas acessível
+6. Máximo 400 palavras
+7. NÃO invente conteúdo que não está nos versículos
+`,
+
+        aplicacao_pratica: `
+# APLICAÇÃO PRÁTICA BÍBLICA
+
+Você é um conselheiro pastoral experiente que ajuda pessoas a aplicar a Bíblia na vida cotidiana.
+
+## PASSAGEM: ${referenciaPassagem}
+
+### VERSÍCULOS:
+${versiculosTexto}
+
+## FORMATO OBRIGATÓRIO:
+
+🚀 **APLICAÇÃO PRÁTICA: ${referenciaPassagem}**
+
+---
+
+**O que posso viver nas próximas 24–48h?**
+
+---
+
+**1. 🏠 EM CASA: [Título da ação]**
+
+[Conecte um ensinamento ESPECÍFICO da passagem a uma situação doméstica real.]
+
+**Ação concreta:** [Algo que a pessoa pode fazer HOJE — específico, mensurável, simples.]
+
+---
+
+**2. 💼 NO TRABALHO: [Título da ação]**
+
+[Conecte outro ensinamento da passagem ao ambiente profissional.]
+
+**Ação concreta:** [Algo prático para aplicar no trabalho esta semana.]
+
+---
+
+**3. 💭 NO CORAÇÃO: [Título da ação]**
+
+[Conecte a mensagem espiritual central da passagem à vida interior.]
+
+**Ação concreta:** [Uma prática espiritual ou mudança de postura interna.]
+
+---
+
+**⚠️ O QUE EVITAR**
+
+• ❌ [Interpretação errada comum desta passagem]
+• ❌ [Aplicação distorcida que as pessoas fazem]
+
+---
+
+**🙏 ORAÇÃO SUGERIDA**
+
+*"[Oração de 2-3 frases conectada aos ensinamentos desta passagem específica.]"*
+
+---
+
+## REGRAS:
+1. BASEIE-SE EXCLUSIVAMENTE nos versículos fornecidos acima
+2. Cada ação deve se conectar a um versículo ESPECÍFICO da passagem
+3. As ações devem ser CONCRETAS e REALIZÁVEIS em 24-48h
+4. Tom pastoral, caloroso, sem julgamento
+5. Máximo 350 palavras
+6. NÃO use exemplos genéricos — conecte à passagem
+`,
+
+        sintese_rapida: `
+# SÍNTESE RÁPIDA BÍBLICA
+
+Você é um comunicador bíblico que consegue resumir passagens complexas de forma clara e impactante.
+
+## PASSAGEM: ${referenciaPassagem}
+
+### VERSÍCULOS:
+${versiculosTexto}
+
+## FORMATO OBRIGATÓRIO:
+
+⚡ **SÍNTESE RÁPIDA: ${referenciaPassagem}**
+
+---
+
+**🎯 A GRANDE IDEIA**
+
+> **[Uma frase poderosa que capture a essência de TODA a passagem]**
+
+---
+
+**📋 PONTOS-CHAVE**
+
+1. **[Ponto principal 1]:** [Explicação em 1 frase, citando versículo]
+2. **[Ponto principal 2]:** [Explicação em 1 frase, citando versículo]
+3. **[Ponto principal 3]:** [Explicação em 1 frase, citando versículo]
+
+---
+
+**💎 RESUMO DE 30 SEGUNDOS**
+
+[Parágrafo de 3-4 frases que conta a história/mensagem completa da passagem de forma fluida. Para quem tem pressa mas quer entender.]
+
+---
+
+**✝️ CONEXÃO COM O EVANGELHO**
+
+[2-3 frases conectando esta passagem à mensagem central de Jesus/cruz/salvação.]
+
+---
+
+## REGRAS:
+1. BASEIE-SE EXCLUSIVAMENTE nos versículos fornecidos acima
+2. Seja CONCISO — cada palavra conta
+3. A "Grande Ideia" deve ser memorável e tweetável
+4. Os pontos-chave devem citar versículos específicos
+5. O resumo de 30 segundos deve ser lido em voz alta em ~30s
+6. Máximo 250 palavras no total
+7. NÃO invente conteúdo que não está nos versículos
+`
+      };
+
+      const promptFinal = PROMPTS[tipoEstudo] || PROMPTS['estudo_profundo'];
+
+      console.log(`📝 Prompt selecionado: ${tipoEstudo} (${promptFinal.length} chars)`);
+
+      const MODEL_NAME = "gemini-2.0-flash";
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: promptFinal }] }],
+          generationConfig: {
+            temperature: 0.75,
+            maxOutputTokens: 3072
+          }
+        })
+      });
+
+      if (!resp.ok) {
+        const errorBody = await resp.text();
+        console.error(`❌ Erro Gemini:`, errorBody);
+        throw new Error(`Erro API Gemini: ${resp.status}`);
+      }
+
+      const aiData = await resp.json();
+      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar estudo.";
+
+      console.log(`✅ [ESTUDO BÍBLICO] ${tipoEstudo} gerado com sucesso!`);
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          resultado: resultado,
+          tipo: 'estudo_biblico',
+          tipo_estudo: tipoEstudo
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    }
+    // ========================================
+    // FIM DO MODO ESTUDO BÍBLICO
     // ========================================
 
 
