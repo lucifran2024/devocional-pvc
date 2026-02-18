@@ -35,7 +35,7 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: stri
     { id: 'reflexao', nome: 'Reflexão', icon: Lightbulb, cor: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
     { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-green-400 bg-green-500/20 border-green-500/30' },
     { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
-    { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-slate-400 bg-slate-500/20 border-slate-500/30' },
+    { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-text-muted bg-slate-500/20 border-slate-500/30' },
 ];
 
 const QUANTIDADES = [1, 5, 10, 15, 20, 30];
@@ -458,14 +458,14 @@ export default function DnaCategorizadoPage() {
     const totalItems = useMemo(() => stats.reduce((acc, s) => acc + s.total, 0), [stats]);
 
     return (
-        <CosmicBackground className="font-sans text-slate-100">
+        <CosmicBackground className="font-sans text-text-primary">
             <div className="w-full flex flex-col items-center relative z-10">
                 <div className="w-full max-w-6xl">
                     <CosmicHeader className="pb-32 md:pb-48">
                         <div className="w-full px-4 sm:px-6 lg:px-8 pt-12 text-center md:text-left">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-8">
-                                <Link href="/" className="group p-3 bg-white/[0.03] hover:bg-white/[0.08] rounded-2xl transition-all border border-white/5">
-                                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-white" />
+                                <Link href="/" className="group p-3 bg-surface-2 hover:bg-white/[0.08] rounded-2xl transition-all border border-border-subtle">
+                                    <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
                                 </Link>
                                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-violet-500/10 border border-violet-400/20 rounded-full text-violet-300 text-[10px] font-black uppercase tracking-[0.2em]">
                                     <Layers className="w-3.5 h-3.5" />
@@ -473,17 +473,17 @@ export default function DnaCategorizadoPage() {
                                 </div>
                             </div>
 
-                            <h1 className="text-4xl md:text-7xl font-black tracking-tight text-white mb-4 text-center md:text-left">
+                            <h1 className="text-4xl md:text-7xl font-black tracking-tight text-text-primary mb-4 text-center md:text-left">
                                 DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-200 to-fuchsia-500">Categorizado</span>
                             </h1>
 
                             {/* === SISTEMA DE ABAS === */}
-                            <div className="flex flex-wrap gap-2 mb-6 p-1 bg-black/30 rounded-xl border border-white/10 w-fit">
+                            <div className="flex flex-wrap gap-2 mb-6 p-1 bg-surface-2 rounded-xl border border-border-subtle w-fit">
                                 <button
                                     onClick={() => setActiveTab('gerenciar')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerenciar'
                                         ? 'bg-violet-500/30 text-violet-200 border border-violet-500/30'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
                                     <Layers className="w-4 h-4" />
@@ -493,7 +493,7 @@ export default function DnaCategorizadoPage() {
                                     onClick={() => setActiveTab('gerar-dna')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-dna'
                                         ? 'bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-500/30'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
                                     <Wand2 className="w-4 h-4" />
@@ -503,7 +503,7 @@ export default function DnaCategorizadoPage() {
                                     onClick={() => setActiveTab('gerar-estilo')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-estilo'
                                         ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
                                     <Sparkles className="w-4 h-4" />
@@ -515,9 +515,9 @@ export default function DnaCategorizadoPage() {
                             {activeTab === 'gerenciar' && (
                                 <>
                                     <div className="flex flex-wrap items-center gap-2 mb-6">
-                                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm">
+                                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-2 border border-border-subtle rounded-xl text-sm">
                                             <Layers className="w-4 h-4 text-violet-400" />
-                                            <span className="text-slate-300">{totalItems} mensagens</span>
+                                            <span className="text-text-secondary">{totalItems} mensagens</span>
                                         </div>
                                         {stats.map(s => {
                                             const cat = getCategoriaInfo(s.categoria);
@@ -525,7 +525,7 @@ export default function DnaCategorizadoPage() {
                                                 <button
                                                     key={s.categoria}
                                                     onClick={() => setFiltroCategoria(s.categoria)}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filtroCategoria === s.categoria ? cat.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filtroCategoria === s.categoria ? cat.cor : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'
                                                         }`}
                                                 >
                                                     <cat.icon className="w-3 h-3" />
@@ -547,7 +547,7 @@ export default function DnaCategorizadoPage() {
                                     <div className="flex flex-wrap items-center gap-3 mt-4">
                                         <button
                                             onClick={() => setShowAddForm(!showAddForm)}
-                                            className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl border border-white/20 transition-all"
+                                            className="flex items-center gap-2 px-4 py-3 bg-surface-2 hover:bg-white/15 text-text-primary font-bold rounded-xl border border-border-strong transition-all"
                                         >
                                             <Plus className="w-5 h-5" />
                                             Adicionar Mensagem
@@ -559,12 +559,12 @@ export default function DnaCategorizadoPage() {
                             {/* === ABA GERAR DNA === */}
                             {activeTab === 'gerar-dna' && (
                                 <>
-                                    <p className="text-slate-400 mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
+                                    <p className="text-text-muted mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
                                     <div className="flex flex-wrap items-center gap-3">
                                         <button
                                             onClick={handleGerar}
                                             disabled={generating || items.length === 0}
-                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-text-primary font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
                                         >
                                             {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
                                             {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
@@ -573,23 +573,23 @@ export default function DnaCategorizadoPage() {
                                         <select
                                             value={filtroQuantidade}
                                             onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                         >
-                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
+                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-surface-1">{q}</option>)}
                                         </select>
 
                                         <select
                                             value={filtroCategoriaGerar}
                                             onChange={(e) => setFiltroCategoriaGerar(e.target.value as CategoriaDna | 'todas')}
-                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                         >
-                                            <option value="todas" className="bg-slate-900">Todas categorias</option>
-                                            {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nome}</option>)}
+                                            <option value="todas" className="bg-surface-1">Todas categorias</option>
+                                            {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-surface-1">{c.nome}</option>)}
                                         </select>
 
                                         <button
                                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                         >
                                             <Filter className="w-4 h-4" />
                                             Filtros Avançados
@@ -602,11 +602,11 @@ export default function DnaCategorizadoPage() {
                             {/* === ABA GERAR POR ESTILO === */}
                             {activeTab === 'gerar-estilo' && (
                                 <>
-                                    <p className="text-slate-400 mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
+                                    <p className="text-text-muted mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
 
                                     {/* Seleção de Estilo */}
                                     <div className="mb-4">
-                                        <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">1. Escolha o Estilo de Saída</label>
+                                        <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">1. Escolha o Estilo de Saída</label>
                                         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                             {CATEGORIAS.filter(c => c.id !== 'outro').map(cat => {
                                                 const isSelected = selectedStyleCategory === cat.id;
@@ -616,11 +616,11 @@ export default function DnaCategorizadoPage() {
                                                         onClick={() => setSelectedStyleCategory(cat.id)}
                                                         className={`p-3 rounded-xl border text-center transition-all ${isSelected
                                                             ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
-                                                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                            : 'bg-surface-2 border-border-subtle hover:bg-surface-2 hover:border-border-strong'
                                                             }`}
                                                     >
-                                                        <cat.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? 'text-current' : 'text-slate-400'}`} />
-                                                        <span className={`text-xs font-bold ${isSelected ? 'text-current' : 'text-slate-300'}`}>{cat.nome}</span>
+                                                        <cat.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? 'text-current' : 'text-text-muted'}`} />
+                                                        <span className={`text-xs font-bold ${isSelected ? 'text-current' : 'text-text-secondary'}`}>{cat.nome}</span>
                                                     </button>
                                                 );
                                             })}
@@ -632,7 +632,7 @@ export default function DnaCategorizadoPage() {
                                         <button
                                             onClick={handleGerarEstilo}
                                             disabled={generating || !selectedStyleCategory}
-                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-text-primary font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
                                         >
                                             {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                                             {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
@@ -641,14 +641,14 @@ export default function DnaCategorizadoPage() {
                                         <select
                                             value={filtroQuantidade}
                                             onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                            className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                         >
-                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-slate-900">{q}</option>)}
+                                            {QUANTIDADES.map(q => <option key={q} value={q} className="bg-surface-1">{q}</option>)}
                                         </select>
 
                                         <button
                                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                         >
                                             <Filter className="w-4 h-4" />
                                             Filtros Avançados
@@ -660,47 +660,47 @@ export default function DnaCategorizadoPage() {
 
                             {/* FILTROS AVANÇADOS - Visível em ambas abas de geração */}
                             {(activeTab === 'gerar-dna' || activeTab === 'gerar-estilo') && showAdvancedFilters && (
-                                <div className="mt-4 p-4 bg-black/30 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
-                                    <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                                <div className="mt-4 p-4 bg-surface-2 border border-border-subtle rounded-xl animate-in slide-in-from-top-2">
+                                    <h4 className="text-text-primary font-bold mb-4 flex items-center gap-2">
                                         <Filter className="w-4 h-4 text-violet-400" />
                                         Filtros Avançados de Geração
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {/* Tema - Input livre */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tema (livre)</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">Tema (livre)</label>
                                             <input
                                                 type="text"
                                                 value={filtroTema}
                                                 onChange={(e) => setFiltroTema(e.target.value)}
                                                 placeholder="Ex: Esperança, Fé, Gratidão..."
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm placeholder:text-text-muted focus:border-violet-500 focus:outline-none"
                                             />
                                         </div>
 
                                         {/* Tamanho */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Tamanho</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">Tamanho</label>
                                             <select
                                                 value={filtroTamanho}
                                                 onChange={(e) => setFiltroTamanho(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer tamanho</option>
-                                                {TAMANHOS.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                                <option value="" className="bg-surface-1">Qualquer tamanho</option>
+                                                {TAMANHOS.map(t => <option key={t} value={t} className="bg-surface-1">{t}</option>)}
                                             </select>
                                         </div>
 
                                         {/* Formato */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Formato</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">Formato</label>
                                             <select
                                                 value={filtroFormato}
                                                 onChange={(e) => setFiltroFormato(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer formato</option>
-                                                {FORMATOS_TEXTO.map(f => <option key={f} value={f} className="bg-slate-900">{f}</option>)}
+                                                <option value="" className="bg-surface-1">Qualquer formato</option>
+                                                {FORMATOS_TEXTO.map(f => <option key={f} value={f} className="bg-surface-1">{f}</option>)}
                                             </select>
                                         </div>
 
@@ -708,33 +708,33 @@ export default function DnaCategorizadoPage() {
 
                                         {/* Período do Dia */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Período do Dia</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">Período do Dia</label>
                                             <select
                                                 value={filtroPeriodo}
                                                 onChange={(e) => setFiltroPeriodo(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer período</option>
-                                                {PERIODOS.map(p => <option key={p} value={p} className="bg-slate-900">{p}</option>)}
+                                                <option value="" className="bg-surface-1">Qualquer período</option>
+                                                {PERIODOS.map(p => <option key={p} value={p} className="bg-surface-1">{p}</option>)}
                                             </select>
                                         </div>
 
                                         {/* Momento da Semana/Mês */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">Momento</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">Momento</label>
                                             <select
                                                 value={filtroMomento}
                                                 onChange={(e) => setFiltroMomento(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
                                             >
-                                                <option value="" className="bg-slate-900">Qualquer momento</option>
-                                                {MOMENTOS.map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
+                                                <option value="" className="bg-surface-1">Qualquer momento</option>
+                                                {MOMENTOS.map(m => <option key={m} value={m} className="bg-surface-1">{m}</option>)}
                                             </select>
                                         </div>
 
                                         {/* DNA Base Toggle */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">DNA Base</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">DNA Base</label>
                                             <button
                                                 disabled={activeTab === 'gerar-dna'}
                                                 onClick={() => activeTab !== 'gerar-dna' && setUsarDnaBase(!usarDnaBase)}
@@ -742,7 +742,7 @@ export default function DnaCategorizadoPage() {
                                                     ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300 cursor-not-allowed'
                                                     : usarDnaBase
                                                         ? 'bg-green-500/20 border-green-500/30 text-green-300'
-                                                        : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                                        : 'bg-surface-2 border-border-subtle text-text-muted'}`}
                                             >
                                                 {activeTab === 'gerar-dna'
                                                     ? '[ON] Sempre ativo no Gerar DNA'
@@ -752,10 +752,10 @@ export default function DnaCategorizadoPage() {
 
                                         {/* Passagem do Dia Toggle */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1.5 uppercase font-semibold">📖 Passagem do Dia</label>
+                                            <label className="block text-xs text-text-muted mb-1.5 uppercase font-semibold">📖 Passagem do Dia</label>
                                             <button
                                                 onClick={() => setUsarPassagemDia(!usarPassagemDia)}
-                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${usarPassagemDia ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                                className={`w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all ${usarPassagemDia ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' : 'bg-surface-2 border-border-subtle text-text-muted'}`}
                                             >
                                                 {usarPassagemDia ? '✓ Usar Passagem do Dia' : '✗ Sem Passagem'}
                                             </button>
@@ -766,8 +766,8 @@ export default function DnaCategorizadoPage() {
                                     </div>
 
                                     {/* Dias da Semana */}
-                                    <div className="mt-5 pt-5 border-t border-white/10">
-                                        <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Dias da Semana (Mencionar no texto)</label>
+                                    <div className="mt-5 pt-5 border-t border-border-subtle">
+                                        <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">Dias da Semana (Mencionar no texto)</label>
                                         <div className="flex flex-wrap gap-2">
                                             {DIAS_SEMANA.map(dia => {
                                                 const active = diasSelecionados.includes(dia);
@@ -775,7 +775,7 @@ export default function DnaCategorizadoPage() {
                                                     <button
                                                         key={dia}
                                                         onClick={() => toggleDia(dia)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                                     >
                                                         {active ? <CheckSquare className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                                                         {dia}
@@ -785,11 +785,11 @@ export default function DnaCategorizadoPage() {
                                         </div>
                                     </div>
 
-                                    <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="mt-5 pt-5 border-t border-border-subtle grid grid-cols-1 md:grid-cols-2 gap-5">
                                         {/* Estratégia de Contexto */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Fonte de Inspiração (Contexto)</label>
-                                            <div className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+                                            <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">Fonte de Inspiração (Contexto)</label>
+                                            <div className="flex flex-wrap gap-1 bg-surface-2 p-1 rounded-lg border border-border-subtle">
                                                 {([
                                                     { key: 'recent_5' as const, label: '5 Últimas' },
                                                     { key: 'recent_10' as const, label: '10 Últimas' },
@@ -800,13 +800,13 @@ export default function DnaCategorizadoPage() {
                                                     <button
                                                         key={opt.key}
                                                         onClick={() => setContextoEstrategia(opt.key)}
-                                                        className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === opt.key ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                                                        className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === opt.key ? 'bg-indigo-500 text-text-primary shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                                                     >
                                                         {opt.label}
                                                     </button>
                                                 ))}
                                             </div>
-                                            <p className="text-[10px] text-slate-500 mt-1.5">
+                                            <p className="text-[10px] text-text-muted mt-1.5">
                                                 {contextoEstrategia === 'recent_5' && 'Usa as 5 mensagens mais recentes como sementes.'}
                                                 {contextoEstrategia === 'recent_10' && 'Usa as 10 mais recentes como sementes.'}
                                                 {contextoEstrategia === 'recent_20' && 'Usa as 20 mais recentes — mais variedade de DNA.'}
@@ -817,10 +817,10 @@ export default function DnaCategorizadoPage() {
 
                                         {/* Toggle Neutro */}
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Configurações Extras</label>
+                                            <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">Configurações Extras</label>
                                             <button
                                                 onClick={() => setFiltroNeutro(!filtroNeutro)}
-                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-all ${filtroNeutro ? 'bg-slate-500/20 border-slate-500/30 text-slate-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-all ${filtroNeutro ? 'bg-slate-500/20 border-slate-500/30 text-text-secondary' : 'bg-surface-2 border-border-subtle text-text-muted'}`}
                                             >
                                                 <div className="flex flex-col items-start text-left">
                                                     <span className="font-medium">Filtro Neutro (Sem Saudações)</span>
@@ -846,15 +846,15 @@ export default function DnaCategorizadoPage() {
 
                                     {/* MANUAL CURATION PREVIEW - Gerar DNA */}
                                     {activeTab === 'gerar-dna' && usarDnaBase && filtroCategoriaGerar !== 'todas' && (
-                                        <div className="mt-5 pt-5 border-t border-white/10">
+                                        <div className="mt-5 pt-5 border-t border-border-subtle">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     <Sparkles className="w-4 h-4 text-amber-400" />
-                                                    <h4 className="text-sm font-bold text-white">Inspiração Selecionada</h4>
+                                                    <h4 className="text-sm font-bold text-text-primary">Inspiração Selecionada</h4>
                                                 </div>
                                                 <button
                                                     onClick={() => setShowCandidates(!showCandidates)}
-                                                    className="text-xs flex items-center gap-1.5 text-violet-300 hover:text-white transition-colors"
+                                                    className="text-xs flex items-center gap-1.5 text-violet-300 hover:text-text-primary transition-colors"
                                                 >
                                                     {loadingCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
                                                     {showCandidates ? 'Ocultar' : 'Ver/Editar'}
@@ -865,14 +865,14 @@ export default function DnaCategorizadoPage() {
                                             </div>
 
                                             {showCandidates && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-white/5">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-border-subtle">
                                                     {loadingCandidates ? (
-                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                        <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
                                                             Carregando inspiração...
                                                         </div>
                                                     ) : candidates.length === 0 ? (
-                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                        <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             Nenhuma mensagem encontrada para esta estratégia.
                                                         </div>
                                                     ) : (
@@ -884,11 +884,11 @@ export default function DnaCategorizadoPage() {
                                                                     p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
                                                                     ${c.selected
                                                                         ? 'bg-violet-500/10 border-violet-500/30 text-slate-200'
-                                                                        : 'bg-transparent border-white/5 text-slate-600 opacity-60 hover:opacity-100'}
+                                                                        : 'bg-transparent border-border-subtle text-text-muted opacity-60 hover:opacity-100'}
                                                                 `}
                                                             >
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <span className="text-[10px] uppercase font-bold text-slate-500">#{c.id}</span>
+                                                                    <span className="text-[10px] uppercase font-bold text-text-muted">#{c.id}</span>
                                                                     {c.selected && <Check className="w-3 h-3 text-violet-400" />}
                                                                 </div>
                                                                 <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
@@ -902,15 +902,15 @@ export default function DnaCategorizadoPage() {
 
                                     {/* MANUAL CURATION PREVIEW - Gerar por Estilo */}
                                     {activeTab === 'gerar-estilo' && usarDnaBase && selectedStyleCategory && (
-                                        <div className="mt-5 pt-5 border-t border-white/10">
+                                        <div className="mt-5 pt-5 border-t border-border-subtle">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     <Sparkles className="w-4 h-4 text-indigo-400" />
-                                                    <h4 className="text-sm font-bold text-white">Exemplos de {selectedStyleCategory}</h4>
+                                                    <h4 className="text-sm font-bold text-text-primary">Exemplos de {selectedStyleCategory}</h4>
                                                 </div>
                                                 <button
                                                     onClick={() => setShowStyleCandidates(!showStyleCandidates)}
-                                                    className="text-xs flex items-center gap-1.5 text-indigo-300 hover:text-white transition-colors"
+                                                    className="text-xs flex items-center gap-1.5 text-indigo-300 hover:text-text-primary transition-colors"
                                                 >
                                                     {loadingStyleCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
                                                     {showStyleCandidates ? 'Ocultar' : 'Ver/Editar'}
@@ -921,14 +921,14 @@ export default function DnaCategorizadoPage() {
                                             </div>
 
                                             {showStyleCandidates && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-white/5">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-border-subtle">
                                                     {loadingStyleCandidates ? (
-                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                        <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
                                                             Carregando exemplos...
                                                         </div>
                                                     ) : styleCandidates.length === 0 ? (
-                                                        <div className="col-span-full py-8 text-center text-slate-500 text-xs">
+                                                        <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             Nenhum exemplo encontrado para este estilo.
                                                         </div>
                                                     ) : (
@@ -940,11 +940,11 @@ export default function DnaCategorizadoPage() {
                                                                     p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
                                                                     ${c.selected
                                                                         ? 'bg-indigo-500/10 border-indigo-500/30 text-slate-200'
-                                                                        : 'bg-transparent border-white/5 text-slate-600 opacity-60 hover:opacity-100'}
+                                                                        : 'bg-transparent border-border-subtle text-text-muted opacity-60 hover:opacity-100'}
                                                                 `}
                                                             >
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <span className="text-[10px] uppercase font-bold text-slate-500">#{c.id}</span>
+                                                                    <span className="text-[10px] uppercase font-bold text-text-muted">#{c.id}</span>
                                                                     {c.selected && <Check className="w-3 h-3 text-indigo-400" />}
                                                                 </div>
                                                                 <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
@@ -960,17 +960,17 @@ export default function DnaCategorizadoPage() {
 
                             {/* FORM DE ADIÇÃO - Só na aba Gerenciar */}
                             {activeTab === 'gerenciar' && showAddForm && (
-                                <div className="mt-4 p-4 bg-black/40 border border-white/10 rounded-xl animate-in slide-in-from-top-2">
-                                    <h3 className="text-white font-bold mb-3">Adicionar Nova Mensagem</h3>
+                                <div className="mt-4 p-4 bg-black/40 border border-border-subtle rounded-xl animate-in slide-in-from-top-2">
+                                    <h3 className="text-text-primary font-bold mb-3">Adicionar Nova Mensagem</h3>
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1 uppercase font-semibold">Categoria</label>
+                                            <label className="block text-xs text-text-muted mb-1 uppercase font-semibold">Categoria</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {CATEGORIAS.map(cat => (
                                                     <button
                                                         key={cat.id}
                                                         onClick={() => setNovaCategoria(cat.id)}
-                                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${novaCategoria === cat.id ? cat.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+                                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${novaCategoria === cat.id ? cat.cor : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'
                                                             }`}
                                                     >
                                                         <cat.icon className="w-3 h-3" />
@@ -980,20 +980,20 @@ export default function DnaCategorizadoPage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1 uppercase font-semibold">Texto</label>
+                                            <label className="block text-xs text-text-muted mb-1 uppercase font-semibold">Texto</label>
                                             <textarea
                                                 value={novoTexto}
                                                 onChange={(e) => setNovoTexto(e.target.value)}
                                                 placeholder="Cole ou digite a mensagem aqui..."
                                                 rows={5}
-                                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:border-violet-500 focus:outline-none resize-none"
+                                                className="w-full px-4 py-3 bg-surface-2 border border-border-subtle rounded-xl text-text-primary placeholder:text-text-muted focus:border-violet-500 focus:outline-none resize-none"
                                             />
                                         </div>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={handleAdd}
                                                 disabled={adding || !novoTexto.trim()}
-                                                className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-white font-bold rounded-lg hover:bg-violet-600 disabled:opacity-50"
+                                                className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-text-primary font-bold rounded-lg hover:bg-violet-600 disabled:opacity-50"
                                             >
                                                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                                                 {adding ? 'Adicionando...' : 'Adicionar'}
@@ -1035,7 +1035,7 @@ export default function DnaCategorizadoPage() {
                                                 {copiedId === -i ? '✓ Copiado' : 'Copiar'}
                                             </button>
                                         </div>
-                                        <div className="prose prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                        <div className="prose dark:prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                             <ReactMarkdown>{msg}</ReactMarkdown>
                                         </div>
                                     </div>
@@ -1123,7 +1123,7 @@ export default function DnaCategorizadoPage() {
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div className="prose prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                                <div className="prose dark:prose-invert prose-sm max-w-none whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                                     <ReactMarkdown>{gen.texto_msg}</ReactMarkdown>
                                                 </div>
                                             </div>
@@ -1137,10 +1137,10 @@ export default function DnaCategorizadoPage() {
                     {/* Lista de DNA - Só na aba Gerenciar */}
                     {activeTab === 'gerenciar' && (loading ? (
                         [1, 2, 3].map(i => (
-                            <div key={i} className="h-40 bg-white/[0.02] rounded-2xl animate-pulse border border-white/5" />
+                            <div key={i} className="h-40 bg-surface-2 rounded-2xl animate-pulse border border-white/5" />
                         ))
                     ) : items.length === 0 ? (
-                        <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-white/5">
+                        <div className="text-center py-20 bg-surface-2 rounded-3xl border border-white/5">
                             <Sparkles className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-slate-400 mb-2">
                                 {filtroCategoria === 'todas' ? 'Nenhuma mensagem ainda' : `Nenhuma mensagem em "${getCategoriaInfo(filtroCategoria).nome}"`}
@@ -1152,7 +1152,7 @@ export default function DnaCategorizadoPage() {
                             const cat = getCategoriaInfo(item.categoria);
                             const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className={`group relative bg-[#020617]/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-white/10 hover:border-violet-500/30'}`}>
+                                <div key={item.id} className={`group relative bg-surface-0/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-white/10 hover:border-violet-500/30'}`}>
                                     {isEditing ? (
                                         /* === MODO EDIÇÃO === */
                                         <div className="space-y-4">
@@ -1238,7 +1238,7 @@ export default function DnaCategorizadoPage() {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="prose prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                            <div className="prose dark:prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                                 <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
                                             </div>
                                         </>

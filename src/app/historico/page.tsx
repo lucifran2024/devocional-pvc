@@ -187,7 +187,7 @@ export default function HistoricoPage() {
     };
 
     return (
-        <CosmicBackground className="font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
+        <CosmicBackground className="font-sans text-text-primary selection:bg-indigo-500/30 selection:text-indigo-200">
 
             {/* THE GIANT WRAPPER */}
             <div className="w-full flex flex-col items-center relative z-10">
@@ -197,8 +197,8 @@ export default function HistoricoPage() {
                     <CosmicHeader className="pb-32 md:pb-48">
                         <div className="w-full px-4 sm:px-6 lg:px-8 pt-12 text-center md:text-left">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-8 animate-divine">
-                                <Link href="/" className="group p-3 bg-white/[0.03] hover:bg-white/[0.08] rounded-2xl transition-all border border-white/5 hover:border-white/10 active:scale-95">
-                                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-white" />
+                                <Link href="/" className="group p-3 bg-surface-2 hover:bg-surface-2/80 rounded-2xl transition-all border border-border-subtle hover:border-border-subtle active:scale-95">
+                                    <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
                                 </Link>
                                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-indigo-500/10 border border-indigo-400/20 rounded-full text-indigo-300 text-[10px] font-black uppercase tracking-[0.2em] shadow-inner">
                                     <Book className="w-3.5 h-3.5" />
@@ -206,10 +206,10 @@ export default function HistoricoPage() {
                                 </div>
                             </div>
 
-                            <h1 className="text-4xl md:text-7xl font-black tracking-divine text-white mb-6 divine-halo animate-divine text-center md:text-left">
+                            <h1 className="text-4xl md:text-7xl font-black tracking-divine text-text-primary mb-6 divine-halo animate-divine text-center md:text-left">
                                 Minhas Memórias
                             </h1>
-                            <p className="text-slate-400 max-w-2xl text-lg md:text-xl leading-relaxed animate-divine [animation-delay:200ms] text-center md:text-left mx-auto md:mx-0">
+                            <p className="text-text-muted max-w-2xl text-lg md:text-xl leading-relaxed animate-divine [animation-delay:200ms] text-center md:text-left mx-auto md:mx-0">
                                 Cada palavra gerada é um marco na sua caminhada.
                                 <br className="hidden md:block" />Reviva os insights que transformaram o seu dia.
                             </p>
@@ -222,12 +222,12 @@ export default function HistoricoPage() {
 
                     {/* TABS & FILTERS */}
                     <div className="flex flex-wrap items-center justify-between gap-6 mb-12 animate-divine [animation-delay:400ms]">
-                        <div className="bg-[#020617]/40 p-1.5 rounded-[1.5rem] shadow-2xl backdrop-blur-3xl border border-white/5 flex gap-1.5">
+                        <div className="bg-surface-0/40 p-1.5 rounded-[1.5rem] shadow-2xl backdrop-blur-3xl border border-border-subtle flex gap-1.5">
                             <button
                                 onClick={() => setFilter('all')}
                                 className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-500 flex items-center gap-2.5 ${filter === 'all'
-                                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40'
-                                    : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
+                                    ? 'bg-indigo-600 text-text-primary shadow-xl shadow-indigo-900/40'
+                                    : 'text-text-muted hover:bg-surface-2 hover:text-slate-200'
                                     }`}
                             >
                                 <LayoutTemplate className="w-4 h-4" />
@@ -236,8 +236,8 @@ export default function HistoricoPage() {
                             <button
                                 onClick={() => setFilter('favorites')}
                                 className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-500 flex items-center gap-2.5 ${filter === 'favorites'
-                                    ? 'bg-rose-600 text-white shadow-xl shadow-rose-900/40'
-                                    : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'
+                                    ? 'bg-rose-600 text-text-primary shadow-xl shadow-rose-900/40'
+                                    : 'text-text-muted hover:bg-surface-2 hover:text-slate-200'
                                     }`}
                             >
                                 <Heart className={`w-4 h-4 ${filter === 'favorites' ? 'fill-current' : ''}`} />
@@ -245,7 +245,7 @@ export default function HistoricoPage() {
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-3 px-5 py-2.5 bg-white/[0.02] rounded-2xl text-[11px] font-bold text-slate-500 border border-white/5 uppercase tracking-widest">
+                        <div className="flex items-center gap-3 px-5 py-2.5 bg-surface-2 rounded-2xl text-[11px] font-bold text-text-muted border border-border-subtle uppercase tracking-widest">
                             <Filter className="w-4 h-4 text-indigo-500/50" />
                             <span>{items.length} Registros</span>
                         </div>
@@ -259,25 +259,25 @@ export default function HistoricoPage() {
                             ))
                         ) : items.length === 0 ? (
                             <div className="col-span-full py-32 text-center space-y-6 animate-divine">
-                                <div className="w-24 h-24 bg-white/[0.02] rounded-[2rem] flex items-center justify-center mx-auto mb-4 border border-white/5">
+                                <div className="w-24 h-24 bg-surface-2 rounded-[2rem] flex items-center justify-center mx-auto mb-4 border border-border-subtle">
                                     <Sparkles className="w-10 h-10 text-slate-700" />
                                 </div>
-                                <h3 className="text-2xl font-black text-slate-400 tracking-tight">O silêncio precede a revelação.</h3>
-                                <p className="text-slate-600 text-sm max-w-xs mx-auto leading-relaxed">Sua jornada de memórias começa assim que você gerar seu primeiro devocional.</p>
+                                <h3 className="text-2xl font-black text-text-muted tracking-tight">O silêncio precede a revelação.</h3>
+                                <p className="text-text-muted text-sm max-w-xs mx-auto leading-relaxed">Sua jornada de memórias começa assim que você gerar seu primeiro devocional.</p>
                             </div>
                         ) : (
                             items.map((item, idx) => (
                                 <div
                                     key={item.id}
                                     style={{ animationDelay: `${idx * 50}ms` }}
-                                    className="group relative stellar-card rounded-[2.5rem] p-10 border border-white/5 overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] transition-all duration-700 hover:-translate-y-2 cursor-pointer animate-divine"
+                                    className="group relative stellar-card rounded-[2.5rem] p-10 border border-border-subtle overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] transition-all duration-700 hover:-translate-y-2 cursor-pointer animate-divine"
                                     onClick={() => handleOpenModal(item)}
                                 >
                                     <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/[0.03] rounded-bl-[100px] transition-all duration-700 group-hover:bg-indigo-500/[0.07] group-hover:scale-125"></div>
 
                                     <div className="relative z-10">
                                         <div className="flex items-start justify-between mb-8">
-                                            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                                            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-surface-2 border border-border-subtle rounded-full text-text-muted text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-text-primary transition-colors">
                                                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
                                                 {formatData(item.created_at)}
                                             </div>
@@ -285,7 +285,7 @@ export default function HistoricoPage() {
                                                 <button
                                                     onClick={(e) => handleDelete(item, e)}
                                                     disabled={deletingId === item.id}
-                                                    className="p-3 rounded-2xl transition-all duration-500 bg-white/[0.03] border border-white/5 text-slate-600 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50"
+                                                    className="p-3 rounded-2xl transition-all duration-500 bg-surface-2 border border-border-subtle text-text-muted hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50"
                                                     title="Excluir memória"
                                                 >
                                                     {deletingId === item.id ? (
@@ -296,7 +296,7 @@ export default function HistoricoPage() {
                                                 </button>
                                                 <button
                                                     onClick={(e) => handleToggleLike(item, e)}
-                                                    className={`p-3 rounded-2xl transition-all duration-500 ${item.aprovado ? 'bg-rose-500 border border-rose-400 shadow-lg shadow-rose-900/40 text-white' : 'bg-white/[0.03] border border-white/5 text-slate-600 hover:text-white hover:border-rose-500/50'}`}
+                                                    className={`p-3 rounded-2xl transition-all duration-500 ${item.aprovado ? 'bg-rose-500 border border-border-strong0 shadow-lg shadow-rose-900/40 text-text-primary' : 'bg-surface-2 border border-border-subtle text-text-muted hover:text-text-primary hover:border-rose-500/50'}`}
                                                 >
                                                     <Heart className={`w-5 h-5 ${item.aprovado ? 'fill-current' : ''}`} />
                                                 </button>
@@ -304,14 +304,14 @@ export default function HistoricoPage() {
                                         </div>
 
                                         <div className="mb-6">
-                                            <h3 className="font-black text-xl text-white mb-2 line-clamp-1 tracking-tight group-hover:text-indigo-300 transition-colors uppercase italic">{item.modo_id}</h3>
-                                            <p className="text-slate-500 text-xs font-bold flex items-center gap-2.5 uppercase tracking-widest pl-1">
+                                            <h3 className="font-black text-xl text-text-primary mb-2 line-clamp-1 tracking-tight group-hover:text-indigo-300 transition-colors uppercase italic">{item.modo_id}</h3>
+                                            <p className="text-text-muted text-xs font-bold flex items-center gap-2.5 uppercase tracking-widest pl-1">
                                                 <Quote className="w-3.5 h-3.5 text-indigo-500/50" /> {item.passagem}
                                             </p>
                                         </div>
 
                                         <div className="relative">
-                                            <div className="text-slate-400 leading-[1.8] line-clamp-4 text-sm font-medium">
+                                            <div className="text-text-muted leading-[1.8] line-clamp-4 text-sm font-medium">
                                                 {item.resultado_texto}
                                             </div>
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent h-full"></div>
@@ -329,12 +329,12 @@ export default function HistoricoPage() {
                     {/* MODAL (Premium Remake) */}
                     {expandedItem && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8" onClick={() => setExpandedItem(null)}>
-                            <div className="absolute inset-0 bg-[#020617]/90 backdrop-blur-xl animate-in fade-in duration-500"></div>
+                            <div className="absolute inset-0 bg-surface-0/90 backdrop-blur-xl animate-in fade-in duration-500"></div>
 
-                            <div className="bg-[#020617] w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col pt-0 animate-in fade-in zoom-in-95 duration-500 border border-white/10 relative z-10" onClick={e => e.stopPropagation()}>
+                            <div className="bg-surface-0 w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col pt-0 animate-in fade-in zoom-in-95 duration-500 border border-border-subtle relative z-10" onClick={e => e.stopPropagation()}>
 
                                 {/* Modal Header */}
-                                <div className="p-6 md:p-10 bg-gradient-to-br from-[#0f172a] to-[#020617] text-white shrink-0 relative overflow-hidden border-b border-white/5">
+                                <div className="p-6 md:p-10 bg-gradient-to-br from-[#0f172a] to-[#020617] text-text-primary shrink-0 relative overflow-hidden border-b border-border-subtle">
                                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] -mr-32 -mt-32"></div>
 
                                     <div className="relative z-10 flex items-start justify-between">
@@ -343,7 +343,7 @@ export default function HistoricoPage() {
                                             <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-divine divine-halo italic uppercase leading-tight">{expandedItem.modo_id}</h2>
 
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
-                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-2 border border-border-subtle rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">
                                                     <Calendar className="w-3 h-3 text-indigo-500" />
                                                     {formatData(expandedItem.created_at)}
                                                 </div>
@@ -353,17 +353,17 @@ export default function HistoricoPage() {
                                                 </p>
                                             </div>
                                         </div>
-                                        <button onClick={() => setExpandedItem(null)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all active:scale-90 shrink-0">
+                                        <button onClick={() => setExpandedItem(null)} className="p-3 bg-surface-2 hover:bg-surface-2 border border-border-subtle text-text-primary rounded-2xl transition-all active:scale-90 shrink-0">
                                             <X className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Modal Content - Mensagens Individuais */}
-                                <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-4 md:pt-6 custom-scrollbar bg-[#020617]">
+                                <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-4 md:pt-6 custom-scrollbar bg-surface-0">
                                     <div className="space-y-6">
                                         {parseMensagens(expandedItem.resultado_texto).map((mensagem, idx) => (
-                                            <div key={idx} className="relative group/msg bg-white/[0.02] rounded-2xl p-6 border border-white/5 hover:border-indigo-500/30 transition-all">
+                                            <div key={idx} className="relative group/msg bg-surface-2 rounded-2xl p-6 border border-border-subtle hover:border-indigo-500/30 transition-all">
                                                 {/* Botões: Copiar e Like */}
                                                 <div className="absolute top-4 right-4 flex items-center gap-1.5">
                                                     {/* Botão de copiar */}
@@ -372,12 +372,12 @@ export default function HistoricoPage() {
                                                             await navigator.clipboard.writeText(mensagem);
                                                             const btn = document.getElementById(`copy-btn-${idx}`);
                                                             if (btn) {
-                                                                btn.classList.add('bg-green-500', 'text-white');
-                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-white'), 1500);
+                                                                btn.classList.add('bg-green-500', 'text-text-primary');
+                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-text-primary'), 1500);
                                                             }
                                                         }}
                                                         id={`copy-btn-${idx}`}
-                                                        className="p-2 rounded-xl transition-all bg-white/10 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/20 border border-white/10"
+                                                        className="p-2 rounded-xl transition-all bg-white/10 text-text-muted hover:text-indigo-400 hover:bg-indigo-500/20 border border-border-subtle"
                                                         title="Copiar mensagem"
                                                     >
                                                         <Copy className="w-4 h-4" />
@@ -386,8 +386,8 @@ export default function HistoricoPage() {
                                                     <button
                                                         onClick={() => handleToggleMensagemLike(expandedItem.id, idx, mensagem)}
                                                         className={`p-2 rounded-xl transition-all ${favoritosIndividuais.includes(idx)
-                                                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
-                                                            : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
+                                                            ? 'bg-rose-500 text-text-primary shadow-lg shadow-rose-900/40'
+                                                            : 'bg-white/10 text-text-muted hover:text-rose-400 hover:bg-rose-500/20 border border-border-subtle'
                                                             }`}
                                                         title={favoritosIndividuais.includes(idx) ? 'Remover dos favoritos' : 'Favoritar esta mensagem'}
                                                     >
@@ -401,10 +401,10 @@ export default function HistoricoPage() {
                                                 </div>
 
                                                 {/* Conteúdo */}
-                                                <div className="pt-6 prose prose-lg prose-invert max-w-none">
+                                                <div className="pt-6 prose prose-lg dark:prose-invert max-w-none">
                                                     <ReactMarkdown
                                                         components={{
-                                                            p: ({ node, ...props }) => <p className="mb-4 leading-relaxed text-slate-300 text-base" {...props} />,
+                                                            p: ({ node, ...props }) => <p className="mb-4 leading-relaxed text-text-secondary text-base" {...props} />,
                                                             strong: ({ node, ...props }) => <strong className="text-indigo-200 font-bold" {...props} />,
                                                         }}
                                                     >
@@ -417,7 +417,7 @@ export default function HistoricoPage() {
                                 </div>
 
                                 {/* Modal Footer - Compact Icons Only */}
-                                <div className="p-4 md:p-6 bg-[#020617] border-t border-white/5 flex items-center justify-center gap-3 shrink-0">
+                                <div className="p-4 md:p-6 bg-surface-0 border-t border-border-subtle flex items-center justify-center gap-3 shrink-0">
                                     {/* Share Button */}
                                     <ShareButton
                                         text={expandedItem.resultado_texto.substring(0, 300) + '...'}
@@ -430,7 +430,7 @@ export default function HistoricoPage() {
                                             if (expandedItem) handleDelete(expandedItem, e);
                                         }}
                                         disabled={deletingId === expandedItem.id}
-                                        className="p-3 rounded-xl transition-all bg-white/5 text-slate-500 hover:bg-red-500/20 hover:text-red-400 border border-white/10 disabled:opacity-50"
+                                        className="p-3 rounded-xl transition-all bg-surface-2 text-text-muted hover:bg-red-500/20 hover:text-red-400 border border-border-subtle disabled:opacity-50"
                                         title="Excluir memória"
                                     >
                                         {deletingId === expandedItem.id ? (
@@ -446,8 +446,8 @@ export default function HistoricoPage() {
                                             if (expandedItem) handleToggleLike(expandedItem, e);
                                         }}
                                         className={`p-3 rounded-xl transition-all ${expandedItem.aprovado
-                                            ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40'
-                                            : 'bg-white/5 text-slate-500 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10'
+                                            ? 'bg-rose-600 text-text-primary shadow-lg shadow-rose-900/40'
+                                            : 'bg-surface-2 text-text-muted hover:bg-rose-500/20 hover:text-rose-400 border border-border-subtle'
                                             }`}
                                         title={expandedItem.aprovado ? 'Remover dos favoritos' : 'Salvar como favorito'}
                                     >
@@ -462,15 +462,15 @@ export default function HistoricoPage() {
                     {showCategoryPicker && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={() => { setShowCategoryPicker(false); setPendingFavorite(null); }}>
                             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-                            <div className="relative bg-[#0f172a] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-                                <h3 className="text-lg font-black text-white mb-1 tracking-tight">Escolha a categoria</h3>
-                                <p className="text-xs text-slate-500 mb-4">Em qual categoria esta mensagem se encaixa?</p>
+                            <div className="relative bg-surface-1 border border-border-subtle rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+                                <h3 className="text-lg font-black text-text-primary mb-1 tracking-tight">Escolha a categoria</h3>
+                                <p className="text-xs text-text-muted mb-4">Em qual categoria esta mensagem se encaixa?</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     {CATEGORIAS_DNA.map(cat => (
                                         <button
                                             key={cat.value}
                                             onClick={() => handleCategorySelected(cat.value)}
-                                            className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-300 hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-white transition-all font-semibold"
+                                            className="flex items-center gap-2 px-4 py-3 bg-surface-2 border border-border-subtle rounded-xl text-sm text-text-secondary hover:bg-indigo-500/20 hover:border-indigo-500/30 hover:text-text-primary transition-all font-semibold"
                                         >
                                             <span>{cat.icon}</span>
                                             {cat.label}
@@ -479,7 +479,7 @@ export default function HistoricoPage() {
                                 </div>
                                 <button
                                     onClick={() => { setShowCategoryPicker(false); setPendingFavorite(null); }}
-                                    className="mt-4 w-full py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                                    className="mt-4 w-full py-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
                                 >
                                     Cancelar
                                 </button>

@@ -250,7 +250,7 @@ function VersiculosInterativos({
                         onClick={() => handleVersiculoClick(v.verse)}
                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                             ${getCorClasse(v.verse)}
-                            ${versiculoSelecionado === v.verse ? 'bg-white/10 ring-1 ring-amber-500/30' : 'hover:bg-white/5'}
+                            ${versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                         `}
                     >
                         <p className="inline text-lg md:text-xl leading-relaxed text-text-primary font-serif">
@@ -266,22 +266,22 @@ function VersiculosInterativos({
                         {versiculoSelecionado === v.verse && (
                             <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
-                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Destacar">
+                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
                                         <Palette className="w-5 h-5" />
                                     </button>
-                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-slate-300 hover:text-red-400'}`} title="Favoritar">
+                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
                                         <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
                                     </button>
-                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-green-400 transition-colors" title="Copiar">
+                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
                                         <Copy className="w-5 h-5" />
                                     </button>
-                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-blue-400 transition-colors" title="Compartilhar">
+                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
                                         <Share2 className="w-5 h-5" />
                                     </button>
-                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-white/10 text-slate-300 hover:text-amber-400 transition-colors" title="Estudar">
+                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
                                         <Lightbulb className="w-5 h-5" />
                                     </button>
-                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-white/10 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-slate-300 hover:text-blue-400'}`} title="Nota">
+                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
                                         <StickyNote className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -295,7 +295,7 @@ function VersiculosInterativos({
                                         ))}
                                         {interacoesMap.destaques[v.verse] && (
                                             <button onClick={() => handleDestacar(interacoesMap.destaques[v.verse].cor || 'yellow')}
-                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-500 hover:text-red-400" title="Remover destaque">
+                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-text-muted hover:text-red-400" title="Remover destaque">
                                                 <X className="w-5 h-5" />
                                             </button>
                                         )}
@@ -334,14 +334,14 @@ function VersiculosInterativos({
 
             {/* Modal de Estudo IA */}
             {estudoAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-white/10">
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-border-subtle">
+                        <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-400" />
                                 <span className="font-bold text-text-primary text-base">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
                             </div>
-                            <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
+                            <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
                         </div>
                         {estudoVersiculo && (
                             <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
@@ -410,19 +410,19 @@ function PremiumOptionCard({ option, onClick, disabled }: {
             className="group relative w-full text-left p-6 rounded-2xl glass-card hover:bg-white/[0.02] disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Icon className="w-24 h-24 -mr-8 -mt-8 text-white rotate-12" />
+                <Icon className="w-24 h-24 -mr-8 -mt-8 text-text-primary rotate-12" />
             </div>
 
             <div className="flex items-center justify-between z-10">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-[#FCD34D] group-hover:scale-110 transition-transform duration-300">
+                <div className="p-3 rounded-xl bg-surface-2 border border-border-subtle text-[#FCD34D] group-hover:scale-110 transition-transform duration-300">
                     <Icon className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">OPÇÃO {option.id}</span>
+                <span className="text-[10px] font-bold tracking-widest text-text-muted uppercase">OPÇÃO {option.id}</span>
             </div>
 
             <div className="z-10">
-                <h3 className="font-bold text-white text-lg mb-1 group-hover:text-[#FCD34D] transition-colors">{option.label}</h3>
-                <p className="text-sm text-slate-400 group-hover:text-slate-300 leading-relaxed">{option.desc}</p>
+                <h3 className="font-bold text-text-primary text-lg mb-1 group-hover:text-[#FCD34D] transition-colors">{option.label}</h3>
+                <p className="text-sm text-text-muted group-hover:text-text-secondary leading-relaxed">{option.desc}</p>
             </div>
         </button>
     );
@@ -449,7 +449,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                         <div className="relative z-10">
                             {/* Texto antes dos versículos */}
                             {partes[0] && (
-                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
+                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
                                     <ReactMarkdown>{partes[0]}</ReactMarkdown>
                                 </div>
                             )}
@@ -465,7 +465,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
 
                             {/* Texto depois dos versículos */}
                             {partes[1] && (
-                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
+                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
                                     <ReactMarkdown>{partes[1]}</ReactMarkdown>
                                 </div>
                             )}
@@ -481,7 +481,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                     {/* Glow effect */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                    <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
+                    <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                     </div>
                 </div>
@@ -492,7 +492,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
     // Mensagens do usuário mantêm o estilo de bolha
     return (
         <div className="flex justify-end animate-enter mb-6">
-            <div className="max-w-[85%] rounded-2xl px-6 py-4 bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-br-none shadow-lg shadow-amber-900/20">
+            <div className="max-w-[85%] rounded-2xl px-6 py-4 bg-gradient-to-br from-amber-600 to-amber-700 text-text-primary rounded-br-none shadow-lg shadow-amber-900/20">
                 <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
@@ -1783,7 +1783,7 @@ Digite **MENU** para continuar estudando.`;
                         <div className="glass-panel rounded-3xl min-h-[70vh] flex flex-col relative overflow-hidden border-amber-500/20">
 
                             {/* Chat Header */}
-                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md sticky top-0 z-20">
+                            <div className="p-6 border-b border-border-subtle flex items-center justify-between bg-black/20 backdrop-blur-md sticky top-0 z-20">
                                 <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => setActiveOption(null)}
@@ -1835,7 +1835,7 @@ Digite **MENU** para continuar estudando.`;
                             </div>
 
                             {/* Input Area - Botões de ação */}
-                            <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
+                            <div className="p-4 border-t border-border-subtle bg-black/20 backdrop-blur-md">
                                 <div className="flex gap-3">
                                     {/* Botão Continuar */}
                                     <button

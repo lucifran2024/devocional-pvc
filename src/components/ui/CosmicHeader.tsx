@@ -26,16 +26,16 @@ export function CosmicHeader({
 
     const variantStyles = {
         hero: heightClasses[height],
-        navbar: 'h-16 flex items-center border-b border-white/5'
+        navbar: 'h-16 flex items-center border-b border-border-subtle'
     };
 
     const positionStyles = sticky ? 'sticky top-0 z-50' : 'relative z-10';
 
     return (
-        <header className={`${positionStyles} bg-[#020617] text-white overflow-hidden transition-all duration-300 ${variantStyles[variant]} ${className}`}>
+        <header className={`${positionStyles} bg-surface-0 text-text-primary overflow-hidden transition-all duration-300 ${variantStyles[variant]} ${className}`}>
 
             {/* Divine Gradient Background - SINGLE TONE */}
-            <div className={`absolute inset-0 bg-[#020617] ${variant === 'navbar' ? 'opacity-100' : 'opacity-100'}`}></div>
+            <div className={`absolute inset-0 bg-surface-0 ${variant === 'navbar' ? 'opacity-100' : 'opacity-100'}`}></div>
 
             {/* Noise & Stardust */}
             <div className="absolute inset-0 noise-overlay"></div>
@@ -45,7 +45,7 @@ export function CosmicHeader({
             ></div>
 
             {/* Subtle Bottom Glow Border */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtle to-transparent"></div>
 
             {/* Glow Effects (Reduced for Navbar) */}
             {variant === 'hero' && (

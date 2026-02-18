@@ -53,13 +53,6 @@ const FONTES = [
 ];
 
 // ============================================
-// PÁGINA DEVOCIONAL EXTERNO
-// ============================================
-// ============================================
-// COMPONENTES AUXILIARES
-// ============================================
-
-// ============================================
 // COMPONENTES AUXILIARES
 // ============================================
 
@@ -157,35 +150,35 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
     };
 
     return (
-        <div className="glass-panel p-6 rounded-2xl border-white/10 hover:border-pink-500/30 transition-all flex flex-col gap-4">
+        <div className="glass-panel p-6 rounded-2xl border-border-subtle hover:border-pink-500/30 transition-all flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-2 py-1 rounded-md">
                         INSTAGRAM
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-text-muted">
                         {new Date(post.published_at).toLocaleDateString()}
                     </span>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={handleDelete} className="p-1 hover:bg-white/10 rounded text-slate-500 hover:text-red-400 transition-colors" title="Apagar">
+                    <button onClick={handleDelete} className="p-1 hover:bg-surface-2 rounded text-text-muted hover:text-red-400 transition-colors" title="Apagar">
                         <Trash className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             {/* Content Display */}
-            <div className="text-slate-300 text-base leading-relaxed flex flex-col gap-6">
+            <div className="text-text-secondary text-base leading-relaxed flex flex-col gap-6">
 
                 {/* Seção OCR (Mensagem da Imagem) */}
                 {ocrText && (
-                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div className="bg-surface-2 p-4 rounded-xl border border-border-subtle">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-[10px] font-bold text-pink-400/70 uppercase tracking-widest">Mensagem na Imagem</span>
                             <button
                                 onClick={() => handleCopy(ocrText, 'ocr')}
-                                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                                className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 bg-surface-2 px-2 py-1 rounded hover:bg-surface-1 transition-colors"
                             >
                                 {copiado === 'ocr' ? <CheckSquare className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                                 {copiado === 'ocr' ? 'Copiado' : 'Copiar Msg'}
@@ -201,18 +194,18 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
                 {/* Seção Legenda */}
                 {captionText && (
-                    <div className={ocrText ? "pl-4 border-l-2 border-white/10" : ""}>
+                    <div className={ocrText ? "pl-4 border-l-2 border-border-subtle" : ""}>
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Legenda do Post</span>
+                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Legenda do Post</span>
                             <button
                                 onClick={() => handleCopy(captionText, 'legenda')}
-                                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                                className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 bg-surface-2 px-2 py-1 rounded hover:bg-surface-1 transition-colors"
                             >
                                 {copiado === 'legenda' ? <CheckSquare className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                                 {copiado === 'legenda' ? 'Copiado' : 'Copiar Legenda'}
                             </button>
                         </div>
-                        <div className="text-slate-400 text-sm whitespace-pre-wrap">
+                        <div className="text-text-muted text-sm whitespace-pre-wrap">
                             {captionText}
                         </div>
                     </div>
@@ -220,15 +213,15 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
                 {/* Caso não tenha nem OCR nem Legenda (raro) */}
                 {!ocrText && !captionText && (
-                    <div className="text-slate-500 italic">Conteúdo indisponível</div>
+                    <div className="text-text-muted italic">Conteúdo indisponível</div>
                 )}
             </div>
 
             {/* Footer Actions */}
-            <div className="pt-4 border-t border-white/5 flex flex-wrap gap-2 mt-auto">
+            <div className="pt-4 border-t border-border-subtle flex flex-wrap gap-2 mt-auto">
                 <button
                     onClick={() => handleCopy(post.content, 'geral')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado === 'geral' ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/10 text-white'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado === 'geral' ? 'bg-green-500 text-white' : 'bg-surface-2 hover:bg-surface-2/80 text-text-primary'}`}
                 >
                     {copiado === 'geral' ? <CheckSquare className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     {copiado === 'geral' ? 'Tudo Copiado!' : 'Copiar Tudo'}
@@ -243,7 +236,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                     {salvando ? 'Salvando...' : 'Salvar DNA'}
                 </button>
 
-                <Link href={post.post_url} target="_blank" className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                <Link href={post.post_url} target="_blank" className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-bold bg-surface-2 hover:bg-surface-2/80 text-text-muted hover:text-text-primary transition-all">
                     Link
                 </Link>
             </div>
@@ -262,14 +255,14 @@ const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
     };
 
     return (
-        <div className="glass-panel p-6 rounded-2xl border-white/10 hover:border-amber-500/30 transition-all flex flex-col gap-4">
+        <div className="glass-panel p-6 rounded-2xl border-border-subtle hover:border-amber-500/30 transition-all flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md mb-2 inline-block">
                         {post.fonte}
                     </span>
-                    <h3 className="text-lg font-bold text-white leading-tight">
+                    <h3 className="text-lg font-bold text-text-primary leading-tight">
                         <Link href={post.url} target="_blank" className="hover:text-amber-400 transition-colors">
                             {post.titulo_pt}
                         </Link>
@@ -278,19 +271,19 @@ const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
             </div>
 
             {/* Content Preview */}
-            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
                 {post.texto_pt}
             </div>
 
             {/* Footer / Action */}
-            <div className="pt-4 border-t border-white/5 flex justify-between items-center mt-auto">
-                <span className="text-xs text-slate-500 font-medium">Por: {post.author}</span>
+            <div className="pt-4 border-t border-border-subtle flex justify-between items-center mt-auto">
+                <span className="text-xs text-text-muted font-medium">Por: {post.author}</span>
 
                 <button
                     onClick={handleCopy}
                     className={`
                         flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
-                        ${copiado ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-amber-500 hover:text-black'}
+                        ${copiado ? 'bg-green-500 text-white' : 'bg-surface-2 text-text-primary hover:bg-amber-500 hover:text-black'}
                     `}
                 >
                     {copiado ? 'Copiado!' : 'Copiar para Postar'}
@@ -394,22 +387,22 @@ export default function DevocionalExternoPage() {
         <CosmicBackground className="min-h-screen font-sans">
 
             {/* Header */}
-            <header className="sticky top-0 z-50 w-full px-6 py-4 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5">
+            <header className="sticky top-0 z-50 w-full px-6 py-4 bg-surface-0/80 backdrop-blur-xl border-b border-border-subtle">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <Link href="/" className="group p-3 bg-white/5 hover:bg-amber-500/10 border border-white/10 rounded-2xl transition-all">
-                        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-amber-500" />
+                    <Link href="/" className="group p-3 bg-surface-2 hover:bg-amber-500/10 border border-border-subtle rounded-2xl transition-all">
+                        <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-amber-500" />
                     </Link>
 
-                    <div className="flex bg-white/5 p-1 rounded-xl">
+                    <div className="flex bg-surface-2 p-1 rounded-xl">
                         <button
                             onClick={() => setTab('fontes')}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'fontes' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'fontes' ? 'bg-amber-500 text-black shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                         >
                             Fontes
                         </button>
                         <button
                             onClick={() => { setTab('mundo'); if (devocionais.length === 0) buscarDevocionaisMundo('trending'); }}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'mundo' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'mundo' ? 'bg-amber-500 text-black shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                         >
                             Mundo (RSS)
                         </button>
@@ -425,10 +418,10 @@ export default function DevocionalExternoPage() {
                 {tab === 'fontes' && (
                     <>
                         <section className="text-center space-y-4 animate-enter">
-                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                            <h1 className="text-4xl md:text-5xl font-black text-text-primary tracking-tight">
                                 Devocionais do Mundo
                             </h1>
-                            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+                            <p className="text-text-muted text-lg max-w-xl mx-auto">
                                 Escolha uma fonte e leia o devocional original, direto do site.
                             </p>
                         </section>
@@ -447,7 +440,7 @@ export default function DevocionalExternoPage() {
                                             relative p-6 rounded-3xl border text-left transition-all duration-500 group
                                             ${isActive
                                                 ? `${fonte.bgColor} ${fonte.borderColor} shadow-xl`
-                                                : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'}
+                                                : 'bg-surface-1 border-border-subtle hover:border-border-strong hover:bg-surface-2'}
                                             ${carregando && !isActive ? 'opacity-50' : ''}
                                         `}
                                     >
@@ -456,10 +449,10 @@ export default function DevocionalExternoPage() {
                                                 {carregando && isActive ? <Loader2 className="w-6 h-6 animate-spin" /> : <Icon className="w-6 h-6" />}
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className={`font-bold text-lg mb-1 ${isActive ? fonte.color : 'text-white group-hover:text-amber-300'}`}>
+                                                <h3 className={`font-bold text-lg mb-1 ${isActive ? fonte.color : 'text-text-primary group-hover:text-amber-500 dark:group-hover:text-amber-300'}`}>
                                                     {fonte.nome}
                                                 </h3>
-                                                <p className="text-slate-400 text-sm leading-relaxed">{fonte.desc}</p>
+                                                <p className="text-text-muted text-sm leading-relaxed">{fonte.desc}</p>
                                             </div>
                                         </div>
                                     </button>
@@ -480,14 +473,14 @@ export default function DevocionalExternoPage() {
 
                                 {resultado && fonteAtiva !== 'instagram' && fonteAtiva !== 'tribo_juda' && (
                                     <div className="glass-panel rounded-[2.5rem] p-10 md:p-14">
-                                        <div className="whitespace-pre-wrap font-medium text-slate-300 leading-relaxed">
+                                        <div className="whitespace-pre-wrap font-medium text-text-secondary leading-relaxed">
                                             {resultado}
                                         </div>
                                     </div>
                                 )}
 
                                 {((fonteAtiva === 'instagram' || fonteAtiva === 'tribo_juda') && postsInstagram.length === 0 && !erro) && (
-                                    <div className="text-center text-slate-500 py-10">Buscando posts...</div>
+                                    <div className="text-center text-text-muted py-10">Buscando posts...</div>
                                 )}
                             </section>
                         )}
@@ -507,7 +500,7 @@ export default function DevocionalExternoPage() {
                         {buscandoMundo ? (
                             <div className="text-center py-20">
                                 <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-                                <p className="text-slate-400 animate-pulse">Buscando devocionais do mundo...</p>
+                                <p className="text-text-muted animate-pulse">Buscando devocionais do mundo...</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-6 animate-enter">
@@ -515,7 +508,7 @@ export default function DevocionalExternoPage() {
                                     <DevocionalCard key={idx} post={post} />
                                 ))}
                                 {devocionais.length === 0 && (
-                                    <div className="text-center py-10 text-slate-500">
+                                    <div className="text-center py-10 text-text-muted">
                                         Nenhum devocional encontrado. Tente novamente.
                                     </div>
                                 )}

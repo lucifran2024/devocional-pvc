@@ -2,7 +2,7 @@
 
 :root {
   /* --- DESIGN SYSTEM TOKENS --- */
-  
+
   /* Foundation: Spacing */
   --space-0: 0px;
   --space-1: 4px;
@@ -23,30 +23,41 @@
 
   /* --- LIGHT THEME (Default) --- */
   /* Backgrounds */
-  --bg-surface-0: #f8fafc; /* Slate 50 */
-  --bg-surface-1: #ffffff; /* White */
-  --bg-surface-2: #f1f5f9; /* Slate 100 */
-  
+  --bg-surface-0: #f8fafc;
+  /* Slate 50 */
+  --bg-surface-1: #ffffff;
+  /* White */
+  --bg-surface-2: #f1f5f9;
+  /* Slate 100 */
+
   /* Text */
-  --text-primary: #0f172a; /* Slate 900 */
-  --text-secondary: #475569; /* Slate 600 */
-  --text-muted: #94a3b8; /* Slate 400 */
-  
+  --text-primary: #0f172a;
+  /* Slate 900 */
+  --text-secondary: #475569;
+  /* Slate 600 */
+  --text-muted: #94a3b8;
+  /* Slate 400 */
+
   /* Borders */
-  --border-subtle: #e2e8f0; /* Slate 200 */
-  --border-strong: #cbd5e1; /* Slate 300 */
-  
+  --border-subtle: #e2e8f0;
+  /* Slate 200 */
+  --border-strong: #cbd5e1;
+  /* Slate 300 */
+
   /* Accents (PVC Identity - Gold/Amber) */
-  --accent-primary: #d97706; /* Amber 600 - darker for contrast on light */
-  --accent-light: #fbbf24; /* Amber 400 */
-  --accent-dark: #b45309; /* Amber 700 */
+  --accent-primary: #d97706;
+  /* Amber 600 - darker for contrast on light */
+  --accent-light: #fbbf24;
+  /* Amber 400 */
+  --accent-dark: #b45309;
+  /* Amber 700 */
   --accent-text: #ffffff;
-  
+
   /* Glass Effects (Acrylic) */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  
+
   /* Visuals */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -56,25 +67,36 @@
 .dark {
   /* --- DARK THEME (Deep Cosmic) --- */
   /* Backgrounds */
-  --bg-surface-0: #020617; /* Slate 950 */
-  --bg-surface-1: #0f172a; /* Slate 900 */
-  --bg-surface-2: #1e293b; /* Slate 800 */
-  
+  --bg-surface-0: #020617;
+  /* Slate 950 */
+  --bg-surface-1: #0f172a;
+  /* Slate 900 */
+  --bg-surface-2: #1e293b;
+  /* Slate 800 */
+
   /* Text */
-  --text-primary: #f8fafc; /* Slate 50 */
-  --text-secondary: #cbd5e1; /* Slate 300 */
-  --text-muted: #64748b; /* Slate 500 */
-  
+  --text-primary: #f8fafc;
+  /* Slate 50 */
+  --text-secondary: #cbd5e1;
+  /* Slate 300 */
+  --text-muted: #64748b;
+  /* Slate 500 */
+
   /* Borders */
-  --border-subtle: #1e293b; /* Slate 800 */
-  --border-strong: #334155; /* Slate 700 */
-  
+  --border-subtle: #1e293b;
+  /* Slate 800 */
+  --border-strong: #334155;
+  /* Slate 700 */
+
   /* Accents */
-  --accent-primary: #f59e0b; /* Amber 500 */
-  --accent-light: #fcd34d; /* Amber 300 */
-  --accent-dark: #b45309; /* Amber 700 */
+  --accent-primary: #f59e0b;
+  /* Amber 500 */
+  --accent-light: #fcd34d;
+  /* Amber 300 */
+  --accent-dark: #b45309;
+  /* Amber 700 */
   --accent-text: #ffffff;
-  
+
   /* Glass Effects (Frosted) */
   --glass-bg: rgba(15, 23, 42, 0.6);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -85,18 +107,18 @@
   --color-background: var(--bg-surface-0);
   --color-foreground: var(--text-primary);
   --color-gold-primary: var(--accent-primary);
-  
+
   --color-surface-0: var(--bg-surface-0);
   --color-surface-1: var(--bg-surface-1);
   --color-surface-2: var(--bg-surface-2);
-  
+
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  
+
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
-  
+
   --animate-fade-in: fadeIn 0.5s ease-out forwards;
   --animate-slide-up: slideUp 0.5s ease-out forwards;
 }
@@ -107,21 +129,26 @@ body {
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
-  
+
   /* Subtle Texture/Pattern for depth */
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 0%, var(--accent-primary) 0%, transparent 40%, transparent 100%);
   background-size: 100% 100vh;
   background-repeat: no-repeat;
 }
 
 .dark body {
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.15) 0%, transparent 50%);
 }
 
 /* Premium Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: -0.02em;
   color: var(--text-primary);
 }
@@ -179,7 +206,8 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3); /* Optimized shadow */
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+  /* Optimized shadow */
   transition: all 0.3s ease;
   padding: var(--space-3) var(--space-4);
 }
@@ -215,15 +243,49 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Stellar Card - Adaptive */
+.stellar-card {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .stellar-card {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.stellar-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.dark .stellar-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-enter {

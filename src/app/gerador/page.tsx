@@ -47,7 +47,7 @@ function ModeCard({
         w-full text-left p-5 rounded-2xl border transition-all duration-500 group relative overflow-hidden
         ${isActive
                     ? 'glass-card border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
-                    : 'bg-white/[0.02] border-white/[0.05] hover:border-amber-500/30 hover:bg-white/[0.05]'
+                    : 'bg-surface-2 border-border-subtle hover:border-amber-500/30 hover:bg-surface-2'
                 }
         ${!modo.ativo ? 'opacity-30 cursor-not-allowed border-dashed' : ''}
       `}
@@ -57,17 +57,17 @@ function ModeCard({
             )}
 
             <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className={`text-[10px] font-bold tracking-[0.2em] uppercase px-2 py-0.5 rounded-md ${isActive ? 'bg-amber-500 text-black' : 'bg-white/5 text-slate-500 group-hover:text-amber-400'}`}>
+                <span className={`text-[10px] font-bold tracking-[0.2em] uppercase px-2 py-0.5 rounded-md ${isActive ? 'bg-amber-500 text-black' : 'bg-surface-2 text-text-muted group-hover:text-amber-400'}`}>
                     {modo.id}
                 </span>
                 {isLoading && isActive && <Loader2 className="w-4 h-4 animate-spin text-amber-400" />}
             </div>
 
-            <h3 className={`font-bold text-sm mb-1.5 relative z-10 tracking-tight ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+            <h3 className={`font-bold text-sm mb-1.5 relative z-10 tracking-tight ${isActive ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
                 {modo.titulo}
             </h3>
 
-            <p className={`text-[11px] line-clamp-2 leading-relaxed relative z-10 ${isActive ? 'text-amber-100/70' : 'text-slate-500 group-hover:text-slate-400'}`}>
+            <p className={`text-[11px] line-clamp-2 leading-relaxed relative z-10 ${isActive ? 'text-amber-100/70' : 'text-text-muted group-hover:text-text-muted'}`}>
                 {modo.descricao}
             </p>
         </button>
@@ -266,21 +266,21 @@ export default function GeradorPage() {
                 {/* SIDEBAR (MODOS) */}
                 <aside className={`
                     fixed lg:static inset-y-0 left-0 z-50
-                    w-[340px] border-r border-white/5 bg-[#020617] shadow-2xl lg:shadow-none
+                    w-[340px] border-r border-border-subtle bg-surface-0 shadow-2xl lg:shadow-none
                     flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
                     ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0 lg:overflow-hidden'}
                     ${!sidebarOpen ? 'lg:w-0 lg:border-none' : 'lg:w-[340px]'}
                 `}>
                     {/* Sidebar Header */}
-                    <div className="h-20 flex items-center justify-between px-8 border-b border-white/[0.05] shrink-0">
+                    <div className="h-20 flex items-center justify-between px-8 border-b border-border-subtle shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-amber-500/10 rounded-xl">
                                 <LayoutTemplate className="w-5 h-5 text-amber-500" />
                             </div>
-                            <span className="font-bold tracking-[0.15em] text-[10px] uppercase text-slate-400">Diretório de Modos</span>
+                            <span className="font-bold tracking-[0.15em] text-[10px] uppercase text-text-muted">Diretório de Modos</span>
                         </div>
-                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/5 rounded-full transition-colors">
-                            <X className="w-5 h-5 text-slate-500" />
+                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-surface-2 rounded-full transition-colors">
+                            <X className="w-5 h-5 text-text-muted" />
                         </button>
                     </div>
 
@@ -289,12 +289,12 @@ export default function GeradorPage() {
                         {carregandoModos ? (
                             <div className="space-y-4">
                                 {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="h-28 bg-white/[0.02] rounded-2xl animate-pulse" />
+                                    <div key={i} className="h-28 bg-surface-2 rounded-2xl animate-pulse" />
                                 ))}
                             </div>
                         ) : modos.length === 0 ? (
-                            <div className="p-10 text-center border border-dashed border-white/10 rounded-3xl">
-                                <p className="text-slate-600 text-sm">Sintonizando frequências...</p>
+                            <div className="p-10 text-center border border-dashed border-border-subtle rounded-3xl">
+                                <p className="text-text-muted text-sm">Sintonizando frequências...</p>
                             </div>
                         ) : (
                             modos.map(modo => (
@@ -310,22 +310,22 @@ export default function GeradorPage() {
                     </div>
 
                     {/* Sidebar Footer */}
-                    <div className="p-6 border-t border-white/[0.05] bg-white/[0.02] space-y-4">
+                    <div className="p-6 border-t border-border-subtle bg-surface-2 space-y-4">
                         <div className="flex items-center justify-between">
-                            <Link href="/" className="group p-3 bg-white/[0.03] hover:bg-amber-500/10 border border-white/[0.05] rounded-2xl transition-all active:scale-95">
-                                <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-amber-500" />
+                            <Link href="/" className="group p-3 bg-surface-2 hover:bg-amber-500/10 border border-border-subtle rounded-2xl transition-all active:scale-95">
+                                <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-amber-500" />
                             </Link>
 
-                            <h1 className="font-black text-xl tracking-tighter flex items-center gap-2 text-white">
+                            <h1 className="font-black text-xl tracking-tighter flex items-center gap-2 text-text-primary">
                                 <div className="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
-                                    <Book className="w-5 h-5 text-white" />
+                                    <Book className="w-5 h-5 text-text-primary" />
                                 </div>
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-amber-200">PVC AI</span>
                             </h1>
 
                             <button
                                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className={`p-3 hover:bg-white/5 rounded-2xl text-slate-400 transition-all ${sidebarOpen ? 'bg-white/5 text-white' : ''}`}
+                                className={`p-3 hover:bg-surface-2 rounded-2xl text-text-muted transition-all ${sidebarOpen ? 'bg-surface-2 text-text-primary' : ''}`}
                             >
                                 <Menu className="w-5 h-5" />
                             </button>
@@ -334,14 +334,14 @@ export default function GeradorPage() {
                 </aside>
 
                 {/* CONTENT AREA */}
-                <main className="flex-1 overflow-y-auto relative w-full bg-[#020617]">
+                <main className="flex-1 overflow-y-auto relative w-full bg-surface-0">
 
                     {/* Header bar overlay (for desktop if sidebar closed or for mobile) */}
-                    <div className="sticky top-0 z-40 w-full px-6 py-4 flex items-center justify-between lg:hidden bg-[#020617]/80 backdrop-blur-md border-b border-white/5">
-                        <button onClick={() => setSidebarOpen(true)} className="p-2 bg-white/5 rounded-xl">
-                            <Menu className="w-6 h-6 text-white" />
+                    <div className="sticky top-0 z-40 w-full px-6 py-4 flex items-center justify-between lg:hidden bg-surface-0/80 backdrop-blur-md border-b border-border-subtle">
+                        <button onClick={() => setSidebarOpen(true)} className="p-2 bg-surface-2 rounded-xl">
+                            <Menu className="w-6 h-6 text-text-primary" />
                         </button>
-                        <h2 className="text-white font-bold text-sm uppercase tracking-widest">Painel Devocional</h2>
+                        <h2 className="text-text-primary font-bold text-sm uppercase tracking-widest">Painel Devocional</h2>
                         <div className="w-10"></div>
                     </div>
 
@@ -350,32 +350,32 @@ export default function GeradorPage() {
                         {/* 0. LAST GENERATION CARD (NEW) */}
                         {lastGeneration && !resultado && (
                             <section className="animate-in fade-in slide-in-from-top-4 duration-700">
-                                <div className="glass-card border-white/10 p-6 rounded-3xl relative overflow-hidden group">
+                                <div className="glass-card border-border-subtle p-6 rounded-3xl relative overflow-hidden group">
                                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                     <div className="flex items-center justify-between mb-4 relative z-10">
                                         <div className="flex items-center gap-2">
-                                            <RefreshCw className="w-4 h-4 text-slate-400" />
-                                            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Última Criação Recente</h3>
+                                            <RefreshCw className="w-4 h-4 text-text-muted" />
+                                            <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted">Última Criação Recente</h3>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={handleCopyLast} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors" title="Copiar">
+                                            <button onClick={handleCopyLast} className="p-2 hover:bg-surface-2 rounded-full text-text-muted hover:text-text-primary transition-colors" title="Copiar">
                                                 <Copy className="w-4 h-4" />
                                             </button>
-                                            <button onClick={handleLikeLast} className={`p-2 hover:bg-white/10 rounded-full transition-colors ${lastGeneration.aprovado ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'}`} title="Eternizar">
+                                            <button onClick={handleLikeLast} className={`p-2 hover:bg-surface-2 rounded-full transition-colors ${lastGeneration.aprovado ? 'text-rose-500' : 'text-text-muted hover:text-rose-500'}`} title="Eternizar">
                                                 <Heart className={`w-4 h-4 ${lastGeneration.aprovado ? 'fill-current' : ''}`} />
                                             </button>
-                                            <button onClick={handleDeleteLast} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-red-500 transition-colors" title="Excluir">
+                                            <button onClick={handleDeleteLast} className="p-2 hover:bg-surface-2 rounded-full text-text-muted hover:text-red-500 transition-colors" title="Excluir">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="prose prose-invert prose-sm max-w-none relative z-10">
+                                    <div className="prose dark:prose-invert prose-sm max-w-none relative z-10">
                                         <ReactMarkdown
                                             components={{
-                                                p: ({ node, ...props }) => <p className="text-slate-300 leading-relaxed mb-4" {...props} />,
-                                                strong: ({ node, ...props }) => <strong className="text-white font-bold" {...props} />,
+                                                p: ({ node, ...props }) => <p className="text-text-secondary leading-relaxed mb-4" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="text-text-primary font-bold" {...props} />,
                                                 h3: ({ node, ...props }) => <h3 className="text-amber-200 font-bold text-lg mt-4 mb-2 uppercase tracking-wide" {...props} />
                                             }}
                                         >
@@ -390,8 +390,8 @@ export default function GeradorPage() {
                         <section className="animate-enter">
                             {carregandoPayload ? (
                                 <div className="space-y-6 py-12">
-                                    <div className="h-10 w-1/4 bg-white/[0.02] rounded-xl animate-pulse" />
-                                    <div className="h-24 w-full bg-white/[0.02] rounded-3xl animate-pulse" />
+                                    <div className="h-10 w-1/4 bg-surface-2 rounded-xl animate-pulse" />
+                                    <div className="h-24 w-full bg-surface-2 rounded-3xl animate-pulse" />
                                 </div>
                             ) : payloadDoDia ? (
                                 <div className="glass-panel rounded-[2.5rem] p-10 md:p-14 relative overflow-hidden group border-amber-500/10">
@@ -403,31 +403,31 @@ export default function GeradorPage() {
                                         Revelação do Dia
                                     </div>
 
-                                    <h2 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-10">
+                                    <h2 className="text-4xl md:text-6xl font-black tracking-tight text-text-primary leading-[1.05] mb-10">
                                         {payloadDoDia.passagem_do_dia}
                                     </h2>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] shadow-inner group/chip transition-all hover:bg-white/[0.05]">
-                                            <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-2 block">Arquétipo Divino</span>
-                                            <p className="text-xl font-bold text-white group-hover/chip:text-amber-400 transition-colors">{payloadDoDia.arquetipo}</p>
+                                        <div className="p-6 rounded-2xl bg-surface-2 border border-border-subtle shadow-inner group/chip transition-all hover:bg-surface-2">
+                                            <span className="text-[9px] text-text-muted uppercase font-black tracking-[0.2em] mb-2 block">Arquétipo Divino</span>
+                                            <p className="text-xl font-bold text-text-primary group-hover/chip:text-amber-400 transition-colors">{payloadDoDia.arquetipo}</p>
                                         </div>
-                                        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] shadow-inner group/chip transition-all hover:bg-white/[0.05]">
-                                            <span className="text-[9px] text-slate-500 uppercase font-black tracking-[0.2em] mb-2 block">Voz da Profecia</span>
-                                            <p className="text-xl font-bold text-white group-hover/chip:text-amber-400 transition-colors">{payloadDoDia.voice_nome}</p>
+                                        <div className="p-6 rounded-2xl bg-surface-2 border border-border-subtle shadow-inner group/chip transition-all hover:bg-surface-2">
+                                            <span className="text-[9px] text-text-muted uppercase font-black tracking-[0.2em] mb-2 block">Voz da Profecia</span>
+                                            <p className="text-xl font-bold text-text-primary group-hover/chip:text-amber-400 transition-colors">{payloadDoDia.voice_nome}</p>
                                         </div>
                                     </div>
 
                                     <div className="mt-8 p-6 bg-amber-500/[0.03] rounded-2xl border border-amber-500/10 backdrop-blur-sm">
-                                        <p className="text-slate-400 text-sm md:text-base leading-relaxed italic">
+                                        <p className="text-text-muted text-sm md:text-base leading-relaxed italic">
                                             "{payloadDoDia.voice_descricao}"
                                         </p>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-16 glass-panel rounded-[2.5rem] text-center border-dashed border-white/10">
+                                <div className="p-16 glass-panel rounded-[2.5rem] text-center border-dashed border-border-subtle">
                                     <AlertCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                                    <p className="text-slate-500 font-medium tracking-tight">Estamos preparando a sua revelação diária. Por favor, aguarde.</p>
+                                    <p className="text-text-muted font-medium tracking-tight">Estamos preparando a sua revelação diária. Por favor, aguarde.</p>
                                 </div>
                             )}
                         </section>
@@ -461,8 +461,8 @@ export default function GeradorPage() {
                                         <div className="absolute -inset-4 bg-amber-500/10 blur-2xl rounded-full -z-10 animate-pulse"></div>
                                     </div>
                                     <div className="text-center space-y-2">
-                                        <p className="text-2xl font-black tracking-tight text-white uppercase">Sintonizando...</p>
-                                        <p className="text-slate-500 text-sm font-medium tracking-wide">A sabedoria divina está sendo processada.</p>
+                                        <p className="text-2xl font-black tracking-tight text-text-primary uppercase">Sintonizando...</p>
+                                        <p className="text-text-muted text-sm font-medium tracking-wide">A sabedoria divina está sendo processada.</p>
                                     </div>
                                 </div>
                             )}
@@ -478,9 +478,9 @@ export default function GeradorPage() {
 
                                         <button
                                             onClick={handleCopiar}
-                                            className="group flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] text-xs font-bold text-slate-400 hover:text-white transition-all hover:shadow-xl active:scale-95"
+                                            className="group flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-surface-2 border border-border-subtle hover:bg-surface-2/80 text-xs font-bold text-text-muted hover:text-text-primary transition-all hover:shadow-xl active:scale-95"
                                         >
-                                            {copiado ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:rotate-12 transition-all" />}
+                                            {copiado ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-text-muted group-hover:text-amber-400 group-hover:rotate-12 transition-all" />}
                                             {copiado ? 'Copiado para o Altar' : 'Copiar Tudo'}
                                         </button>
                                     </div>
@@ -488,7 +488,7 @@ export default function GeradorPage() {
                                     {/* Mensagens Individuais em Cards */}
                                     <div className="space-y-6">
                                         {parseMensagens(resultado.texto).map((mensagem, idx) => (
-                                            <div key={idx} className="relative group/msg glass-panel rounded-[2rem] p-8 md:p-10 border border-white/5 hover:border-amber-500/30 transition-all">
+                                            <div key={idx} className="relative group/msg glass-panel rounded-[2rem] p-8 md:p-10 border border-border-subtle hover:border-amber-500/30 transition-all">
                                                 {/* Botões: Copiar e Like */}
                                                 <div className="absolute top-6 right-6 flex items-center gap-2">
                                                     {/* Botão de copiar individual */}
@@ -497,12 +497,12 @@ export default function GeradorPage() {
                                                             await navigator.clipboard.writeText(mensagem);
                                                             const btn = document.getElementById(`gen-copy-btn-${idx}`);
                                                             if (btn) {
-                                                                btn.classList.add('bg-green-500', 'text-white');
-                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-white'), 1500);
+                                                                btn.classList.add('bg-green-500', 'text-text-primary');
+                                                                setTimeout(() => btn.classList.remove('bg-green-500', 'text-text-primary'), 1500);
                                                             }
                                                         }}
                                                         id={`gen-copy-btn-${idx}`}
-                                                        className="p-2.5 rounded-xl transition-all bg-white/10 text-slate-400 hover:text-amber-400 hover:bg-amber-500/20 border border-white/10"
+                                                        className="p-2.5 rounded-xl transition-all bg-white/10 text-text-muted hover:text-amber-400 hover:bg-amber-500/20 border border-border-subtle"
                                                         title="Copiar mensagem"
                                                     >
                                                         <Copy className="w-4 h-4" />
@@ -511,8 +511,8 @@ export default function GeradorPage() {
                                                     <button
                                                         onClick={handleToggleLike}
                                                         className={`p-2.5 rounded-xl transition-all ${isLiked
-                                                            ? 'bg-rose-500 text-white shadow-lg shadow-rose-900/40'
-                                                            : 'bg-white/10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 border border-white/10'
+                                                            ? 'bg-rose-500 text-text-primary shadow-lg shadow-rose-900/40'
+                                                            : 'bg-white/10 text-text-muted hover:text-rose-400 hover:bg-rose-500/20 border border-border-subtle'
                                                             }`}
                                                         title={isLiked ? 'Eternizado' : 'Eternizar mensagem'}
                                                     >
@@ -526,10 +526,10 @@ export default function GeradorPage() {
                                                 </div>
 
                                                 {/* Conteúdo */}
-                                                <div className="pt-8 prose prose-lg prose-invert max-w-none
+                                                <div className="pt-8 prose prose-lg dark:prose-invert max-w-none
                                                     prose-headings:text-amber-200 prose-headings:font-black prose-headings:tracking-tight
-                                                    prose-p:text-slate-300 prose-p:leading-[1.9] prose-p:text-base md:prose-p:text-lg
-                                                    prose-strong:text-white prose-strong:font-black
+                                                    prose-p:text-text-secondary prose-p:leading-[1.9] prose-p:text-base md:prose-p:text-lg
+                                                    prose-strong:text-text-primary prose-strong:font-black
                                                     prose-blockquote:border-l-4 prose-blockquote:border-amber-600 prose-blockquote:bg-amber-950/20 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:not-italic prose-blockquote:rounded-xl">
                                                     <ReactMarkdown>{mensagem}</ReactMarkdown>
                                                 </div>
@@ -544,8 +544,8 @@ export default function GeradorPage() {
                                             className={`
                                                 group relative flex items-center gap-4 px-10 py-5 rounded-[2rem] text-sm font-black tracking-[0.1em] uppercase shadow-2xl transition-all duration-500 transform active:scale-95
                                                 ${isLiked
-                                                    ? 'bg-gradient-to-r from-red-700 via-rose-600 to-red-700 text-white shadow-rose-900/40 ring-2 ring-white/10'
-                                                    : 'bg-white/[0.03] text-slate-400 hover:text-white border border-white/10 hover:border-rose-500/30'}
+                                                    ? 'bg-gradient-to-r from-red-700 via-rose-600 to-red-700 text-text-primary shadow-rose-900/40 ring-2 ring-white/10'
+                                                    : 'bg-surface-2 text-text-muted hover:text-text-primary border border-border-subtle hover:border-rose-500/30'}
                                             `}
                                         >
                                             <Heart className={`w-6 h-6 transition-all duration-500 ${isLiked ? 'fill-white scale-125' : 'group-hover:text-rose-500 group-hover:scale-110'}`} />
@@ -561,16 +561,16 @@ export default function GeradorPage() {
                                 </div>
                             )}
 
-                            {/* Placeholder state */}
+                            {/* Pplaceholder-text-muted */}
                             {!modoEmExecucao && !resultado && !carregandoPayload && (
                                 <div className="flex flex-col items-center justify-center py-24 space-y-8 animate-enter opacity-40 grayscale group hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-                                    <div className="p-10 bg-white/[0.02] border border-white/[0.05] rounded-[3rem] relative">
+                                    <div className="p-10 bg-surface-2 border border-border-subtle rounded-[3rem] relative">
                                         <Zap className="w-16 h-16 text-amber-500/50 group-hover:text-amber-500 transition-colors" />
                                         <div className="absolute -inset-2 border-2 border-dashed border-amber-500/10 rounded-[3.5rem] animate-[spin_20s_linear_infinite]"></div>
                                     </div>
                                     <div className="text-center space-y-1">
-                                        <p className="text-lg font-bold text-slate-300">Inicie sua Jornada</p>
-                                        <p className="text-xs text-slate-500 max-w-[240px] leading-relaxed">Selecione um dos modos na lateral para traduzir a sabedoria divina para o seu momento.</p>
+                                        <p className="text-lg font-bold text-text-secondary">Inicie sua Jornada</p>
+                                        <p className="text-xs text-text-muted max-w-[240px] leading-relaxed">Selecione um dos modos na lateral para traduzir a sabedoria divina para o seu momento.</p>
                                     </div>
                                 </div>
                             )}

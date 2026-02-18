@@ -45,7 +45,6 @@ export default function PlanosPage() {
             const inscricao = await inscreverEmPlano(planoId);
 
             if (inscricao) {
-                // Redireciona para o leitor com o plano selecionado
                 router.push(`/plano-de-leitura?plano_id=${planoId}`);
             } else {
                 alert('Erro ao inscrever no plano. Tente novamente.');
@@ -55,7 +54,6 @@ export default function PlanosPage() {
             console.error("Erro ao iniciar plano:", error);
             const message = error instanceof Error ? error.message : '';
             if (message === 'USER_NOT_AUTHENTICATED') {
-                // Sem login, abre o plano em modo leitura (sem salvar progresso)
                 router.push('/plano-de-leitura?plano_id=' + planoId);
             } else {
                 alert('Ocorreu um erro inesperado ao iniciar o plano.');
@@ -64,10 +62,8 @@ export default function PlanosPage() {
         }
     }
 
-    // Encontrar o plano ativo mais recente (se houver)
     const planoAtivo = inscricoes.length > 0 ? inscricoes[0] : null;
 
-    // Mapa de cores
     const colorMap: Record<string, string> = {
         blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
         green: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
@@ -94,16 +90,16 @@ export default function PlanosPage() {
 
                 {/* Header */}
                 <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-2 border border-border-subtle">
                         <BookOpen className="w-4 h-4 text-amber-400" />
-                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+                        <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
                             Central de Estudos
                         </span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
+                    <h1 className="text-3xl md:text-5xl font-bold text-text-primary">
                         Planos de Leitura
                     </h1>
-                    <p className="text-slate-400 max-w-lg">
+                    <p className="text-text-muted max-w-lg">
                         Escolha uma jornada guiada e aprofunde seu conhecimento bíblico com ajuda da Inteligência Artificial.
                     </p>
                 </div>
@@ -111,23 +107,23 @@ export default function PlanosPage() {
                 {/* Plano Ativo (Destaque) */}
                 {planoAtivo && planoAtivo.plano && (
                     <div className="w-full relative group p-1 rounded-3xl bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-blue-500/20 animate-enter">
-                        <div className="bg-[#0A0A0A] rounded-[22px] p-6 md:p-8 relative overflow-hidden">
+                        <div className="bg-surface-0 rounded-[22px] p-6 md:p-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none"></div>
 
                             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] uppercase tracking-widest text-amber-500 font-bold">Em Progresso</span>
-                                        <span className="text-slate-600">•</span>
-                                        <span className="text-[10px] uppercase tracking-widest text-slate-400">
+                                        <span className="text-text-muted">•</span>
+                                        <span className="text-[10px] uppercase tracking-widest text-text-muted">
                                             Dia {planoAtivo.dia_atual} de {planoAtivo.plano.duracao_dias}
                                         </span>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-white group-hover:text-amber-400 transition-colors">
+                                    <h2 className="text-2xl font-bold text-text-primary group-hover:text-amber-400 transition-colors">
                                         {planoAtivo.plano.titulo}
                                     </h2>
                                     {/* Barra de Progresso */}
-                                    <div className="w-full md:w-64 h-2 bg-white/10 rounded-full overflow-hidden mt-3">
+                                    <div className="w-full md:w-64 h-2 bg-surface-2 rounded-full overflow-hidden mt-3">
                                         <div
                                             className="h-full bg-gradient-to-r from-amber-500 to-orange-500 shimmer"
                                             style={{ width: `${Math.max(5, planoAtivo.progresso_percent || 0)}%` }}
@@ -151,30 +147,30 @@ export default function PlanosPage() {
                 {/* Lista de Planos Disponíveis */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Card Leitura Diária (Legado) */}
-                    <div className="group relative p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all flex flex-col gap-4">
+                    <div className="group relative p-6 rounded-2xl bg-surface-1 border border-border-subtle hover:bg-surface-2 hover:border-border-strong transition-all flex flex-col gap-4">
                         <div className="flex justify-between items-start">
                             <div className="p-3 rounded-xl text-amber-400 bg-amber-500/10 border-amber-500/20">
                                 <Calendar className="w-6 h-6" />
                             </div>
-                            <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
+                            <span className="px-2 py-0.5 rounded-full bg-surface-2 text-[10px] font-bold text-text-primary uppercase tracking-widest">
                                 DIÁRIO
                             </span>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
+                            <h3 className="text-xl font-bold text-text-primary mb-1 group-hover:text-amber-300 transition-colors">
                                 Leitura do Dia
                             </h3>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-widest font-medium">
+                            <div className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest font-medium">
                                 <span>Devocional</span>
                                 <span>•</span>
                                 <span>Automático</span>
                             </div>
                         </div>
-                        <p className="text-sm text-slate-400 leading-relaxed">
+                        <p className="text-sm text-text-muted leading-relaxed">
                             A leitura diária tradicional, baseada no calendário anual da igreja.
                         </p>
-                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5">
-                            <Link href="/plano-de-leitura" className="text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest flex items-center gap-2 transition-colors">
+                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-subtle">
+                            <Link href="/plano-de-leitura" className="text-xs font-bold text-text-muted hover:text-text-primary uppercase tracking-widest flex items-center gap-2 transition-colors">
                                 Acessar Agora <ChevronRight className="w-4 h-4" />
                             </Link>
                         </div>
@@ -188,35 +184,35 @@ export default function PlanosPage() {
                         return (
                             <div
                                 key={plano.id}
-                                className="group relative p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all flex flex-col gap-4"
+                                className="group relative p-6 rounded-2xl bg-surface-1 border border-border-subtle hover:bg-surface-2 hover:border-border-strong transition-all flex flex-col gap-4"
                             >
                                 <div className="flex justify-between items-start">
                                     <div className={`p-3 rounded-xl ${theme}`}>
                                         <Calendar className="w-6 h-6" />
                                     </div>
                                     {plano.badge && (
-                                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
+                                        <span className="px-2 py-0.5 rounded-full bg-surface-2 text-[10px] font-bold text-text-primary uppercase tracking-widest">
                                             {plano.badge}
                                         </span>
                                     )}
                                 </div>
 
                                 <div>
-                                    <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
+                                    <h3 className="text-xl font-bold text-text-primary mb-1 group-hover:text-blue-300 transition-colors">
                                         {plano.titulo}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-widest font-medium">
+                                    <div className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest font-medium">
                                         <span>{plano.duracao_dias} Dias</span>
                                         <span>•</span>
                                         <span>Diário</span>
                                     </div>
                                 </div>
 
-                                <p className="text-sm text-slate-400 leading-relaxed">
+                                <p className="text-sm text-text-muted leading-relaxed">
                                     {plano.descricao}
                                 </p>
 
-                                <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5">
+                                <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-subtle">
                                     {isAtivo ? (
                                         <Link
                                             href={`/plano-de-leitura?plano_id=${plano.id}`}
@@ -229,7 +225,7 @@ export default function PlanosPage() {
                                         <button
                                             onClick={() => handleIniciar(plano.id)}
                                             disabled={!!processing}
-                                            className="text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest flex items-center gap-2 transition-colors disabled:opacity-50"
+                                            className="text-xs font-bold text-text-muted hover:text-text-primary uppercase tracking-widest flex items-center gap-2 transition-colors disabled:opacity-50"
                                         >
                                             {processing === plano.id ? (
                                                 <>
@@ -252,7 +248,7 @@ export default function PlanosPage() {
 
                 {/* Voltar */}
                 <div className="text-center pt-8">
-                    <Link href="/" className="text-sm text-slate-600 hover:text-white transition-colors">
+                    <Link href="/" className="text-sm text-text-muted hover:text-text-primary transition-colors">
                         ← Voltar para Dashboard
                     </Link>
                 </div>
