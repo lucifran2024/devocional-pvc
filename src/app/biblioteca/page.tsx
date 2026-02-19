@@ -647,15 +647,25 @@ export default function BibliotecaPage() {
     // Scroll para versículo específico quando carregado
     useEffect(() => {
         if (scrollToVerse && !loading && versiculos.length > 0) {
-            const el = document.getElementById(`verse-${scrollToVerse}`);
-            if (el) {
-                setTimeout(() => {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    el.classList.add('ring-2', 'ring-amber-400/60');
-                    setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400/60'), 2000);
-                }, 300);
-            }
-            setScrollToVerse(null);
+            const doScroll = () => {
+                const el = document.getElementById(`verse-${scrollToVerse}`);
+                if (el) {
+                    setTimeout(() => {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('ring-2', 'ring-amber-400/60', 'bg-amber-500/10');
+                        setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400/60', 'bg-amber-500/10'), 2500);
+                    }, 100);
+                    setScrollToVerse(null);
+                }
+            };
+            // Tenta imediatamente, e se não encontrar, tenta após o DOM atualizar
+            requestAnimationFrame(() => {
+                doScroll();
+                // Retry após pequeno delay caso o DOM ainda não esteja pronto
+                if (scrollToVerse) {
+                    setTimeout(doScroll, 500);
+                }
+            });
         }
     }, [scrollToVerse, loading, versiculos]);
 
