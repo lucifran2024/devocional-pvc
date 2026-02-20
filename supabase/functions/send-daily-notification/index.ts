@@ -18,24 +18,57 @@ webpush.setVapidDetails(
     vapidKeys.privateKey
 )
 
-Deno.serve(async (req) => {
+Deno.serve(async (_req) => {
     try {
-        // 1. Pegar versículo do dia
-        const hoje = new Date().toISOString().split('T')[0]
-        const { data: leitura } = await supabase
-            .from('leitura_do_dia')
-            .select('passagem_do_dia, insight_curto') // Supondo que exista insight_curto ou similar
+        // Timezone Brasil (UTC-3)
+        const agora = new Date()
+        agora.setHours(agora.getHours() - 3)
+        const hoje = agora.toISOString().split('T')[0]
+
+        // 1. Buscar a Palavra da Manhã do dia
+        const { data: palavraManha } = await supabase
+            .from('palavra_manha_diaria')
+            .select('mensagem, passagem_ref, dia_semana, categoria')
             .eq('data', hoje)
             .maybeSingle()
 
-        const mensagem = leitura
-            ? `Versículo do Dia: ${leitura.passagem_do_dia}`
-            : 'Seu devocional diário está pronto!'
+        // 2. Fallback: buscar passagem do dia
+        let titulo = '🌅 Palavra da Manhã'
+        let corpo = 'Sua reflexão diária está pronta. Abra o app!'
 
-        // 2. Pegar todas as inscrições
+        if (palavraManha) {
+            // Extrai os primeiros ~120 chars da mensagem (limpo de markdown)
+            const mensagemLimpa = palavraManha.mensagem
+                .replace(/[*#_>]/g, '')
+                .replace(/\n+/g, ' ')
+                .trim()
+            const trecho = mensagemLimpa.length > 120
+                ? mensagemLimpa.substring(0, 117) + '...'
+                : mensagemLimpa
+
+            titulo = palavraManha.passagem_ref
+                ? `🌅 ${palavraManha.passagem_ref}`
+                : '🌅 Palavra da Manhã'
+
+            corpo = trecho
+        } else {
+            // Se não tem Palavra da Manhã, tenta pegar a passagem do dia
+            const { data: leitura } = await supabase
+                .from('leitura_do_dia')
+                .select('passagem_do_dia')
+                .eq('data', hoje)
+                .maybeSingle()
+
+            if (leitura) {
+                titulo = '📖 Leitura do Dia'
+                corpo = `${leitura.passagem_do_dia} — Abra o app para ler sua reflexão.`
+            }
+        }
+
+        // 3. Pegar todas as inscrições
         const { data: inscricoes } = await supabase
             .from('push_subscriptions')
-            .select('subscription_json')
+            .select('id, subscription_json')
 
         if (!inscricoes?.length) {
             return new Response('Ninguém para notificar', { status: 200 })
@@ -43,30 +76,56 @@ Deno.serve(async (req) => {
 
         console.log(`Disparando para ${inscricoes.length} usuários...`)
 
-        // 3. Enviar para cada um
+        // 4. Enviar para cada um e limpar expirados
+        const idsExpirados: number[] = []
+        let enviados = 0
+
         const promises = inscricoes.map(async (registro) => {
             try {
                 await webpush.sendNotification(
                     registro.subscription_json,
                     JSON.stringify({
-                        title: 'Devocional PVC',
-                        body: mensagem,
-                        icon: '/icon-192.png'
+                        title: titulo,
+                        body: corpo,
+                        icon: '/icon-192.png',
+                        url: '/'
                     })
                 )
-            } catch (err) {
-                if (err.statusCode === 410) {
-                    // Usuário removeu permissão -> Deletar do banco (TODO)
-                    console.log('Inscrição expirada')
+                enviados++
+            } catch (err: any) {
+                if (err.statusCode === 410 || err.statusCode === 404) {
+                    // Inscrição expirada ou inválida -> marcar para remoção
+                    idsExpirados.push(registro.id)
+                    console.log(`Inscrição ${registro.id} expirada (${err.statusCode})`)
+                } else {
+                    console.error(`Erro ao enviar para ${registro.id}:`, err.message)
                 }
             }
         })
 
         await Promise.all(promises)
 
-        return new Response(`Enviado para ${inscricoes.length}`, { status: 200 })
+        // 5. Limpar inscrições expiradas
+        if (idsExpirados.length > 0) {
+            await supabase
+                .from('push_subscriptions')
+                .delete()
+                .in('id', idsExpirados)
+            console.log(`Removidas ${idsExpirados.length} inscrições expiradas`)
+        }
+
+        return new Response(
+            JSON.stringify({
+                ok: true,
+                enviados,
+                expirados: idsExpirados.length,
+                total: inscricoes.length
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
 
     } catch (err) {
+        console.error('Erro fatal:', err)
         return new Response(String(err), { status: 500 })
     }
 })
