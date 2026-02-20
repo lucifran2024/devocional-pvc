@@ -26,16 +26,16 @@ export function CosmicHeader({
 
     const variantStyles = {
         hero: heightClasses[height],
-        navbar: 'h-16 flex items-center border-b border-border-subtle'
+        navbar: 'h-16 flex items-center border-b border-slate-200 dark:border-border-subtle'
     };
 
     const positionStyles = sticky ? 'sticky top-0 z-50' : 'relative z-10';
 
     return (
-        <header className={`${positionStyles} bg-surface-0 text-text-primary overflow-hidden transition-all duration-300 ${variantStyles[variant]} ${className}`}>
+        <header className={`${positionStyles} bg-white dark:bg-surface-0 text-slate-900 dark:text-text-primary overflow-hidden transition-all duration-300 ${variantStyles[variant]} ${className}`}>
 
             {/* Divine Gradient Background - SINGLE TONE */}
-            <div className={`absolute inset-0 bg-surface-0 ${variant === 'navbar' ? 'opacity-100' : 'opacity-100'}`}></div>
+            <div className={`absolute inset-0 bg-white dark:bg-surface-0 ${variant === 'navbar' ? 'opacity-100' : 'opacity-100'}`}></div>
 
             {/* Noise & Stardust */}
             <div className="absolute inset-0 noise-overlay"></div>
@@ -50,8 +50,8 @@ export function CosmicHeader({
             {/* Glow Effects (Reduced for Navbar) */}
             {variant === 'hero' && (
                 <>
-                    <div className="absolute top-[-30%] right-[-10%] w-[700px] h-[700px] bg-amber-500/[0.05] blur-[120px] rounded-full mix-blend-screen pointer-events-none"></div>
-                    <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-500/[0.1] blur-[140px] rounded-full mix-blend-screen pointer-events-none"></div>
+                    <div className="absolute top-[-30%] right-[-10%] w-[700px] h-[700px] bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-[120px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+                    <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-500/[0.05] dark:bg-blue-500/[0.1] blur-[140px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
                 </>
             )}
 
