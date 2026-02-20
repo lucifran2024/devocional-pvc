@@ -12,6 +12,7 @@ import { HeroSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useDailyStreak } from '@/hooks/useDailyStreak';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dataHoje = getDataHoje();
+  const { streak, isLoaded } = useDailyStreak();
 
   useEffect(() => {
     async function load() {
@@ -72,29 +74,34 @@ export default function DashboardPage() {
 
         <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
 
-          {/* Header Top Icons */}
-          <div className="absolute top-0 right-0 flex gap-4">
-            <div className="h-10 w-10 md:h-12 md:w-12 glass-panel rounded-xl flex items-center justify-center text-amber-500 border-amber-500/20">
-              <User className="w-5 h-5 md:w-6 md:h-6" />
-            </div>
-          </div>
-
           {/* Date Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-2 border border-border-subtle backdrop-blur-md mb-8 animate-enter">
-            <Calendar className="w-3.5 h-3.5 text-accent-primary" />
-            <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 dark:bg-surface-2 border border-slate-300 dark:border-border-subtle backdrop-blur-md mb-8 animate-enter shadow-sm">
+            <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-accent-primary" />
+            <span className="text-xs font-bold text-slate-700 dark:text-text-secondary uppercase tracking-widest">
               {formatarDataExtenso(dataHoje)}
             </span>
+          </div>
+
+          {/* Header Top Icons */}
+          <div className="absolute top-0 right-0 flex gap-4">
+            <div className="h-8 md:h-10 px-3 glass-panel rounded-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-500 border-amber-600/30 dark:border-amber-500/20 font-bold bg-white/90 dark:bg-amber-500/10 backdrop-blur-md transition-all shadow-md shadow-amber-500/5 dark:shadow-amber-500/10" title="Dias seguidos abrindo o app">
+              <span className="text-lg">🔥</span>
+              {isLoaded ? (
+                <span className="text-xs md:text-sm tracking-wide">{streak} Dia{streak !== 1 ? 's' : ''}</span>
+              ) : (
+                <span className="text-xs opacity-50">...</span>
+              )}
+            </div>
           </div>
 
           {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
           <div className="w-full relative z-20">
             <div className="flex flex-col items-center mb-2">
-              <h2 className="text-accent-primary/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1">
+              <h2 className="text-amber-700 dark:text-accent-primary/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1 drop-shadow-sm dark:drop-shadow-none">
                 Palavra da Manhã
               </h2>
               {/* Data da Leitura */}
-              <div className="text-[10px] text-text-muted font-medium uppercase tracking-widest bg-surface-2 px-3 py-1 rounded-full border border-border-subtle">
+              <div className="text-[10px] text-slate-600 dark:text-text-muted font-bold uppercase tracking-widest bg-white/80 dark:bg-surface-2 px-3 py-1 rounded-full border border-slate-300 dark:border-border-subtle shadow-sm">
                 {payload?.passagem_do_dia || "Leitura Sagrada"}
               </div>
             </div>

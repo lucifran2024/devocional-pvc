@@ -40,6 +40,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Navigation } from "@/components/ui/Navigation";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,9 +54,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider defaultTheme="dark" storageKey="devocional-theme">
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <Navigation />
+          <div className="md:pl-24 pb-20 md:pb-0 min-h-screen">
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </div>
           <ServiceWorkerRegistration />
           <NotificationManager />
         </ThemeProvider>
