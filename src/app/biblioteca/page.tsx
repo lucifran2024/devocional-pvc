@@ -1495,7 +1495,7 @@ export default function BibliotecaPage() {
 
             {/* --- NOTA FULLSCREEN --- */}
             {notaFullscreen && notaFullscreenVerso && (
-                <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-black/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
+                <div className="fixed inset-0 z-[120] flex flex-col bg-white dark:bg-black/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 shrink-0">
                         <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm font-medium">
@@ -1532,7 +1532,7 @@ export default function BibliotecaPage() {
                     </div>
 
                     {/* Área de texto - ocupa todo espaço restante */}
-                    <div className="flex-1 min-h-0 p-4 pb-24 flex flex-col overflow-y-auto">
+                    <div className="flex-1 min-h-0 p-4 pb-4 flex flex-col overflow-y-auto">
                         <textarea
                             value={textoNota}
                             onChange={e => setTextoNota(e.target.value)}
@@ -1543,7 +1543,7 @@ export default function BibliotecaPage() {
                     </div>
 
                     {/* Barra fixa inferior com botão SALVAR sempre visível */}
-                    <div className="shrink-0 px-4 py-4 border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
+                    <div className="shrink-0 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
                         <button
                             onClick={salvarNotaFullscreen}
                             disabled={!textoNota.trim()}
@@ -1557,8 +1557,9 @@ export default function BibliotecaPage() {
 
             {/* --- BARRA FLUTUANTE MULTI-SELEÇÃO --- */}
             {modoMultiSelecao && (
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 duration-200">
-                    <div className="bg-white/98 dark:bg-surface-1/98 border border-emerald-400/40 dark:border-emerald-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl flex items-center gap-1.5">
+                <div className="fixed left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] md:left-1/2 md:right-auto md:bottom-4 md:-translate-x-1/2 z-[80] animate-in slide-in-from-bottom-4 duration-200">
+                    <div className="bg-white/98 dark:bg-surface-1/98 border border-emerald-400/40 dark:border-emerald-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl overflow-x-auto">
+                        <div className="flex items-center gap-1.5 min-w-max">
                         {/* Contador */}
                         <div className="px-3 py-2 text-emerald-400 font-bold text-sm min-w-[60px] text-center">
                             {versiculosSelecionados.size} sel.
@@ -1610,6 +1611,7 @@ export default function BibliotecaPage() {
                         >
                             <XCircle className="w-5 h-5" />
                         </button>
+                        </div>
                     </div>
 
                     {/* Cores para multi-seleção */}

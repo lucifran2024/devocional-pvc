@@ -469,14 +469,14 @@ export default function DnaCategorizadoPage() {
                                 <Link href="/" className="group p-3 bg-surface-2 hover:bg-surface-2/80 rounded-2xl transition-all border border-border-subtle">
                                     <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
                                 </Link>
-                                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-violet-500/10 border border-violet-400/20 rounded-full text-violet-300 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-50 dark:bg-violet-500/10 border border-amber-200 dark:border-violet-400/20 rounded-full text-amber-700 dark:text-violet-300 text-[10px] font-black uppercase tracking-[0.2em]">
                                     <Layers className="w-3.5 h-3.5" />
                                     DNA Categorizado
                                 </div>
                             </div>
 
                             <h1 className="text-4xl md:text-7xl font-black tracking-tight text-text-primary mb-4 text-center md:text-left">
-                                DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-200 to-fuchsia-500">Categorizado</span>
+                                DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-600 dark:from-violet-200 dark:to-fuchsia-500">Categorizado</span>
                             </h1>
 
                             {/* === SISTEMA DE ABAS === */}
@@ -484,7 +484,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerenciar')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerenciar'
-                                        ? 'bg-violet-500/30 text-violet-200 border border-violet-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-violet-500/30 dark:text-violet-200 dark:border-violet-500/30'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -494,7 +494,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerar-dna')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-dna'
-                                        ? 'bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-fuchsia-500/30 dark:text-fuchsia-200 dark:border-fuchsia-500/30'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -504,7 +504,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerar-estilo')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-estilo'
-                                        ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-indigo-500/30 dark:text-indigo-200 dark:border-indigo-500/30'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -518,7 +518,7 @@ export default function DnaCategorizadoPage() {
                                 <>
                                     <div className="flex flex-wrap items-center gap-2 mb-6">
                                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-2 border border-border-subtle rounded-xl text-sm">
-                                            <Layers className="w-4 h-4 text-violet-400" />
+                                            <Layers className="w-4 h-4 text-amber-500 dark:text-violet-400" />
                                             <span className="text-text-secondary">{totalItems} mensagens</span>
                                         </div>
                                         {stats.map(s => {
@@ -538,7 +538,7 @@ export default function DnaCategorizadoPage() {
                                         {filtroCategoria !== 'todas' && (
                                             <button
                                                 onClick={() => setFiltroCategoria('todas')}
-                                                className="text-xs text-violet-400 hover:text-violet-300"
+                                                className="text-xs text-amber-600 hover:text-amber-700 dark:text-violet-400 dark:hover:text-violet-300"
                                             >
                                                 ✕ Ver todas
                                             </button>
