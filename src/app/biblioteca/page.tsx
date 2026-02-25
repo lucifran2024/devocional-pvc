@@ -1504,11 +1504,19 @@ export default function BibliotecaPage() {
                         </button>
                         <div className="flex items-center gap-2">
                             <StickyNote className="w-4 h-4 text-blue-400" />
-                            <span className="font-bold text-text-primary text-sm truncate max-w-[180px]">
+                            <span className="font-bold text-text-primary text-sm truncate max-w-[120px] sm:max-w-[180px]">
                                 {livroAtual.nome} {capituloAtual}:{notaFullscreenVerso}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onClick={salvarNotaFullscreen}
+                                disabled={!textoNota.trim()}
+                                className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Salvar anotação"
+                            >
+                                Salvar
+                            </button>
                             {notaFullscreenVerso && interacoesMap.notas[notaFullscreenVerso] && (
                                 <button onClick={async () => {
                                     await removerPorVersiculoETipo('nota', notaFullscreenVerso);
@@ -1543,7 +1551,7 @@ export default function BibliotecaPage() {
                     </div>
 
                     {/* Barra fixa inferior com botão SALVAR sempre visível */}
-                    <div className="shrink-0 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
+                    <div className="hidden sm:block shrink-0 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
                         <button
                             onClick={salvarNotaFullscreen}
                             disabled={!textoNota.trim()}
