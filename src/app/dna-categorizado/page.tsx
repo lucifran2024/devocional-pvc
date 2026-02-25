@@ -464,7 +464,7 @@ export default function DnaCategorizadoPage() {
                     <CosmicHeader className="pb-32 md:pb-48">
                         <div className="w-full px-4 sm:px-6 lg:px-8 pt-12 text-center md:text-left">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-8">
-                                <Link href="/" className="group p-3 bg-surface-2 hover:bg-white/[0.08] rounded-2xl transition-all border border-border-subtle">
+                                <Link href="/" className="group p-3 bg-surface-2 hover:bg-surface-2/80 rounded-2xl transition-all border border-border-subtle">
                                     <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
                                 </Link>
                                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-violet-500/10 border border-violet-400/20 rounded-full text-violet-300 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -547,7 +547,7 @@ export default function DnaCategorizadoPage() {
                                     <div className="flex flex-wrap items-center gap-3 mt-4">
                                         <button
                                             onClick={() => setShowAddForm(!showAddForm)}
-                                            className="flex items-center gap-2 px-4 py-3 bg-surface-2 hover:bg-white/15 text-text-primary font-bold rounded-xl border border-border-strong transition-all"
+                                            className="flex items-center gap-2 px-4 py-3 bg-surface-2 hover:bg-surface-2/80 text-text-primary font-bold rounded-xl border border-border-strong transition-all"
                                         >
                                             <Plus className="w-5 h-5" />
                                             Adicionar Mensagem
@@ -865,7 +865,7 @@ export default function DnaCategorizadoPage() {
                                             </div>
 
                                             {showCandidates && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-border-subtle">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-surface-2/50 dark:bg-black/20 p-2 rounded-xl border border-border-subtle">
                                                     {loadingCandidates ? (
                                                         <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
@@ -921,7 +921,7 @@ export default function DnaCategorizadoPage() {
                                             </div>
 
                                             {showStyleCandidates && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-black/20 p-2 rounded-xl border border-border-subtle">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar bg-surface-2/50 dark:bg-black/20 p-2 rounded-xl border border-border-subtle">
                                                     {loadingStyleCandidates ? (
                                                         <div className="col-span-full py-8 text-center text-text-muted text-xs">
                                                             <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2 opacity-50" />
@@ -960,7 +960,7 @@ export default function DnaCategorizadoPage() {
 
                             {/* FORM DE ADIÇÃO - Só na aba Gerenciar */}
                             {activeTab === 'gerenciar' && showAddForm && (
-                                <div className="mt-4 p-4 bg-black/40 border border-border-subtle rounded-xl animate-in slide-in-from-top-2">
+                                <div className="mt-4 p-4 bg-surface-2/80 dark:bg-black/40 border border-border-subtle rounded-xl animate-in slide-in-from-top-2">
                                     <h3 className="text-text-primary font-bold mb-3">Adicionar Nova Mensagem</h3>
                                     <div className="space-y-3">
                                         <div>
@@ -1000,7 +1000,7 @@ export default function DnaCategorizadoPage() {
                                             </button>
                                             <button
                                                 onClick={() => setShowAddForm(false)}
-                                                className="px-4 py-2 text-slate-400 hover:text-white"
+                                                className="px-4 py-2 text-text-muted hover:text-text-primary"
                                             >
                                                 Cancelar
                                             </button>
@@ -1016,21 +1016,21 @@ export default function DnaCategorizadoPage() {
 
                     {/* Resultado da Geração */}
                     {showResult && generatedResult && (
-                        <div className="bg-gradient-to-br from-violet-900/20 to-fuchsia-900/10 border border-violet-500/30 rounded-2xl p-6">
+                        <div className="bg-gradient-to-br from-violet-100 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/10 border border-violet-500/30 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-violet-400 font-bold text-lg">✨ Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
-                                <button onClick={() => setShowResult(false)} className="p-2 hover:bg-white/10 rounded-lg">
-                                    <X className="w-5 h-5 text-slate-400" />
+                                <button onClick={() => setShowResult(false)} className="p-2 hover:bg-surface-2 rounded-lg">
+                                    <X className="w-5 h-5 text-text-muted" />
                                 </button>
                             </div>
                             <div className="space-y-6">
                                 {parseMessages(generatedResult).map((msg, i) => (
-                                    <div key={i} className="bg-black/30 border border-white/10 rounded-xl p-4">
+                                    <div key={i} className="bg-surface-1 dark:bg-black/30 border border-border-subtle dark:border-white/10 rounded-xl p-4">
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-violet-500 text-xs font-bold">Msg {i + 1}</span>
                                             <button
                                                 onClick={() => handleCopy(msg, -i)}
-                                                className="text-xs px-2 py-1 bg-white/10 rounded text-slate-300 hover:text-white"
+                                                className="text-xs px-2 py-1 bg-surface-2 rounded text-text-secondary hover:text-text-primary"
                                             >
                                                 {copiedId === -i ? '✓ Copiado' : 'Copiar'}
                                             </button>
@@ -1046,7 +1046,7 @@ export default function DnaCategorizadoPage() {
 
                     {/* NOVO: CARD ÚLTIMAS GERAÇÕES */}
                     {recentGenerations.length > 0 && (
-                        <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/10 border border-amber-500/30 rounded-2xl p-6">
+                        <div className="bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-amber-500/30 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-amber-400 font-bold text-lg flex items-center gap-2">
                                     <Calendar className="w-5 h-5" />
@@ -1064,12 +1064,12 @@ export default function DnaCategorizadoPage() {
                             ).map(([batchId, batchItems]) => (
                                 <div key={batchId} className="mb-6 last:mb-0">
                                     {/* Header do Lote */}
-                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
                                         <div className="flex items-center gap-2">
                                             <span className="text-amber-500 text-xs font-bold uppercase tracking-wider">
                                                 Lote ({batchItems.length} msgs)
                                             </span>
-                                            <span className="text-slate-500 text-xs">
+                                            <span className="text-text-muted text-xs">
                                                 {new Date(batchItems[0].created_at).toLocaleString('pt-BR', {
                                                     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                                                 })}
@@ -1088,21 +1088,21 @@ export default function DnaCategorizadoPage() {
                                     {/* Mensagens do Lote */}
                                     <div className="space-y-3">
                                         {batchItems.map((gen) => (
-                                            <div key={gen.id} className="bg-black/30 border border-white/10 rounded-xl p-4">
+                                            <div key={gen.id} className="bg-surface-1 dark:bg-black/30 border border-border-subtle dark:border-white/10 rounded-xl p-4">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <span className="text-amber-500 text-xs font-bold">#{gen.id}</span>
                                                     <div className="flex gap-2">
                                                         {/* Feedback Buttons */}
                                                         <button
                                                             onClick={() => handleFeedback(gen.id, 1)}
-                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === 1 ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-green-200'}`}
+                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === 1 ? 'bg-green-500/20 text-green-400' : 'bg-surface-2 text-text-muted hover:bg-surface-2/80 hover:text-green-500 dark:hover:text-green-200'}`}
                                                             title="Gostei"
                                                         >
                                                             <ThumbsUp className="w-3 h-3" />
                                                         </button>
                                                         <button
                                                             onClick={() => handleFeedback(gen.id, -1)}
-                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === -1 ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-red-200'}`}
+                                                            className={`text-xs p-1.5 rounded transition-colors ${gen.feedback === -1 ? 'bg-red-500/20 text-red-400' : 'bg-surface-2 text-text-muted hover:bg-surface-2/80 hover:text-red-500 dark:hover:text-red-200'}`}
                                                             title="Não gostei"
                                                         >
                                                             <ThumbsDown className="w-3 h-3" />
@@ -1110,7 +1110,7 @@ export default function DnaCategorizadoPage() {
 
                                                         <button
                                                             onClick={() => handleCopy(gen.texto_msg, gen.id)}
-                                                            className="text-xs px-2 py-1 bg-white/10 rounded text-slate-300 hover:text-white"
+                                                            className="text-xs px-2 py-1 bg-surface-2 rounded text-text-secondary hover:text-text-primary"
                                                         >
                                                             {copiedId === gen.id ? '✓ Copiado' : <Copy className="w-3 h-3" />}
                                                         </button>
@@ -1137,34 +1137,34 @@ export default function DnaCategorizadoPage() {
                     {/* Lista de DNA - Só na aba Gerenciar */}
                     {activeTab === 'gerenciar' && (loading ? (
                         [1, 2, 3].map(i => (
-                            <div key={i} className="h-40 bg-surface-2 rounded-2xl animate-pulse border border-white/5" />
+                            <div key={i} className="h-40 bg-surface-2 rounded-2xl animate-pulse border border-border-subtle" />
                         ))
                     ) : items.length === 0 ? (
-                        <div className="text-center py-20 bg-surface-2 rounded-3xl border border-white/5">
-                            <Sparkles className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold text-slate-400 mb-2">
+                        <div className="text-center py-20 bg-surface-2 rounded-3xl border border-border-subtle">
+                            <Sparkles className="w-12 h-12 text-text-muted mx-auto mb-4" />
+                            <h3 className="text-xl font-bold text-text-muted mb-2">
                                 {filtroCategoria === 'todas' ? 'Nenhuma mensagem ainda' : `Nenhuma mensagem em "${getCategoriaInfo(filtroCategoria).nome}"`}
                             </h3>
-                            <p className="text-slate-500 text-sm">Adicione mensagens para o DNA aprender.</p>
+                            <p className="text-text-muted text-sm">Adicione mensagens para o DNA aprender.</p>
                         </div>
                     ) : (
                         items.map((item) => {
                             const cat = getCategoriaInfo(item.categoria);
                             const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className={`group relative bg-surface-0/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-white/10 hover:border-violet-500/30'}`}>
+                                <div key={item.id} className={`group relative bg-surface-0/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-border-subtle hover:border-violet-500/30'}`}>
                                     {isEditing ? (
                                         /* === MODO EDIÇÃO === */
                                         <div className="space-y-4">
                                             {/* Seletor de categoria */}
                                             <div>
-                                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Categoria</label>
+                                                <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">Categoria</label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {CATEGORIAS.map(c => (
                                                         <button
                                                             key={c.id}
                                                             onClick={() => setEditCategoria(c.id)}
-                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${editCategoria === c.id ? c.cor : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${editCategoria === c.id ? c.cor : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2/80'}`}
                                                         >
                                                             <c.icon className="w-3 h-3" />
                                                             {c.nome}
@@ -1174,12 +1174,12 @@ export default function DnaCategorizadoPage() {
                                             </div>
                                             {/* Textarea do texto */}
                                             <div>
-                                                <label className="block text-xs text-slate-400 mb-2 uppercase font-semibold">Texto</label>
+                                                <label className="block text-xs text-text-muted mb-2 uppercase font-semibold">Texto</label>
                                                 <textarea
                                                     value={editTexto}
                                                     onChange={(e) => setEditTexto(e.target.value)}
                                                     rows={8}
-                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder:text-slate-500 focus:border-amber-500 focus:outline-none resize-y leading-relaxed"
+                                                    className="w-full px-4 py-3 bg-surface-2 border border-border-subtle rounded-xl text-text-primary text-sm placeholder:text-text-muted focus:border-amber-500 focus:outline-none resize-y leading-relaxed"
                                                 />
                                             </div>
                                             {/* Botões salvar / cancelar */}
@@ -1194,7 +1194,7 @@ export default function DnaCategorizadoPage() {
                                                 </button>
                                                 <button
                                                     onClick={handleCancelEdit}
-                                                    className="px-4 py-2 text-slate-400 hover:text-white text-sm"
+                                                    className="px-4 py-2 text-text-muted hover:text-text-primary text-sm"
                                                 >
                                                     Cancelar
                                                 </button>
@@ -1209,7 +1209,7 @@ export default function DnaCategorizadoPage() {
                                                         <cat.icon className="w-3 h-3" />
                                                         {cat.nome}
                                                     </div>
-                                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/[0.03] border border-white/5 rounded-full text-slate-400 text-[10px] font-bold uppercase">
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-2 border border-border-subtle rounded-full text-text-muted text-[10px] font-bold uppercase">
                                                         <Calendar className="w-3 h-3 text-violet-500" />
                                                         {new Date(item.created_at).toLocaleDateString('pt-BR')}
                                                     </div>
@@ -1232,13 +1232,13 @@ export default function DnaCategorizadoPage() {
                                                     <button
                                                         onClick={() => handleDelete(item.id)}
                                                         disabled={deletingId === item.id}
-                                                        className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-white/5"
+                                                        className="p-2 rounded-lg bg-surface-2 text-text-muted hover:text-red-400 hover:bg-red-500/10 border border-border-subtle"
                                                     >
                                                         {deletingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="prose dark:prose-invert max-w-none prose-p:text-slate-300 whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
+                                            <div className="prose dark:prose-invert max-w-none prose-p:text-text-secondary whitespace-pre-line [&>p]:mb-3 [&>*:last-child]:mb-0">
                                                 <ReactMarkdown>{item.texto_msg}</ReactMarkdown>
                                             </div>
                                         </>
