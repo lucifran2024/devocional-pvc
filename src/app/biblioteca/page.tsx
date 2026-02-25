@@ -25,10 +25,10 @@ import {
 interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
 
 // Categorias organizadas da Bíblia
-const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: LivroBiblia[] }[] = [
+const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: string; livros: LivroBiblia[] }[] = [
     // ===== ANTIGO TESTAMENTO =====
     {
-        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', livros: [
+        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', corBarra: 'bg-amber-400', livros: [
             { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
             { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
             { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
@@ -37,7 +37,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', livros: [
+        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', corBarra: 'bg-blue-400', livros: [
             { nome: 'Josué', abrev: 'js', capitulos: 24 },
             { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
             { nome: 'Rute', abrev: 'rt', capitulos: 4 },
@@ -53,7 +53,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', livros: [
+        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', corBarra: 'bg-purple-400', livros: [
             { nome: 'Jó', abrev: 'jó', capitulos: 42 },
             { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
             { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
@@ -62,7 +62,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', livros: [
+        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', corBarra: 'bg-red-400', livros: [
             { nome: 'Isaías', abrev: 'is', capitulos: 66 },
             { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
             { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
@@ -71,7 +71,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', livros: [
+        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', corBarra: 'bg-orange-400', livros: [
             { nome: 'Oséias', abrev: 'os', capitulos: 14 },
             { nome: 'Joel', abrev: 'jl', capitulos: 3 },
             { nome: 'Amós', abrev: 'am', capitulos: 9 },
@@ -88,7 +88,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
     },
     // ===== NOVO TESTAMENTO =====
     {
-        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', livros: [
+        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', corBarra: 'bg-emerald-400', livros: [
             { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
             { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
             { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
@@ -96,12 +96,12 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', livros: [
+        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', corBarra: 'bg-cyan-400', livros: [
             { nome: 'Atos', abrev: 'at', capitulos: 28 },
         ]
     },
     {
-        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', livros: [
+        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', corBarra: 'bg-sky-400', livros: [
             { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
             { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
             { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
@@ -118,7 +118,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', livros: [
+        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', corBarra: 'bg-teal-400', livros: [
             { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
             { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
             { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
@@ -130,7 +130,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; livros: Liv
         ]
     },
     {
-        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', livros: [
+        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', corBarra: 'bg-yellow-400', livros: [
             { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
         ]
     },
@@ -1321,22 +1321,55 @@ export default function BibliotecaPage() {
                         </div>
                         <div className="overflow-y-auto flex-1 p-2">
                             {faseSelecao === 'livros' && (
-                                <div className="space-y-4 p-2">
+                                <div className="space-y-6 p-3">
                                     {CATEGORIAS_BIBLIA.map(cat => (
                                         <div key={cat.nome}>
-                                            <div className="flex items-center gap-2 mb-2 sticky top-0 bg-white/90 dark:bg-surface-0/90 backdrop-blur-sm py-1.5 px-1 rounded-lg z-10">
-                                                <span className="text-base">{cat.emoji}</span>
+                                            <div className="flex items-center gap-2.5 mb-3 sticky top-0 bg-white/95 dark:bg-surface-0/95 backdrop-blur-md py-2.5 px-3 rounded-xl z-10 border border-slate-100 dark:border-border-subtle">
+                                                <span className="text-lg">{cat.emoji}</span>
                                                 <h4 className={`text-xs font-bold uppercase tracking-wider ${cat.cor}`}>{cat.nome}</h4>
                                                 <div className="flex-1 h-px bg-border-subtle" />
+                                                <span className="text-[10px] text-text-muted font-medium">{cat.livros.length} livros</span>
                                             </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                                                {cat.livros.map(livro => (
-                                                    <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                        className={`p-2.5 rounded-xl text-left transition-all border ${livro.abrev === livroAtual.abrev ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-surface-1 border-transparent hover:bg-surface-2 text-text-secondary'}`}>
-                                                        <div className="font-bold text-sm truncate">{livro.nome}</div>
-                                                        <div className="text-[10px] text-text-muted mt-0.5">{livro.capitulos} caps</div>
-                                                    </button>
-                                                ))}
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {cat.livros.map(livro => {
+                                                    const isAtual = livro.abrev === livroAtual.abrev;
+                                                    return (
+                                                        <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
+                                                            className={`relative p-4 rounded-2xl text-left transition-all border group/book overflow-hidden
+                                                                ${isAtual
+                                                                    ? 'bg-amber-500/15 border-amber-500/40 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/20'
+                                                                    : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:border-amber-400/40 dark:hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 active:scale-[0.97]'
+                                                                }`}
+                                                        >
+                                                            {/* Barra lateral colorida da categoria */}
+                                                            <div className={`absolute top-2 left-0 w-1 h-[calc(100%-16px)] rounded-r-full ${isAtual ? 'bg-amber-400' : cat.corBarra}`} />
+
+                                                            {/* Abreviação decorativa no fundo */}
+                                                            <span className={`absolute -bottom-1 -right-1 text-3xl font-black uppercase select-none pointer-events-none
+                                                                ${isAtual ? 'text-amber-500/10' : 'text-slate-200 dark:text-white/[0.03]'}`}>
+                                                                {livro.abrev}
+                                                            </span>
+
+                                                            {/* Nome do livro */}
+                                                            <div className={`font-bold text-sm mb-2 relative z-10
+                                                                ${isAtual ? 'text-amber-500 dark:text-amber-300' : 'text-slate-800 dark:text-text-primary group-hover/book:text-amber-600 dark:group-hover/book:text-amber-300'}`}>
+                                                                {livro.nome}
+                                                            </div>
+
+                                                            {/* Info do livro */}
+                                                            <div className="flex items-center justify-between relative z-10">
+                                                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+                                                                    ${isAtual
+                                                                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300'
+                                                                        : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-text-muted'
+                                                                    }`}>
+                                                                    {livro.capitulos} cap.
+                                                                </span>
+                                                                <Book className={`w-3.5 h-3.5 ${isAtual ? 'text-amber-400/60' : 'text-slate-300 dark:text-white/10 group-hover/book:text-amber-400/40'}`} />
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     ))}
@@ -1462,42 +1495,20 @@ export default function BibliotecaPage() {
 
             {/* --- NOTA FULLSCREEN --- */}
             {notaFullscreen && notaFullscreenVerso && (
-                <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-black/95 backdrop-blur-xl animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-black/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 shrink-0">
+                        <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm font-medium">
+                            <X className="w-5 h-5" />
+                            <span className="hidden sm:inline">Fechar</span>
+                        </button>
                         <div className="flex items-center gap-2">
-                            <StickyNote className="w-5 h-5 text-blue-400" />
-                            <span className="font-bold text-text-primary text-sm">
-                                Anotação — {livroAtual.nome} {capituloAtual}:{notaFullscreenVerso}
+                            <StickyNote className="w-4 h-4 text-blue-400" />
+                            <span className="font-bold text-text-primary text-sm truncate max-w-[180px]">
+                                {livroAtual.nome} {capituloAtual}:{notaFullscreenVerso}
                             </span>
                         </div>
-                        <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    {/* Versículo em destaque */}
-                    <div className="px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20">
-                        <p className="text-amber-900 dark:text-amber-200 text-sm italic font-serif">
-                            <sup className="text-xs font-bold mr-1 opacity-60">{notaFullscreenVerso}</sup>
-                            {getVersiculoObj(notaFullscreenVerso)?.text}
-                        </p>
-                    </div>
-
-                    {/* Área de texto grande */}
-                    <div className="flex-1 p-4 flex flex-col">
-                        <textarea
-                            value={textoNota}
-                            onChange={e => setTextoNota(e.target.value)}
-                            placeholder="Escreva sua anotação, reflexão, oração, insight..."
-                            className="flex-1 w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-2xl px-5 py-4 text-slate-900 dark:text-text-primary text-base leading-relaxed placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-blue-400 dark:focus:border-blue-500/50 resize-none"
-                            autoFocus
-                        />
-                    </div>
-
-                    {/* Footer com ações */}
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2">
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                             {notaFullscreenVerso && interacoesMap.notas[notaFullscreenVerso] && (
                                 <button onClick={async () => {
                                     await removerPorVersiculoETipo('nota', notaFullscreenVerso);
@@ -1505,13 +1516,40 @@ export default function BibliotecaPage() {
                                     setNotaFullscreen(false);
                                     setNotaFullscreenVerso(null);
                                     await carregarInteracoes();
-                                }} className="px-5 py-2.5 rounded-xl bg-red-50 dark:bg-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/30 font-medium text-sm border border-red-200 dark:border-transparent">
-                                    Apagar nota
+                                }} className="p-2 rounded-lg text-red-400 hover:bg-red-500/10" title="Apagar nota">
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             )}
                         </div>
-                        <button onClick={salvarNotaFullscreen} disabled={!textoNota.trim()} className="px-6 py-2.5 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-400 disabled:opacity-50 text-sm transition-colors">
-                            Salvar nota
+                    </div>
+
+                    {/* Versículo em destaque */}
+                    <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 shrink-0">
+                        <p className="text-amber-900 dark:text-amber-200 text-sm italic font-serif line-clamp-3">
+                            <sup className="text-xs font-bold mr-1 opacity-60">{notaFullscreenVerso}</sup>
+                            {getVersiculoObj(notaFullscreenVerso)?.text}
+                        </p>
+                    </div>
+
+                    {/* Área de texto - ocupa todo espaço restante */}
+                    <div className="flex-1 min-h-0 p-4 pb-24 flex flex-col overflow-y-auto">
+                        <textarea
+                            value={textoNota}
+                            onChange={e => setTextoNota(e.target.value)}
+                            placeholder="Escreva sua anotação, reflexão, oração, insight..."
+                            className="flex-1 min-h-[120px] w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-2xl px-5 py-4 text-slate-900 dark:text-text-primary text-base leading-relaxed placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-blue-400 dark:focus:border-blue-500/50 resize-none"
+                            autoFocus
+                        />
+                    </div>
+
+                    {/* Barra fixa inferior com botão SALVAR sempre visível */}
+                    <div className="shrink-0 px-4 py-4 border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
+                        <button
+                            onClick={salvarNotaFullscreen}
+                            disabled={!textoNota.trim()}
+                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                        >
+                            {textoNota.trim() ? 'Salvar Anotação' : 'Digite sua anotação para salvar'}
                         </button>
                     </div>
                 </div>

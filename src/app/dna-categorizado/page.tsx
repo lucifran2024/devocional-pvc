@@ -28,14 +28,16 @@ import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
 // ==================== CATEGORIAS ====================
+// Paleta harmônica: tons quentes (âmbar/dourado) + tons frios suaves (slate/zinc)
+// Esquema análogo centrado em âmbar com acentos complementares sutis
 const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: string }[] = [
-    { id: 'devocional', nome: 'Devocional', icon: BookOpen, cor: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
-    { id: 'oracao', nome: 'Oração', icon: Heart, cor: 'text-pink-400 bg-pink-500/20 border-pink-500/30' },
-    { id: 'versiculo', nome: 'Versículo', icon: Book, cor: 'text-amber-400 bg-amber-500/20 border-amber-500/30' },
-    { id: 'reflexao', nome: 'Reflexão', icon: Lightbulb, cor: 'text-purple-400 bg-purple-500/20 border-purple-500/30' },
-    { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-green-400 bg-green-500/20 border-green-500/30' },
-    { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' },
-    { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-text-muted bg-slate-500/20 border-slate-500/30' },
+    { id: 'devocional', nome: 'Devocional', icon: BookOpen, cor: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
+    { id: 'oracao', nome: 'Oração', icon: Heart, cor: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' },
+    { id: 'versiculo', nome: 'Versículo', icon: Book, cor: 'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
+    { id: 'reflexao', nome: 'Reflexão', icon: Lightbulb, cor: 'text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/20' },
+    { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/20' },
+    { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20' },
+    { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-500/10 border-zinc-200 dark:border-zinc-500/20' },
 ];
 
 const QUANTIDADES = [1, 5, 10, 15, 20, 30];
@@ -1152,7 +1154,7 @@ export default function DnaCategorizadoPage() {
                             const cat = getCategoriaInfo(item.categoria);
                             const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className={`group relative bg-surface-0/60 backdrop-blur-xl border rounded-2xl p-6 transition-all ${isEditing ? 'border-amber-500/40 ring-1 ring-amber-500/20' : 'border-border-subtle hover:border-violet-500/30'}`}>
+                                <div key={item.id} className={`group relative bg-white/80 dark:bg-surface-0/70 backdrop-blur-xl border rounded-2xl p-6 transition-all shadow-sm ${isEditing ? 'border-amber-300 dark:border-amber-400/30 ring-1 ring-amber-200 dark:ring-amber-400/15' : 'border-slate-200/80 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-400/20 hover:shadow-violet-200/30 dark:hover:shadow-violet-500/5 hover:shadow-md'}`}>
                                     {isEditing ? (
                                         /* === MODO EDIÇÃO === */
                                         <div className="space-y-4">
