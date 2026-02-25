@@ -469,14 +469,14 @@ export default function DnaCategorizadoPage() {
                                 <Link href="/" className="group p-3 bg-surface-2 hover:bg-surface-2/80 rounded-2xl transition-all border border-border-subtle">
                                     <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
                                 </Link>
-                                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-50 dark:bg-violet-500/10 border border-amber-200 dark:border-violet-400/20 rounded-full text-amber-700 dark:text-violet-300 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-400/20 rounded-full text-amber-700 dark:text-amber-200 text-[10px] font-black uppercase tracking-[0.2em]">
                                     <Layers className="w-3.5 h-3.5" />
                                     DNA Categorizado
                                 </div>
                             </div>
 
                             <h1 className="text-4xl md:text-7xl font-black tracking-tight text-text-primary mb-4 text-center md:text-left">
-                                DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-600 dark:from-violet-200 dark:to-fuchsia-500">Categorizado</span>
+                                DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-200 dark:to-orange-300">Categorizado</span>
                             </h1>
 
                             {/* === SISTEMA DE ABAS === */}
@@ -484,7 +484,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerenciar')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerenciar'
-                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-violet-500/30 dark:text-violet-200 dark:border-violet-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-400/20'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -494,7 +494,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerar-dna')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-dna'
-                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-fuchsia-500/30 dark:text-fuchsia-200 dark:border-fuchsia-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-400/20'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -504,7 +504,7 @@ export default function DnaCategorizadoPage() {
                                 <button
                                     onClick={() => setActiveTab('gerar-estilo')}
                                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'gerar-estilo'
-                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-indigo-500/30 dark:text-indigo-200 dark:border-indigo-500/30'
+                                        ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-400/20'
                                         : 'text-text-muted hover:text-text-primary hover:bg-surface-2'
                                         }`}
                                 >
@@ -518,7 +518,7 @@ export default function DnaCategorizadoPage() {
                                 <>
                                     <div className="flex flex-wrap items-center gap-2 mb-6">
                                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-2 border border-border-subtle rounded-xl text-sm">
-                                            <Layers className="w-4 h-4 text-amber-500 dark:text-violet-400" />
+                                            <Layers className="w-4 h-4 text-amber-500 dark:text-amber-300" />
                                             <span className="text-text-secondary">{totalItems} mensagens</span>
                                         </div>
                                         {stats.map(s => {
@@ -538,7 +538,7 @@ export default function DnaCategorizadoPage() {
                                         {filtroCategoria !== 'todas' && (
                                             <button
                                                 onClick={() => setFiltroCategoria('todas')}
-                                                className="text-xs text-amber-600 hover:text-amber-700 dark:text-violet-400 dark:hover:text-violet-300"
+                                                className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200"
                                             >
                                                 ✕ Ver todas
                                             </button>
@@ -1018,21 +1018,21 @@ export default function DnaCategorizadoPage() {
 
                     {/* Resultado da Geração */}
                     {showResult && generatedResult && (
-                        <div className="bg-gradient-to-br from-violet-100 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/10 border border-violet-500/30 rounded-2xl p-6">
+                        <div className="bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-500/10 dark:via-amber-400/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-violet-400 font-bold text-lg">✨ Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
+                                <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg">✨ Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
                                 <button onClick={() => setShowResult(false)} className="p-2 hover:bg-surface-2 rounded-lg">
                                     <X className="w-5 h-5 text-text-muted" />
                                 </button>
                             </div>
                             <div className="space-y-6">
                                 {parseMessages(generatedResult).map((msg, i) => (
-                                    <div key={i} className="bg-surface-1 dark:bg-black/30 border border-border-subtle dark:border-white/10 rounded-xl p-4">
+                                    <div key={i} className="bg-surface-1 dark:bg-amber-500/[0.03] border border-border-subtle dark:border-amber-400/10 rounded-xl p-4">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-violet-500 text-xs font-bold">Msg {i + 1}</span>
+                                            <span className="text-amber-600 dark:text-amber-300 text-xs font-bold">Msg {i + 1}</span>
                                             <button
                                                 onClick={() => handleCopy(msg, -i)}
-                                                className="text-xs px-2 py-1 bg-surface-2 rounded text-text-secondary hover:text-text-primary"
+                                                className="text-xs px-2 py-1 bg-surface-2 dark:bg-black/25 border border-transparent dark:border-amber-400/10 rounded text-text-secondary hover:text-text-primary dark:hover:text-amber-200"
                                             >
                                                 {copiedId === -i ? '✓ Copiado' : 'Copiar'}
                                             </button>
@@ -1048,9 +1048,9 @@ export default function DnaCategorizadoPage() {
 
                     {/* NOVO: CARD ÚLTIMAS GERAÇÕES */}
                     {recentGenerations.length > 0 && (
-                        <div className="bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border border-amber-500/30 rounded-2xl p-6">
+                        <div className="bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-500/10 dark:via-amber-400/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-amber-400 font-bold text-lg flex items-center gap-2">
+                                <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg flex items-center gap-2">
                                     <Calendar className="w-5 h-5" />
                                     Últimas Gerações ({recentGenerations.length})
                                 </h3>
@@ -1090,7 +1090,7 @@ export default function DnaCategorizadoPage() {
                                     {/* Mensagens do Lote */}
                                     <div className="space-y-3">
                                         {batchItems.map((gen) => (
-                                            <div key={gen.id} className="bg-surface-1 dark:bg-black/30 border border-border-subtle dark:border-white/10 rounded-xl p-4">
+                                            <div key={gen.id} className="bg-surface-1 dark:bg-amber-500/[0.03] border border-border-subtle dark:border-amber-400/10 rounded-xl p-4">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <span className="text-amber-500 text-xs font-bold">#{gen.id}</span>
                                                     <div className="flex gap-2">
@@ -1112,7 +1112,7 @@ export default function DnaCategorizadoPage() {
 
                                                         <button
                                                             onClick={() => handleCopy(gen.texto_msg, gen.id)}
-                                                            className="text-xs px-2 py-1 bg-surface-2 rounded text-text-secondary hover:text-text-primary"
+                                                            className="text-xs px-2 py-1 bg-surface-2 dark:bg-black/25 border border-transparent dark:border-amber-400/10 rounded text-text-secondary hover:text-text-primary dark:hover:text-amber-200"
                                                         >
                                                             {copiedId === gen.id ? '✓ Copiado' : <Copy className="w-3 h-3" />}
                                                         </button>
@@ -1154,7 +1154,7 @@ export default function DnaCategorizadoPage() {
                             const cat = getCategoriaInfo(item.categoria);
                             const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className={`group relative bg-white/80 dark:bg-surface-0/70 backdrop-blur-xl border rounded-2xl p-6 transition-all shadow-sm ${isEditing ? 'border-amber-300 dark:border-amber-400/30 ring-1 ring-amber-200 dark:ring-amber-400/15' : 'border-slate-200/80 dark:border-white/5 hover:border-violet-300 dark:hover:border-violet-400/20 hover:shadow-violet-200/30 dark:hover:shadow-violet-500/5 hover:shadow-md'}`}>
+                                <div key={item.id} className={`group relative bg-white/80 dark:bg-surface-0/70 backdrop-blur-xl border rounded-2xl p-6 transition-all shadow-sm ${isEditing ? 'border-amber-300 dark:border-amber-400/30 ring-1 ring-amber-200 dark:ring-amber-400/15' : 'border-slate-200/80 dark:border-white/5 hover:border-amber-300 dark:hover:border-amber-400/20 hover:shadow-amber-200/30 dark:hover:shadow-amber-500/5 hover:shadow-md'}`}>
                                     {isEditing ? (
                                         /* === MODO EDIÇÃO === */
                                         <div className="space-y-4">
@@ -1212,7 +1212,7 @@ export default function DnaCategorizadoPage() {
                                                         {cat.nome}
                                                     </div>
                                                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-2 border border-border-subtle rounded-full text-text-muted text-[10px] font-bold uppercase">
-                                                        <Calendar className="w-3 h-3 text-violet-500" />
+                                                        <Calendar className="w-3 h-3 text-amber-500 dark:text-amber-300" />
                                                         {new Date(item.created_at).toLocaleDateString('pt-BR')}
                                                     </div>
                                                 </div>
@@ -1226,7 +1226,7 @@ export default function DnaCategorizadoPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleCopy(item.texto_msg, item.id)}
-                                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 text-xs font-bold"
+                                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-200 hover:bg-amber-500/20 border border-amber-500/20 text-xs font-bold"
                                                     >
                                                         <Copy className="w-3 h-3" />
                                                         {copiedId === item.id ? 'Copiado!' : 'Copiar'}
