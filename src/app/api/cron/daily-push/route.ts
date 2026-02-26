@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 // ============================================
 // CONFIG
@@ -6,46 +7,104 @@ import { NextResponse } from 'next/server';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
 
-// Versiculos inspiradores para "Palavra do Dia"
-const VERSICULOS_DIA = [
-    { ref: 'Filipenses 4:13', texto: 'Tudo posso naquele que me fortalece.' },
-    { ref: 'Salmos 23:1', texto: 'O Senhor e meu pastor; nada me faltara.' },
-    { ref: 'Isaias 41:10', texto: 'Nao temas, porque eu sou contigo; nao te assombres, porque eu sou o teu Deus.' },
-    { ref: 'Josue 1:9', texto: 'Seja forte e corajoso! Nao se apavore, nem se desanime, pois o Senhor esta com voce.' },
-    { ref: 'Romanos 8:28', texto: 'Sabemos que todas as coisas cooperam para o bem daqueles que amam a Deus.' },
-    { ref: 'Jeremias 29:11', texto: 'Eu sei os planos que tenho para voces, planos de paz e nao de mal, para dar a voces um futuro e uma esperanca.' },
-    { ref: 'Salmos 37:5', texto: 'Entregue o seu caminho ao Senhor; confie nele, e ele agira.' },
-    { ref: 'Proverbios 3:5-6', texto: 'Confie no Senhor de todo o seu coracao e nao se apoie em seu proprio entendimento. Reconheca o Senhor em todos os seus caminhos, e ele endireitara as suas veredas.' },
-    { ref: 'Mateus 11:28', texto: 'Venham a mim, todos os que estao cansados e sobrecarregados, e eu lhes darei descanso.' },
-    { ref: 'Salmos 91:1-2', texto: 'Aquele que habita no abrigo do Altissimo descansara a sombra do Todo-Poderoso. Direi do Senhor: Ele e o meu refugio e a minha fortaleza, o meu Deus, em quem confio.' },
-    { ref: '2 Timoteo 1:7', texto: 'Pois Deus nao nos deu espirito de covardia, mas de poder, de amor e de equilibrio.' },
-    { ref: 'Isaias 40:31', texto: 'Mas aqueles que esperam no Senhor renovam as suas forcas. Voam alto como aguias; correm e nao ficam cansados, andam e nao se fatigam.' },
-    { ref: 'Salmos 46:10', texto: 'Aquietem-se e saibam que eu sou Deus.' },
-    { ref: 'Joao 14:27', texto: 'Deixo-lhes a paz; a minha paz lhes dou. Nao a dou como o mundo a da. Nao se perturbem os seus coracoes, nem tenham medo.' },
-    { ref: 'Salmos 34:18', texto: 'Perto esta o Senhor dos que tem o coracao quebrantado e salva os de espirito abatido.' },
-    { ref: 'Romanos 15:13', texto: 'Que o Deus da esperanca os encha de toda alegria e paz, por sua confianca nele, para que voces transbordem de esperanca, pelo poder do Espirito Santo.' },
-    { ref: 'Lamentacoes 3:22-23', texto: 'O amor do Senhor nao se acaba; as suas misericordias nao tem fim. Renovam-se a cada manha; grande e a tua fidelidade.' },
-    { ref: 'Salmos 119:105', texto: 'A tua palavra e lampada para os meus pes e luz para o meu caminho.' },
-    { ref: '1 Corintios 10:13', texto: 'Deus e fiel; ele nao permitira que voces sejam tentados alem do que podem suportar.' },
-    { ref: 'Efesios 3:20', texto: 'Aquele que e poderoso para fazer infinitamente mais do que tudo o que pedimos ou pensamos, de acordo com o seu poder que age em nos.' },
-    { ref: 'Hebreus 13:8', texto: 'Jesus Cristo e o mesmo, ontem, hoje e para sempre.' },
-    { ref: 'Salmos 27:1', texto: 'O Senhor e a minha luz e a minha salvacao; de quem terei medo?' },
-    { ref: 'Mateus 6:33', texto: 'Busquem em primeiro lugar o Reino de Deus e a sua justica, e todas essas coisas lhes serao acrescentadas.' },
-    { ref: 'Filipenses 4:6-7', texto: 'Nao andem ansiosos por coisa alguma, mas em tudo, pela oracao e suplicas, e com acao de gracas, apresentem seus pedidos a Deus. E a paz de Deus, que excede todo o entendimento, guardara o coracao e a mente de voces.' },
-    { ref: 'Galatas 5:22-23', texto: 'Mas o fruto do Espirito e: amor, alegria, paz, paciencia, amabilidade, bondade, fidelidade, mansidao e dominio proprio.' },
-    { ref: 'Salmos 121:1-2', texto: 'Levanto os meus olhos para os montes e pergunto: De onde me vem o socorro? O meu socorro vem do Senhor, que fez os ceus e a terra.' },
-    { ref: 'Tiago 1:5', texto: 'Se algum de voces tem falta de sabedoria, peca-a a Deus, que a todos da livremente.' },
-    { ref: 'Salmos 139:14', texto: 'Eu te louvo porque me fizeste de modo especial e admiravel. Tuas obras sao maravilhosas!' },
-    { ref: '1 Pedro 5:7', texto: 'Lancem sobre ele toda a sua ansiedade, porque ele tem cuidado de voces.' },
-    { ref: 'Deuteronomio 31:6', texto: 'Sejam fortes e corajosos. Nao tenham medo, pois o Senhor vai com voces; nunca os deixara, nunca os abandonara.' },
-];
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-function getVersiculoDoDia(): { ref: string; texto: string } {
-    // Usa a data como seed para pegar um versiculo diferente por dia
-    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-    const seed = hoje.split('-').join('');
-    const index = parseInt(seed) % VERSICULOS_DIA.length;
-    return VERSICULOS_DIA[index];
+// Mapeamento de livros para IDs da API bolls.life
+const LIVRO_PARA_ID: Record<string, number> = {
+    'gênesis': 1, 'genesis': 1, 'gn': 1,
+    'êxodo': 2, 'exodo': 2, 'ex': 2,
+    'levítico': 3, 'levitico': 3, 'lv': 3,
+    'números': 4, 'numeros': 4, 'nm': 4,
+    'deuteronômio': 5, 'deuteronomio': 5, 'dt': 5,
+    'josué': 6, 'josue': 6, 'js': 6,
+    'juízes': 7, 'juizes': 7, 'jz': 7,
+    'rute': 8, 'rt': 8,
+    '1 samuel': 9, '1samuel': 9, '1sm': 9,
+    '2 samuel': 10, '2samuel': 10, '2sm': 10,
+    '1 reis': 11, '1reis': 11, '1rs': 11,
+    '2 reis': 12, '2reis': 12, '2rs': 12,
+    '1 crônicas': 13, '1cronicas': 13, '1cr': 13,
+    '2 crônicas': 14, '2cronicas': 14, '2cr': 14,
+    'esdras': 15, 'ed': 15,
+    'neemias': 16, 'ne': 16,
+    'ester': 17, 'et': 17,
+    'jó': 18, 'jo': 18,
+    'salmos': 19, 'sl': 19,
+    'provérbios': 20, 'proverbios': 20, 'pv': 20,
+    'eclesiastes': 21, 'ec': 21,
+    'cantares': 22, 'ct': 22,
+    'isaías': 23, 'isaias': 23, 'is': 23,
+    'jeremias': 24, 'jr': 24,
+    'lamentações': 25, 'lamentacoes': 25, 'lm': 25,
+    'ezequiel': 26, 'ez': 26,
+    'daniel': 27, 'dn': 27,
+    'oséias': 28, 'oseias': 28, 'os': 28,
+    'joel': 29, 'jl': 29,
+    'amós': 30, 'amos': 30, 'am': 30,
+    'obadias': 31, 'ob': 31,
+    'jonas': 32, 'jn': 32,
+    'miquéias': 33, 'miqueias': 33, 'mq': 33,
+    'naum': 34, 'na': 34,
+    'habacuque': 35, 'hc': 35,
+    'sofonias': 36, 'sf': 36,
+    'ageu': 37, 'ag': 37,
+    'zacarias': 38, 'zc': 38,
+    'malaquias': 39, 'ml': 39,
+    'mateus': 40, 'mt': 40,
+    'marcos': 41, 'mc': 41,
+    'lucas': 42, 'lc': 42,
+    'joão': 43, 'joao': 43,
+    'atos': 44, 'at': 44,
+    'romanos': 45, 'rm': 45,
+    '1 coríntios': 46, '1corintios': 46, '1co': 46,
+    '2 coríntios': 47, '2corintios': 47, '2co': 47,
+    'gálatas': 48, 'galatas': 48, 'gl': 48,
+    'efésios': 49, 'efesios': 49, 'ef': 49,
+    'filipenses': 50, 'fp': 50,
+    'colossenses': 51, 'cl': 51,
+    '1 tessalonicenses': 52, '1tessalonicenses': 52, '1ts': 52,
+    '2 tessalonicenses': 53, '2tessalonicenses': 53, '2ts': 53,
+    '1 timóteo': 54, '1timoteo': 54, '1tm': 54,
+    '2 timóteo': 55, '2timoteo': 55, '2tm': 55,
+    'tito': 56, 'tt': 56,
+    'filemom': 57, 'fm': 57,
+    'hebreus': 58, 'hb': 58,
+    'tiago': 59, 'tg': 59,
+    '1 pedro': 60, '1pedro': 60, '1pe': 60,
+    '2 pedro': 61, '2pedro': 61, '2pe': 61,
+    '1 joão': 62, '1joao': 62, '1jo': 62,
+    '2 joão': 63, '2joao': 63, '2jo': 63,
+    '3 joão': 64, '3joao': 64, '3jo': 64,
+    'judas': 65, 'jd': 65,
+    'apocalipse': 66, 'ap': 66
+};
+
+// Mapa reverso: ID → nome do livro legivel
+const ID_PARA_NOME: Record<number, string> = {
+    1: 'Gênesis', 2: 'Êxodo', 3: 'Levítico', 4: 'Números', 5: 'Deuteronômio',
+    6: 'Josué', 7: 'Juízes', 8: 'Rute', 9: '1 Samuel', 10: '2 Samuel',
+    11: '1 Reis', 12: '2 Reis', 13: '1 Crônicas', 14: '2 Crônicas',
+    15: 'Esdras', 16: 'Neemias', 17: 'Ester', 18: 'Jó', 19: 'Salmos',
+    20: 'Provérbios', 21: 'Eclesiastes', 22: 'Cantares', 23: 'Isaías',
+    24: 'Jeremias', 25: 'Lamentações', 26: 'Ezequiel', 27: 'Daniel',
+    28: 'Oséias', 29: 'Joel', 30: 'Amós', 31: 'Obadias', 32: 'Jonas',
+    33: 'Miquéias', 34: 'Naum', 35: 'Habacuque', 36: 'Sofonias',
+    37: 'Ageu', 38: 'Zacarias', 39: 'Malaquias', 40: 'Mateus', 41: 'Marcos',
+    42: 'Lucas', 43: 'João', 44: 'Atos', 45: 'Romanos', 46: '1 Coríntios',
+    47: '2 Coríntios', 48: 'Gálatas', 49: 'Efésios', 50: 'Filipenses',
+    51: 'Colossenses', 52: '1 Tessalonicenses', 53: '2 Tessalonicenses',
+    54: '1 Timóteo', 55: '2 Timóteo', 56: 'Tito', 57: 'Filemom',
+    58: 'Hebreus', 59: 'Tiago', 60: '1 Pedro', 61: '2 Pedro',
+    62: '1 João', 63: '2 João', 64: '3 João', 65: 'Judas', 66: 'Apocalipse'
+};
+
+// ============================================
+// HELPERS
+// ============================================
+
+function getDataHoje(): string {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
 async function enviarTelegram(texto: string): Promise<boolean> {
@@ -70,6 +129,144 @@ async function enviarTelegram(texto: string): Promise<boolean> {
     }
 }
 
+function parseReferencia(referencia: string): {
+    livro: string;
+    livroId: number;
+    capituloInicio: number;
+    capituloFim: number;
+} | null {
+    const refLower = referencia.toLowerCase().trim();
+
+    // "Isaías 16-18"
+    const regexMultiCap = /^(.+?)\s+(\d+)[-–](\d+)$/;
+    // "Isaías 16"
+    const regexSingleCap = /^(.+?)\s+(\d+)$/;
+
+    let livro: string;
+    let capituloInicio: number;
+    let capituloFim: number;
+
+    let match = refLower.match(regexMultiCap);
+    if (match) {
+        livro = match[1].trim();
+        capituloInicio = parseInt(match[2]);
+        capituloFim = parseInt(match[3]);
+    } else {
+        match = refLower.match(regexSingleCap);
+        if (match) {
+            livro = match[1].trim();
+            capituloInicio = parseInt(match[2]);
+            capituloFim = capituloInicio;
+        } else {
+            return null;
+        }
+    }
+
+    const livroId = LIVRO_PARA_ID[livro];
+    if (!livroId) return null;
+
+    return { livro, livroId, capituloInicio, capituloFim };
+}
+
+async function buscarCapitulo(livroId: number, capitulo: number): Promise<{ verse: number; text: string }[]> {
+    try {
+        const response = await fetch(
+            `https://bolls.life/get-chapter/NTLH/${livroId}/${capitulo}/`,
+            { headers: { 'Accept': 'application/json' } }
+        );
+        if (!response.ok) return [];
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            return data.map((v: { verse: number; text: string }) => ({
+                verse: v.verse,
+                text: v.text
+                    .replace(/<br\s*\/?>/gi, ' ')
+                    .replace(/<[^>]+>/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+            }));
+        }
+        return [];
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Seleciona os 3 melhores versiculos de uma passagem
+ * Criterios: versiculos com tamanho medio (nao muito curtos, nao muito longos),
+ * que tenham palavras-chave inspiradoras
+ */
+function selecionarMelhoresVersiculos(
+    versiculos: { verse: number; text: string; capitulo: number }[],
+    livroId: number,
+    quantidade: number = 3
+): { verse: number; text: string; capitulo: number }[] {
+    if (versiculos.length <= quantidade) return versiculos;
+
+    // Palavras que indicam versiculos inspiradores/poderosos
+    const palavrasFortes = [
+        'senhor', 'deus', 'amor', 'paz', 'esperança', 'esperanca', 'fé', 'fe',
+        'força', 'forca', 'coragem', 'misericórdia', 'misericordia', 'graça', 'graca',
+        'salvação', 'salvacao', 'promessa', 'eterno', 'fiel', 'proteger', 'refugio',
+        'sabedoria', 'justiça', 'justica', 'perdão', 'perdao', 'bendito', 'louvor',
+        'alegria', 'consolo', 'luz', 'caminho', 'verdade', 'vida', 'coração', 'coracao',
+        'santo', 'poder', 'glória', 'gloria', 'benção', 'bencao', 'confiança', 'confianca',
+        'forte', 'corajoso', 'não temas', 'nao temas', 'não tenha medo', 'nao tenha medo'
+    ];
+
+    // Pontua cada versiculo
+    const pontuados = versiculos.map(v => {
+        let score = 0;
+        const lower = v.text.toLowerCase();
+
+        // Tamanho ideal: entre 40 e 200 caracteres
+        if (v.text.length >= 40 && v.text.length <= 200) score += 3;
+        else if (v.text.length >= 20 && v.text.length <= 300) score += 1;
+        else score -= 2; // Muito curto ou muito longo
+
+        // Bonus por palavras fortes
+        for (const palavra of palavrasFortes) {
+            if (lower.includes(palavra)) score += 2;
+        }
+
+        // Bonus se tem aspas (citação direta de Deus/Jesus)
+        if (v.text.includes('"') || v.text.includes('"') || v.text.includes('—')) score += 3;
+
+        // Penaliza versiculos que sao listas de nomes ou genealogias
+        if (lower.includes('filho de') && lower.includes(',')) score -= 5;
+        if (lower.includes('gerou')) score -= 5;
+
+        return { ...v, score };
+    });
+
+    // Ordena por score (maior primeiro) e pega os top
+    pontuados.sort((a, b) => b.score - a.score);
+
+    // Pega os 3 melhores, mas tenta espalhar entre capitulos diferentes
+    const selecionados: typeof pontuados = [];
+    const capitulosUsados = new Set<number>();
+
+    // Primeiro pass: um de cada capitulo
+    for (const v of pontuados) {
+        if (selecionados.length >= quantidade) break;
+        if (!capitulosUsados.has(v.capitulo)) {
+            selecionados.push(v);
+            capitulosUsados.add(v.capitulo);
+        }
+    }
+
+    // Segundo pass: completa com os melhores restantes
+    for (const v of pontuados) {
+        if (selecionados.length >= quantidade) break;
+        if (!selecionados.includes(v)) {
+            selecionados.push(v);
+        }
+    }
+
+    return selecionados;
+}
+
 // ============================================
 // CRON HANDLER
 // ============================================
@@ -81,28 +278,117 @@ export async function GET(request: Request) {
     }
 
     try {
-        // Versiculo do dia
-        const versiculo = getVersiculoDoDia();
-
-        // Formatar mensagem
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const dataHoje = getDataHoje();
         const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        const mensagem = `Palavra do Dia\n${dataFormatada}\n\n${versiculo.ref}\n\n"${versiculo.texto}"`;
+        const mensagensEnviadas: string[] = [];
 
-        // Enviar via Telegram
-        const enviou = await enviarTelegram(mensagem);
+        // =============================================
+        // 1. PALAVRA DA MANHA (mesma do app)
+        // =============================================
+        const { data: palavraManha } = await supabase
+            .from('palavra_manha_diaria')
+            .select('*')
+            .eq('data', dataHoje)
+            .maybeSingle();
 
-        if (enviou) {
-            return NextResponse.json({
-                ok: true,
-                message: 'Palavra do dia enviada via Telegram!',
-                versiculo: versiculo.ref,
-            });
+        if (palavraManha && palavraManha.mensagem) {
+            // Limpa markdown para texto puro
+            const textoLimpo = palavraManha.mensagem
+                .replace(/\*\*/g, '')
+                .replace(/\*/g, '')
+                .replace(/#{1,6}\s/g, '')
+                .replace(/>\s?/g, '')
+                .trim();
+
+            const msgPalavra = `Palavra da Manha\n${dataFormatada}\n\n${textoLimpo}`;
+            const enviou = await enviarTelegram(msgPalavra);
+            if (enviou) mensagensEnviadas.push('Palavra da Manha');
         } else {
-            return NextResponse.json({ ok: false, message: 'Falha ao enviar para Telegram' }, { status: 500 });
+            console.log('Palavra da Manha nao encontrada para hoje:', dataHoje);
         }
 
+        // =============================================
+        // 2. VERSICULOS DO DIA (do plano de leitura)
+        // =============================================
+
+        // 2a. Buscar a inscricao ativa do usuario (pega a primeira ativa)
+        const { data: inscricoes } = await supabase
+            .from('usuario_inscricoes')
+            .select('id, plano_id, dia_atual, status')
+            .eq('status', 'ativo')
+            .limit(1);
+
+        if (inscricoes && inscricoes.length > 0) {
+            const inscricao = inscricoes[0];
+
+            // 2b. Buscar o dia do plano (referencia biblica)
+            const { data: diaPlano } = await supabase
+                .from('plano_dias')
+                .select('referencia, titulo_dia')
+                .eq('plano_id', inscricao.plano_id)
+                .eq('dia_numero', inscricao.dia_atual)
+                .maybeSingle();
+
+            if (diaPlano && diaPlano.referencia) {
+                // 2c. Parsear referencia e buscar versiculos da API
+                // Suporta multi-livro: "Jeremias 51-52; Lamentações 1"
+                const partes = diaPlano.referencia.split(';').map((p: string) => p.trim()).filter(Boolean);
+
+                const todosVersiculos: { verse: number; text: string; capitulo: number }[] = [];
+
+                for (const parte of partes) {
+                    const parsed = parseReferencia(parte);
+                    if (!parsed) continue;
+
+                    const { livroId, capituloInicio, capituloFim } = parsed;
+
+                    for (let cap = capituloInicio; cap <= Math.min(capituloFim, capituloInicio + 4); cap++) {
+                        const versiculos = await buscarCapitulo(livroId, cap);
+                        for (const v of versiculos) {
+                            todosVersiculos.push({ ...v, capitulo: cap });
+                        }
+                    }
+                }
+
+                if (todosVersiculos.length > 0) {
+                    // 2d. Selecionar os 3 melhores
+                    const parsed0 = parseReferencia(partes[0]);
+                    const livroId = parsed0?.livroId || 1;
+                    const livroNome = ID_PARA_NOME[livroId] || partes[0];
+
+                    const melhores = selecionarMelhoresVersiculos(todosVersiculos, livroId, 3);
+
+                    // 2e. Enviar cada um como mensagem separada
+                    for (const v of melhores) {
+                        const refCompleta = `${livroNome} ${v.capitulo}:${v.verse}`;
+                        const msgVersiculo = `Versiculo do Dia\n\n"${v.text}"\n\n${refCompleta}`;
+
+                        const enviou = await enviarTelegram(msgVersiculo);
+                        if (enviou) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
+
+                        // Pequena pausa entre mensagens para nao dar flood
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                } else {
+                    console.log('Nenhum versiculo carregado para:', diaPlano.referencia);
+                }
+            } else {
+                console.log('Dia do plano nao encontrado. plano_id:', inscricao.plano_id, 'dia:', inscricao.dia_atual);
+            }
+        } else {
+            console.log('Nenhuma inscricao ativa encontrada');
+        }
+
+        return NextResponse.json({
+            ok: true,
+            data: dataHoje,
+            mensagens_enviadas: mensagensEnviadas,
+            total: mensagensEnviadas.length,
+        });
+
     } catch (e: any) {
-        console.error('Erro no cron palavra do dia:', e);
+        console.error('Erro no cron daily-push:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
