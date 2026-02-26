@@ -27,6 +27,30 @@ function extrairOCR(content: string): string {
     return content.trim();
 }
 
+function limparTexto(texto: string): string {
+    // Remove @menções (ex: @juciqueiroz, @evangelhoparatodos__, @Maria etc)
+    let limpo = texto.replace(/@[\w._]+/g, '').trim();
+    // Remove linhas vazias consecutivas (mais de 2)
+    limpo = limpo.replace(/\n{3,}/g, '\n\n');
+    // Remove espaços extras
+    limpo = limpo.replace(/  +/g, ' ');
+    // Remove pontos/espaços soltos no inicio de linhas (restos de @removidos)
+    limpo = limpo.replace(/^\s*[.,]\s*/gm, '');
+    return limpo.trim();
+}
+
+function ehDevocionalDoDia(textoOCR: string): boolean {
+    const lower = textoOCR.toLowerCase();
+    return (
+        lower.includes('devocional') ||
+        lower.includes('devocional do dia') ||
+        lower.includes('reflexão do dia') ||
+        lower.includes('reflexao do dia') ||
+        lower.includes('palavra do dia') ||
+        lower.includes('mensagem do dia')
+    );
+}
+
 async function enviarTelegram(texto: string): Promise<boolean> {
     try {
         const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -35,23 +59,12 @@ async function enviarTelegram(texto: string): Promise<boolean> {
             body: JSON.stringify({
                 chat_id: TELEGRAM_CHAT_ID,
                 text: texto,
-                parse_mode: 'HTML',
             }),
         });
         const data = await resp.json();
         if (!data.ok) {
             console.error('Telegram error:', data.description);
-            // Tentar sem parse_mode se HTML falhar
-            const resp2 = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: texto.replace(/<[^>]*>/g, ''),
-                }),
-            });
-            const data2 = await resp2.json();
-            return data2.ok;
+            return false;
         }
         return true;
     } catch (e) {
@@ -108,12 +121,10 @@ export async function GET(request: Request) {
             return NextResponse.json({ ok: true, message: 'Nenhum post novo encontrado' });
         }
 
-        // 3. Verificar quais ja foram enviados hoje
-        //    Usa tabela telegram_enviados para controle
+        // 3. Verificar quais ja foram enviados (todos, nao so hoje)
         const { data: enviados } = await supabase
             .from('telegram_enviados')
-            .select('external_id')
-            .eq('data_envio', dataHoje);
+            .select('external_id');
 
         const idsEnviados = new Set((enviados || []).map(e => e.external_id));
 
@@ -121,35 +132,53 @@ export async function GET(request: Request) {
         const postsNovos = posts.filter(p => !idsEnviados.has(p.external_id));
 
         if (postsNovos.length === 0) {
-            console.log('Todos os posts de hoje ja foram enviados');
-            return NextResponse.json({ ok: true, message: 'Todos os posts ja foram enviados hoje' });
+            console.log('Todos os posts ja foram enviados');
+            return NextResponse.json({ ok: true, message: 'Todos os posts ja foram enviados' });
         }
 
-        // 5. Pegar o proximo post (o mais antigo nao enviado)
-        const post = postsNovos[0];
-        const textoOCR = extrairOCR(post.content);
+        // 5. Priorizar o "Devocional do Dia" — post que tem "Devocional" no OCR
+        let postEscolhido = null;
 
-        if (!textoOCR) {
-            console.log('Post sem conteudo OCR:', post.external_id);
-            return NextResponse.json({ ok: true, message: 'Post sem conteudo OCR' });
+        // Primeiro tenta achar o devocional do dia
+        for (const p of postsNovos) {
+            const ocr = extrairOCR(p.content);
+            if (ocr && ehDevocionalDoDia(ocr)) {
+                postEscolhido = p;
+                break;
+            }
         }
+
+        // Se nao achou devocional do dia, pega o primeiro disponivel
+        if (!postEscolhido) {
+            // Pega o primeiro que tem OCR
+            for (const p of postsNovos) {
+                const ocr = extrairOCR(p.content);
+                if (ocr) {
+                    postEscolhido = p;
+                    break;
+                }
+            }
+        }
+
+        if (!postEscolhido) {
+            console.log('Nenhum post com conteudo OCR disponivel');
+            return NextResponse.json({ ok: true, message: 'Nenhum post com OCR disponivel' });
+        }
+
+        const textoOCR = extrairOCR(postEscolhido.content);
+        const textoLimpo = limparTexto(textoOCR);
 
         // 6. Formatar e enviar
         const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        const horaFormatada = new Date().toLocaleTimeString('pt-BR', {
-            timeZone: 'America/Sao_Paulo',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
 
-        const mensagem = `Devocional do Dia - ${dataFormatada}\n${horaFormatada}\n\n${textoOCR}\n\nvia @evangelhoparatodos__`;
+        const mensagem = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
 
         const enviou = await enviarTelegram(mensagem);
 
         if (enviou) {
             // 7. Registrar envio
             await supabase.from('telegram_enviados').insert({
-                external_id: post.external_id,
+                external_id: postEscolhido.external_id,
                 data_envio: dataHoje,
                 enviado_em: new Date().toISOString()
             });
