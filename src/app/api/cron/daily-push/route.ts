@@ -231,9 +231,9 @@ ${listaVersiculos}`;
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                modo_id: 'modo_livre',
+                modo_id: 'chat_pastoral',
                 data: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
-                prompt_override: prompt
+                pergunta: prompt
             })
         });
 
