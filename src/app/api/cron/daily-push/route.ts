@@ -198,10 +198,10 @@ async function buscarCapitulo(livroId: number, capitulo: number): Promise<{ vers
  * que tenham palavras-chave inspiradoras
  */
 function selecionarMelhoresVersiculos(
-    versiculos: { verse: number; text: string; capitulo: number }[],
+    versiculos: { verse: number; text: string; capitulo: number; livroId?: number }[],
     livroId: number,
     quantidade: number = 3
-): { verse: number; text: string; capitulo: number }[] {
+): { verse: number; text: string; capitulo: number; livroId?: number }[] {
     if (versiculos.length <= quantidade) return versiculos;
 
     // Palavras que indicam versiculos inspiradores/poderosos
@@ -309,75 +309,63 @@ export async function GET(request: Request) {
         }
 
         // =============================================
-        // 2. VERSICULOS DO DIA (do plano de leitura)
+        // 2. VERSICULOS DO DIA (da passagem do dia - payload_do_dia)
         // =============================================
 
-        // 2a. Buscar a inscricao ativa do usuario (pega a primeira ativa)
-        const { data: inscricoes } = await supabase
-            .from('usuario_inscricoes')
-            .select('id, plano_id, dia_atual, status')
-            .eq('status', 'ativo')
-            .limit(1);
+        // Busca a passagem do dia direto da tabela payload_do_dia
+        const { data: payload } = await supabase
+            .from('payload_do_dia')
+            .select('passagem_do_dia')
+            .eq('data', dataHoje)
+            .maybeSingle();
 
-        if (inscricoes && inscricoes.length > 0) {
-            const inscricao = inscricoes[0];
+        const referenciaDoDia = payload?.passagem_do_dia;
 
-            // 2b. Buscar o dia do plano (referencia biblica)
-            const { data: diaPlano } = await supabase
-                .from('plano_dias')
-                .select('referencia, titulo_dia')
-                .eq('plano_id', inscricao.plano_id)
-                .eq('dia_numero', inscricao.dia_atual)
-                .maybeSingle();
+        if (referenciaDoDia) {
+            // Parsear referencia e buscar versiculos da API
+            // Suporta multi-livro: "Jeremias 51-52; Lamentações 1"
+            const partes = referenciaDoDia.split(';').map((p: string) => p.trim()).filter(Boolean);
 
-            if (diaPlano && diaPlano.referencia) {
-                // 2c. Parsear referencia e buscar versiculos da API
-                // Suporta multi-livro: "Jeremias 51-52; Lamentações 1"
-                const partes = diaPlano.referencia.split(';').map((p: string) => p.trim()).filter(Boolean);
+            const todosVersiculos: { verse: number; text: string; capitulo: number; livroId: number }[] = [];
 
-                const todosVersiculos: { verse: number; text: string; capitulo: number }[] = [];
+            for (const parte of partes) {
+                const parsed = parseReferencia(parte);
+                if (!parsed) continue;
 
-                for (const parte of partes) {
-                    const parsed = parseReferencia(parte);
-                    if (!parsed) continue;
+                const { livroId, capituloInicio, capituloFim } = parsed;
 
-                    const { livroId, capituloInicio, capituloFim } = parsed;
-
-                    for (let cap = capituloInicio; cap <= Math.min(capituloFim, capituloInicio + 4); cap++) {
-                        const versiculos = await buscarCapitulo(livroId, cap);
-                        for (const v of versiculos) {
-                            todosVersiculos.push({ ...v, capitulo: cap });
-                        }
+                for (let cap = capituloInicio; cap <= Math.min(capituloFim, capituloInicio + 4); cap++) {
+                    const versiculos = await buscarCapitulo(livroId, cap);
+                    for (const v of versiculos) {
+                        todosVersiculos.push({ ...v, capitulo: cap, livroId });
                     }
                 }
+            }
 
-                if (todosVersiculos.length > 0) {
-                    // 2d. Selecionar os 3 melhores
-                    const parsed0 = parseReferencia(partes[0]);
-                    const livroId = parsed0?.livroId || 1;
-                    const livroNome = ID_PARA_NOME[livroId] || partes[0];
+            if (todosVersiculos.length > 0) {
+                // Selecionar os 3 melhores
+                const parsed0 = parseReferencia(partes[0]);
+                const livroIdPrincipal = parsed0?.livroId || 1;
 
-                    const melhores = selecionarMelhoresVersiculos(todosVersiculos, livroId, 3);
+                const melhores = selecionarMelhoresVersiculos(todosVersiculos, livroIdPrincipal, 3);
 
-                    // 2e. Enviar cada um como mensagem separada
-                    for (const v of melhores) {
-                        const refCompleta = `${livroNome} ${v.capitulo}:${v.verse}`;
-                        const msgVersiculo = `Versiculo do Dia\n\n"${v.text}"\n\n${refCompleta}`;
+                // Enviar cada um como mensagem separada
+                for (const v of melhores) {
+                    const livroNome = (v.livroId ? ID_PARA_NOME[v.livroId] : null) || ID_PARA_NOME[livroIdPrincipal] || '';
+                    const refCompleta = `${livroNome} ${v.capitulo}:${v.verse}`;
+                    const msgVersiculo = `Versiculo do Dia\n\n"${v.text}"\n\n${refCompleta}`;
 
-                        const enviou = await enviarTelegram(msgVersiculo);
-                        if (enviou) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
+                    const enviou = await enviarTelegram(msgVersiculo);
+                    if (enviou) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
 
-                        // Pequena pausa entre mensagens para nao dar flood
-                        await new Promise(r => setTimeout(r, 500));
-                    }
-                } else {
-                    console.log('Nenhum versiculo carregado para:', diaPlano.referencia);
+                    // Pequena pausa entre mensagens para nao dar flood
+                    await new Promise(r => setTimeout(r, 500));
                 }
             } else {
-                console.log('Dia do plano nao encontrado. plano_id:', inscricao.plano_id, 'dia:', inscricao.dia_atual);
+                console.log('Nenhum versiculo carregado para:', referenciaDoDia);
             }
         } else {
-            console.log('Nenhuma inscricao ativa encontrada');
+            console.log('Passagem do dia nao encontrada para:', dataHoje);
         }
 
         return NextResponse.json({
