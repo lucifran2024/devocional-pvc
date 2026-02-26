@@ -9,6 +9,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Mapeamento de livros para IDs da API bolls.life
 const LIVRO_PARA_ID: Record<string, number> = {
@@ -193,18 +194,86 @@ async function buscarCapitulo(livroId: number, capitulo: number): Promise<{ vers
 }
 
 /**
- * Seleciona os 3 melhores versiculos de uma passagem
- * Criterios: versiculos com tamanho medio (nao muito curtos, nao muito longos),
- * que tenham palavras-chave inspiradoras
+ * Seleciona os 3 melhores versiculos usando IA (Gemini via Edge Function)
+ * Fallback: algoritmo local por palavras-chave
  */
-function selecionarMelhoresVersiculos(
+async function selecionarMelhoresVersiculosIA(
     versiculos: { verse: number; text: string; capitulo: number; livroId?: number }[],
-    livroId: number,
+    referencia: string,
     quantidade: number = 3
-): { verse: number; text: string; capitulo: number; livroId?: number }[] {
+): Promise<{ verse: number; text: string; capitulo: number; livroId?: number }[]> {
     if (versiculos.length <= quantidade) return versiculos;
 
-    // Palavras que indicam versiculos inspiradores/poderosos
+    try {
+        // Monta lista compacta para a IA avaliar
+        const listaVersiculos = versiculos.map(v =>
+            `[${v.capitulo}:${v.verse}] ${v.text}`
+        ).join('\n');
+
+        const prompt = `Voce e um especialista em Biblia. Da leitura de hoje (${referencia}), selecione exatamente ${quantidade} versiculos que sejam os mais impactantes, inspiradores e bonitos para compartilhar como "Versiculo do Dia" nas redes sociais.
+
+Criterios:
+- Versiculos que funcionam sozinhos (faz sentido sem contexto)
+- Mensagem positiva, esperanca, fe, forca, promessa de Deus
+- Bom para copiar e postar no Instagram/WhatsApp
+- Evite versiculos narrativos ou de contexto historico
+- Prefira falas diretas de Deus ou promessas
+
+Responda APENAS com os numeros no formato capitulo:versiculo separados por virgula. Exemplo: 37:4,38:12,39:7
+
+Versiculos disponíveis:
+${listaVersiculos}`;
+
+        const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                modo_id: 'modo_livre',
+                data: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
+                prompt_override: prompt
+            })
+        });
+
+        if (resp.ok) {
+            const json = await resp.json();
+            const resultado = json.resultado || '';
+
+            // Parsear resposta: "37:4,38:12,39:7" ou variações
+            const refs = resultado.match(/(\d+):(\d+)/g);
+            if (refs && refs.length >= quantidade) {
+                const selecionados: typeof versiculos = [];
+                for (const ref of refs) {
+                    const [cap, vers] = ref.split(':').map(Number);
+                    const encontrado = versiculos.find(v => v.capitulo === cap && v.verse === vers);
+                    if (encontrado && !selecionados.includes(encontrado)) {
+                        selecionados.push(encontrado);
+                    }
+                    if (selecionados.length >= quantidade) break;
+                }
+                if (selecionados.length >= quantidade) {
+                    console.log('IA selecionou versiculos:', refs.slice(0, quantidade).join(', '));
+                    return selecionados;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Erro na selecao por IA, usando fallback:', e);
+    }
+
+    // FALLBACK: algoritmo local
+    return selecionarMelhoresVersiculosLocal(versiculos, quantidade);
+}
+
+/**
+ * Fallback: selecao local por palavras-chave
+ */
+function selecionarMelhoresVersiculosLocal(
+    versiculos: { verse: number; text: string; capitulo: number; livroId?: number }[],
+    quantidade: number = 3
+): { verse: number; text: string; capitulo: number; livroId?: number }[] {
     const palavrasFortes = [
         'senhor', 'deus', 'amor', 'paz', 'esperança', 'esperanca', 'fé', 'fe',
         'força', 'forca', 'coragem', 'misericórdia', 'misericordia', 'graça', 'graca',
@@ -215,39 +284,30 @@ function selecionarMelhoresVersiculos(
         'forte', 'corajoso', 'não temas', 'nao temas', 'não tenha medo', 'nao tenha medo'
     ];
 
-    // Pontua cada versiculo
     const pontuados = versiculos.map(v => {
         let score = 0;
         const lower = v.text.toLowerCase();
 
-        // Tamanho ideal: entre 40 e 200 caracteres
         if (v.text.length >= 40 && v.text.length <= 200) score += 3;
         else if (v.text.length >= 20 && v.text.length <= 300) score += 1;
-        else score -= 2; // Muito curto ou muito longo
+        else score -= 2;
 
-        // Bonus por palavras fortes
         for (const palavra of palavrasFortes) {
             if (lower.includes(palavra)) score += 2;
         }
 
-        // Bonus se tem aspas (citação direta de Deus/Jesus)
-        if (v.text.includes('"') || v.text.includes('"') || v.text.includes('—')) score += 3;
-
-        // Penaliza versiculos que sao listas de nomes ou genealogias
+        if (v.text.includes('"') || v.text.includes('\u201c') || v.text.includes('\u2014')) score += 3;
         if (lower.includes('filho de') && lower.includes(',')) score -= 5;
         if (lower.includes('gerou')) score -= 5;
 
         return { ...v, score };
     });
 
-    // Ordena por score (maior primeiro) e pega os top
     pontuados.sort((a, b) => b.score - a.score);
 
-    // Pega os 3 melhores, mas tenta espalhar entre capitulos diferentes
     const selecionados: typeof pontuados = [];
     const capitulosUsados = new Set<number>();
 
-    // Primeiro pass: um de cada capitulo
     for (const v of pontuados) {
         if (selecionados.length >= quantidade) break;
         if (!capitulosUsados.has(v.capitulo)) {
@@ -256,7 +316,6 @@ function selecionarMelhoresVersiculos(
         }
     }
 
-    // Segundo pass: completa com os melhores restantes
     for (const v of pontuados) {
         if (selecionados.length >= quantidade) break;
         if (!selecionados.includes(v)) {
@@ -347,7 +406,7 @@ export async function GET(request: Request) {
                 const parsed0 = parseReferencia(partes[0]);
                 const livroIdPrincipal = parsed0?.livroId || 1;
 
-                const melhores = selecionarMelhoresVersiculos(todosVersiculos, livroIdPrincipal, 3);
+                const melhores = await selecionarMelhoresVersiculosIA(todosVersiculos, referenciaDoDia, 3);
 
                 // Enviar cada um como mensagem separada
                 for (const v of melhores) {
