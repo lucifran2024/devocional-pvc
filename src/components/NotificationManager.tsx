@@ -50,18 +50,32 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
 
     const registerPushSubscription = async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.log('Push not supported');
             return;
         }
 
         try {
             const registration = await navigator.serviceWorker.ready;
+            console.log('SW ready, registrando push...');
 
             // Chave pública VAPID
             const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BOl_RIst7Fkgnn5VGKOTAxP6jniHuG9t2JA4GKmmdBz6TSDtv0phLxQYP-NqNhkXoNaoQE49D3nRoUxelGX3a-k';
 
+            // Converter base64url para Uint8Array (necessario para Web Push API)
+            const urlBase64ToUint8Array = (base64String: string) => {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            };
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: vapidPublicKey
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
             });
 
             console.log('Push subscription:', subscription);
