@@ -183,7 +183,18 @@ export async function GET(request: Request) {
                 enviado_em: new Date().toISOString()
             });
 
-            return NextResponse.json({ ok: true, message: 'Devocional enviado com sucesso!' });
+            // 8. Salvar no DNA Categorizado (alimenta o app automaticamente)
+            await supabase.from('dna_categorizado').insert({
+                texto_msg: textoLimpo,
+                categoria: 'DEVOCIONAL',
+                origem: 'telegram_auto',
+                tags: ['evangelhoparatodos', 'devocional_diario']
+            }).then(({ error }) => {
+                if (error) console.error('Erro ao salvar no DNA:', error.message);
+                else console.log('DNA alimentado automaticamente');
+            });
+
+            return NextResponse.json({ ok: true, message: 'Devocional enviado e salvo no DNA!' });
         } else {
             return NextResponse.json({ ok: false, message: 'Falha ao enviar para Telegram' }, { status: 500 });
         }

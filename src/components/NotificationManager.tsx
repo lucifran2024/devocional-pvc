@@ -53,8 +53,8 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
         try {
             const registration = await navigator.serviceWorker.ready;
 
-            // Chave pública VAPID (do env ou hardcoded se necessário no frontend)
-            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BMk...'; // Substituir pela real ou usar env
+            // Chave pública VAPID
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BOl_RIst7Fkgnn5VGKOTAxP6jniHuG9t2JA4GKmmdBz6TSDtv0phLxQYP-NqNhkXoNaoQE49D3nRoUxelGX3a-k';
 
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,

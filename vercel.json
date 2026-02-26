@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/daily-devotional",
       "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/cron/daily-push",
+      "schedule": "0 10 * * *"
     }
   ]
 }
