@@ -15,9 +15,12 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
         if ('Notification' in window) {
             setPermission(Notification.permission);
 
-            // Show banner if permission not yet decided
-            if (Notification.permission === 'default') {
-                // Delay showing banner
+            if (Notification.permission === 'granted') {
+                // Permissao ja ativa — registra subscription automaticamente
+                // (necessario quando a chave VAPID mudou ou subscription expirou)
+                registerPushSubscription();
+            } else if (Notification.permission === 'default') {
+                // Show banner if permission not yet decided
                 const timer = setTimeout(() => setShowBanner(true), 5000);
                 return () => clearTimeout(timer);
             }
@@ -66,21 +69,37 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
             // Salvar no Supabase
             const { supabase } = await import('@/lib/supabase');
 
-            // Salva na tabela push_subscriptions
-            // Nota: JSON.stringify(subscription) é necessário pois o objeto subscription tem propriedades no prototype
             const subJson = JSON.parse(JSON.stringify(subscription));
+            const endpoint = subJson.endpoint;
 
-            const { error } = await supabase
+            // Verifica se ja existe para nao duplicar
+            const { data: existing } = await supabase
                 .from('push_subscriptions')
-                .insert({
-                    subscription_json: subJson,
-                    updated_at: new Date().toISOString()
-                });
+                .select('id')
+                .eq('endpoint', endpoint)
+                .limit(1);
 
-            if (error) {
-                console.warn('Erro ao salvar push:', error);
+            if (existing && existing.length > 0) {
+                // Atualiza subscription existente (pode ter mudado)
+                await supabase
+                    .from('push_subscriptions')
+                    .update({ subscription_json: subJson, updated_at: new Date().toISOString() })
+                    .eq('id', existing[0].id);
+                console.log('✅ Subscription atualizada');
             } else {
-                console.log('✅ Notificações ativadas com sucesso!');
+                // Insere nova
+                const { error } = await supabase
+                    .from('push_subscriptions')
+                    .insert({
+                        endpoint,
+                        subscription_json: subJson,
+                        updated_at: new Date().toISOString()
+                    });
+                if (error) {
+                    console.warn('Erro ao salvar push:', error);
+                } else {
+                    console.log('✅ Notificações ativadas com sucesso!');
+                }
             }
 
         } catch (err) {
