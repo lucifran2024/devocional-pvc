@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import webpush from 'web-push';
 
 // ============================================
 // CONFIG
 // ============================================
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BOl_RIst7Fkgnn5VGKOTAxP6jniHuG9t2JA4GKmmdBz6TSDtv0phLxQYP-NqNhkXoNaoQE49D3nRoUxelGX3a-k';
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'pU2qtMHShhrEa4JA0Bb5Tq02A3KScgoeA3G0_mPP6VI';
-const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:lucifran2024@gmail.com';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
 
 // Versiculos inspiradores para "Palavra do Dia"
 const VERSICULOS_DIA = [
@@ -54,6 +48,28 @@ function getVersiculoDoDia(): { ref: string; texto: string } {
     return VERSICULOS_DIA[index];
 }
 
+async function enviarTelegram(texto: string): Promise<boolean> {
+    try {
+        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: texto,
+            }),
+        });
+        const data = await resp.json();
+        if (!data.ok) {
+            console.error('Telegram error:', data.description);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error('Erro ao enviar Telegram:', e);
+        return false;
+    }
+}
+
 // ============================================
 // CRON HANDLER
 // ============================================
@@ -65,70 +81,28 @@ export async function GET(request: Request) {
     }
 
     try {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-        // Configurar VAPID
-        webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-
         // Versiculo do dia
         const versiculo = getVersiculoDoDia();
 
-        // Buscar todas as subscriptions
-        const { data: subs, error } = await supabase
-            .from('push_subscriptions')
-            .select('id, subscription_json');
+        // Formatar mensagem
+        const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const mensagem = `Palavra do Dia\n${dataFormatada}\n\n${versiculo.ref}\n\n"${versiculo.texto}"`;
 
-        if (error || !subs || subs.length === 0) {
-            console.log('Nenhuma subscription encontrada:', error?.message);
-            return NextResponse.json({ ok: true, message: 'Nenhuma subscription ativa', count: 0 });
+        // Enviar via Telegram
+        const enviou = await enviarTelegram(mensagem);
+
+        if (enviou) {
+            return NextResponse.json({
+                ok: true,
+                message: 'Palavra do dia enviada via Telegram!',
+                versiculo: versiculo.ref,
+            });
+        } else {
+            return NextResponse.json({ ok: false, message: 'Falha ao enviar para Telegram' }, { status: 500 });
         }
-
-        // Payload da notificacao
-        const payload = JSON.stringify({
-            title: `Palavra do Dia - ${versiculo.ref}`,
-            body: versiculo.texto,
-            url: '/biblioteca',
-        });
-
-        // Enviar para cada subscription
-        let enviados = 0;
-        let falhas = 0;
-        const idsParaRemover: number[] = [];
-
-        for (const sub of subs) {
-            try {
-                await webpush.sendNotification(sub.subscription_json, payload);
-                enviados++;
-            } catch (err: any) {
-                console.error(`Push falhou para sub ${sub.id}:`, err.statusCode || err.message);
-                // Se subscription expirou ou foi removida (410 Gone, 404), remover
-                if (err.statusCode === 410 || err.statusCode === 404) {
-                    idsParaRemover.push(sub.id);
-                }
-                falhas++;
-            }
-        }
-
-        // Limpar subscriptions invalidas
-        if (idsParaRemover.length > 0) {
-            await supabase
-                .from('push_subscriptions')
-                .delete()
-                .in('id', idsParaRemover);
-            console.log(`Removidas ${idsParaRemover.length} subscriptions invalidas`);
-        }
-
-        return NextResponse.json({
-            ok: true,
-            message: `Push enviado: ${enviados} sucesso, ${falhas} falhas`,
-            versiculo: versiculo.ref,
-            enviados,
-            falhas,
-            removidos: idsParaRemover.length
-        });
 
     } catch (e: any) {
-        console.error('Erro no push cron:', e);
+        console.error('Erro no cron palavra do dia:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }
