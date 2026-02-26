@@ -433,64 +433,55 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
 
-    // Mensagens do assistente ocupam a tela toda (como a Biblioteca)
+    // Mensagens do assistente - sem bolha, tela toda para leitura
     if (!isUser) {
         if (temVersiculosInterativos) {
-            // Renderiza com versículos interativos
             const partes = message.content.split('%%VERSICULOS_INTERATIVOS%%');
             return (
-                <div className="animate-enter mb-6">
-                    <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-visible">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-
-                        <div className="relative z-10">
-                            {/* Texto antes dos versículos */}
-                            {partes[0] && (
-                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-4">
-                                    <ReactMarkdown>{partes[0]}</ReactMarkdown>
-                                </div>
-                            )}
-
-                            {/* Versículos interativos */}
-                            <VersiculosInterativos
-                                versiculos={versiculosInterativos!}
-                                referencia={`${livroInfo!.nome} ${livroInfo!.capitulo}`}
-                                livroAbrev={livroInfo!.abrev}
-                                livroNome={livroInfo!.nome}
-                                capitulo={livroInfo!.capitulo}
-                            />
-
-                            {/* Texto depois dos versículos */}
-                            {partes[1] && (
-                                <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-4">
-                                    <ReactMarkdown>{partes[1]}</ReactMarkdown>
-                                </div>
-                            )}
+                <div className="animate-enter mb-4">
+                    {/* Texto antes dos versículos */}
+                    {partes[0] && (
+                        <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-3">
+                            <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Versículos interativos - sem container extra */}
+                    <VersiculosInterativos
+                        versiculos={versiculosInterativos!}
+                        referencia={`${livroInfo!.nome} ${livroInfo!.capitulo}`}
+                        livroAbrev={livroInfo!.abrev}
+                        livroNome={livroInfo!.nome}
+                        capitulo={livroInfo!.capitulo}
+                    />
+
+                    {/* Texto depois dos versículos */}
+                    {partes[1] && (
+                        <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3">
+                            <ReactMarkdown>{partes[1]}</ReactMarkdown>
+                        </div>
+                    )}
                 </div>
             );
         }
 
-        return (
-            <div className="animate-enter mb-6">
-                <div className="glass-panel rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                    {/* Glow effect */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        // Remove placeholder de versículos que não foram renderizados
+        const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '');
 
-                    <div className="text-lg md:text-xl whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-3 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none relative z-10">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                    </div>
+        return (
+            <div className="animate-enter mb-4">
+                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none">
+                    <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                 </div>
             </div>
         );
     }
 
-    // Mensagens do usuário mantêm o estilo de bolha
+    // Mensagens do usuário mantêm o estilo de bolha (compactas)
     return (
-        <div className="flex justify-end animate-enter mb-6">
-            <div className="max-w-[85%] rounded-2xl px-6 py-4 bg-gradient-to-br from-amber-600 to-amber-700 text-text-primary rounded-br-none shadow-lg shadow-amber-900/20">
-                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed">
+        <div className="flex justify-end animate-enter mb-3">
+            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-gradient-to-br from-amber-600 to-amber-700 text-text-primary rounded-br-none shadow-lg shadow-amber-900/20">
+                <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
             </div>
@@ -689,9 +680,17 @@ function PlanoLeituraContent() {
     const atualizarContextoVersiculos = (parte: number) => {
         if (!bibleData || !passagem) return;
 
-        const startIndex = (parte - 1) * 10;
-        const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
-        setVersiculosPaginaAtual(slice);
+        // No modo plano, mostra TODOS os versículos desde o início até a parte atual
+        // para que o que já foi lido continue visível
+        if (isPlanoMode) {
+            const endIndex = parte * 10;
+            const slice = bibleData.versiculos.slice(0, endIndex);
+            setVersiculosPaginaAtual(slice);
+        } else {
+            const startIndex = (parte - 1) * 10;
+            const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
+            setVersiculosPaginaAtual(slice);
+        }
 
         const primeiraParte = passagem.referencia.split(';')[0].trim();
         const parsed = parseReferencia(primeiraParte);
@@ -1069,6 +1068,47 @@ Ou **MENU** para voltar.`;
     const submitMessage = async (text: string) => {
         if (!text.trim() || isProcessing) return;
 
+        const cmdLower = text.trim().toLowerCase();
+        const isContinuarPlano = isPlanoMode && ['continuar', 'próximo', 'proximo', 'seguir', 'leia mais'].includes(cmdLower);
+        const page = currentPageRef.current;
+        const totalVersiculos = bibleData?.versiculos.length || 30;
+        const totalPartes = Math.ceil(totalVersiculos / 10);
+        const ehUltimaParteAtual = page >= totalPartes;
+
+        // No modo plano, ao continuar (e não estamos na última parte),
+        // substituímos a última mensagem do assistente em vez de adicionar nova
+        if (isContinuarPlano && !ehUltimaParteAtual) {
+            setIsProcessing(true);
+            setInputValue('');
+
+            try {
+                const resposta = await processarComando(text.trim());
+
+                setMessages(prev => {
+                    // Encontra o último índice de mensagem do assistente
+                    const lastAssistantIdx = prev.map((m, i) => ({ m, i }))
+                        .filter(x => x.m.role === 'assistant')
+                        .pop()?.i;
+
+                    if (lastAssistantIdx !== undefined) {
+                        const updated = [...prev];
+                        updated[lastAssistantIdx] = {
+                            role: 'assistant',
+                            content: resposta,
+                            timestamp: new Date()
+                        };
+                        return updated;
+                    }
+                    return [...prev, { role: 'assistant', content: resposta, timestamp: new Date() }];
+                });
+            } catch {
+                // Em caso de erro, não modifica
+            } finally {
+                setIsProcessing(false);
+            }
+            return;
+        }
+
         const userMessage: ChatMessage = {
             role: 'user',
             content: text.trim(),
@@ -1203,25 +1243,38 @@ Ou **MENU** para voltar.`;
 
             <div className="max-w-7xl mx-auto px-6 z-10 relative">
 
-                {/* Header Section */}
-                <div className="text-center mb-16 animate-enter">
-                    <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold tracking-[0.2em] mb-4">
-                        MODO MENTOR
-                    </span>
-                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-                        {inscricaoAtiva?.plano ? (
-                            inscricaoAtiva.plano.titulo
-                        ) : (
-                            <>Plano de <span className="text-gradient-gold">Leitura</span></>
-                        )}
-                    </h1>
-                    <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                        {inscricaoAtiva
-                            ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias} • ${inscricaoAtiva.plano.descricao}`
-                            : "Mergulhe nas Escrituras com profundidade, contexto e aplicação prática."
-                        }
-                    </p>
-                </div>
+                {/* Header Section - compacto no modo plano */}
+                {isPlanoMode ? (
+                    <div className="text-center mb-6 animate-enter">
+                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">
+                            {inscricaoAtiva?.plano?.titulo || 'Plano de Leitura'}
+                        </h1>
+                        <p className="text-slate-400 text-sm">
+                            {inscricaoAtiva
+                                ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias}`
+                                : "Mergulhe nas Escrituras"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="text-center mb-16 animate-enter">
+                        <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold tracking-[0.2em] mb-4">
+                            MODO MENTOR
+                        </span>
+                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                            {inscricaoAtiva?.plano ? (
+                                inscricaoAtiva.plano.titulo
+                            ) : (
+                                <>Plano de <span className="text-gradient-gold">Leitura</span></>
+                            )}
+                        </h1>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            {inscricaoAtiva
+                                ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias} • ${inscricaoAtiva.plano.descricao}`
+                                : "Mergulhe nas Escrituras com profundidade, contexto e aplicação prática."
+                            }
+                        </p>
+                    </div>
+                )}
 
                 {!activeOption && !isPlanoMode ? (
                     // -------------------------------------------
@@ -1300,93 +1353,85 @@ Ou **MENU** para voltar.`;
                     </div>
                 ) : (
                     // -------------------------------------------
-                    // VISTA CHAT (INTERATIVA)
+                    // VISTA CHAT (INTERATIVA) - Sem bolha externa para maximizar leitura
                     // -------------------------------------------
-                    <div className="max-w-4xl mx-auto animate-enter">
-                        <div className="glass-panel rounded-3xl min-h-[70vh] flex flex-col relative overflow-hidden border-amber-500/20">
+                    <div className="max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
 
-                            {/* Chat Header */}
-                            <div className="p-6 border-b border-border-subtle flex items-center justify-between bg-black/20 backdrop-blur-md sticky top-0 z-20">
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={() => setActiveOption(null)}
-                                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
-                                    >
-                                        <ArrowLeft className="w-5 h-5" />
-                                    </button>
-                                    <div>
-                                        <h2 className="font-bold text-white text-lg">
-                                            {isPlanoMode
-                                                ? 'Leitura do Plano'
-                                                : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
-                                        </h2>
-                                        <p className="text-xs text-slate-400">
-                                            {passagem?.referencia} • {passagem?.arquetipo_maestro}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="p-2 bg-amber-500/10 rounded-full">
-                                    <Sparkles className="w-5 h-5 text-amber-400" />
+                        {/* Chat Header - compacto e sticky */}
+                        <div className="px-4 py-3 border-b border-border-subtle/50 flex items-center justify-between sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setActiveOption(null)}
+                                    className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                </button>
+                                <div>
+                                    <h2 className="font-bold text-white text-base">
+                                        {isPlanoMode
+                                            ? 'Leitura do Plano'
+                                            : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                    </h2>
+                                    <p className="text-[11px] text-slate-400">
+                                        {passagem?.referencia}
+                                    </p>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                {messages.map((msg, idx) => {
-                                    // Passa versículos interativos para a última mensagem com placeholder
-                                    const isLastMsg = idx === messages.length - 1;
-                                    const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
-                                    return (
-                                        <ChatBubble
-                                            key={idx}
-                                            message={msg}
-                                            versiculosInterativos={isLastMsg && temPlaceholder ? versiculosPaginaAtual : undefined}
-                                            livroInfo={isLastMsg && temPlaceholder ? livroInfoAtual : undefined}
-                                        />
-                                    );
-                                })}
+                        {/* Messages Area - sem padding extra, direto no conteúdo */}
+                        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                            {messages.map((msg, idx) => {
+                                const isLastMsg = idx === messages.length - 1;
+                                const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
+                                return (
+                                    <ChatBubble
+                                        key={idx}
+                                        message={msg}
+                                        versiculosInterativos={isLastMsg && temPlaceholder ? versiculosPaginaAtual : undefined}
+                                        livroInfo={isLastMsg && temPlaceholder ? livroInfoAtual : undefined}
+                                    />
+                                );
+                            })}
 
-                                {isProcessing && (
-                                    <div className="flex justify-start animate-pulse">
-                                        <div className="glass-panel px-6 py-4 rounded-2xl rounded-bl-none flex items-center gap-3">
-                                            <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-                                            <span className="text-sm text-slate-400">O Mentor está escrevendo...</span>
-                                        </div>
+                            {isProcessing && (
+                                <div className="flex justify-start animate-pulse">
+                                    <div className="px-4 py-2 rounded-xl flex items-center gap-2 bg-white/5">
+                                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+                                        <span className="text-sm text-slate-400">Carregando...</span>
                                     </div>
-                                )}
-                                <div ref={chatEndRef} />
-                            </div>
+                                </div>
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
 
-                            {/* Input Area - Botões de ação */}
-                            <div className="p-4 border-t border-border-subtle bg-black/20 backdrop-blur-md">
-                                <div className="flex gap-3">
-                                    {/* Botão Continuar */}
+                        {/* Input Area - botão fixo no fundo */}
+                        <div className="sticky bottom-0 px-4 py-3 bg-surface-0/80 backdrop-blur-md border-t border-border-subtle/30">
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => submitMessage('Continuar')}
+                                    className="flex-1 btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2"
+                                    disabled={isProcessing}
+                                >
+                                    <ArrowRight className="w-5 h-5" />
+                                    Continuar
+                                </button>
+
+                                {!isPlanoMode && activeOption === '1' && (
                                     <button
                                         type="button"
-                                        onClick={() => submitMessage('Continuar')}
-                                        className="flex-1 btn-premium py-4 rounded-xl flex items-center justify-center gap-2"
+                                        onClick={() => submitMessage('Explicar')}
+                                        className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
                                         disabled={isProcessing}
                                     >
-                                        <ArrowRight className="w-5 h-5" />
-                                        Continuar
+                                        <Sparkles className="w-5 h-5 text-amber-400" />
+                                        Explicar
                                     </button>
-
-                                    {/* Botão Explicar (só na Opção 1) */}
-                                    {!isPlanoMode && activeOption === '1' && (
-                                        <button
-                                            type="button"
-                                            onClick={() => submitMessage('Explicar')}
-                                            className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-4 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                                            disabled={isProcessing}
-                                        >
-                                            <Sparkles className="w-5 h-5 text-amber-400" />
-                                            Explicar
-                                        </button>
-                                    )}
-                                </div>
+                                )}
                             </div>
-
                         </div>
+
                     </div>
                 )}
             </div>

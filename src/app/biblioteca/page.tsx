@@ -489,6 +489,12 @@ export default function BibliotecaPage() {
     const [painelAba, setPainelAba] = useState<'favoritos' | 'destaques' | 'notas'>('favoritos');
     const [painelItens, setPainelItens] = useState<BibliaInteracao[]>([]);
     const [painelLoading, setPainelLoading] = useState(false);
+    const [painelNotaEditId, setPainelNotaEditId] = useState<number | null>(null);
+    const [painelNotaTexto, setPainelNotaTexto] = useState('');
+    const [novaNotaAberta, setNovaNotaAberta] = useState(false);
+    const [novaNotaRef, setNovaNotaRef] = useState('');
+    const [novaNotaTexto, setNovaNotaTexto] = useState('');
+    const [novaNotaSalvando, setNovaNotaSalvando] = useState(false);
 
     const { toasts, removeToast, success, error: toastError } = useToast();
     const toolbarRef = useRef<HTMLDivElement>(null);
@@ -1050,6 +1056,26 @@ export default function BibliotecaPage() {
     // ==========================================
     const handleBuscar = async () => {
         if (!termoBusca.trim()) return;
+
+        // Tentar interpretar como referência bíblica (ex: "João 3:16", "Gn 1", "Salmos 23")
+        const refMatch = termoBusca.trim().match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i);
+        if (refMatch) {
+            const nomeLivro = refMatch[1].trim().toLowerCase();
+            const cap = parseInt(refMatch[2]);
+            const livroEncontrado = LIVROS_BIBLIA.find(l =>
+                l.nome.toLowerCase() === nomeLivro ||
+                l.abrev.toLowerCase() === nomeLivro ||
+                l.nome.toLowerCase().startsWith(nomeLivro)
+            );
+            if (livroEncontrado) {
+                navegarPara(livroEncontrado.abrev, cap, refMatch[3] ? parseInt(refMatch[3]) : undefined);
+                setBuscaAberta(false);
+                setTermoBusca('');
+                setResultadosBusca([]);
+                return;
+            }
+        }
+
         setBuscaLoading(true);
         setResultadosBusca([]);
 
@@ -1057,13 +1083,25 @@ export default function BibliotecaPage() {
             const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termoBusca.trim())}/`);
             if (resp.ok) {
                 const data = await resp.json();
-                setResultadosBusca(Array.isArray(data) ? data.slice(0, 50) : []);
+                setResultadosBusca(Array.isArray(data) ? data.slice(0, 100) : []);
             }
         } catch {
             toastError('Erro na busca');
         } finally {
             setBuscaLoading(false);
         }
+    };
+
+    const limparBusca = () => {
+        setTermoBusca('');
+        setResultadosBusca([]);
+    };
+
+    const highlightTermo = (texto: string): string => {
+        if (!termoBusca.trim()) return texto;
+        const clean = texto.replace(/<[^>]*>/g, '');
+        const escaped = termoBusca.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return clean.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="bg-amber-400/40 text-inherit rounded px-0.5">$1</mark>');
     };
 
     const getLivroByBookId = (bookId: number) => {
@@ -1096,6 +1134,81 @@ export default function BibliotecaPage() {
     const navegarParaItem = (item: BibliaInteracao) => {
         navegarPara(item.livro_abrev, item.capitulo, item.versiculo);
         setPainelAberto(false);
+    };
+
+    const iniciarEdicaoNotaPainel = (item: BibliaInteracao) => {
+        setPainelNotaEditId(item.id!);
+        setPainelNotaTexto(item.nota || '');
+    };
+
+    const salvarNotaPainel = async (item: BibliaInteracao) => {
+        if (!painelNotaTexto.trim()) return;
+        // Sempre atualiza o campo nota no registro existente (funciona tanto para adicionar nova nota quanto editar existente)
+        await atualizarNota(item.id!, painelNotaTexto.trim());
+        success('Nota salva!');
+        setPainelNotaEditId(null);
+        setPainelNotaTexto('');
+        // Recarregar itens do painel
+        await abrirPainel(painelAba);
+        await carregarInteracoes();
+    };
+
+    const criarNovaNotaPainel = async () => {
+        if (!novaNotaRef.trim() || !novaNotaTexto.trim()) return;
+        // Interpretar referência (ex: "João 3:16", "Gn 1:1")
+        const refMatch = novaNotaRef.trim().match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+):(\d+)$/i);
+        if (!refMatch) {
+            toastError('Formato inválido. Use: Livro capítulo:versículo (ex: João 3:16)');
+            return;
+        }
+        const nomeLivro = refMatch[1].trim().toLowerCase();
+        const cap = parseInt(refMatch[2]);
+        const vers = parseInt(refMatch[3]);
+        const livro = LIVROS_BIBLIA.find(l =>
+            l.nome.toLowerCase() === nomeLivro ||
+            l.abrev.toLowerCase() === nomeLivro ||
+            l.nome.toLowerCase().startsWith(nomeLivro)
+        );
+        if (!livro) {
+            toastError('Livro não encontrado');
+            return;
+        }
+        if (cap < 1 || cap > livro.capitulos) {
+            toastError(`${livro.nome} tem ${livro.capitulos} capítulos`);
+            return;
+        }
+        setNovaNotaSalvando(true);
+        try {
+            const bookId = LIVRO_PARA_ID[livro.abrev] || 1;
+            const resp = await fetch(`https://bolls.life/get-chapter/${versaoBiblia.codigo}/${bookId}/${cap}/`);
+            if (!resp.ok) throw new Error('Erro ao buscar versículo');
+            const data = await resp.json();
+            const versiculo = data.find((v: { verse: number }) => v.verse === vers);
+            if (!versiculo) {
+                toastError(`Versículo ${vers} não encontrado em ${livro.nome} ${cap}`);
+                return;
+            }
+            const textoLimpo = (versiculo.text || '').replace(/<[^>]*>/g, '').trim();
+            await salvarInteracao({
+                tipo: 'nota',
+                livro_abrev: livro.abrev,
+                livro_nome: livro.nome,
+                capitulo: cap,
+                versiculo: vers,
+                texto_versiculo: textoLimpo,
+                nota: novaNotaTexto.trim()
+            });
+            success('Nota criada!');
+            setNovaNotaAberta(false);
+            setNovaNotaRef('');
+            setNovaNotaTexto('');
+            await abrirPainel('notas');
+            await carregarInteracoes();
+        } catch {
+            toastError('Erro ao criar nota');
+        } finally {
+            setNovaNotaSalvando(false);
+        }
     };
 
     // ==========================================
@@ -1169,15 +1282,22 @@ export default function BibliotecaPage() {
                 {buscaAberta && (
                     <div className="px-4 pb-3 animate-in slide-in-from-top duration-200">
                         <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={termoBusca}
-                                onChange={e => setTermoBusca(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleBuscar()}
-                                placeholder="Buscar na Bíblia..."
-                                className="flex-1 bg-surface-2 border border-border-subtle rounded-xl px-4 py-2.5 text-text-primary placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-                                autoFocus
-                            />
+                            <div className="flex-1 relative">
+                                <input
+                                    type="text"
+                                    value={termoBusca}
+                                    onChange={e => setTermoBusca(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleBuscar()}
+                                    placeholder="Buscar texto ou referência (ex: João 3:16)..."
+                                    className="w-full bg-surface-2 border border-border-subtle rounded-xl px-4 py-2.5 pr-8 text-text-primary placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
+                                    autoFocus
+                                />
+                                {termoBusca && (
+                                    <button onClick={limparBusca} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-primary transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                             <button onClick={handleBuscar} disabled={buscaLoading} className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
                                 {buscaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
                             </button>
@@ -1185,27 +1305,50 @@ export default function BibliotecaPage() {
 
                         {/* Resultados de busca */}
                         {resultadosBusca.length > 0 && (
-                            <div className="mt-2 max-h-64 overflow-y-auto space-y-1 bg-slate-100 dark:bg-black/40 rounded-xl p-2 border border-slate-200 dark:border-transparent">
-                                {resultadosBusca.map((r, i) => {
-                                    const livro = getLivroByBookId(r.book);
-                                    return (
-                                        <button
-                                            key={i}
-                                            onClick={() => {
-                                                if (livro) {
-                                                    navegarPara(livro.abrev, r.chapter, r.verse);
-                                                    setBuscaAberta(false);
-                                                    setResultadosBusca([]);
-                                                    setTermoBusca('');
-                                                }
-                                            }}
-                                            className="w-full text-left p-2.5 rounded-lg hover:bg-surface-2 transition-colors"
-                                        >
-                                            <div className="text-amber-400 text-xs font-bold">{livro?.nome || `Livro ${r.book}`} {r.chapter}:{r.verse}</div>
-                                            <div className="text-text-secondary text-sm mt-0.5 line-clamp-2">{r.text?.replace(/<[^>]*>/g, '')}</div>
-                                        </button>
-                                    );
-                                })}
+                            <div className="mt-2">
+                                <div className="flex items-center justify-between px-2 mb-1.5">
+                                    <span className="text-xs text-text-muted font-medium">
+                                        {resultadosBusca.length} resultado{resultadosBusca.length !== 1 ? 's' : ''} encontrado{resultadosBusca.length !== 1 ? 's' : ''}
+                                    </span>
+                                    <span className="text-xs text-text-muted">{versaoBiblia.nome}</span>
+                                </div>
+                                <div className="max-h-72 overflow-y-auto space-y-1 bg-slate-100 dark:bg-black/40 rounded-xl p-2 border border-slate-200 dark:border-transparent">
+                                    {resultadosBusca.map((r, i) => {
+                                        const livro = getLivroByBookId(r.book);
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => {
+                                                    if (livro) {
+                                                        navegarPara(livro.abrev, r.chapter, r.verse);
+                                                        setBuscaAberta(false);
+                                                        setResultadosBusca([]);
+                                                        setTermoBusca('');
+                                                    }
+                                                }}
+                                                className="w-full text-left p-2.5 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 transition-colors group"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-amber-400 text-xs font-bold whitespace-nowrap">{livro?.nome || `Livro ${r.book}`} {r.chapter}:{r.verse}</span>
+                                                    <ChevronRight className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                                <div
+                                                    className="text-text-secondary text-sm mt-0.5 line-clamp-2"
+                                                    dangerouslySetInnerHTML={{ __html: highlightTermo(r.text || '') }}
+                                                />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Estado vazio após busca sem resultados */}
+                        {!buscaLoading && resultadosBusca.length === 0 && termoBusca.trim() && (
+                            <div className="mt-3 text-center py-4">
+                                <Search className="w-6 h-6 text-text-muted mx-auto mb-2 opacity-50" />
+                                <p className="text-sm text-text-muted">Nenhum resultado para &quot;{termoBusca}&quot;</p>
+                                <p className="text-xs text-text-muted mt-1">Tente outros termos ou busque por referência (ex: Gn 1, Sl 23)</p>
                             </div>
                         )}
                     </div>
@@ -1454,7 +1597,18 @@ export default function BibliotecaPage() {
                     <div className="bg-white dark:bg-surface-1 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-slate-50 dark:bg-surface-2">
                             <span className="font-bold text-slate-900 dark:text-text-primary">Meus Salvos</span>
-                            <button onClick={() => setPainelAberto(false)} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-primary"><X className="w-5 h-5" /></button>
+                            <div className="flex items-center gap-1">
+                                {painelAba === 'notas' && (
+                                    <button
+                                        onClick={() => { setNovaNotaAberta(!novaNotaAberta); setNovaNotaRef(''); setNovaNotaTexto(''); }}
+                                        className={`p-2 rounded-lg transition-all ${novaNotaAberta ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-amber-600 dark:hover:text-amber-400'}`}
+                                        title="Criar nova nota"
+                                    >
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <button onClick={() => setPainelAberto(false)} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-primary"><X className="w-5 h-5" /></button>
+                            </div>
                         </div>
 
                         {/* Abas */}
@@ -1468,6 +1622,46 @@ export default function BibliotecaPage() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-3 bg-white dark:bg-surface-1">
+                            {/* Formulário de nova nota */}
+                            {novaNotaAberta && painelAba === 'notas' && (
+                                <div className="mb-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 animate-in fade-in slide-in-from-top-2 duration-150">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <StickyNote className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                        <span className="text-sm font-bold text-amber-700 dark:text-amber-400">Nova Nota</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={novaNotaRef}
+                                        onChange={e => setNovaNotaRef(e.target.value)}
+                                        placeholder="Ex: João 3:16"
+                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-xl px-3 py-2.5 text-slate-800 dark:text-text-primary text-sm placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50 mb-2"
+                                    />
+                                    <textarea
+                                        value={novaNotaTexto}
+                                        onChange={e => setNovaNotaTexto(e.target.value)}
+                                        placeholder="Escreva sua anotação..."
+                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-xl px-3 py-2.5 text-slate-800 dark:text-text-primary text-sm placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50 resize-none"
+                                        rows={3}
+                                    />
+                                    <div className="flex justify-end gap-2 mt-2">
+                                        <button
+                                            onClick={() => { setNovaNotaAberta(false); setNovaNotaRef(''); setNovaNotaTexto(''); }}
+                                            className="px-3 py-1.5 text-xs rounded-lg text-slate-500 dark:text-text-muted hover:bg-slate-100 dark:hover:bg-surface-2 font-medium"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={criarNovaNotaPainel}
+                                            disabled={!novaNotaRef.trim() || !novaNotaTexto.trim() || novaNotaSalvando}
+                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors flex items-center gap-1.5"
+                                        >
+                                            {novaNotaSalvando && <Loader2 className="w-3 h-3 animate-spin" />}
+                                            Criar Nota
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {painelLoading ? (
                                 <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-amber-500 dark:text-amber-400 animate-spin" /></div>
                             ) : painelItens.length === 0 ? (
@@ -1475,15 +1669,64 @@ export default function BibliotecaPage() {
                             ) : (
                                 <div className="space-y-2.5">
                                     {painelItens.map(item => (
-                                        <div key={item.id} className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors group border border-slate-100 dark:border-transparent">
-                                            <button onClick={() => navegarParaItem(item)} className="flex-1 text-left">
-                                                <div className="text-amber-600 dark:text-amber-400 text-sm font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
-                                                <div className={`text-slate-800 dark:text-text-primary ${fontConfig.salvos} mt-1.5 leading-[1.8] font-serif`}>{item.texto_versiculo}</div>
-                                                {item.nota && <div className="text-slate-500 dark:text-text-muted text-sm mt-2 italic bg-slate-100 dark:bg-surface-2 rounded-lg px-3 py-2 border border-slate-200 dark:border-transparent">{item.nota}</div>}
-                                            </button>
-                                            <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-500/20 text-slate-300 dark:text-text-muted hover:text-red-500 dark:hover:text-red-400 transition-all shrink-0">
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                                        <div key={item.id} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors group border border-slate-100 dark:border-transparent">
+                                            <div className="flex items-start gap-3">
+                                                <button onClick={() => navegarParaItem(item)} className="flex-1 text-left">
+                                                    <div className="text-amber-600 dark:text-amber-400 text-sm font-bold">{item.livro_nome} {item.capitulo}:{item.versiculo}</div>
+                                                    <div className={`text-slate-800 dark:text-text-primary ${fontConfig.salvos} mt-1.5 leading-[1.8] font-serif`}>{item.texto_versiculo}</div>
+                                                </button>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    <button
+                                                        onClick={() => painelNotaEditId === item.id ? setPainelNotaEditId(null) : iniciarEdicaoNotaPainel(item)}
+                                                        className={`p-2 rounded-lg transition-all ${painelNotaEditId === item.id ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-500' : item.nota ? 'text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'text-slate-300 dark:text-text-muted hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500 dark:hover:text-blue-400'}`}
+                                                        title={item.nota ? 'Editar nota' : 'Adicionar nota'}
+                                                    >
+                                                        <StickyNote className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 dark:hover:text-red-400 transition-all">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Nota existente (visualização) */}
+                                            {item.nota && painelNotaEditId !== item.id && (
+                                                <div
+                                                    onClick={() => iniciarEdicaoNotaPainel(item)}
+                                                    className="text-slate-500 dark:text-text-muted text-sm mt-2 italic bg-slate-100 dark:bg-surface-1 rounded-lg px-3 py-2 border border-slate-200 dark:border-border-subtle cursor-pointer hover:border-blue-300 dark:hover:border-blue-500/30 transition-colors"
+                                                >
+                                                    {item.nota}
+                                                </div>
+                                            )}
+
+                                            {/* Editor de nota inline */}
+                                            {painelNotaEditId === item.id && (
+                                                <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-150">
+                                                    <textarea
+                                                        value={painelNotaTexto}
+                                                        onChange={e => setPainelNotaTexto(e.target.value)}
+                                                        placeholder="Escreva sua anotação..."
+                                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-xl px-3 py-2.5 text-slate-800 dark:text-text-primary text-sm placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-blue-400 dark:focus:border-blue-500/50 resize-none"
+                                                        rows={3}
+                                                        autoFocus
+                                                    />
+                                                    <div className="flex justify-end gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => { setPainelNotaEditId(null); setPainelNotaTexto(''); }}
+                                                            className="px-3 py-1.5 text-xs rounded-lg text-slate-500 dark:text-text-muted hover:bg-slate-100 dark:hover:bg-surface-2 font-medium"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => salvarNotaPainel(item)}
+                                                            disabled={!painelNotaTexto.trim()}
+                                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors"
+                                                        >
+                                                            Salvar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
