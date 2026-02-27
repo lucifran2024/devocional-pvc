@@ -30,12 +30,38 @@ function extrairOCR(content: string): string {
 function limparTexto(texto: string): string {
     // Remove @menções (ex: @juciqueiroz, @evangelhoparatodos__, @Maria etc)
     let limpo = texto.replace(/@[\w._]+/g, '').trim();
+    // Remove handles conhecidos (com ou sem @)
+    const handles = [
+        'tribodejuda.ofc', 'tribodejuda20', 'tribodejuda',
+        'evangelhoparatodos__', 'evangelhoparatodos',
+        'biblegateway'
+    ];
+    for (const handle of handles) {
+        limpo = limpo.replace(new RegExp(handle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
+    }
     // Remove linhas vazias consecutivas (mais de 2)
     limpo = limpo.replace(/\n{3,}/g, '\n\n');
     // Remove espaços extras
     limpo = limpo.replace(/  +/g, ' ');
     // Remove pontos/espaços soltos no inicio de linhas (restos de @removidos)
     limpo = limpo.replace(/^\s*[.,]\s*/gm, '');
+    // Remove linhas fragmentadas no final (OCR cortado)
+    const linhas = limpo.trim().split('\n');
+    while (linhas.length > 1) {
+        const ultima = linhas[linhas.length - 1].trim();
+        if (!ultima) { linhas.pop(); continue; }
+        const ehFragmento =
+            // Fragmento curto sem pontuação final (ex: "Gratic")
+            (ultima.length < 8 && !/[.!?"]$/.test(ultima)) ||
+            // Começa com minúscula = provavelmente continuação cortada (ex: "ratidão Senhor")
+            /^[a-záàãâéèêíìîóòôõúùûç]/.test(ultima);
+        if (ehFragmento) {
+            linhas.pop();
+        } else {
+            break;
+        }
+    }
+    limpo = linhas.join('\n');
     return limpo.trim();
 }
 
