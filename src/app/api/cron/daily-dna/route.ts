@@ -197,10 +197,50 @@ export async function GET(request: Request) {
         const mensagensEnviadas: string[] = [];
 
         // =============================================
+        // 0. ANTI-REPETICAO: buscar o que ja foi gerado nos ultimos 7 dias
+        // =============================================
+        const seteDiasAtras = new Date();
+        seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+        const dataLimite = seteDiasAtras.toISOString();
+
+        const { data: geracoesRecentes } = await supabase
+            .from('dna_geracoes')
+            .select('texto_msg, categoria, tema_principal, angulo_usado, titulo, imagem_central, abertura_tipo, fechamento_tipo')
+            .gte('created_at', dataLimite)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        // Monta contexto anti-repeticao para enviar nos filtros
+        const temasUsados = [...new Set((geracoesRecentes || []).map(g => g.tema_principal).filter(Boolean))];
+        const titulosUsados = [...new Set((geracoesRecentes || []).map(g => g.titulo).filter(Boolean))];
+        const imagensUsadas = [...new Set((geracoesRecentes || []).map(g => g.imagem_central).filter(Boolean))];
+        const aberturasUsadas = [...new Set((geracoesRecentes || []).map(g => g.abertura_tipo).filter(Boolean))];
+        const fechamentosUsados = [...new Set((geracoesRecentes || []).map(g => g.fechamento_tipo).filter(Boolean))];
+
+        // Extrair trechos curtos das msgs recentes para a IA evitar
+        const trechosRecentes = (geracoesRecentes || [])
+            .map(g => g.texto_msg?.substring(0, 80))
+            .filter(Boolean)
+            .slice(0, 20);
+
+        const antiRepeticao = {
+            temas_evitar: temasUsados.slice(0, 10),
+            titulos_evitar: titulosUsados.slice(0, 15),
+            imagens_evitar: imagensUsadas.slice(0, 10),
+            aberturas_saturadas: aberturasUsadas.slice(0, 5),
+            fechamentos_saturados: fechamentosUsados.slice(0, 5),
+            trechos_recentes: trechosRecentes,
+        };
+
+        console.log(`Anti-repeticao: ${temasUsados.length} temas, ${titulosUsados.length} titulos, ${trechosRecentes.length} trechos dos ultimos 7 dias`);
+
+        // =============================================
         // 1. GERAR DNA (modo_favoritas) - 5 mensagens
         // =============================================
         const filtrosFavoritas = getFiltrosDoDia(dataHoje, 'favoritas');
-        console.log('Filtros Favoritas:', JSON.stringify(filtrosFavoritas));
+        // Injeta contexto anti-repeticao nos filtros
+        filtrosFavoritas.anti_repeticao = antiRepeticao;
+        console.log('Filtros Favoritas:', JSON.stringify({ ...filtrosFavoritas, anti_repeticao: '...(omitido)' }));
 
         const resultFavoritas = await gerarConteudo('modo_favoritas', dataHoje, filtrosFavoritas);
 
@@ -226,7 +266,8 @@ export async function GET(request: Request) {
         // 2. GERAR ESTILO (modo_estilo) - 5 mensagens
         // =============================================
         const filtrosEstilo = getFiltrosDoDia(dataHoje, 'estilo');
-        console.log('Filtros Estilo:', JSON.stringify(filtrosEstilo));
+        filtrosEstilo.anti_repeticao = antiRepeticao;
+        console.log('Filtros Estilo:', JSON.stringify({ ...filtrosEstilo, anti_repeticao: '...(omitido)' }));
 
         const resultEstilo = await gerarConteudo('modo_estilo', dataHoje, filtrosEstilo);
 
