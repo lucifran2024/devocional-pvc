@@ -186,8 +186,7 @@ export async function GET(request: Request) {
             // 8. Salvar no DNA Categorizado (alimenta o app automaticamente)
             await supabase.from('dna_categorizado').insert({
                 texto_msg: textoLimpo,
-                categoria: 'DEVOCIONAL',
-                origem: 'telegram_auto',
+                categoria: 'devocional',
                 tags: ['evangelhoparatodos', 'devocional_diario']
             }).then(({ error }) => {
                 if (error) console.error('Erro ao salvar no DNA:', error.message);

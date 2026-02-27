@@ -1475,7 +1475,7 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
         const novoCache: any = {
             data: data,
             dia_semana: config?.dia || 'Hoje',
-            categoria: config?.categoria || 'DEVOCIONAL',
+            categoria: config?.categoria || 'devocional',
             formato: config?.formato || 'Auto',
             mensagem: json.resultado,
             passagem_ref: json.passagem_usada || null

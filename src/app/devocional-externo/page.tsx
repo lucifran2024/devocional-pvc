@@ -118,9 +118,8 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
 
             const { error } = await supabase.from('dna_categorizado').insert({
                 texto_msg: textToSave,
-                categoria: 'DEVOCIONAL',
-                origem: 'instagram',
-                tags: [post.author_name]
+                categoria: 'devocional',
+                tags: [post.author_name || 'evangelhoparatodos']
             });
 
             if (error) alert('Erro ao salvar no DNA: ' + error.message);
