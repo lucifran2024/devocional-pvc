@@ -345,11 +345,44 @@ export async function GET(request: Request) {
         // =============================================
         // 1. PALAVRA DA MANHA (mesma do app)
         // =============================================
-        const { data: palavraManha } = await supabase
+        let palavraManha = (await supabase
             .from('palavra_manha_diaria')
             .select('*')
             .eq('data', dataHoje)
-            .maybeSingle();
+            .maybeSingle()).data;
+
+        // Se ainda nao existe (cron roda antes do app), gera via Edge Function
+        if (!palavraManha) {
+            console.log('Palavra da Manha nao existe ainda, gerando via Edge Function...');
+            try {
+                const gerarResp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${supabaseAnonKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        modo_id: 'modo_palavra_manha',
+                        data: dataHoje
+                    })
+                });
+                if (gerarResp.ok) {
+                    const gerarJson = await gerarResp.json();
+                    // Busca de novo do banco (a Edge Function salva automaticamente)
+                    if (gerarJson.ok) {
+                        const { data: novaPalavra } = await supabase
+                            .from('palavra_manha_diaria')
+                            .select('*')
+                            .eq('data', dataHoje)
+                            .maybeSingle();
+                        palavraManha = novaPalavra;
+                        console.log('Palavra da Manha gerada com sucesso!');
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao gerar Palavra da Manha:', e);
+            }
+        }
 
         if (palavraManha && palavraManha.mensagem) {
             // Limpa markdown para texto puro
