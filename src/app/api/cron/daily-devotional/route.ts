@@ -87,116 +87,252 @@ export async function GET(request: Request) {
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const dataHoje = getDataHoje();
+        const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const resultado: Record<string, string> = {};
 
-        // 1. Buscar posts do Instagram via Supabase Edge Function
-        const { data: funcData, error: funcError } = await supabase.functions.invoke('execute', {
-            body: {
-                modo_id: 'devocional_externo',
-                data: dataHoje,
-                fonte_rss: 'instagram'
-            }
-        });
-
-        if (funcError) {
-            console.error('Erro ao buscar devocionais:', funcError);
-            return NextResponse.json({ error: 'Erro ao buscar devocionais', details: funcError.message }, { status: 500 });
-        }
-
-        // 2. Extrair posts
-        let posts: { external_id: string; content: string; published_at: string; author_name: string }[] = [];
-        if (funcData?.dados_estruturados && Array.isArray(funcData.dados_estruturados)) {
-            posts = funcData.dados_estruturados;
-        } else if (Array.isArray(funcData?.resultado)) {
-            posts = funcData.resultado;
-        }
-
-        // Filtrar apenas do evangelhoparatodos
-        posts = posts.filter(p =>
-            p.author_name?.toLowerCase().includes('evangelho') ||
-            p.author_name?.toLowerCase().includes('evangelhoparatodos')
-        );
-
-        if (posts.length === 0) {
-            console.log('Nenhum post encontrado do evangelhoparatodos');
-            return NextResponse.json({ ok: true, message: 'Nenhum post novo encontrado' });
-        }
-
-        // 3. Verificar quais ja foram enviados (todos, nao so hoje)
+        // Buscar todos os IDs já enviados (compartilhado entre as 3 fontes)
         const { data: enviados } = await supabase
             .from('telegram_enviados')
             .select('external_id');
-
         const idsEnviados = new Set((enviados || []).map(e => e.external_id));
 
-        // 4. Filtrar posts nao enviados
-        const postsNovos = posts.filter(p => !idsEnviados.has(p.external_id));
+        // =============================================
+        // PARTE 1: EVANGELHOPARATODOS (1 mensagem)
+        // =============================================
+        try {
+            console.log('Buscando evangelhoparatodos...');
+            const { data: funcData, error: funcError } = await supabase.functions.invoke('execute', {
+                body: {
+                    modo_id: 'devocional_externo',
+                    data: dataHoje,
+                    fonte_rss: 'instagram'
+                }
+            });
 
-        if (postsNovos.length === 0) {
-            console.log('Todos os posts ja foram enviados');
-            return NextResponse.json({ ok: true, message: 'Todos os posts ja foram enviados' });
-        }
+            if (funcError) {
+                console.error('Erro ao buscar evangelhoparatodos:', funcError.message);
+                resultado.evangelhoparatodos = 'erro: ' + funcError.message;
+            } else {
+                // Extrair posts
+                let posts: { external_id: string; content: string; published_at: string; author_name: string }[] = [];
+                if (funcData?.dados_estruturados && Array.isArray(funcData.dados_estruturados)) {
+                    posts = funcData.dados_estruturados;
+                } else if (Array.isArray(funcData?.resultado)) {
+                    posts = funcData.resultado;
+                }
 
-        // 5. Priorizar o "Devocional do Dia" — post que tem "Devocional" no OCR
-        let postEscolhido = null;
+                // Filtrar apenas do evangelhoparatodos
+                posts = posts.filter(p =>
+                    p.author_name?.toLowerCase().includes('evangelho') ||
+                    p.author_name?.toLowerCase().includes('evangelhoparatodos')
+                );
 
-        // Primeiro tenta achar o devocional do dia
-        for (const p of postsNovos) {
-            const ocr = extrairOCR(p.content);
-            if (ocr && ehDevocionalDoDia(ocr)) {
-                postEscolhido = p;
-                break;
-            }
-        }
+                // Filtrar posts nao enviados
+                const postsNovos = posts.filter(p => !idsEnviados.has(p.external_id));
 
-        // Se nao achou devocional do dia, pega o primeiro disponivel
-        if (!postEscolhido) {
-            // Pega o primeiro que tem OCR
-            for (const p of postsNovos) {
-                const ocr = extrairOCR(p.content);
-                if (ocr) {
-                    postEscolhido = p;
-                    break;
+                if (postsNovos.length === 0) {
+                    console.log('Evangelhoparatodos: nenhum post novo');
+                    resultado.evangelhoparatodos = 'sem_posts_novos';
+                } else {
+                    // Priorizar o "Devocional do Dia"
+                    let postEscolhido = null;
+                    for (const p of postsNovos) {
+                        const ocr = extrairOCR(p.content);
+                        if (ocr && ehDevocionalDoDia(ocr)) { postEscolhido = p; break; }
+                    }
+                    if (!postEscolhido) {
+                        for (const p of postsNovos) {
+                            const ocr = extrairOCR(p.content);
+                            if (ocr) { postEscolhido = p; break; }
+                        }
+                    }
+
+                    if (postEscolhido) {
+                        const textoOCR = extrairOCR(postEscolhido.content);
+                        const textoLimpo = limparTexto(textoOCR);
+                        const mensagem = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
+
+                        const enviou = await enviarTelegram(mensagem);
+                        if (enviou) {
+                            await supabase.from('telegram_enviados').insert({
+                                external_id: postEscolhido.external_id,
+                                data_envio: dataHoje,
+                                enviado_em: new Date().toISOString()
+                            });
+                            await supabase.from('dna_categorizado').insert({
+                                texto_msg: textoLimpo,
+                                categoria: 'devocional',
+                                tags: ['evangelhoparatodos', 'devocional_diario']
+                            }).then(({ error }) => {
+                                if (error) console.error('Erro DNA (evangelho):', error.message);
+                                else console.log('DNA alimentado (evangelhoparatodos)');
+                            });
+                            idsEnviados.add(postEscolhido.external_id);
+                            resultado.evangelhoparatodos = 'enviado';
+                        } else {
+                            resultado.evangelhoparatodos = 'falha_telegram';
+                        }
+                    } else {
+                        console.log('Evangelhoparatodos: nenhum post com OCR');
+                        resultado.evangelhoparatodos = 'sem_ocr';
+                    }
                 }
             }
+        } catch (evErr: any) {
+            console.error('Erro evangelhoparatodos:', evErr.message);
+            resultado.evangelhoparatodos = 'erro: ' + evErr.message;
         }
 
-        if (!postEscolhido) {
-            console.log('Nenhum post com conteudo OCR disponivel');
-            return NextResponse.json({ ok: true, message: 'Nenhum post com OCR disponivel' });
-        }
+        await new Promise(r => setTimeout(r, 500));
 
-        const textoOCR = extrairOCR(postEscolhido.content);
-        const textoLimpo = limparTexto(textoOCR);
-
-        // 6. Formatar e enviar
-        const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-
-        const mensagem = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
-
-        const enviou = await enviarTelegram(mensagem);
-
-        if (enviou) {
-            // 7. Registrar envio
-            await supabase.from('telegram_enviados').insert({
-                external_id: postEscolhido.external_id,
-                data_envio: dataHoje,
-                enviado_em: new Date().toISOString()
+        // =============================================
+        // PARTE 2: TRIBO DE JUDÁ (2 mensagens)
+        // =============================================
+        try {
+            console.log('Buscando Tribo de Judá...');
+            const { data: triboData, error: triboError } = await supabase.functions.invoke('execute', {
+                body: {
+                    modo_id: 'devocional_externo',
+                    data: dataHoje,
+                    fonte_rss: 'tribo_juda'
+                }
             });
 
-            // 8. Salvar no DNA Categorizado (alimenta o app automaticamente)
-            await supabase.from('dna_categorizado').insert({
-                texto_msg: textoLimpo,
-                categoria: 'devocional',
-                tags: ['evangelhoparatodos', 'devocional_diario']
-            }).then(({ error }) => {
-                if (error) console.error('Erro ao salvar no DNA:', error.message);
-                else console.log('DNA alimentado automaticamente');
-            });
+            if (triboError) {
+                console.error('Erro ao buscar Tribo de Judá:', triboError.message);
+            } else {
+                let triboPostsRaw: { external_id: string; content: string; published_at: string; author_name: string }[] = [];
+                if (triboData?.dados_estruturados && Array.isArray(triboData.dados_estruturados)) {
+                    triboPostsRaw = triboData.dados_estruturados;
+                } else if (Array.isArray(triboData?.resultado)) {
+                    triboPostsRaw = triboData.resultado;
+                }
 
-            return NextResponse.json({ ok: true, message: 'Devocional enviado e salvo no DNA!' });
-        } else {
-            return NextResponse.json({ ok: false, message: 'Falha ao enviar para Telegram' }, { status: 500 });
+                // Filtrar por author_name tribo
+                triboPostsRaw = triboPostsRaw.filter(p =>
+                    p.author_name?.toLowerCase().includes('tribo') ||
+                    p.author_name?.toLowerCase().includes('juda')
+                );
+
+                // Filtrar não enviados
+                const triboNovos = triboPostsRaw.filter(p => !idsEnviados.has(p.external_id));
+
+                // Pegar até 2 posts com conteúdo
+                let triboEnviados = 0;
+                for (const post of triboNovos) {
+                    if (triboEnviados >= 2) break;
+
+                    const ocr = extrairOCR(post.content);
+                    if (!ocr) continue;
+
+                    const textoTribo = limparTexto(ocr);
+                    if (textoTribo.length < 20) continue; // Muito curto, pular
+
+                    const msgTribo = `Tribo de Judá\n${dataFormatada}\n\n${textoTribo}`;
+                    const enviouTribo = await enviarTelegram(msgTribo);
+
+                    if (enviouTribo) {
+                        await supabase.from('telegram_enviados').insert({
+                            external_id: post.external_id,
+                            data_envio: dataHoje,
+                            enviado_em: new Date().toISOString()
+                        });
+
+                        await supabase.from('dna_categorizado').insert({
+                            texto_msg: textoTribo,
+                            categoria: 'devocional',
+                            tags: ['tribodejuda', 'devocional_diario']
+                        }).then(({ error }) => {
+                            if (error) console.error('Erro ao salvar DNA (tribo):', error.message);
+                            else console.log(`DNA alimentado (tribo #${triboEnviados + 1})`);
+                        });
+
+                        triboEnviados++;
+                        idsEnviados.add(post.external_id);
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                }
+
+                resultado.tribo_juda = `${triboEnviados} msgs enviadas`;
+                console.log(`Tribo de Judá: ${triboEnviados} mensagens enviadas`);
+            }
+        } catch (triboErr: any) {
+            console.error('Erro Tribo de Judá:', triboErr.message);
+            resultado.tribo_juda = 'erro: ' + triboErr.message;
         }
+
+        // =============================================
+        // PARTE 3: BÍBLIA GATEWAY (1 versículo)
+        // =============================================
+        try {
+            const bgExternalId = `bible_gateway_${dataHoje}`;
+
+            // Só busca se não foi enviado hoje
+            if (!idsEnviados.has(bgExternalId)) {
+                console.log('Buscando Bíblia Gateway...');
+                const { data: bgData, error: bgError } = await supabase.functions.invoke('execute', {
+                    body: {
+                        modo_id: 'devocional_externo',
+                        data: dataHoje,
+                        fonte_rss: 'bible_gateway'
+                    }
+                });
+
+                if (bgError) {
+                    console.error('Erro ao buscar Bible Gateway:', bgError.message);
+                } else if (bgData?.resultado) {
+                    // Resultado vem como string: "FONTE: BIBLE_GATEWAY\nTÍTULO: ...\n\n{conteudo}"
+                    let textoBG = typeof bgData.resultado === 'string' ? bgData.resultado : '';
+
+                    // Limpar formatação da Edge Function
+                    textoBG = textoBG
+                        .replace(/^FONTE:\s*BIBLE_GATEWAY\s*/i, '')
+                        .replace(/^TÍTULO:\s*/im, '')
+                        .replace(/<[^>]+>/g, '') // Remove HTML tags
+                        .trim();
+
+                    if (textoBG.length > 10) {
+                        const msgBG = `Versículo do Dia\n${dataFormatada}\n\n${textoBG}`;
+                        const enviouBG = await enviarTelegram(msgBG);
+
+                        if (enviouBG) {
+                            await supabase.from('telegram_enviados').insert({
+                                external_id: bgExternalId,
+                                data_envio: dataHoje,
+                                enviado_em: new Date().toISOString()
+                            });
+
+                            await supabase.from('dna_categorizado').insert({
+                                texto_msg: textoBG,
+                                categoria: 'versiculo',
+                                tags: ['bible_gateway', 'versiculo_do_dia']
+                            }).then(({ error }) => {
+                                if (error) console.error('Erro ao salvar DNA (BG):', error.message);
+                                else console.log('DNA alimentado (Bible Gateway)');
+                            });
+
+                            resultado.bible_gateway = 'enviado';
+                            console.log('Bible Gateway: versículo enviado');
+                        }
+                    } else {
+                        console.log('Bible Gateway: conteúdo muito curto, ignorando');
+                        resultado.bible_gateway = 'conteudo_vazio';
+                    }
+                }
+            } else {
+                console.log('Bible Gateway: já enviado hoje');
+                resultado.bible_gateway = 'ja_enviado';
+            }
+        } catch (bgErr: any) {
+            console.error('Erro Bible Gateway:', bgErr.message);
+            resultado.bible_gateway = 'erro: ' + bgErr.message;
+        }
+
+        return NextResponse.json({
+            ok: true,
+            data: dataHoje,
+            resultado
+        });
 
     } catch (e: any) {
         console.error('Erro no cron:', e);
