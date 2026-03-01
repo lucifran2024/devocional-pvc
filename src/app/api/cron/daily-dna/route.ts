@@ -13,59 +13,35 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // ============================================
-// FILTROS - ROTAÇÃO DIÁRIA
+// FILTROS - DIA DA SEMANA + FONTE TODAS
 // ============================================
 
-const CATEGORIAS = ['devocional', 'oracao', 'versiculo', 'reflexao', 'exortacao', 'declaracao'];
-const TAMANHOS = ['Curto', 'Médio', 'Longo'];
-const FORMATOS = ['Staccato', 'Narrativo', 'Lista'];
-const PERIODOS = ['Manhã', 'Madrugada'];
-const TEMAS = [
-    'Fé', 'Esperança', 'Amor', 'Gratidão', 'Perdão',
-    'Coragem', 'Paz', 'Força', 'Confiança', 'Renovação',
-    'Misericórdia', 'Graça', 'Vitória', 'Descanso', 'Propósito',
-    'Fidelidade', 'Sabedoria', 'Proteção', 'Provisão', 'Adoração'
-];
-const CONTEXTOS: ('recent_5' | 'recent_10' | 'recent_20' | 'mixed')[] = ['recent_5', 'recent_10', 'recent_20', 'mixed'];
+// Estilos que rotacionam diariamente para modo_estilo
+const ESTILOS_ROTACAO = ['devocional', 'oracao', 'versiculo', 'reflexao', 'exortacao', 'declaracao'];
 
 /**
- * Gera combinação de filtros que muda todo dia usando a data como seed
- * Garante que nunca repita a mesma combinação
+ * Filtros simplificados: dia da semana (auto-detectado) + fonte de inspiração = todas
+ * Para modo_estilo: rotaciona o estilo diariamente (1 estilo por dia)
  */
 function getFiltrosDoDia(dataStr: string, modo: 'favoritas' | 'estilo'): Record<string, any> {
-    // Usa data como seed numérica
-    const seed = parseInt(dataStr.replace(/-/g, ''));
-    const offset = modo === 'estilo' ? 7 : 0; // Offset para estilo não coincidir com favoritas
-
-    const categoria = CATEGORIAS[(seed + offset) % CATEGORIAS.length];
-    const tamanho = TAMANHOS[(seed + offset + 1) % TAMANHOS.length];
-    const formato = FORMATOS[(seed + offset + 2) % FORMATOS.length];
-    const tema = TEMAS[(seed + offset) % TEMAS.length];
-    const periodo = PERIODOS[(seed + offset) % PERIODOS.length];
-    const contexto = CONTEXTOS[(seed + offset) % CONTEXTOS.length];
+    // Auto-detecta dia da semana
+    const data = new Date(dataStr + 'T12:00:00');
+    const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const diaSemana = DIAS[data.getDay()];
 
     const filtros: Record<string, any> = {
         quantidade: 5,
-        tamanho,
-        formato,
-        periodo,
-        contextoEstrategia: contexto,
+        diasSemana: diaSemana,        // FILTRO 1: dia da semana (auto-detectado)
+        contextoEstrategia: 'all',    // FILTRO 2: Fonte de Inspiração = TODAS
         usarDnaBase: true,
-        usarPassagemDia: true,
+        usarPassagemDia: false,
         neutro: false,
     };
 
-    // Favoritas: varia categoria e tema
-    if (modo === 'favoritas') {
-        filtros.tipo = categoria;
-        filtros.tema = tema;
-    }
-
-    // Estilo: varia estilo e tema diferente
+    // modo_estilo EXIGE um estilo alvo — rotaciona 1 por dia
     if (modo === 'estilo') {
-        filtros.estilo = categoria;
-        const temaEstilo = TEMAS[(seed + offset + 5) % TEMAS.length]; // Tema diferente do favoritas
-        filtros.tema = temaEstilo;
+        const seed = parseInt(dataStr.replace(/-/g, ''));
+        filtros.estilo = ESTILOS_ROTACAO[seed % ESTILOS_ROTACAO.length];
     }
 
     return filtros;
@@ -254,7 +230,7 @@ export async function GET(request: Request) {
                 await supabase.from('dna_geracoes').insert({
                     batch_id: batchIdFav,
                     texto_msg: msg.trim(),
-                    categoria: filtrosFavoritas.tipo || 'devocional',
+                    categoria: 'devocional',
                     filtros: filtrosFavoritas,
                     build_style: 'favoritas',
                 });
@@ -281,7 +257,7 @@ export async function GET(request: Request) {
                 await supabase.from('dna_geracoes').insert({
                     batch_id: batchIdEst,
                     texto_msg: msg.trim(),
-                    categoria: filtrosEstilo.estilo || 'reflexao',
+                    categoria: 'reflexao',
                     filtros: filtrosEstilo,
                     build_style: 'estilo',
                 });
@@ -296,7 +272,7 @@ export async function GET(request: Request) {
 
         // Envia cabeçalho
         if (todasMsgs.length > 0) {
-            const header = `DNA Gerado - ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\nFiltros DNA: ${filtrosFavoritas.tipo} | ${filtrosFavoritas.tema} | ${filtrosFavoritas.tamanho}\nFiltros Estilo: ${filtrosEstilo.estilo} | ${filtrosEstilo.tema} | ${filtrosEstilo.tamanho}\n\nTotal: ${todasMsgs.length} mensagens`;
+            const header = `DNA Gerado - ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\nDia: ${filtrosFavoritas.diasSemana} | Fonte: Todas\nEstilo do dia: ${filtrosEstilo.estilo}\n\nTotal: ${todasMsgs.length} mensagens`;
             await enviarTelegram(header);
             await new Promise(r => setTimeout(r, 300));
         }
