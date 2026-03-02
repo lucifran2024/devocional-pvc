@@ -653,7 +653,7 @@ function PlanoLeituraContent() {
         if (bibleData && (activeOption === '1' || isPlanoMode) && currentPage > 0) {
             atualizarContextoVersiculos(currentPage);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bibleData]);
 
     // Scroll automático no chat
@@ -1438,14 +1438,13 @@ ${conteudo}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                             {messages.map((msg, idx) => {
-                                const isLastMsg = idx === messages.length - 1;
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
                                 return (
                                     <ChatBubble
                                         key={idx}
                                         message={msg}
-                                        versiculosInterativos={isLastMsg && temPlaceholder ? versiculosPaginaAtual : undefined}
-                                        livroInfo={isLastMsg && temPlaceholder ? livroInfoAtual : undefined}
+                                        versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
+                                        livroInfo={temPlaceholder ? livroInfoAtual : undefined}
                                     />
                                 );
                             })}

@@ -161,18 +161,41 @@ export function parseReferencia(referencia: string): {
     return { livro, livroId, capituloInicio, capituloFim, versiculoInicio, versiculoFim };
 }
 
+// Mapa reverso: ID → nome do livro em português (para fallback bible-api.com)
+const ID_PARA_NOME_PT: Record<number, string> = {
+    1: 'Gênesis', 2: 'Êxodo', 3: 'Levítico', 4: 'Números', 5: 'Deuteronômio',
+    6: 'Josué', 7: 'Juízes', 8: 'Rute', 9: '1 Samuel', 10: '2 Samuel',
+    11: '1 Reis', 12: '2 Reis', 13: '1 Crônicas', 14: '2 Crônicas',
+    15: 'Esdras', 16: 'Neemias', 17: 'Ester', 18: 'Jó', 19: 'Salmos',
+    20: 'Provérbios', 21: 'Eclesiastes', 22: 'Cantares', 23: 'Isaías',
+    24: 'Jeremias', 25: 'Lamentações', 26: 'Ezequiel', 27: 'Daniel',
+    28: 'Oséias', 29: 'Joel', 30: 'Amós', 31: 'Obadias', 32: 'Jonas',
+    33: 'Miquéias', 34: 'Naum', 35: 'Habacuque', 36: 'Sofonias',
+    37: 'Ageu', 38: 'Zacarias', 39: 'Malaquias', 40: 'Mateus',
+    41: 'Marcos', 42: 'Lucas', 43: 'João', 44: 'Atos', 45: 'Romanos',
+    46: '1 Coríntios', 47: '2 Coríntios', 48: 'Gálatas', 49: 'Efésios',
+    50: 'Filipenses', 51: 'Colossenses', 52: '1 Tessalonicenses', 53: '2 Tessalonicenses',
+    54: '1 Timóteo', 55: '2 Timóteo', 56: 'Tito', 57: 'Filemom',
+    58: 'Hebreus', 59: 'Tiago', 60: '1 Pedro', 61: '2 Pedro',
+    62: '1 João', 63: '2 João', 64: '3 João', 65: 'Judas', 66: 'Apocalipse'
+};
+
 /**
- * Busca um capítulo completo da API
+ * Busca um capítulo completo da API bolls.life (API primária)
+ * Usa timeout de 5s para não travar se a API estiver fora do ar
  */
-export async function buscarCapitulo(livroId: number, capitulo: number): Promise<Versiculo[]> {
+async function buscarCapituloBolls(livroId: number, capitulo: number): Promise<Versiculo[]> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     try {
         const response = await fetch(
             `https://bolls.life/get-chapter/NTLH/${livroId}/${capitulo}/`,
-            { headers: { 'Accept': 'application/json' } }
+            { headers: { 'Accept': 'application/json' }, signal: controller.signal }
         );
 
         if (!response.ok) {
-            console.error('❌ [BIBLE-API] Erro HTTP:', response.status);
+            console.error('❌ [BIBLE-API] bolls.life erro HTTP:', response.status);
             return [];
         }
 
@@ -180,19 +203,69 @@ export async function buscarCapitulo(livroId: number, capitulo: number): Promise
         if (Array.isArray(data)) {
             return data.map((v: { verse: number; text: string }) => ({
                 verse: v.verse,
-                // Remove tags HTML como <br> que a API retorna
                 text: v.text
-                    .replace(/<br\s*\/?>/gi, ' ')  // Substitui <br> por espaço
-                    .replace(/<[^>]+>/g, '')       // Remove outras tags HTML
-                    .replace(/\s+/g, ' ')          // Normaliza espaços múltiplos
+                    .replace(/<br\s*\/?>/gi, ' ')
+                    .replace(/<[^>]+>/g, '')
+                    .replace(/\s+/g, ' ')
                     .trim()
             }));
         }
         return [];
-    } catch (error) {
-        console.error('❌ [BIBLE-API] Erro ao buscar capítulo:', error);
+    } catch {
+        console.warn('⚠️ [BIBLE-API] bolls.life indisponível, tentando fallback...');
+        return [];
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+/**
+ * Fallback: busca capítulo da API bible-api.com (tradução Almeida)
+ * Aceita nomes de livros em português diretamente
+ */
+async function buscarCapituloFallback(livroId: number, capitulo: number): Promise<Versiculo[]> {
+    const nomeLivro = ID_PARA_NOME_PT[livroId];
+    if (!nomeLivro) {
+        console.error('❌ [BIBLE-API-FALLBACK] Livro não encontrado para ID:', livroId);
         return [];
     }
+
+    try {
+        const url = `https://bible-api.com/${encodeURIComponent(nomeLivro)}+${capitulo}?translation=almeida`;
+        console.log('🔄 [BIBLE-API-FALLBACK] Buscando:', url);
+
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+        if (!response.ok) {
+            console.error('❌ [BIBLE-API-FALLBACK] Erro HTTP:', response.status);
+            return [];
+        }
+
+        const data = await response.json();
+        if (data.verses && Array.isArray(data.verses)) {
+            return data.verses.map((v: { verse: number; text: string }) => ({
+                verse: v.verse,
+                text: (v.text || '').replace(/\s+/g, ' ').trim()
+            }));
+        }
+        return [];
+    } catch (error) {
+        console.error('❌ [BIBLE-API-FALLBACK] Erro ao buscar capítulo:', error);
+        return [];
+    }
+}
+
+/**
+ * Busca um capítulo completo da API (com fallback automático)
+ * Tenta bolls.life primeiro, se falhar usa bible-api.com
+ */
+export async function buscarCapitulo(livroId: number, capitulo: number): Promise<Versiculo[]> {
+    // Tenta API primária (bolls.life)
+    const resultado = await buscarCapituloBolls(livroId, capitulo);
+    if (resultado.length > 0) return resultado;
+
+    // Fallback para bible-api.com
+    return await buscarCapituloFallback(livroId, capitulo);
 }
 
 /**

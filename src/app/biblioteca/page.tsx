@@ -21,6 +21,63 @@ import {
     type BibliaInteracao
 } from '@/lib/supabase';
 
+// Mapa reverso: bookId → nome em português (para fallback bible-api.com)
+const ID_PARA_NOME_BIBLIA: Record<number, string> = {
+    1: 'Gênesis', 2: 'Êxodo', 3: 'Levítico', 4: 'Números', 5: 'Deuteronômio', 6: 'Josué', 7: 'Juízes', 8: 'Rute',
+    9: '1 Samuel', 10: '2 Samuel', 11: '1 Reis', 12: '2 Reis', 13: '1 Crônicas', 14: '2 Crônicas',
+    15: 'Esdras', 16: 'Neemias', 17: 'Ester', 18: 'Jó', 19: 'Salmos', 20: 'Provérbios', 21: 'Eclesiastes',
+    22: 'Cantares', 23: 'Isaías', 24: 'Jeremias', 25: 'Lamentações', 26: 'Ezequiel', 27: 'Daniel',
+    28: 'Oséias', 29: 'Joel', 30: 'Amós', 31: 'Obadias', 32: 'Jonas', 33: 'Miquéias', 34: 'Naum',
+    35: 'Habacuque', 36: 'Sofonias', 37: 'Ageu', 38: 'Zacarias', 39: 'Malaquias', 40: 'Mateus',
+    41: 'Marcos', 42: 'Lucas', 43: 'João', 44: 'Atos', 45: 'Romanos', 46: '1 Coríntios', 47: '2 Coríntios',
+    48: 'Gálatas', 49: 'Efésios', 50: 'Filipenses', 51: 'Colossenses', 52: '1 Tessalonicenses',
+    53: '2 Tessalonicenses', 54: '1 Timóteo', 55: '2 Timóteo', 56: 'Tito', 57: 'Filemom',
+    58: 'Hebreus', 59: 'Tiago', 60: '1 Pedro', 61: '2 Pedro', 62: '1 João', 63: '2 João',
+    64: '3 João', 65: 'Judas', 66: 'Apocalipse'
+};
+
+/**
+ * Busca capítulo com fallback: tenta bolls.life (5s timeout), se falhar usa bible-api.com
+ */
+async function fetchBibliaComFallback(
+    bookId: number, cap: number, versaoCodigo?: string
+): Promise<{ verse: number; text: string }[]> {
+    // Tentar API primária (bolls.life) com timeout
+    const codigo = versaoCodigo || 'NTLH';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+        const resp = await fetch(
+            `https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`,
+            { signal: controller.signal }
+        );
+        if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data) && data.length > 0) return data;
+        }
+    } catch { /* timeout ou erro */ } finally { clearTimeout(timeout); }
+
+    // Fallback: bible-api.com (tradução Almeida, sem versão específica)
+    const nomeLivro = ID_PARA_NOME_BIBLIA[bookId];
+    if (!nomeLivro) return [];
+    try {
+        console.log('🔄 [BIBLIA-FALLBACK] Buscando:', nomeLivro, cap);
+        const resp = await fetch(
+            `https://bible-api.com/${encodeURIComponent(nomeLivro)}+${cap}?translation=almeida`
+        );
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.verses && Array.isArray(data.verses)) {
+                return data.verses.map((v: { verse: number; text: string }) => ({
+                    verse: v.verse,
+                    text: (v.text || '').replace(/\s+/g, ' ').trim()
+                }));
+            }
+        }
+    } catch (e) { console.error('❌ [BIBLIA-FALLBACK] Erro:', e); }
+    return [];
+}
+
 // Tipo de livro
 interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
 
@@ -592,16 +649,14 @@ export default function BibliotecaPage() {
 
                 // Background: atualiza cache se online (stale-while-revalidate)
                 if (navigator.onLine) {
-                    fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`)
-                        .then(r => r.ok ? r.json() : null)
+                    fetchBibliaComFallback(bookId, cap, codigo)
                         .then(data => {
-                            if (Array.isArray(data) && data.length > 0) {
-                                const fresh = data.map((v: { verse: number; text: string }) => ({
+                            if (data.length > 0) {
+                                const fresh = data.map(v => ({
                                     verse: v.verse,
-                                    text: v.text.replace(/<[^>]*>/g, ''),
+                                    text: (v.text || '').replace(/<[^>]*>/g, ''),
                                 }));
                                 cacheChapter(codigo, bookId, cap, fresh);
-                                // Atualiza UI silenciosamente se mudou
                                 setVersiculos(fresh);
                             }
                         })
@@ -611,27 +666,21 @@ export default function BibliotecaPage() {
             }
         } catch { /* IndexedDB indisponível, continua para fetch */ }
 
-        // 2) Sem cache: buscar da API
+        // 2) Sem cache: buscar da API (com fallback automático)
         try {
-            const response = await fetch(`https://bolls.life/get-chapter/${codigo}/${bookId}/${cap}/`);
-            if (!response.ok) throw new Error('API não disponível');
-
-            const data = await response.json();
-            if (Array.isArray(data) && data.length > 0) {
-                const versiculos = data.map((v: { verse: number; text: string }) => ({
+            const data = await fetchBibliaComFallback(bookId, cap, codigo);
+            if (data.length > 0) {
+                const versiculos = data.map(v => ({
                     verse: v.verse,
-                    text: v.text.replace(/<[^>]*>/g, ''),
+                    text: (v.text || '').replace(/<[^>]*>/g, ''),
                 }));
                 setVersiculos(versiculos);
-
-                // Salvar no cache para próxima vez
                 cacheChapter(codigo, bookId, cap, versiculos).catch(() => { });
             } else {
-                throw new Error('Formato inválido');
+                throw new Error('Nenhum versículo retornado');
             }
         } catch {
-            // 3) Sem cache + sem internet = mensagem de offline
-            setError('Capítulo não disponível offline. Conecte à internet para baixar.');
+            setError('Capítulo não disponível. Verifique sua conexão.');
             setVersiculos([]);
         } finally {
             setLoading(false);
@@ -717,15 +766,12 @@ export default function BibliotecaPage() {
         setLoadingVersiculosTemp(true);
         setTotalVersiculosTemp(0);
 
-        // Buscar quantidade de versículos do capítulo
+        // Buscar quantidade de versículos do capítulo (com fallback)
         try {
             const bookId = LIVRO_PARA_ID[livroSelecionadoTemp.abrev] || 1;
-            const resp = await fetch(`https://bolls.life/get-chapter/${versaoBiblia.codigo}/${bookId}/${cap}/`);
-            if (resp.ok) {
-                const data = await resp.json();
-                if (Array.isArray(data)) setTotalVersiculosTemp(data.length);
-            }
-        } catch { /* fallback */ }
+            const data = await fetchBibliaComFallback(bookId, cap, versaoBiblia.codigo);
+            if (data.length > 0) setTotalVersiculosTemp(data.length);
+        } catch { /* silencioso */ }
         setLoadingVersiculosTemp(false);
     };
 
@@ -1180,9 +1226,8 @@ export default function BibliotecaPage() {
         setNovaNotaSalvando(true);
         try {
             const bookId = LIVRO_PARA_ID[livro.abrev] || 1;
-            const resp = await fetch(`https://bolls.life/get-chapter/${versaoBiblia.codigo}/${bookId}/${cap}/`);
-            if (!resp.ok) throw new Error('Erro ao buscar versículo');
-            const data = await resp.json();
+            const data = await fetchBibliaComFallback(bookId, cap, versaoBiblia.codigo);
+            if (data.length === 0) throw new Error('Erro ao buscar versículo');
             const versiculo = data.find((v: { verse: number }) => v.verse === vers);
             if (!versiculo) {
                 toastError(`Versículo ${vers} não encontrado em ${livro.nome} ${cap}`);
@@ -1811,57 +1856,57 @@ export default function BibliotecaPage() {
                 <div className="fixed left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] md:left-1/2 md:right-auto md:bottom-4 md:-translate-x-1/2 z-[80] animate-in slide-in-from-bottom-4 duration-200">
                     <div className="bg-white/98 dark:bg-surface-1/98 border border-emerald-400/40 dark:border-emerald-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl overflow-x-auto">
                         <div className="flex items-center gap-1.5 min-w-max">
-                        {/* Contador */}
-                        <div className="px-3 py-2 text-emerald-400 font-bold text-sm min-w-[60px] text-center">
-                            {versiculosSelecionados.size} sel.
-                        </div>
+                            {/* Contador */}
+                            <div className="px-3 py-2 text-emerald-400 font-bold text-sm min-w-[60px] text-center">
+                                {versiculosSelecionados.size} sel.
+                            </div>
 
-                        <div className="w-px h-8 bg-surface-2" />
+                            <div className="w-px h-8 bg-surface-2" />
 
-                        {/* Ações */}
-                        <button
-                            onClick={() => setMostrarCores(!mostrarCores)}
-                            disabled={versiculosSelecionados.size === 0}
-                            className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors disabled:opacity-30"
-                            title="Destacar"
-                        >
-                            <Palette className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={handleMultiFavoritar}
-                            disabled={versiculosSelecionados.size === 0}
-                            className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-red-400 transition-colors disabled:opacity-30"
-                            title="Favoritar"
-                        >
-                            <Heart className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={handleMultiCopiar}
-                            disabled={versiculosSelecionados.size === 0}
-                            className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors disabled:opacity-30"
-                            title="Copiar"
-                        >
-                            <Copy className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={handleMultiCompartilhar}
-                            disabled={versiculosSelecionados.size === 0}
-                            className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors disabled:opacity-30"
-                            title="Compartilhar"
-                        >
-                            <Share2 className="w-5 h-5" />
-                        </button>
+                            {/* Ações */}
+                            <button
+                                onClick={() => setMostrarCores(!mostrarCores)}
+                                disabled={versiculosSelecionados.size === 0}
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors disabled:opacity-30"
+                                title="Destacar"
+                            >
+                                <Palette className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={handleMultiFavoritar}
+                                disabled={versiculosSelecionados.size === 0}
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-red-400 transition-colors disabled:opacity-30"
+                                title="Favoritar"
+                            >
+                                <Heart className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={handleMultiCopiar}
+                                disabled={versiculosSelecionados.size === 0}
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors disabled:opacity-30"
+                                title="Copiar"
+                            >
+                                <Copy className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={handleMultiCompartilhar}
+                                disabled={versiculosSelecionados.size === 0}
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors disabled:opacity-30"
+                                title="Compartilhar"
+                            >
+                                <Share2 className="w-5 h-5" />
+                            </button>
 
-                        <div className="w-px h-8 bg-surface-2" />
+                            <div className="w-px h-8 bg-surface-2" />
 
-                        {/* Fechar multi-seleção */}
-                        <button
-                            onClick={toggleMultiSelecao}
-                            className="p-3 rounded-xl hover:bg-red-500/20 text-text-muted hover:text-red-400 transition-colors"
-                            title="Sair da seleção"
-                        >
-                            <XCircle className="w-5 h-5" />
-                        </button>
+                            {/* Fechar multi-seleção */}
+                            <button
+                                onClick={toggleMultiSelecao}
+                                className="p-3 rounded-xl hover:bg-red-500/20 text-text-muted hover:text-red-400 transition-colors"
+                                title="Sair da seleção"
+                            >
+                                <XCircle className="w-5 h-5" />
+                            </button>
                         </div>
                     </div>
 
