@@ -458,15 +458,26 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                     {/* Texto depois dos versículos */}
                     {partes[1] && (
                         <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3">
-                            <ReactMarkdown>{partes[1]}</ReactMarkdown>
+                            {partes[1].includes('%%EXPLICACAO_LOADING%%') ? (
+                                <>
+                                    <ReactMarkdown>{partes[1].split('%%EXPLICACAO_LOADING%%')[0]}</ReactMarkdown>
+                                    <div className="flex items-center gap-2 py-4">
+                                        <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
+                                        <span className="text-sm text-slate-400">Gerando explicação...</span>
+                                    </div>
+                                    <ReactMarkdown>{partes[1].split('%%EXPLICACAO_LOADING%%')[1]}</ReactMarkdown>
+                                </>
+                            ) : (
+                                <ReactMarkdown>{partes[1]}</ReactMarkdown>
+                            )}
                         </div>
                     )}
                 </div>
             );
         }
 
-        // Remove placeholder de versículos que não foram renderizados
-        const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '');
+        // Remove placeholders que não foram renderizados
+        const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '').replace('%%EXPLICACAO_LOADING%%', '');
 
         return (
             <div className="animate-enter mb-4">
@@ -529,6 +540,7 @@ function PlanoLeituraContent() {
     const [inscricaoAtiva, setInscricaoAtiva] = useState<(InscricaoPlano & { plano: Plano }) | null>(null);
     const [diaExibido, setDiaExibido] = useState<number>(1);
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
+    const [isLoadingExplicacao, setIsLoadingExplicacao] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const dataHoje = getDataHoje();
@@ -779,6 +791,10 @@ function PlanoLeituraContent() {
 
 ---
 
+%%EXPLICACAO_LOADING%%
+
+---
+
 ${ehUltimaParte
                 ? 'Digite **CONTINUAR** para finalizar a leitura.'
                 : 'Digite **CONTINUAR** para os próximos versículos.'}
@@ -942,6 +958,45 @@ Ou **MENU** para voltar.`;
         }
     };
 
+    // Gerar APENAS o conteúdo da explicação (sem header/footer) para embutir na mensagem da Parte
+    const gerarExplicacaoConteudo = async (): Promise<string> => {
+        if (!passagem) return '';
+
+        const page = currentPageRef.current;
+        const startIndex = (page - 1) * 10;
+        const versiculosAtual = bibleData
+            ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
+            : '';
+
+        try {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    modo_id: 'explicar_passagem',
+                    data: new Date().toISOString().split('T')[0],
+                    referencia: passagem.referencia,
+                    versiculos: versiculosAtual,
+                    parte: page
+                })
+            });
+
+            if (!resp.ok) throw new Error(`Erro ${resp.status}`);
+            const data = await resp.json();
+
+            if (data.ok && data.resultado) {
+                return data.resultado;
+            }
+            throw new Error(data.error || 'Erro ao gerar explicação');
+        } catch (error) {
+            console.error('Erro ao gerar explicação (conteúdo):', error);
+            return '❌ Não foi possível gerar a explicação no momento.';
+        }
+    };
+
     // Gerar estudo via IA (Edge Function)
     const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
         if (!passagem) return 'Passagem não carregada.';
@@ -1058,6 +1113,46 @@ Ou **MENU** para voltar.`;
         return `O conteúdo da opção atual já foi gerado por IA.\n\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
     };
 
+    // Embutir explicação na última mensagem (substitui %%EXPLICACAO_LOADING%%)
+    const embedExplicacaoIntoLastMessage = async () => {
+        setIsLoadingExplicacao(true);
+        try {
+            const conteudo = await gerarExplicacaoConteudo();
+            const page = currentPageRef.current;
+
+            const explicacaoFormatada = `🔍 **EXPLICAÇÃO GERADA POR IA**
+📍 *Parte ${page} de ${passagem?.referencia}*
+
+${conteudo}`;
+
+            setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (lastIdx >= 0 && updated[lastIdx].content.includes('%%EXPLICACAO_LOADING%%')) {
+                    updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        content: updated[lastIdx].content.replace('%%EXPLICACAO_LOADING%%', explicacaoFormatada)
+                    };
+                }
+                return updated;
+            });
+        } catch {
+            setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (lastIdx >= 0 && updated[lastIdx].content.includes('%%EXPLICACAO_LOADING%%')) {
+                    updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        content: updated[lastIdx].content.replace('%%EXPLICACAO_LOADING%%', '❌ *Não foi possível gerar a explicação.*')
+                    };
+                }
+                return updated;
+            });
+        } finally {
+            setIsLoadingExplicacao(false);
+        }
+    };
+
     // Enviar mensagem (Lógica central)
     const submitMessage = async (text: string) => {
         if (!text.trim() || isProcessing) return;
@@ -1083,32 +1178,9 @@ Ou **MENU** para voltar.`;
 
             setMessages(prev => [...prev, assistantMessage]);
 
-            // Auto-gerar explicacao apos mostrar versiculos (plano e diario)
-            if (resposta.includes('%%VERSICULOS_INTERATIVOS%%')) {
-                // Mostrar loading da explicacao
-                const loadingMsg: ChatMessage = {
-                    role: 'assistant',
-                    content: '🔍 **Gerando explicação...**',
-                    timestamp: new Date()
-                };
-                setMessages(prev => [...prev, loadingMsg]);
-
-                try {
-                    const explicacao = await gerarExplicacaoAtual();
-                    // Substituir loading pela explicacao real
-                    setMessages(prev => {
-                        const updated = [...prev];
-                        updated[updated.length - 1] = {
-                            role: 'assistant',
-                            content: explicacao,
-                            timestamp: new Date()
-                        };
-                        return updated;
-                    });
-                } catch {
-                    // Se falhar, remover loading
-                    setMessages(prev => prev.slice(0, -1));
-                }
+            // Auto-gerar explicação embutida na mesma mensagem (plano e diário)
+            if (resposta.includes('%%EXPLICACAO_LOADING%%')) {
+                embedExplicacaoIntoLastMessage();
             }
         } catch (error) {
             const errorMessage: ChatMessage = {
@@ -1153,6 +1225,11 @@ Ou **MENU** para voltar.`;
             };
 
             setMessages(prev => [...prev, assistantMessage]);
+
+            // Auto-gerar explicação embutida para opção de leitura
+            if (resposta.includes('%%EXPLICACAO_LOADING%%')) {
+                embedExplicacaoIntoLastMessage();
+            }
         } finally {
             setIsProcessing(false);
         }
@@ -1171,6 +1248,11 @@ Ou **MENU** para voltar.`;
                     timestamp: new Date()
                 };
                 setMessages([primeiraMensagemPlano]);
+
+                // Gerar explicação embutida na mensagem inicial
+                setTimeout(() => {
+                    embedExplicacaoIntoLastMessage();
+                }, 0);
                 return;
             }
 
@@ -1325,6 +1407,11 @@ Ou **MENU** para voltar.`;
                                                 const resp = await gerarRespostaOpcao(option.id as MenuOption);
                                                 setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
                                                 setIsProcessing(false);
+
+                                                // Auto-gerar explicação embutida para opção de leitura
+                                                if (resp.includes('%%EXPLICACAO_LOADING%%')) {
+                                                    setTimeout(() => embedExplicacaoIntoLastMessage(), 0);
+                                                }
                                             }, 600);
                                         }
                                     }}
@@ -1393,7 +1480,7 @@ Ou **MENU** para voltar.`;
                                     type="button"
                                     onClick={() => submitMessage('Continuar')}
                                     className="flex-1 btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2"
-                                    disabled={isProcessing}
+                                    disabled={isProcessing || isLoadingExplicacao}
                                 >
                                     <ArrowRight className="w-5 h-5" />
                                     Continuar
@@ -1404,7 +1491,7 @@ Ou **MENU** para voltar.`;
                                         type="button"
                                         onClick={() => submitMessage('Explicar')}
                                         className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                                        disabled={isProcessing}
+                                        disabled={isProcessing || isLoadingExplicacao}
                                     >
                                         <Sparkles className="w-5 h-5 text-amber-400" />
                                         Explicar
