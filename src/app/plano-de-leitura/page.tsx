@@ -766,9 +766,6 @@ function PlanoLeituraContent() {
             salvarProgressoPlanoLocal(parteAtual);
         }
 
-        const linhaExplicar = isPlanoMode
-            ? ''
-            : '\nDigite **EXPLICAR** para gerar contexto e explicação desta parte.';
         const linhaPersistencia = isPlanoMode
             ? '\nSeu progresso desta leitura fica salvo até o fim do dia.'
             : '';
@@ -784,7 +781,7 @@ function PlanoLeituraContent() {
 
 ${ehUltimaParte
                 ? 'Digite **CONTINUAR** para finalizar a leitura.'
-                : 'Digite **CONTINUAR** para os próximos versículos.'}${linhaExplicar}
+                : 'Digite **CONTINUAR** para os próximos versículos.'}
 Ou **MENU** para voltar.${linhaPersistencia}`;
     };
 
@@ -844,12 +841,9 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
             return await processarContinuar();
         }
 
-        // Comando EXPLICAR (só funciona na Opção 1)
+        // Comando EXPLICAR (funciona na leitura e no plano)
         if (['explicar', 'explicação', 'explicacao', 'contexto'].includes(cmdLower)) {
-            if (isPlanoMode) {
-                return 'No plano de leitura, o modo está simplificado. Use **CONTINUAR** para avançar.';
-            }
-            if (activeOption === '1') {
+            if (isPlanoMode || activeOption === '1') {
                 return gerarExplicacaoAtual();
             }
             return 'O comando **EXPLICAR** só funciona na opção 1 (Ler Passagem).';
@@ -1068,47 +1062,6 @@ Ou **MENU** para voltar.`;
     const submitMessage = async (text: string) => {
         if (!text.trim() || isProcessing) return;
 
-        const cmdLower = text.trim().toLowerCase();
-        const isContinuarPlano = isPlanoMode && ['continuar', 'próximo', 'proximo', 'seguir', 'leia mais'].includes(cmdLower);
-        const page = currentPageRef.current;
-        const totalVersiculos = bibleData?.versiculos.length || 30;
-        const totalPartes = Math.ceil(totalVersiculos / 10);
-        const ehUltimaParteAtual = page >= totalPartes;
-
-        // No modo plano, ao continuar (e não estamos na última parte),
-        // substituímos a última mensagem do assistente em vez de adicionar nova
-        if (isContinuarPlano && !ehUltimaParteAtual) {
-            setIsProcessing(true);
-            setInputValue('');
-
-            try {
-                const resposta = await processarComando(text.trim());
-
-                setMessages(prev => {
-                    // Encontra o último índice de mensagem do assistente
-                    const lastAssistantIdx = prev.map((m, i) => ({ m, i }))
-                        .filter(x => x.m.role === 'assistant')
-                        .pop()?.i;
-
-                    if (lastAssistantIdx !== undefined) {
-                        const updated = [...prev];
-                        updated[lastAssistantIdx] = {
-                            role: 'assistant',
-                            content: resposta,
-                            timestamp: new Date()
-                        };
-                        return updated;
-                    }
-                    return [...prev, { role: 'assistant', content: resposta, timestamp: new Date() }];
-                });
-            } catch {
-                // Em caso de erro, não modifica
-            } finally {
-                setIsProcessing(false);
-            }
-            return;
-        }
-
         const userMessage: ChatMessage = {
             role: 'user',
             content: text.trim(),
@@ -1129,6 +1082,34 @@ Ou **MENU** para voltar.`;
             };
 
             setMessages(prev => [...prev, assistantMessage]);
+
+            // Auto-gerar explicacao apos mostrar versiculos (plano e diario)
+            if (resposta.includes('%%VERSICULOS_INTERATIVOS%%')) {
+                // Mostrar loading da explicacao
+                const loadingMsg: ChatMessage = {
+                    role: 'assistant',
+                    content: '🔍 **Gerando explicação...**',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, loadingMsg]);
+
+                try {
+                    const explicacao = await gerarExplicacaoAtual();
+                    // Substituir loading pela explicacao real
+                    setMessages(prev => {
+                        const updated = [...prev];
+                        updated[updated.length - 1] = {
+                            role: 'assistant',
+                            content: explicacao,
+                            timestamp: new Date()
+                        };
+                        return updated;
+                    });
+                } catch {
+                    // Se falhar, remover loading
+                    setMessages(prev => prev.slice(0, -1));
+                }
+            }
         } catch (error) {
             const errorMessage: ChatMessage = {
                 role: 'assistant',

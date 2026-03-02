@@ -1,12 +1,15 @@
-const CACHE_NAME = 'pvc-v1';
+const CACHE_NAME = 'pvc-v2';
 const STATIC_ASSETS = [
     '/',
+    '/biblioteca',
+    '/plano-de-leitura',
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
+    '/offline.html',
 ];
 
-// Install: Cache static assets
+// Install: Cache static assets + offline fallback
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -28,16 +31,40 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch: Network first, fallback to cache
+// Fetch: Estrategia por tipo de recurso
 self.addEventListener('fetch', (event) => {
     // Skip non-GET requests
     if (event.request.method !== 'GET') return;
 
-    // Skip API and external requests
     const url = new URL(event.request.url);
+
+    // Skip external requests
     if (url.origin !== location.origin) return;
+
+    // Skip API routes (nunca cachear)
     if (url.pathname.startsWith('/api/')) return;
 
+    // ESTRATEGIA 1: Bundles Next.js (/_next/static/*) → Cache-first
+    // Esses arquivos tem hash no nome e sao imutaveis
+    if (url.pathname.startsWith('/_next/static/')) {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    if (response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, clone);
+                        });
+                    }
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+
+    // ESTRATEGIA 2: Paginas e outros assets → Network-first, cache fallback, offline fallback
     event.respondWith(
         fetch(event.request)
             .then((response) => {
@@ -52,7 +79,17 @@ self.addEventListener('fetch', (event) => {
             })
             .catch(() => {
                 // Fallback to cache
-                return caches.match(event.request);
+                return caches.match(event.request).then((cached) => {
+                    if (cached) return cached;
+
+                    // Se e uma navegacao (pagina HTML) e nao tem cache, mostrar offline.html
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('/offline.html');
+                    }
+
+                    // Para outros recursos sem cache, retornar erro
+                    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+                });
             })
     );
 });
