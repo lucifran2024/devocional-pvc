@@ -458,18 +458,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                     {/* Texto depois dos versículos */}
                     {partes[1] && (
                         <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3">
-                            {partes[1].includes('%%EXPLICACAO_LOADING%%') ? (
-                                <>
-                                    <ReactMarkdown>{partes[1].split('%%EXPLICACAO_LOADING%%')[0]}</ReactMarkdown>
-                                    <div className="flex items-center gap-2 py-4">
-                                        <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
-                                        <span className="text-sm text-slate-400">Gerando explicação...</span>
-                                    </div>
-                                    <ReactMarkdown>{partes[1].split('%%EXPLICACAO_LOADING%%')[1]}</ReactMarkdown>
-                                </>
-                            ) : (
-                                <ReactMarkdown>{partes[1]}</ReactMarkdown>
-                            )}
+                            <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
                 </div>
@@ -477,7 +466,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
         }
 
         // Remove placeholders que não foram renderizados
-        const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '').replace('%%EXPLICACAO_LOADING%%', '');
+        const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '').replace('%%EXPLICACAO_SLOT%%', '');
 
         return (
             <div className="animate-enter mb-4">
@@ -659,6 +648,14 @@ function PlanoLeituraContent() {
     }, [passagem?.referencia]);
 
 
+    // Re-sync versículos quando bibleData carrega (corrige race condition)
+    useEffect(() => {
+        if (bibleData && (activeOption === '1' || isPlanoMode) && currentPage > 0) {
+            atualizarContextoVersiculos(currentPage);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bibleData]);
+
     // Scroll automático no chat
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -791,11 +788,7 @@ function PlanoLeituraContent() {
 
 ---
 
-%%EXPLICACAO_LOADING%%
-
----
-
-${ehUltimaParte
+%%EXPLICACAO_SLOT%%${ehUltimaParte
                 ? 'Digite **CONTINUAR** para finalizar a leitura.'
                 : 'Digite **CONTINUAR** para os próximos versículos.'}
 Ou **MENU** para voltar.${linhaPersistencia}`;
@@ -860,7 +853,9 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         // Comando EXPLICAR (funciona na leitura e no plano)
         if (['explicar', 'explicação', 'explicacao', 'contexto'].includes(cmdLower)) {
             if (isPlanoMode || activeOption === '1') {
-                return gerarExplicacaoAtual();
+                // Disparar explicação sob demanda (embute na mensagem da Parte)
+                handleExplicar();
+                return '🔍 Gerando explicação... Aguarde um momento.';
             }
             return 'O comando **EXPLICAR** só funciona na opção 1 (Ler Passagem).';
         }
@@ -1113,8 +1108,9 @@ Ou **MENU** para voltar.`;
         return `O conteúdo da opção atual já foi gerado por IA.\n\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
     };
 
-    // Embutir explicação na última mensagem (substitui %%EXPLICACAO_LOADING%%)
-    const embedExplicacaoIntoLastMessage = async () => {
+    // Gerar explicação sob demanda (botão Explicar) - embute na última mensagem da Parte
+    const handleExplicar = async () => {
+        if (isLoadingExplicacao) return;
         setIsLoadingExplicacao(true);
         try {
             const conteudo = await gerarExplicacaoConteudo();
@@ -1123,28 +1119,40 @@ Ou **MENU** para voltar.`;
             const explicacaoFormatada = `🔍 **EXPLICAÇÃO GERADA POR IA**
 📍 *Parte ${page} de ${passagem?.referencia}*
 
-${conteudo}`;
+${conteudo}
+
+---
+
+`;
 
             setMessages(prev => {
                 const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                if (lastIdx >= 0 && updated[lastIdx].content.includes('%%EXPLICACAO_LOADING%%')) {
-                    updated[lastIdx] = {
-                        ...updated[lastIdx],
-                        content: updated[lastIdx].content.replace('%%EXPLICACAO_LOADING%%', explicacaoFormatada)
-                    };
+                // Encontra a última mensagem da Parte (com versículos)
+                for (let i = updated.length - 1; i >= 0; i--) {
+                    if (updated[i].role === 'assistant' && updated[i].content.includes('%%VERSICULOS_INTERATIVOS%%')) {
+                        if (updated[i].content.includes('%%EXPLICACAO_SLOT%%')) {
+                            // Substituir o slot pela explicação
+                            updated[i] = {
+                                ...updated[i],
+                                content: updated[i].content.replace('%%EXPLICACAO_SLOT%%', explicacaoFormatada)
+                            };
+                        }
+                        break;
+                    }
                 }
                 return updated;
             });
         } catch {
             setMessages(prev => {
                 const updated = [...prev];
-                const lastIdx = updated.length - 1;
-                if (lastIdx >= 0 && updated[lastIdx].content.includes('%%EXPLICACAO_LOADING%%')) {
-                    updated[lastIdx] = {
-                        ...updated[lastIdx],
-                        content: updated[lastIdx].content.replace('%%EXPLICACAO_LOADING%%', '❌ *Não foi possível gerar a explicação.*')
-                    };
+                for (let i = updated.length - 1; i >= 0; i--) {
+                    if (updated[i].role === 'assistant' && updated[i].content.includes('%%EXPLICACAO_SLOT%%')) {
+                        updated[i] = {
+                            ...updated[i],
+                            content: updated[i].content.replace('%%EXPLICACAO_SLOT%%', '❌ *Não foi possível gerar a explicação.*\n\n---\n\n')
+                        };
+                        break;
+                    }
                 }
                 return updated;
             });
@@ -1177,11 +1185,6 @@ ${conteudo}`;
             };
 
             setMessages(prev => [...prev, assistantMessage]);
-
-            // Auto-gerar explicação embutida na mesma mensagem (plano e diário)
-            if (resposta.includes('%%EXPLICACAO_LOADING%%')) {
-                embedExplicacaoIntoLastMessage();
-            }
         } catch (error) {
             const errorMessage: ChatMessage = {
                 role: 'assistant',
@@ -1225,11 +1228,6 @@ ${conteudo}`;
             };
 
             setMessages(prev => [...prev, assistantMessage]);
-
-            // Auto-gerar explicação embutida para opção de leitura
-            if (resposta.includes('%%EXPLICACAO_LOADING%%')) {
-                embedExplicacaoIntoLastMessage();
-            }
         } finally {
             setIsProcessing(false);
         }
@@ -1248,11 +1246,6 @@ ${conteudo}`;
                     timestamp: new Date()
                 };
                 setMessages([primeiraMensagemPlano]);
-
-                // Gerar explicação embutida na mensagem inicial
-                setTimeout(() => {
-                    embedExplicacaoIntoLastMessage();
-                }, 0);
                 return;
             }
 
@@ -1407,11 +1400,6 @@ ${conteudo}`;
                                                 const resp = await gerarRespostaOpcao(option.id as MenuOption);
                                                 setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
                                                 setIsProcessing(false);
-
-                                                // Auto-gerar explicação embutida para opção de leitura
-                                                if (resp.includes('%%EXPLICACAO_LOADING%%')) {
-                                                    setTimeout(() => embedExplicacaoIntoLastMessage(), 0);
-                                                }
                                             }, 600);
                                         }
                                     }}
@@ -1486,17 +1474,19 @@ ${conteudo}`;
                                     Continuar
                                 </button>
 
-                                {!isPlanoMode && activeOption === '1' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => submitMessage('Explicar')}
-                                        className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                                        disabled={isProcessing || isLoadingExplicacao}
-                                    >
+                                <button
+                                    type="button"
+                                    onClick={handleExplicar}
+                                    className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                    disabled={isProcessing || isLoadingExplicacao}
+                                >
+                                    {isLoadingExplicacao ? (
+                                        <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
+                                    ) : (
                                         <Sparkles className="w-5 h-5 text-amber-400" />
-                                        Explicar
-                                    </button>
-                                )}
+                                    )}
+                                    {isLoadingExplicacao ? 'Gerando...' : 'Explicar'}
+                                </button>
                             </div>
                         </div>
 
