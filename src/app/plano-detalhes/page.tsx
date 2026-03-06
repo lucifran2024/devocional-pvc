@@ -48,7 +48,20 @@ function PlanoDetalhesContent() {
                 getMinhasInscricoes()
             ]);
             setDias(todosDias);
-            setDiasConcluidos(concluidos);
+
+            // Combinar dias do banco com localStorage (fallback sem login)
+            let todosConcluidos = concluidos;
+            if (typeof window !== 'undefined') {
+                const localKey = `plano-dias-concluidos:${planoId}`;
+                const localRaw = localStorage.getItem(localKey);
+                if (localRaw) {
+                    const localDias: number[] = JSON.parse(localRaw);
+                    const merged = [...new Set([...todosConcluidos, ...localDias])].sort((a, b) => a - b);
+                    todosConcluidos = merged;
+                }
+            }
+            setDiasConcluidos(todosConcluidos);
+
             const insc = inscricoes.find(i => i.plano_id === planoId) || null;
             setInscricao(insc);
         } catch (error) {
@@ -240,8 +253,8 @@ function PlanoDetalhesContent() {
                                 >
                                     <div className="flex items-start justify-between mb-2">
                                         <span className={`text-2xl font-black ${isConcluido ? 'text-emerald-400' :
-                                                isAtual ? 'text-amber-400' :
-                                                    'text-text-muted'
+                                            isAtual ? 'text-amber-400' :
+                                                'text-text-muted'
                                             }`}>
                                             {dia.dia_numero}
                                         </span>
@@ -254,8 +267,8 @@ function PlanoDetalhesContent() {
                                         )}
                                     </div>
                                     <p className={`text-xs leading-tight line-clamp-2 ${isConcluido ? 'text-emerald-300/80' :
-                                            isAtual ? 'text-amber-300/80' :
-                                                'text-text-muted'
+                                        isAtual ? 'text-amber-300/80' :
+                                            'text-text-muted'
                                         }`}>
                                         {dia.referencia}
                                     </p>

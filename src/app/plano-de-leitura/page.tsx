@@ -678,7 +678,24 @@ function PlanoLeituraContent() {
 
     const getPlanoCompletedKey = () => {
         if (!planoId) return null;
-        return `plano-completed:${planoId}:${diaExibido}:${dataHoje}`;
+        return `plano-completed:${planoId}:${diaExibido}`;
+    };
+
+    // Chave permanente para salvar lista de dias concluídos no localStorage
+    const getDiasConcluidosLocalKey = () => {
+        if (!planoId) return null;
+        return `plano-dias-concluidos:${planoId}`;
+    };
+
+    const salvarDiaConcluidoLocal = (dia: number) => {
+        const key = getDiasConcluidosLocalKey();
+        if (!key || typeof window === 'undefined') return;
+        const raw = localStorage.getItem(key);
+        const dias: number[] = raw ? JSON.parse(raw) : [];
+        if (!dias.includes(dia)) {
+            dias.push(dia);
+            localStorage.setItem(key, JSON.stringify(dias));
+        }
     };
 
     const getTotalPartesLeitura = () => {
@@ -1059,12 +1076,23 @@ Ou **MENU** para voltar.`;
                 if (isPlanoMode && !leituraDiaConcluida) {
                     setLeituraDiaConcluida(true);
                     salvarLeituraConcluidaLocal();
+                    salvarDiaConcluidoLocal(diaExibido);
+
+                    if (planoId) {
+                        // Tentar salvar no banco (funciona se logado)
+                        marcarDiaConcluido(planoId, diaExibido)
+                            .then(ok => {
+                                if (ok) console.log('✅ Dia concluído salvo no banco');
+                                else console.log('⚠️ Dia concluído salvo apenas localmente (sem login)');
+                            })
+                            .catch(() => console.log('⚠️ Dia concluído salvo apenas localmente'));
+                    }
 
                     if (planoId && inscricaoAtiva) {
-                        // Salvar progresso do dia no banco uma única vez.
+                        // Atualizar dia_atual da inscrição
                         concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1, planoId, diaExibido)
                             .then(() => {
-                                console.log('✅ Progresso salvo no banco');
+                                console.log('✅ Progresso da inscrição atualizado');
                                 setInscricaoAtiva(prev => {
                                     if (!prev) return prev;
                                     return {
