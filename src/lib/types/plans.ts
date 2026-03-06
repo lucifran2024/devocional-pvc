@@ -18,6 +18,14 @@ export interface PlanoDia {
     titulo_dia: string | null;
 }
 
+export interface DiaConcluido {
+    id: string;
+    user_id: string;
+    plano_id: string;
+    dia_numero: number;
+    data_conclusao: string;
+}
+
 export interface InscricaoPlano {
     id: string;
     user_id: string;
@@ -29,4 +37,5 @@ export interface InscricaoPlano {
     // Join fields
     plano?: Plano;
     progresso_percent?: number;
+    dias_concluidos?: number[];
 }

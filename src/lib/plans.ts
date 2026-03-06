@@ -104,13 +104,13 @@ export async function getPrimeiroDiaDoPlano(plano_id: string): Promise<PlanoDia 
     return data || null;
 }
 
-export async function concluirDiaLeitura(inscricao_id: string, user_id: string, proximo_dia: number): Promise<boolean> {
+export async function concluirDiaLeitura(inscricao_id: string, user_id: string, proximo_dia: number, plano_id?: string, dia_concluido?: number): Promise<boolean> {
     // Atualiza o dia_atual da inscrição
     const { error } = await supabase
         .from('usuario_inscricoes')
         .update({
             dia_atual: proximo_dia,
-            updated_at: new Date().toISOString()
+            ultimo_acesso: new Date().toISOString()
         })
         .eq('id', inscricao_id);
 
@@ -118,5 +118,63 @@ export async function concluirDiaLeitura(inscricao_id: string, user_id: string, 
         console.error('Erro ao concluir leitura:', error);
         return false;
     }
+
+    // Também registra na tabela de dias concluídos
+    if (plano_id && dia_concluido) {
+        await marcarDiaConcluido(plano_id, dia_concluido);
+    }
+
     return true;
+}
+
+export async function marcarDiaConcluido(plano_id: string, dia_numero: number): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+        .from('plano_dias_concluidos')
+        .upsert({
+            user_id: user.id,
+            plano_id,
+            dia_numero,
+            data_conclusao: new Date().toISOString().split('T')[0]
+        }, { onConflict: 'user_id,plano_id,dia_numero' });
+
+    if (error) {
+        console.error('Erro ao marcar dia concluído:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function getDiasConcluidos(plano_id: string): Promise<number[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+        .from('plano_dias_concluidos')
+        .select('dia_numero')
+        .eq('user_id', user.id)
+        .eq('plano_id', plano_id)
+        .order('dia_numero');
+
+    if (error) {
+        console.error('Erro ao buscar dias concluídos:', error);
+        return [];
+    }
+    return (data || []).map(d => d.dia_numero);
+}
+
+export async function getTodosOsDiasDoPlano(plano_id: string): Promise<PlanoDia[]> {
+    const { data, error } = await supabase
+        .from('plano_dias')
+        .select('*')
+        .eq('plano_id', plano_id)
+        .order('dia_numero');
+
+    if (error) {
+        console.error('Erro ao buscar dias do plano:', error);
+        return [];
+    }
+    return data || [];
 }

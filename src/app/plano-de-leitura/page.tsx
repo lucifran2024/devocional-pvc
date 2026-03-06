@@ -26,7 +26,7 @@ import ReactMarkdown from 'react-markdown';
 import { useSearchParams } from 'next/navigation'; // Added imports
 import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
-import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes } from '@/lib/plans'; // Added plans lib
+import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
 // Cores para destacar versículos
@@ -1062,7 +1062,7 @@ Ou **MENU** para voltar.`;
 
                     if (planoId && inscricaoAtiva) {
                         // Salvar progresso do dia no banco uma única vez.
-                        concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1)
+                        concluirDiaLeitura(inscricaoAtiva.id, inscricaoAtiva.user_id, diaExibido + 1, planoId, diaExibido)
                             .then(() => {
                                 console.log('✅ Progresso salvo no banco');
                                 setInscricaoAtiva(prev => {
@@ -1078,7 +1078,7 @@ Ou **MENU** para voltar.`;
                 }
 
                 const proximoDiaMsg = planoId
-                    ? `\n\n👉 **[Clique aqui para o Próximo Dia](/plano-de-leitura?plano_id=${planoId}&dia=${diaExibido + 1})**`
+                    ? `\n\n📋 **[Ver Todos os Dias](/plano-detalhes?plano_id=${planoId})**\n\n👉 **[Clique aqui para o Próximo Dia](/plano-de-leitura?plano_id=${planoId}&dia=${diaExibido + 1})**`
                     : '';
 
                 return `✅ **LEITURA CONCLUÍDA!**
@@ -1291,6 +1291,12 @@ ${conteudo}
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     {planoId ? "Voltar aos Planos" : "Voltar ao Dashboard"}
                 </Link>
+                {planoId && (
+                    <Link href={`/plano-detalhes?plano_id=${planoId}`} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
+                        <Calendar className="w-4 h-4" />
+                        Ver Todos os Dias
+                    </Link>
+                )}
                 <div className="flex gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                     <span className="text-xs text-slate-400 font-mono tracking-widest">ONLINE</span>

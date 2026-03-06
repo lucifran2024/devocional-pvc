@@ -7,7 +7,7 @@ import {
     ArrowRight, Award, ChevronRight, Loader2, Play
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
-import { getPlanosDisponiveis, getMinhasInscricoes, inscreverEmPlano } from '@/lib/plans';
+import { getPlanosDisponiveis, getMinhasInscricoes, inscreverEmPlano, getDiasConcluidos } from '@/lib/plans';
 import { Plano, InscricaoPlano } from '@/lib/types/plans';
 import Link from 'next/link';
 
@@ -18,6 +18,7 @@ export default function PlanosPage() {
     const [inscricoes, setInscricoes] = useState<InscricaoPlano[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
+    const [progressoMap, setProgressoMap] = useState<Record<string, { concluidos: number; total: number }>>({});
 
     useEffect(() => {
         loadData();
@@ -32,6 +33,18 @@ export default function PlanosPage() {
             ]);
             setPlanos(listaPlanos);
             setInscricoes(listaInscricoes);
+
+            // Carregar progresso real de cada inscrição
+            const progMap: Record<string, { concluidos: number; total: number }> = {};
+            await Promise.all(listaInscricoes.map(async (insc) => {
+                const dias = await getDiasConcluidos(insc.plano_id);
+                const plano = listaPlanos.find(p => p.id === insc.plano_id);
+                progMap[insc.plano_id] = {
+                    concluidos: dias.length,
+                    total: plano?.duracao_dias || 1
+                };
+            }));
+            setProgressoMap(progMap);
         } catch (error) {
             console.error(error);
         } finally {
@@ -116,7 +129,10 @@ export default function PlanosPage() {
                                         <span className="text-[10px] uppercase tracking-widest text-amber-500 font-bold">Em Progresso</span>
                                         <span className="text-text-muted">•</span>
                                         <span className="text-[10px] uppercase tracking-widest text-text-muted">
-                                            Dia {planoAtivo.dia_atual} de {planoAtivo.plano.duracao_dias}
+                                            {progressoMap[planoAtivo.plano_id]
+                                                ? `${progressoMap[planoAtivo.plano_id].concluidos} de ${progressoMap[planoAtivo.plano_id].total} dias lidos`
+                                                : `Dia ${planoAtivo.dia_atual} de ${planoAtivo.plano.duracao_dias}`
+                                            }
                                         </span>
                                     </div>
                                     <h2 className="text-2xl font-bold text-text-primary group-hover:text-amber-400 transition-colors">
@@ -126,17 +142,17 @@ export default function PlanosPage() {
                                     <div className="w-full md:w-64 h-2 bg-surface-2 rounded-full overflow-hidden mt-3">
                                         <div
                                             className="h-full bg-gradient-to-r from-amber-500 to-orange-500 shimmer"
-                                            style={{ width: `${Math.max(5, planoAtivo.progresso_percent || 0)}%` }}
+                                            style={{ width: `${Math.max(5, progressoMap[planoAtivo.plano_id] ? Math.round((progressoMap[planoAtivo.plano_id].concluidos / progressoMap[planoAtivo.plano_id].total) * 100) : 0)}%` }}
                                         ></div>
                                     </div>
                                 </div>
 
                                 <Link
-                                    href={`/plano-de-leitura?plano_id=${planoAtivo.plano_id}`}
+                                    href={`/plano-detalhes?plano_id=${planoAtivo.plano_id}`}
                                     className="shrink-0 px-6 py-3 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-400 hover:scale-105 transition-all shadow-lg hover:shadow-amber-500/20 flex items-center gap-2 group/btn"
                                 >
                                     <Play className="w-4 h-4 fill-current" />
-                                    Continuar Leitura
+                                    Ver Progresso
                                     <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                 </Link>
                             </div>
@@ -215,11 +231,14 @@ export default function PlanosPage() {
                                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-border-subtle">
                                     {isAtivo ? (
                                         <Link
-                                            href={`/plano-de-leitura?plano_id=${plano.id}`}
+                                            href={`/plano-detalhes?plano_id=${plano.id}`}
                                             className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2 hover:text-emerald-300 transition-colors"
                                         >
                                             <CheckCircle className="w-4 h-4" />
-                                            Aberto
+                                            {progressoMap[plano.id]
+                                                ? `${progressoMap[plano.id].concluidos}/${progressoMap[plano.id].total} dias`
+                                                : 'Ver Progresso'
+                                            }
                                         </Link>
                                     ) : (
                                         <button
