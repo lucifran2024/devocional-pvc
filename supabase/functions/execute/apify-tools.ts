@@ -19,6 +19,24 @@ export const APIFY_TOOLS_DEFINITION = [{
     }]
 }];
 
+// Prompts de OCR contextualizados
+const OCR_PROMPT_PRIMARY = `Você é especialista em OCR de posts cristãos/devocionais do Instagram.
+Esta imagem contém uma mensagem devocional com texto sobre fundo decorativo.
+
+INSTRUÇÕES:
+1. Extraia ABSOLUTAMENTE TODO o texto visível na imagem (topo, meio, rodapé, cantos)
+2. Inclua títulos, corpo do texto, versículos bíblicos e referências (ex: João 3:16)
+3. Se houver fontes artísticas, cursivas ou decorativas, leia completamente sem pular nada
+4. NÃO omita palavras, frases ou linhas — extraia TUDO
+5. Retorne APENAS o texto extraído, sem comentários seus
+6. Mantenha parágrafos e quebras de linha do layout original`;
+
+const OCR_PROMPT_RETRY = `ATENÇÃO: A extração anterior falhou ou ficou incompleta.
+Olhe com MUITO CUIDADO para TODAS as áreas desta imagem.
+O texto pode estar em fontes decorativas, cursivas, com sombra ou sobre fundo colorido.
+Extraia CADA PALAVRA visível, mesmo que difícil de ler. Inclua TUDO.
+Retorne APENAS o texto, mantendo a formatação de parágrafos.`;
+
 // Função auxiliar para OCR com Gemini Vision
 async function extractTextFromImage(imageUrl: string): Promise<string> {
     const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
@@ -39,41 +57,59 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
             binaryString += String.fromCharCode(...chunk);
         }
         const base64Image = btoa(binaryString);
+        const mimeType = imgResp.headers.get("content-type") || "image/jpeg";
 
-        // Usando modelo gemini-2.0-flash (confirmado funcionamento)
-        const MODEL_NAME = "gemini-2.0-flash";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_KEY}`;
+        // Primeira tentativa com prompt contextualizado
+        let text = await callGeminiVision(GEMINI_KEY, base64Image, mimeType, OCR_PROMPT_PRIMARY);
 
-        const body = {
-            contents: [{
-                parts: [
-                    { text: "Extraia TODO o texto desta imagem. Retorne APENAS o texto extraído. Mantenha a formatação original de quebras de linha." },
-                    {
-                        inline_data: {
-                            mime_type: imgResp.headers.get("content-type") || "image/jpeg",
-                            data: base64Image
-                        }
-                    }
-                ]
-            }]
-        };
+        // Retry se texto muito curto (provavelmente OCR falhou)
+        if (text.length < 30) {
+            console.log(`🔄 [OCR] Texto curto (${text.length} chars), tentando retry...`);
+            await new Promise(r => setTimeout(r, 300));
+            const retryText = await callGeminiVision(GEMINI_KEY, base64Image, mimeType, OCR_PROMPT_RETRY);
+            if (retryText.length > text.length) {
+                text = retryText;
+            }
+        }
 
-        const resp = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
-
-        if (!resp.ok) return "";
-
-        const data = await resp.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-        return text ? text.trim() : "";
+        return text;
 
     } catch (e) {
+        console.error("❌ [OCR] Exception:", e);
         return "";
     }
+}
+
+// Chamada individual ao Gemini Vision
+async function callGeminiVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
+    const MODEL_NAME = "gemini-2.0-flash";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+
+    const body = {
+        contents: [{
+            parts: [
+                { text: prompt },
+                {
+                    inline_data: {
+                        mime_type: mimeType,
+                        data: base64Image
+                    }
+                }
+            ]
+        }]
+    };
+
+    const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) return "";
+
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return text ? text.trim() : "";
 }
 
 export async function consultarInstagram(username: string): Promise<any[]> {

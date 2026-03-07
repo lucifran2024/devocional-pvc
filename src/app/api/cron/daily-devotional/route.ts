@@ -7,6 +7,11 @@ import { createClient } from '@supabase/supabase-js';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
 
+// URL base da app para gerar imagens (funciona tanto local quanto em produção)
+const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL)
+    ? `https://${process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -28,33 +33,51 @@ function extrairOCR(content: string): string {
 }
 
 function limparTexto(texto: string): string {
-    // Remove @menções (ex: @juciqueiroz, @evangelhoparatodos__, @Maria etc)
+    // 1. Remove @menções (ex: @juciqueiroz, @evangelhoparatodos__, @Maria etc)
     let limpo = texto.replace(/@[\w._]+/g, '').trim();
-    // Remove handles conhecidos (com ou sem @)
+
+    // 2. Remove handles/nomes de páginas conhecidos (com ou sem @)
+    //    CRÍTICO: impede que o texto contenha referências a páginas originais
     const handles = [
         'tribodejuda.ofc', 'tribodejuda20', 'tribodejuda',
+        'tribo de judá', 'tribo de juda',
         'evangelhoparatodos__', 'evangelhoparatodos',
-        'biblegateway'
+        'evangelho para todos',
+        'biblegateway', 'bible gateway',
+        'juciqueiroz', 'juci queiroz',
+        'instagram', 'facebook',
+        'siga-nos', 'siga nos', 'sigam', 'siga a página',
+        'curta e compartilhe', 'ative as notificações',
+        'link na bio', 'compartilhe', 'marque alguém',
+        'segue a gente', 'seguir',
     ];
     for (const handle of handles) {
         limpo = limpo.replace(new RegExp(handle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
     }
-    // Remove linhas vazias consecutivas (mais de 2)
+
+    // 3. Remove URLs
+    limpo = limpo.replace(/https?:\/\/[^\s]+/g, '');
+
+    // 4. Remove hashtags (#devocional, #deus, etc)
+    limpo = limpo.replace(/#[\w]+/g, '');
+
+    // 5. Remove emojis comuns de call-to-action (👉👆📲 etc) em linhas de CTA
+    limpo = limpo.replace(/^.*(?:siga|curta|compartilhe|ative|link|bio|inscreva).*$/gim, '');
+
+    // 6. Remove linhas vazias consecutivas (mais de 2)
     limpo = limpo.replace(/\n{3,}/g, '\n\n');
     // Remove espaços extras
     limpo = limpo.replace(/  +/g, ' ');
     // Remove pontos/espaços soltos no inicio de linhas (restos de @removidos)
     limpo = limpo.replace(/^\s*[.,]\s*/gm, '');
-    // Remove linhas fragmentadas no final (OCR cortado)
+
+    // 7. Remove linhas fragmentadas no final (OCR cortado) - MENOS agressivo
     const linhas = limpo.trim().split('\n');
     while (linhas.length > 1) {
         const ultima = linhas[linhas.length - 1].trim();
         if (!ultima) { linhas.pop(); continue; }
-        const ehFragmento =
-            // Fragmento curto sem pontuação final (ex: "Gratic")
-            (ultima.length < 8 && !/[.!?"]$/.test(ultima)) ||
-            // Começa com minúscula = provavelmente continuação cortada (ex: "ratidão Senhor")
-            /^[a-záàãâéèêíìîóòôõúùûç]/.test(ultima);
+        // Só remove se MUITO curto (≤3 chars) e sem pontuação
+        const ehFragmento = ultima.length <= 3 && !/[.!?"\])…]$/.test(ultima);
         if (ehFragmento) {
             linhas.pop();
         } else {
@@ -96,6 +119,54 @@ async function enviarTelegram(texto: string): Promise<boolean> {
     } catch (e) {
         console.error('Erro ao enviar Telegram:', e);
         return false;
+    }
+}
+
+// Gera imagem devocional personalizada e envia como foto no Telegram
+async function enviarTelegramComFoto(textoDevocional: string, caption: string): Promise<boolean> {
+    try {
+        // 1. Gerar imagem via nossa API
+        const dataFormatada = new Date().toLocaleDateString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            day: '2-digit', month: 'long', year: 'numeric'
+        });
+        const imageUrl = `${APP_URL}/api/generate-devotional-image?` + new URLSearchParams({
+            texto: textoDevocional,
+            data: dataFormatada,
+        }).toString();
+
+        console.log('📸 Gerando imagem devocional...');
+        const imgResp = await fetch(imageUrl);
+        if (!imgResp.ok) {
+            console.error('Erro ao gerar imagem:', imgResp.status);
+            // Fallback: enviar só texto
+            return enviarTelegram(caption);
+        }
+
+        const imageBuffer = await imgResp.arrayBuffer();
+
+        // 2. Enviar via sendPhoto do Telegram (multipart/form-data)
+        const formData = new FormData();
+        formData.append('chat_id', TELEGRAM_CHAT_ID);
+        formData.append('caption', caption);
+        formData.append('photo', new Blob([imageBuffer], { type: 'image/png' }), 'devotional.png');
+
+        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await resp.json();
+        if (!data.ok) {
+            console.error('Telegram sendPhoto error:', data.description);
+            // Fallback: enviar só texto se a foto falhar
+            return enviarTelegram(caption);
+        }
+        console.log('✅ Foto devocional enviada com sucesso!');
+        return true;
+    } catch (e) {
+        console.error('Erro ao enviar foto Telegram:', e);
+        // Fallback: tenta enviar só o texto
+        return enviarTelegram(caption);
     }
 }
 
@@ -176,9 +247,10 @@ export async function GET(request: Request) {
                     if (postEscolhido) {
                         const textoOCR = extrairOCR(postEscolhido.content);
                         const textoLimpo = limparTexto(textoOCR);
-                        const mensagem = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
+                        const caption = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
 
-                        const enviou = await enviarTelegram(mensagem);
+                        // Enviar com imagem gerada + texto como caption
+                        const enviou = await enviarTelegramComFoto(textoLimpo, caption);
                         if (enviou) {
                             await supabase.from('telegram_enviados').insert({
                                 external_id: postEscolhido.external_id,
@@ -254,8 +326,9 @@ export async function GET(request: Request) {
                     const textoTribo = limparTexto(ocr);
                     if (textoTribo.length < 20) continue; // Muito curto, pular
 
-                    const msgTribo = `Tribo de Judá\n${dataFormatada}\n\n${textoTribo}`;
-                    const enviouTribo = await enviarTelegram(msgTribo);
+                    const captionTribo = `Devocional do Dia\n${dataFormatada}\n\n${textoTribo}`;
+                    // Enviar com imagem gerada (sem mencionar "Tribo de Judá")
+                    const enviouTribo = await enviarTelegramComFoto(textoTribo, captionTribo);
 
                     if (enviouTribo) {
                         await supabase.from('telegram_enviados').insert({
