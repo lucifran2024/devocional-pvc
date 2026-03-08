@@ -593,8 +593,8 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, tipo_estudo } = await req.json();
-    console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}`);
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, tipo_estudo, force_live_refresh } = await req.json();
+    console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}, Refresh ao vivo: ${force_live_refresh ? 'sim' : 'nao'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
 
@@ -622,6 +622,7 @@ Deno.serve(async (req) => {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+        const forceLiveRefresh = force_live_refresh === true;
 
         // 1. Tentar buscar do CACHE do dia-alvo em America/Sao_Paulo.
         // Isso evita reaproveitar um post de ontem só porque ele foi salvo há menos de 24h.
@@ -641,11 +642,19 @@ Deno.serve(async (req) => {
           .order('published_at', { ascending: false })
           .limit(6);
 
-        if (cachedPosts && cachedPosts.length > 0) {
+        if (cacheError) {
+          console.error("❌ [CACHE] Erro ao buscar posts no banco:", cacheError);
+        }
+
+        if (cachedPosts && cachedPosts.length > 0 && !forceLiveRefresh) {
           console.log(`✅ [CACHE] ${cachedPosts.length} posts encontrados no banco. (Bypass Apify)`);
           postsInstagram = cachedPosts;
         } else {
-          console.log(`⚠️ [CACHE] Nenhum post recente encontrado. Buscando do Instagram (Apify)...`);
+          if (forceLiveRefresh) {
+            console.log(`🔄 [APIFY] Refresh ao vivo solicitado para @${username}. Consultando Instagram mesmo com cache do dia...`);
+          } else {
+            console.log(`⚠️ [CACHE] Nenhum post recente encontrado. Buscando do Instagram (Apify)...`);
+          }
 
           // 2. Se não tiver cache, buscar do APIFY + OCR
           postsInstagram = await consultarInstagram(username);
@@ -663,6 +672,9 @@ Deno.serve(async (req) => {
             } else {
               console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
             }
+          } else if (cachedPosts && cachedPosts.length > 0) {
+            console.warn(`⚠️ [APIFY] Refresh ao vivo não retornou posts. Usando ${cachedPosts.length} posts do cache como fallback.`);
+            postsInstagram = cachedPosts;
           }
         }
 

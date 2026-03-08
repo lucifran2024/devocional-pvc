@@ -153,7 +153,8 @@ export async function GET(request: Request) {
                 body: {
                     modo_id: 'devocional_externo',
                     data: dataHoje,
-                    fonte_rss: 'instagram'
+                    fonte_rss: 'instagram',
+                    force_live_refresh: true
                 }
             });
 
@@ -243,7 +244,8 @@ export async function GET(request: Request) {
                 body: {
                     modo_id: 'devocional_externo',
                     data: dataHoje,
-                    fonte_rss: 'tribo_juda'
+                    fonte_rss: 'tribo_juda',
+                    force_live_refresh: true
                 }
             });
 
