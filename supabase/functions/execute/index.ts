@@ -36,6 +36,33 @@ function getCorsHeaders(origin: string | null) {
   };
 }
 
+function getCacheRangeForSaoPauloDate(dateStr: string): { startUtcIso: string; endUtcIso: string; mode: 'calendar_day' | 'fallback_24h' } {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!match) {
+    const end = new Date();
+    const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    return {
+      startUtcIso: start.toISOString(),
+      endUtcIso: end.toISOString(),
+      mode: 'fallback_24h',
+    };
+  }
+
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+
+  // America/Sao_Paulo = UTC-3. O cron já envia `data` no calendário local de SP.
+  const startUtc = new Date(Date.UTC(year, monthIndex, day, 3, 0, 0, 0));
+  const endUtc = new Date(Date.UTC(year, monthIndex, day + 1, 3, 0, 0, 0));
+
+  return {
+    startUtcIso: startUtc.toISOString(),
+    endUtcIso: endUtc.toISOString(),
+    mode: 'calendar_day',
+  };
+}
+
 // =====================================================
 // CACHE GLOBAL - Arquivos de conhecimento (não mudam)
 // Evita baixar ~500KB+ em cada requisição
@@ -596,16 +623,21 @@ Deno.serve(async (req) => {
         const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-        // 1. Tentar buscar do CACHE (posts de hoje, últimas 24h)
-        const umDiaAtras = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-        console.log(`🔍 [CACHE] Buscando posts de @${username} desde ${umDiaAtras}...`);
+        // 1. Tentar buscar do CACHE do dia-alvo em America/Sao_Paulo.
+        // Isso evita reaproveitar um post de ontem só porque ele foi salvo há menos de 24h.
+        const { startUtcIso, endUtcIso, mode } = getCacheRangeForSaoPauloDate(data);
+        if (mode === 'calendar_day') {
+          console.log(`🔍 [CACHE] Buscando posts de @${username} publicados em ${data} (SP) | UTC ${startUtcIso} -> ${endUtcIso}...`);
+        } else {
+          console.warn(`⚠️ [CACHE] Data inválida (${data}). Fallback para janela móvel: ${startUtcIso} -> ${endUtcIso}`);
+        }
 
         const { data: cachedPosts, error: cacheError } = await supabaseAdmin
           .from('devocional_externo_posts')
           .select('*')
           .eq('author_name', username) // Filtrar pelo username correto
-          .gt('created_at', umDiaAtras)
+          .gte('published_at', startUtcIso)
+          .lt('published_at', endUtcIso)
           .order('published_at', { ascending: false })
           .limit(6);
 

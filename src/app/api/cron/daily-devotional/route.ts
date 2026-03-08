@@ -7,10 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
 
-// URL base da app para gerar imagens (funciona tanto local quanto em produção)
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL)
-    ? `https://${process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -122,53 +119,7 @@ async function enviarTelegram(texto: string): Promise<boolean> {
     }
 }
 
-// Gera imagem devocional personalizada e envia como foto no Telegram
-async function enviarTelegramComFoto(textoDevocional: string, caption: string): Promise<boolean> {
-    try {
-        // 1. Gerar imagem via nossa API
-        const dataFormatada = new Date().toLocaleDateString('pt-BR', {
-            timeZone: 'America/Sao_Paulo',
-            day: '2-digit', month: 'long', year: 'numeric'
-        });
-        const imageUrl = `${APP_URL}/api/generate-devotional-image?` + new URLSearchParams({
-            texto: textoDevocional,
-            data: dataFormatada,
-        }).toString();
 
-        console.log('📸 Gerando imagem devocional...');
-        const imgResp = await fetch(imageUrl);
-        if (!imgResp.ok) {
-            console.error('Erro ao gerar imagem:', imgResp.status);
-            // Fallback: enviar só texto
-            return enviarTelegram(caption);
-        }
-
-        const imageBuffer = await imgResp.arrayBuffer();
-
-        // 2. Enviar via sendPhoto do Telegram (multipart/form-data)
-        const formData = new FormData();
-        formData.append('chat_id', TELEGRAM_CHAT_ID);
-        formData.append('caption', caption);
-        formData.append('photo', new Blob([imageBuffer], { type: 'image/png' }), 'devotional.png');
-
-        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
-            method: 'POST',
-            body: formData,
-        });
-        const data = await resp.json();
-        if (!data.ok) {
-            console.error('Telegram sendPhoto error:', data.description);
-            // Fallback: enviar só texto se a foto falhar
-            return enviarTelegram(caption);
-        }
-        console.log('✅ Foto devocional enviada com sucesso!');
-        return true;
-    } catch (e) {
-        console.error('Erro ao enviar foto Telegram:', e);
-        // Fallback: tenta enviar só o texto
-        return enviarTelegram(caption);
-    }
-}
 
 // ============================================
 // CRON HANDLER
@@ -249,8 +200,8 @@ export async function GET(request: Request) {
                         const textoLimpo = limparTexto(textoOCR);
                         const caption = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
 
-                        // Enviar com imagem gerada + texto como caption
-                        const enviou = await enviarTelegramComFoto(textoLimpo, caption);
+                        // Enviar apenas texto
+                        const enviou = await enviarTelegram(caption);
                         if (enviou) {
                             await supabase.from('telegram_enviados').insert({
                                 external_id: postEscolhido.external_id,
@@ -327,8 +278,8 @@ export async function GET(request: Request) {
                     if (textoTribo.length < 20) continue; // Muito curto, pular
 
                     const captionTribo = `Devocional do Dia\n${dataFormatada}\n\n${textoTribo}`;
-                    // Enviar com imagem gerada (sem mencionar "Tribo de Judá")
-                    const enviouTribo = await enviarTelegramComFoto(textoTribo, captionTribo);
+                    // Enviar texto (sem imagem e sem mencionar "Tribo de Judá")
+                    const enviouTribo = await enviarTelegram(captionTribo);
 
                     if (enviouTribo) {
                         await supabase.from('telegram_enviados').insert({
