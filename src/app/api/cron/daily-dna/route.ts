@@ -1,165 +1,211 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { randomUUID } from 'crypto';
+import {
+    buildDnaGeracaoRecords,
+    getMessageDedupKey,
+    inferCategoriaParaGeracao,
+    processGeneratedContent,
+    splitTelegramText,
+} from '@/lib/dna-processing';
 
-// ============================================
-// CONFIG
-// ============================================
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-// ============================================
-// FILTROS - DIA DA SEMANA + FONTE TODAS
-// ============================================
-
-// Estilos que rotacionam diariamente para modo_estilo
 const ESTILOS_ROTACAO = ['devocional', 'oracao', 'versiculo', 'reflexao', 'exortacao', 'declaracao'];
+const MAX_GENERATION_ATTEMPTS = 2;
 
-/**
- * Filtros simplificados: dia da semana (auto-detectado) + fonte de inspiração = todas
- * Para modo_estilo: rotaciona o estilo diariamente (1 estilo por dia)
- */
-function getFiltrosDoDia(dataStr: string, modo: 'favoritas' | 'estilo'): Record<string, any> {
-    // Auto-detecta dia da semana
-    const data = new Date(dataStr + 'T12:00:00');
-    const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const diaSemana = DIAS[data.getDay()];
+interface ExecuteGenerationResult {
+    ok: boolean;
+    resultado?: string;
+    error?: string;
+    tema_usado?: string;
+    categoria_usada?: string;
+    estilo_usado?: string;
+}
 
-    const filtros: Record<string, any> = {
+function ensureEnv() {
+    const missing: string[] = [];
+    if (!TELEGRAM_BOT_TOKEN) missing.push('TELEGRAM_BOT_TOKEN');
+    if (!TELEGRAM_CHAT_ID) missing.push('TELEGRAM_CHAT_ID');
+    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseAnonKey) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+    if (missing.length > 0) {
+        throw new Error(`Variáveis obrigatórias ausentes: ${missing.join(', ')}`);
+    }
+}
+
+function getFiltrosDoDia(dataStr: string, modo: 'favoritas' | 'estilo'): Record<string, unknown> {
+    const data = new Date(`${dataStr}T12:00:00`);
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const diaSemana = dias[data.getDay()];
+
+    const filtros: Record<string, unknown> = {
         quantidade: 5,
-        diasSemana: diaSemana,        // FILTRO 1: dia da semana (auto-detectado)
-        contextoEstrategia: 'all',    // FILTRO 2: Fonte de Inspiração = TODAS
+        diasSemana: diaSemana,
+        contextoEstrategia: 'all',
         usarDnaBase: true,
         usarPassagemDia: false,
         neutro: false,
     };
 
-    // modo_estilo EXIGE um estilo alvo — rotaciona 1 por dia
     if (modo === 'estilo') {
-        const seed = parseInt(dataStr.replace(/-/g, ''));
+        const seed = parseInt(dataStr.replace(/-/g, ''), 10);
         filtros.estilo = ESTILOS_ROTACAO[seed % ESTILOS_ROTACAO.length];
     }
 
     return filtros;
 }
 
-// ============================================
-// HELPERS
-// ============================================
-
 function getDataHoje(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
-async function enviarTelegram(texto: string): Promise<boolean> {
-    try {
-        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: texto,
-            }),
-        });
-        const data = await resp.json();
-        if (!data.ok) {
-            console.error('Telegram error:', data.description);
-            return false;
-        }
-        return true;
-    } catch (e) {
-        console.error('Erro ao enviar Telegram:', e);
-        return false;
-    }
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Chama a Edge Function para gerar conteúdo
- */
-async function gerarConteudo(modo_id: string, data: string, filtros: Record<string, any>): Promise<string | null> {
+async function enviarTelegram(texto: string): Promise<boolean> {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.error('Telegram não configurado.');
+        return false;
+    }
+
+    const partes = splitTelegramText(texto);
+    let envioCompleto = true;
+
+    for (const parte of partes) {
+        try {
+            const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: parte,
+                }),
+            });
+
+            const data = await resp.json();
+            if (!data.ok) {
+                console.error('Telegram error:', data.description);
+                envioCompleto = false;
+            }
+        } catch (error) {
+            console.error('Erro ao enviar Telegram:', error);
+            envioCompleto = false;
+        }
+
+        await delay(180);
+    }
+
+    return envioCompleto;
+}
+
+async function gerarConteudo(
+    modoId: string,
+    data: string,
+    filtros: Record<string, unknown>
+): Promise<ExecuteGenerationResult | null> {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase não configurado para daily-dna.');
+    }
+
     try {
         const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ modo_id, data, filtros })
+            body: JSON.stringify({ modo_id: modoId, data, filtros }),
         });
 
         if (!resp.ok) {
-            console.error(`Edge Function erro ${resp.status}`);
+            const errorText = await resp.text();
+            console.error(`Edge Function erro ${resp.status}:`, errorText);
             return null;
         }
 
-        const json = await resp.json();
-        if (json.ok && json.resultado) {
-            return json.resultado;
+        return (await resp.json()) as ExecuteGenerationResult;
+    } catch (error) {
+        console.error('Erro ao chamar Edge Function:', error);
+        return null;
+    }
+}
+
+async function gerarMensagensValidadas(
+    modoId: 'modo_favoritas' | 'modo_estilo',
+    data: string,
+    filtros: Record<string, unknown>
+): Promise<{
+    messages: string[];
+    rejectedCount: number;
+    response: ExecuteGenerationResult | null;
+    shortfall: number;
+}> {
+    const quantidadeEsperada =
+        typeof filtros.quantidade === 'number' && Number.isFinite(filtros.quantidade)
+            ? filtros.quantidade
+            : 5;
+    const expectedCategory = inferCategoriaParaGeracao(modoId, filtros);
+    const approved: string[] = [];
+    const seen = new Set<string>();
+    let rejectedCount = 0;
+    let lastResponse: ExecuteGenerationResult | null = null;
+
+    for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS && approved.length < quantidadeEsperada; attempt++) {
+        const response = await gerarConteudo(modoId, data, filtros);
+        lastResponse = response;
+
+        if (!response?.ok || !response.resultado) {
+            console.warn(`[${modoId}] tentativa ${attempt} sem conteúdo válido.`, response?.error);
+            continue;
         }
-        console.error('Edge Function retornou erro:', json.error);
-        return null;
-    } catch (e) {
-        console.error('Erro ao chamar Edge Function:', e);
-        return null;
+
+        const processed = processGeneratedContent(response.resultado, {
+            modoId,
+            filtros,
+            expectedCategory,
+            quantidadeEsperada,
+        });
+
+        rejectedCount += processed.rejected.length;
+        console.log(
+            `[${modoId}] tentativa ${attempt}: ${processed.messages.length} aprovadas, ${processed.rejected.length} rejeitadas`
+        );
+
+        processed.rejected.forEach((rejected, index) => {
+            console.warn(`[${modoId}] rejeitada (${attempt}.${index + 1}): ${rejected.reasons.join(', ')}`);
+        });
+
+        for (const message of processed.messages) {
+            const key = getMessageDedupKey(message);
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            approved.push(message);
+            if (approved.length >= quantidadeEsperada) {
+                break;
+            }
+        }
     }
+
+    const shortfall = Math.max(0, quantidadeEsperada - approved.length);
+    if (shortfall > 0) {
+        console.warn(`[${modoId}] lote incompleto: faltaram ${shortfall} mensagem(ns) após ${MAX_GENERATION_ATTEMPTS} tentativa(s).`);
+    }
+
+    return {
+        messages: approved,
+        rejectedCount,
+        response: lastResponse,
+        shortfall,
+    };
 }
 
-/**
- * Parseia o texto gerado em mensagens individuais
- */
-function parseMensagens(texto: string): string[] {
-    if (!texto) return [];
-
-    // 1. Separador explícito ---
-    if (texto.includes('\n---\n') || texto.includes('\n---') || texto.includes('---\n')) {
-        const partes = texto.split(/\n\s*---\s*\n/);
-        if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
-    }
-
-    // 2. Separador ### (títulos markdown)
-    if (texto.includes('\n###') || texto.includes('\n## ')) {
-        const partes = texto.split(/\n(?=###?\s)/);
-        if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
-    }
-
-    // 3. Separador por P01, P02, P03... (padrão PVC)
-    const pNumberPattern = /\n(?=P\d{2}\s*[—–-]\s*)/;
-    if (pNumberPattern.test(texto)) {
-        const partes = texto.split(pNumberPattern);
-        if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
-    }
-
-    // 4. Separador por título em MAIÚSCULAS
-    const upperTitlePattern = /\n\n(?=[A-ZÀ-Ú][A-ZÀ-Ú\s,.!?]{10,})/;
-    if (upperTitlePattern.test(texto)) {
-        const partes = texto.split(upperTitlePattern);
-        if (partes.length > 1) return partes.filter(p => p.trim().length > 0);
-    }
-
-    // 5. Fallback: retorna texto inteiro
-    return [texto];
-}
-
-/**
- * Limpa markdown para texto puro (Telegram)
- */
-function limparMarkdown(texto: string): string {
-    return texto
-        .replace(/\*\*/g, '')
-        .replace(/\*/g, '')
-        .replace(/#{1,6}\s/g, '')
-        .replace(/>\s?/g, '')
-        .replace(/^P\d{2}\s*[—–-]\s*/gm, '') // Remove prefixo P01 —
-        .trim();
-}
-
-// ============================================
-// CRON HANDLER
-// ============================================
 export async function GET(request: Request) {
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
@@ -168,126 +214,72 @@ export async function GET(request: Request) {
     }
 
     try {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        ensureEnv();
+        const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
         const dataHoje = getDataHoje();
         const mensagensEnviadas: string[] = [];
 
-        // =============================================
-        // 0. ANTI-REPETICAO: buscar o que ja foi gerado nos ultimos 7 dias
-        // =============================================
-        const seteDiasAtras = new Date();
-        seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
-        const dataLimite = seteDiasAtras.toISOString();
-
-        const { data: geracoesRecentes } = await supabase
-            .from('dna_geracoes')
-            .select('texto_msg, categoria, tema_principal, angulo_usado, titulo, imagem_central, abertura_tipo, fechamento_tipo')
-            .gte('created_at', dataLimite)
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-        // Monta contexto anti-repeticao para enviar nos filtros
-        const temasUsados = [...new Set((geracoesRecentes || []).map(g => g.tema_principal).filter(Boolean))];
-        const titulosUsados = [...new Set((geracoesRecentes || []).map(g => g.titulo).filter(Boolean))];
-        const imagensUsadas = [...new Set((geracoesRecentes || []).map(g => g.imagem_central).filter(Boolean))];
-        const aberturasUsadas = [...new Set((geracoesRecentes || []).map(g => g.abertura_tipo).filter(Boolean))];
-        const fechamentosUsados = [...new Set((geracoesRecentes || []).map(g => g.fechamento_tipo).filter(Boolean))];
-
-        // Extrair trechos curtos das msgs recentes para a IA evitar
-        const trechosRecentes = (geracoesRecentes || [])
-            .map(g => g.texto_msg?.substring(0, 80))
-            .filter(Boolean)
-            .slice(0, 20);
-
-        const antiRepeticao = {
-            temas_evitar: temasUsados.slice(0, 10),
-            titulos_evitar: titulosUsados.slice(0, 15),
-            imagens_evitar: imagensUsadas.slice(0, 10),
-            aberturas_saturadas: aberturasUsadas.slice(0, 5),
-            fechamentos_saturados: fechamentosUsados.slice(0, 5),
-            trechos_recentes: trechosRecentes,
-        };
-
-        console.log(`Anti-repeticao: ${temasUsados.length} temas, ${titulosUsados.length} titulos, ${trechosRecentes.length} trechos dos ultimos 7 dias`);
-
-        // =============================================
-        // 1. GERAR DNA (modo_favoritas) - 5 mensagens
-        // =============================================
         const filtrosFavoritas = getFiltrosDoDia(dataHoje, 'favoritas');
-        // Injeta contexto anti-repeticao nos filtros
-        filtrosFavoritas.anti_repeticao = antiRepeticao;
-        console.log('Filtros Favoritas:', JSON.stringify({ ...filtrosFavoritas, anti_repeticao: '...(omitido)' }));
+        console.log('Filtros Favoritas:', JSON.stringify(filtrosFavoritas));
+        const favoritas = await gerarMensagensValidadas('modo_favoritas', dataHoje, filtrosFavoritas);
 
-        const resultFavoritas = await gerarConteudo('modo_favoritas', dataHoje, filtrosFavoritas);
-
-        let msgsFavoritas: string[] = [];
-        if (resultFavoritas) {
-            msgsFavoritas = parseMensagens(resultFavoritas).slice(0, 5);
-
-            // Salvar no dna_geracoes
-            const batchIdFav = randomUUID();
-            for (const msg of msgsFavoritas) {
-                await supabase.from('dna_geracoes').insert({
-                    batch_id: batchIdFav,
-                    texto_msg: msg.trim(),
-                    categoria: 'devocional',
-                    filtros: filtrosFavoritas,
-                    build_style: 'favoritas',
-                });
-            }
-            console.log(`Favoritas: ${msgsFavoritas.length} msgs salvas (batch: ${batchIdFav})`);
-        }
-
-        // =============================================
-        // 2. GERAR ESTILO (modo_estilo) - 5 mensagens
-        // =============================================
         const filtrosEstilo = getFiltrosDoDia(dataHoje, 'estilo');
-        filtrosEstilo.anti_repeticao = antiRepeticao;
-        console.log('Filtros Estilo:', JSON.stringify({ ...filtrosEstilo, anti_repeticao: '...(omitido)' }));
+        console.log('Filtros Estilo:', JSON.stringify(filtrosEstilo));
+        const estilo = await gerarMensagensValidadas('modo_estilo', dataHoje, filtrosEstilo);
 
-        const resultEstilo = await gerarConteudo('modo_estilo', dataHoje, filtrosEstilo);
+        if (favoritas.messages.length > 0) {
+            const { batchId, records } = buildDnaGeracaoRecords(favoritas.messages, {
+                categoria: inferCategoriaParaGeracao('modo_favoritas', filtrosFavoritas),
+                filtros: filtrosFavoritas,
+                temaPrincipal: favoritas.response?.tema_usado,
+                buildStyle: 'favoritas',
+            });
 
-        let msgsEstilo: string[] = [];
-        if (resultEstilo) {
-            msgsEstilo = parseMensagens(resultEstilo).slice(0, 5);
-
-            // Salvar no dna_geracoes
-            const batchIdEst = randomUUID();
-            for (const msg of msgsEstilo) {
-                await supabase.from('dna_geracoes').insert({
-                    batch_id: batchIdEst,
-                    texto_msg: msg.trim(),
-                    categoria: 'reflexao',
-                    filtros: filtrosEstilo,
-                    build_style: 'estilo',
-                });
+            const { error } = await supabase.from('dna_geracoes').insert(records);
+            if (error) {
+                throw new Error(`Erro ao salvar favoritas (${batchId}): ${error.message}`);
             }
-            console.log(`Estilo: ${msgsEstilo.length} msgs salvas (batch: ${batchIdEst})`);
+
+            console.log(`Favoritas: ${records.length} msgs salvas (batch: ${batchId})`);
         }
 
-        // =============================================
-        // 3. ENVIAR TUDO VIA TELEGRAM
-        // =============================================
-        const todasMsgs = [...msgsFavoritas, ...msgsEstilo];
+        if (estilo.messages.length > 0) {
+            const { batchId, records } = buildDnaGeracaoRecords(estilo.messages, {
+                categoria: inferCategoriaParaGeracao('modo_estilo', filtrosEstilo),
+                filtros: filtrosEstilo,
+                temaPrincipal: estilo.response?.tema_usado,
+                buildStyle: 'estilo',
+            });
 
-        // Envia cabeçalho
+            const { error } = await supabase.from('dna_geracoes').insert(records);
+            if (error) {
+                throw new Error(`Erro ao salvar estilo (${batchId}): ${error.message}`);
+            }
+
+            console.log(`Estilo: ${records.length} msgs salvas (batch: ${batchId})`);
+        }
+
+        const todasMsgs = [...favoritas.messages, ...estilo.messages];
         if (todasMsgs.length > 0) {
-            const header = `DNA Gerado - ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n\nDia: ${filtrosFavoritas.diasSemana} | Fonte: Todas\nEstilo do dia: ${filtrosEstilo.estilo}\n\nTotal: ${todasMsgs.length} mensagens`;
+            const header = `DNA Gerado - ${new Date().toLocaleDateString('pt-BR', {
+                timeZone: 'America/Sao_Paulo',
+            })}\n\nDia: ${String(filtrosFavoritas.diasSemana)} | Fonte: Todas\nEstilo do dia: ${String(
+                filtrosEstilo.estilo || '-'
+            )}\n\nTotal: ${todasMsgs.length} mensagens`;
+
             await enviarTelegram(header);
-            await new Promise(r => setTimeout(r, 300));
+            await delay(300);
         }
 
-        // Envia cada mensagem numerada
         let num = 1;
         for (const msg of todasMsgs) {
-            const textoLimpo = limparMarkdown(msg);
-            const label = num <= msgsFavoritas.length ? 'DNA' : 'Estilo';
-            const msgFinal = `[${num}/${todasMsgs.length}] ${label}\n\n${textoLimpo}`;
-
+            const label = num <= favoritas.messages.length ? 'DNA' : 'Estilo';
+            const msgFinal = `[${num}/${todasMsgs.length}] ${label}\n\n${msg}`;
             const enviou = await enviarTelegram(msgFinal);
-            if (enviou) mensagensEnviadas.push(`Msg ${num} (${label})`);
-
-            await new Promise(r => setTimeout(r, 500));
+            if (enviou) {
+                mensagensEnviadas.push(`Msg ${num} (${label})`);
+            }
+            await delay(450);
             num++;
         }
 
@@ -298,10 +290,15 @@ export async function GET(request: Request) {
             filtros_estilo: filtrosEstilo,
             mensagens_enviadas: mensagensEnviadas,
             total: mensagensEnviadas.length,
+            favoritas_validas: favoritas.messages.length,
+            favoritas_rejeitadas: favoritas.rejectedCount,
+            favoritas_faltantes: favoritas.shortfall,
+            estilo_validas: estilo.messages.length,
+            estilo_rejeitadas: estilo.rejectedCount,
+            estilo_faltantes: estilo.shortfall,
         });
-
-    } catch (e: any) {
-        console.error('Erro no cron daily-dna:', e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (error: any) {
+        console.error('Erro no cron daily-dna:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

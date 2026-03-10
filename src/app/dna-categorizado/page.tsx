@@ -22,8 +22,15 @@ import {
     saveDnaGeracoes,
     saveFeedbackDna, // NEW Function
     DnaGeracao,
+    ExecuteResponse,
     fetchInspirationCandidates
 } from '@/lib/supabase';
+import {
+    getMessageDedupKey,
+    inferCategoriaParaGeracao,
+    processGeneratedContent,
+    splitGeneratedMessages,
+} from '@/lib/dna-processing';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
@@ -285,6 +292,70 @@ export default function DnaCategorizadoPage() {
         setAdding(false);
     };
 
+    const executarGeracaoCurada = async (
+        modoId: 'modo_favoritas' | 'modo_estilo',
+        filtros: Record<string, unknown>
+    ): Promise<{
+        ok: boolean;
+        displayText: string;
+        messages: string[];
+        meta: ExecuteResponse | null;
+        error?: string;
+        shortfall: number;
+    }> => {
+        const quantidadeEsperada =
+            typeof filtros.quantidade === 'number' && Number.isFinite(filtros.quantidade)
+                ? filtros.quantidade
+                : 5;
+        const expectedCategory = inferCategoriaParaGeracao(modoId, filtros);
+        const approved: string[] = [];
+        const seen = new Set<string>();
+        let meta: ExecuteResponse | null = null;
+        let lastError: string | undefined;
+
+        for (let tentativa = 1; tentativa <= 2 && approved.length < quantidadeEsperada; tentativa++) {
+            const result = await executarModoComFiltros(modoId, getDataHoje(), filtros);
+            if (!result.ok || !result.resultado) {
+                lastError = result.error || 'Erro ao gerar.';
+                console.warn(`[${modoId}] tentativa ${tentativa} sem conteúdo válido:`, lastError);
+                continue;
+            }
+
+            meta = result;
+            const processed = processGeneratedContent(result.resultado, {
+                modoId,
+                filtros,
+                expectedCategory,
+                quantidadeEsperada,
+            });
+
+            console.log(
+                `[${modoId}] tentativa ${tentativa}: ${processed.messages.length} aprovadas, ${processed.rejected.length} rejeitadas`
+            );
+
+            processed.rejected.forEach((rejeitada, index) => {
+                console.warn(`[${modoId}] rejeitada (${tentativa}.${index + 1}):`, rejeitada.reasons.join(', '));
+            });
+
+            for (const message of processed.messages) {
+                const key = getMessageDedupKey(message);
+                if (!key || seen.has(key)) continue;
+                seen.add(key);
+                approved.push(message);
+                if (approved.length >= quantidadeEsperada) break;
+            }
+        }
+
+        return {
+            ok: approved.length > 0,
+            displayText: approved.join('\n\n---\n\n'),
+            messages: approved,
+            meta,
+            error: lastError,
+            shortfall: Math.max(0, quantidadeEsperada - approved.length),
+        };
+    };
+
     const handleGerar = async () => {
         if (items.length === 0) {
             alert('Adicione mensagens primeiro!');
@@ -315,23 +386,23 @@ export default function DnaCategorizadoPage() {
         };
 
         try {
-            const result = await executarModoComFiltros('modo_favoritas', getDataHoje(), filtros);
-            if (result.ok && result.resultado) {
-                setGeneratedResult(result.resultado);
+            const curated = await executarGeracaoCurada('modo_favoritas', filtros);
+            if (curated.ok) {
+                setGeneratedResult(curated.displayText);
                 setShowResult(true);
 
                 // NOVO: Salvar mensagens na tabela dna_geracoes com tracking de tema
-                const mensagens = parseMessages(result.resultado);
-                if (mensagens.length > 0) {
-                    const categoriaStr = filtroCategoriaGerar !== 'todas' ? filtroCategoriaGerar : undefined;
-                    const temaUsado = result.tema_usado || filtroTema || undefined;
-                    await saveDnaGeracoes(mensagens, categoriaStr, filtros, temaUsado, undefined, 'favoritas');
-                    // Recarregar lista de gerações recentes
-                    const novasGeracoes = await getDnaGeracoes(3);
-                    setRecentGenerations(novasGeracoes);
+                if (curated.shortfall > 0) {
+                    console.warn(`[modo_favoritas] lote parcial: faltaram ${curated.shortfall} mensagens.`);
                 }
+                const categoriaPersistida = inferCategoriaParaGeracao('modo_favoritas', filtros) || undefined;
+                const temaUsado = curated.meta?.tema_usado || filtroTema || undefined;
+                await saveDnaGeracoes(curated.messages, categoriaPersistida, filtros, temaUsado, undefined, 'favoritas');
+                const novasGeracoes = await getDnaGeracoes(3);
+                    // Recarregar lista de gerações recentes
+                setRecentGenerations(novasGeracoes);
             } else {
-                alert(result.error || 'Erro ao gerar.');
+                alert(curated.error || 'Nenhuma mensagem válida foi gerada.');
             }
         } catch (e) {
             alert('Erro de conexão.');
@@ -428,20 +499,22 @@ export default function DnaCategorizadoPage() {
         };
 
         try {
-            const result = await executarModoComFiltros('modo_estilo', getDataHoje(), filtros);
-            if (result.ok && result.resultado) {
-                setGeneratedResult(result.resultado);
+            const curated = await executarGeracaoCurada('modo_estilo', filtros);
+            if (curated.ok) {
+                setGeneratedResult(curated.displayText);
                 setShowResult(true);
 
-                const mensagens = parseMessages(result.resultado);
-                if (mensagens.length > 0) {
-                    const temaUsado = result.tema_usado || filtroTema || undefined;
-                    await saveDnaGeracoes(mensagens, selectedStyleCategory, filtros, temaUsado, undefined, 'estilo');
-                    const novasGeracoes = await getDnaGeracoes(3);
-                    setRecentGenerations(novasGeracoes);
+                if (curated.shortfall > 0) {
+                    console.warn(`[modo_estilo] lote parcial: faltaram ${curated.shortfall} mensagens.`);
                 }
+
+                const categoriaPersistida = inferCategoriaParaGeracao('modo_estilo', filtros) || selectedStyleCategory;
+                const temaUsado = curated.meta?.tema_usado || filtroTema || undefined;
+                await saveDnaGeracoes(curated.messages, categoriaPersistida, filtros, temaUsado, undefined, 'estilo');
+                const novasGeracoes = await getDnaGeracoes(3);
+                setRecentGenerations(novasGeracoes);
             } else {
-                alert(result.error || 'Erro ao gerar.');
+                alert(curated.error || 'Nenhuma mensagem válida foi gerada.');
             }
         } catch (e) {
             alert('Erro de conexão.');
@@ -449,15 +522,15 @@ export default function DnaCategorizadoPage() {
         setGenerating(false);
     };
 
-    const parseMessages = (text: string): string[] => {
-        if (!text) return [];
-        const parts = text.split(/\n\s*---\s*\n/);
-        return parts.filter(p => p.trim().length > 0);
-    };
-
     const getCategoriaInfo = (cat: CategoriaDna) => CATEGORIAS.find(c => c.id === cat) || CATEGORIAS[6];
 
     const totalItems = useMemo(() => stats.reduce((acc, s) => acc + s.total, 0), [stats]);
+    const generatedMessages = useMemo(
+        () => (generatedResult ? splitGeneratedMessages(generatedResult) : []),
+        [generatedResult]
+    );
+    const parseMessages = (text: string) =>
+        text === generatedResult ? generatedMessages : splitGeneratedMessages(text);
 
     return (
         <CosmicBackground className="font-sans text-text-primary">

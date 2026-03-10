@@ -1,5 +1,6 @@
 ﻿import { createClient } from '@supabase/supabase-js';
 import { withRetry, CircuitBreaker } from './retry';
+import { buildDnaGeracaoRecords } from './dna-processing';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -70,6 +71,12 @@ export interface DnaGeracao {
     tema_principal?: string;
     angulo_usado?: string;
     versiculos_usados?: string[];
+    titulo?: string;
+    imagem_central?: string;
+    abertura_tipo?: string;
+    fechamento_tipo?: string;
+    punchline?: string;
+    build_style?: string;
     created_at: string;
     // Feedback
     feedback?: number; // 1 = like, -1 = dislike, 0 = neutro
@@ -708,39 +715,17 @@ export async function saveDnaGeracoes(
     anguloUsado?: string,
     buildStyle?: string
 ): Promise<string | null> {
-    const batchId = crypto.randomUUID();
-    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens com batch_id: ${batchId}`);
+    console.log(`💾 [DNA_GERACOES] Salvando ${mensagens.length} mensagens...`);
 
     try {
-        const records = mensagens.map(texto => {
-            const textoLimpo = texto.trim();
-            // Extrai versículos automaticamente de cada mensagem
-            const versiculosExtraidos = extrairVersiculos(textoLimpo);
-            // Extrai tema do título se não foi fornecido
-            const temaExtraido = temaPrincipal || extrairTema(textoLimpo);
-            // Novos campos anti-repetição profunda
-            const tituloExtraido = extrairTitulo(textoLimpo);
-            const imagemCentral = detectarImagemCentral(textoLimpo);
-            const aberturaTipo = detectarAbertura(textoLimpo);
-            const fechamentoTipo = detectarFechamento(textoLimpo);
-            const punchline = extrairPunchline(textoLimpo);
-
-            return {
-                batch_id: batchId,
-                texto_msg: textoLimpo,
-                categoria: categoria || null,
-                filtros: filtros || null,
-                tema_principal: temaExtraido,
-                angulo_usado: anguloUsado || null,
-                versiculos_usados: versiculosExtraidos.length > 0 ? versiculosExtraidos : null,
-                titulo: tituloExtraido,
-                imagem_central: imagemCentral,
-                abertura_tipo: aberturaTipo,
-                fechamento_tipo: fechamentoTipo,
-                punchline: punchline,
-                build_style: buildStyle || 'favoritas'
-            };
+        const { batchId, records } = buildDnaGeracaoRecords(mensagens, {
+            categoria,
+            filtros,
+            temaPrincipal,
+            anguloUsado,
+            buildStyle,
         });
+        console.log(`💾 [DNA_GERACOES] batch_id: ${batchId}`);
 
         const { error } = await supabase
             .from('dna_geracoes')
