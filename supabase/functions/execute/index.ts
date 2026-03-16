@@ -64,12 +64,10 @@ function getCacheRangeForSaoPauloDate(dateStr: string): { startUtcIso: string; e
 }
 
 // =====================================================
-// CACHE GLOBAL - Arquivos de conhecimento (não mudam)
-// Evita baixar ~500KB+ em cada requisição
+// CACHE GLOBAL - CCE (Conhecimento Compilado Essencial)
+// BASE foi removida — MODO agora é self-contained
 // =====================================================
-let cachedBaseConhecimento: string | null = null;
 let cachedConhecimentoCompilado: string | null = null;
-let cachedBancoOuroExemplos: string | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora de cache
 
@@ -2696,36 +2694,26 @@ REGRAS FINAIS DE NUANCE:
       throw new Error(`CRÍTICO: Arquivo do modo (${modoRow.storage_path}) não encontrado. Verifique se o arquivo existe no Bucket 'pvc'.`);
     }
 
-    // Arquivos de conhecimento (COM CACHE)
+    // Arquivos de conhecimento (COM CACHE) — apenas CCE (BASE foi removida, MODO agora é self-contained)
     const agora = Date.now();
     const cacheExpirado = !cacheTimestamp || (agora - cacheTimestamp) > CACHE_TTL_MS;
 
-    if (cacheExpirado || !cachedBaseConhecimento || !cachedConhecimentoCompilado || !cachedBancoOuroExemplos) {
-      console.log("📥 [CACHE] Baixando arquivos de conhecimento (cache expirado ou vazio)...");
+    if (cacheExpirado || !cachedConhecimentoCompilado) {
+      console.log("📥 [CACHE] Baixando CCE (cache expirado ou vazio)...");
 
-      const [base, compilado, ouro] = await Promise.all([
-        downloadFile("base/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt"),
-        downloadFile("base/Conhecimento_Compilado_Essencial.v1.4.txt"),
-        downloadFile("base/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt")
-      ]);
+      const compilado = await downloadFile("base/Conhecimento_Compilado_Essencial.v1.4.txt");
 
-      if (!base) console.warn("⚠️ AVISO: BASE_DE_CONHECIMENTO_UNIFICADA não encontrada ou falhou. Usando vazio.");
       if (!compilado) console.warn("⚠️ AVISO: Conhecimento Essencial vazio/falhou.");
-      if (!ouro) console.warn("⚠️ AVISO: Banco de Ouro vazio/falhou.");
 
-      cachedBaseConhecimento = base || "";
       cachedConhecimentoCompilado = compilado || "";
-      cachedBancoOuroExemplos = ouro || "";
       cacheTimestamp = agora;
 
-      console.log(`📚 [CACHE] Atualizado. Base=${cachedBaseConhecimento.length}`);
+      console.log(`📚 [CACHE] Atualizado. CCE=${cachedConhecimentoCompilado.length}`);
     } else {
-      console.log("⚡ [CACHE] Usando arquivos de conhecimento do cache (rápido!)");
+      console.log("⚡ [CACHE] Usando CCE do cache (rápido!)");
     }
 
-    const baseConhecimentoCompleta = cachedBaseConhecimento!;
     const conhecimentoCompilado = cachedConhecimentoCompilado!;
-    const bancoOuroExemplos = cachedBancoOuroExemplos!;
 
     // 2. Buscar dados PROFUNDOS do dia na tabela leitura_do_dia
     // O payload do front pode estar desatualizado (View), então buscamos direto da fonte.
@@ -2878,12 +2866,11 @@ REGRAS FINAIS DE NUANCE:
       : "Nenhuma geração recente encontrada. Terra virgem.";
 
     // 8. Montar Prompt
-    // HIERARQUIA v4 (CORRIGIDA - Janeiro 2026):
+    // HIERARQUIA v5 (Março 2026 — MODO SELF-CONTAINED):
     // 1. PASSAGEM_DO_DIA (SSOT - Fonte de Verdade)
-    // 2. BASE_UNIFICADA (Regras e Proibições)
-    // 3. CCE (Conhecimento Compilado - Repertório)
-    // 4. MODO (Instruções Específicas)
-    // 5. Exemplos e Ajustes Finais
+    // 2. MODO (Instruções completas — voz, formato, auditoria, tudo)
+    // 3. CCE (Conhecimento Compilado — repertório de consulta)
+    // 4. Contexto temporal e anti-repetição
     const promptFinal = `
 ### [PASSAGEM_DO_DIA] ⭐⭐⭐ FONTE DE VERDADE ABSOLUTA (SSOT)
 Esta é a passagem bíblica do dia. TODO o conteúdo deve ser derivado EXCLUSIVAMENTE deste texto.
@@ -2894,99 +2881,14 @@ ${deepContext}
 ### [MOMENTO_E_DATA] (Contexto Temporal)
 ${contextoTemporal}
 
-### [MEMORIA_DE_OURO] ⭐⭐⭐⭐⭐ DNA SUPREMO (PRIORIDADE MÁXIMA)
-ATENÇÃO: Estes textos representam a "Voz Real" que o usuário deseja.
-Se houver conflito de estilo entre o MODO e estes EXEMPLOS, OS EXEMPLOS VENCEM.
-O MODO define "O QUE" falar (tópico).
-ESTES EXEMPLOS definem "COMO" falar (tom, ritmo, vocabulário).
-
-IMITE OBSESSIVAMENTE O ESTILO DESTES EXEMPLOS:
-${memoria}
-
-### [CONTEXTO_RECENTE] ⚠️ O QUE NÃO DIZER (ANTI-REPETIÇÃO)
-Aqui está o que você gerou recentemente para este modo.
-OBJETIVO: **NÃO SE REPITA**. Não use a mesma estrutura exata, nem as mesmas frases de impacto.
-Se a última mensagem foi sobre "paz", enfoque agora em "guerra" ou "vigilância". Mude o ângulo.
-${contextoRecenteTexto}
-
-### [REGRAS_DE_ESTILO] ⭐⭐⭐ OBRIGATÓRIO - ESTILO DA MENSAGEM
-
-📏 LIMITE DE TAMANHO (CRÍTICO):
-- MÁXIMO 150 palavras por mensagem (corpo + fechamento)
-- Corpo do devocional: MÁXIMO 120 palavras
-- Se ultrapassar: CORTAR e simplificar
-- Menos texto = mais lido. Seja CONCISO.
-
-🚫 PROIBIDO (NÃO USE):
-- TEXTOS LONGOS: Cada devocional deve ser CURTO e IMPACTANTE
-- Palavras/termos: "norte", "rota", "Farol", "neblina", "bússola" (exceto se no versículo)
-- METÁFORAS EM EXCESSO: NÃO repita "Agricultor", "vinha", "plantio", "solo", "semente", "raízes", "fruto", "pomar", "terra" em todas as mensagens. Use NO MÁXIMO 1 metáfora por mensagem.
-- RÓTULOS/MARCADORES: NÃO use "Aplicação:", "Hoje:", "Ação:", "Lembre-se:", "Sua resposta:", "Faça isso:", "Reflexão:", "Oração:". O texto deve fluir naturalmente SEM marcadores.
-- Frases longas e poéticas rebuscadas
-- Clichês de auto-ajuda
-- Versículo jogado no final sem explicação
-
-🎯 TOM PASTORAL SIMPLES:
-- Fale como um pastor experiente conversando com alguém na sala da igreja
-- Seja DIRETO, não poético
-- Use linguagem do dia a dia, não rebuscada
-- Confronte com amor, mas sem rodeios
-- Menos metáforas, mais verdade crua
-
-📅 CONTEXTO DO DIA (OBRIGATÓRIO):
-- SEMPRE mencione o DIA DA SEMANA quando relevante (ex: "nesta segunda-feira", "o peso desta semana")
-- Use o MOMENTO_E_DATA para contextualizar (segunda = início de semana, sexta = fim de expediente, domingo = culto)
-- Conecte a mensagem com a REALIDADE do dia do leitor
-
-✅ OBRIGATÓRIO (SEMPRE USE):
-
-1. TÍTULO: Provocativo, em CAIXA ALTA, máximo 15 palavras
-   - CERTO: "A FALTA DE PERDÃO NÃO PRENDE QUEM TE FERIU. PRENDE VOCÊ."
-   - ERRADO: "O fim da neblina"
-
-2. FRASES CURTAS E PUNCHY:
-   - CERTO: "Arrependimento não é vergonha. É coragem."
-   - ERRADO: "Quando a neblina do luto invade a casa..."
-
-3. CONTRASTES (não é X, é Y / menos X, mais Y):
-   - CERTO: "Perdoar não é concordar. Não é esquecer. É decidir não continuar preso."
-   - ERRADO: "O perdão é importante para a cura"
-
-4. TOM DIRETO E PESSOAL:
-   - CERTO: "Enquanto você segura a mágoa, o inimigo constrói fortalezas."
-   - ERRADO: "Quando a gente tateia as paredes..."
-
-5. DECLARAÇÕES PROFÉTICAS (lista de "não vai"):
-   - CERTO: "O cansaço não vai te parar. A dúvida não vai te governar. O medo não vai ter a última palavra."
-
-6. PROFUNDIDADE TEOLÓGICA:
-   - Explique o contexto histórico do versículo (o que Israel vivia)
-   - Conecte com a passagem do dia
-   - Use termos bíblicos quando relevante
-
-7. EXEGESE DO VERSÍCULO:
-   - Não apenas cite, EXPLIQUE o que o texto significa
-   - CERTO: "Jesus foi direto: 'Se vocês não perdoarem...' Perdoar não é concordar..."
-   - ERRADO: Apenas colocar o versículo entre aspas
-
-8. FECHAMENTO COM IMPERATIVO CLARO:
-   - CERTO: "Perdoe. Seja livre." / "Hoje, escolha soltar."
-   - ERRADO: "Peça a Deus força para continuar"
-
-📐 ESTRUTURA IDEAL:
-1. Título provocativo (CAPS)
-2. Abertura com afirmação forte
-3. Desenvolvimento com contrastes e explicação
-4. Versículo como PROVA (no meio, não no final)
-5. Aplicação direta com "você"
-6. Fechamento imperativo
-
-### [PERSONALIDADE_DINAMICA] ⭐⭐⭐ ÂNGULO E TEMPERATURA DO DIA
-${instrucaoVariabilidade}
-
-### [INSTRUCOES_MODO] ⭐ DIRETRIZES TÉCNICAS
-Use estas instruções para estruturar o conteúdo, mas mantenha a VOZ dos exemplos acima a todo custo:
+### [INSTRUCOES_MODO] ⭐⭐⭐ MODO ATIVO (PRIORIDADE MÁXIMA)
+Este é o prompt completo do modo. Contém TODAS as regras: identidade, voz, formato,
+matrizes, anti-clichê, auditoria. Seguir INTEGRALMENTE.
+Em caso de conflito com qualquer outra seção: o MODO vence.
 ${modoTexto}
+
+### [PERSONALIDADE_DINAMICA] ÂNGULO E TEMPERATURA DO DIA
+${instrucaoVariabilidade}
 
 ### [ARQUETIPO_E_VOZ] Ajustes de Tom
 ARQUETIPO: ${payload.arquetipo}
@@ -2994,21 +2896,23 @@ VOZ: ${payload.voice_nome} - ${payload.voice_descricao}
 ${formatVoiceSection(payload.passagem_do_dia)}
 ${formatArchetypeSection(arquetipoSorteado)}
 
+### [CONTEXTO_RECENTE] ⚠️ ANTI-REPETIÇÃO
+Aqui está o que você gerou recentemente para este modo.
+NÃO SE REPITA. Mude ângulo, estrutura e frases de impacto.
+${contextoRecenteTexto}
+
+### [MEMORIA_ESTILO] Exemplos Aprovados (Referência de Tom)
+Estes textos representam o estilo desejado. Use como REFERÊNCIA de cadência e temperatura.
+O MODO define as regras. Os exemplos calibram a música.
+${memoria}
+
 ### [AGENT_START] (Regras Gerais do Agente)
 ${agentStartFinal}
 
-### [CONHECIMENTO_E_REGRAS_COMPLETO] BASE UNIFICADA (Consulta)
-Este é o arquivo de conhecimento completo. Use como referência para dúvidas sobre teologia e vocabulário:
-${baseConhecimentoCompleta}
-
 ### [CONHECIMENTO_COMPILADO_ESSENCIAL] CCE (Repertório de Consulta)
-Catálogo de temas, metáforas e aplicações. Use para enriquecer quando necessário:
+Catálogo de temas, versos por tema, movimentos DE→PARA, anti-arcaísmos, frases de autoridade.
+Consultar quando o MODO indicar. CCE é CONTEÚDO de apoio, não muda regras.
 ${conhecimentoCompilado}
-
-### [BANCO_DE_OURO_EXEMPLOS] EXEMPLOS DE ESTILO (Referência Adicional)
-Use estes exemplos como referência de qualidade e estilo, NÃO copie literalmente:
-${bancoOuroExemplos}
-
 
 ${pergunta ? `
 ### [PERGUNTA_DO_USUARIO] 🗣️ RESPONDA ESTA PERGUNTA
@@ -3036,7 +2940,7 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      const MODEL_NAME = "gemini-3-flash-preview"; // Solicitado EXPLICITAMENTE pelo usuário
+      const MODEL_NAME = "gemini-3-flash-preview";
       console.log(`🤖 Chamando ${MODEL_NAME} (Endpoint v1beta)...`);
 
       // MUDANÇA: Voltando para v1beta pois modelos "preview" geralmente não estão na v1 (GA)
@@ -3163,6 +3067,70 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
       console.warn("⚠️ Atingido limite máximo de turnos de ferramenta.");
       // Tenta pegar o que tiver ou falhar
       resultadoFinal = "Erro: Limite de chamadas de ferramenta excedido.";
+    }
+
+    // =====================================================
+    // PASSE 2 — REVISÃO E REESCRITA (Técnica SQUAD)
+    // Segundo call ao Gemini: revisa, pontua e reescreve peças fracas
+    // =====================================================
+    if (!pergunta && resultadoFinal && !resultadoFinal.startsWith("Erro")) {
+      console.log("🔍 [PASSE 2] Iniciando revisão de qualidade (SQUAD)...");
+
+      const promptRevisao = `
+Você é uma REVISORA EXIGENTE de devocionais. Recebeu 6 peças para revisar.
+
+## PEÇAS PARA REVISÃO:
+${resultadoFinal}
+
+## RUBRICA DE QUALIDADE (pontue cada peça de 0-10 em 5 categorias):
+1. BÍBLICO (peso 3): Precisão teológica, verso correto no contexto, sem prosperidade
+2. ESCRITA (peso 2): Gancho forte, ritmo, sem clichê, fechamento memorável
+3. ENGAJAMENTO (peso 2): Para o scroll? Gera identificação? Faz salvar?
+4. FORMATO (peso 1.5): Segue o formato declarado? Anatomia completa?
+5. TOM (peso 1.5): Voz pastoral autêntica? Mesa de café, não púlpito?
+
+NOTA FINAL = (Bíblico×3 + Escrita×2 + Engajamento×2 + Formato×1.5 + Tom×1.5) / 10
+
+## REJEIÇÃO AUTOMÁTICA (nota 0 na peça):
+- Versículo incorreto ou fora do contexto
+- Teologia da prosperidade
+- Gancho genérico ("Bom dia a todos", "A passagem de hoje nos ensina")
+- Linguagem de coach ("destrave", "tome posse", "declare vitória")
+- Peça idêntica em estrutura a outra do lote
+
+## SUA TAREFA:
+1. Pontue CADA peça (P01 a P06) com nota final
+2. Identifique as peças com nota < 7.5
+3. REESCREVA as peças fracas mantendo o verso mas melhorando gancho, ritmo e fechamento
+4. Se TODAS as peças tiverem nota >= 7.5, retorne o lote ORIGINAL sem mudanças
+
+## FORMATO DE SAÍDA OBRIGATÓRIO:
+Retorne APENAS o lote final (6 peças revisadas), pronto para uso.
+NÃO inclua a tabela de notas na saída final — apenas as peças.
+Use o mesmo formato: separador --- entre peças, cabeçalho 📖 Leitura do dia em cada uma.
+Se reescreveu alguma peça, ela substitui a original no lote.
+`;
+
+      try {
+        const reviewData = await callGeminiAPI([{ role: 'user', parts: [{ text: promptRevisao }] }]);
+
+        if (reviewData.candidates?.[0]?.content?.parts?.[0]?.text) {
+          const revisado = reviewData.candidates[0].content.parts[0].text;
+          // Validação básica: só aceita se tiver pelo menos 3 separadores (indica que tem peças)
+          const separadores = (revisado.match(/---/g) || []).length;
+          if (separadores >= 2) {
+            console.log(`✅ [PASSE 2] Revisão concluída. ${separadores} separadores encontrados.`);
+            resultadoFinal = revisado;
+          } else {
+            console.warn(`⚠️ [PASSE 2] Revisão retornou formato inválido (${separadores} separadores). Mantendo original.`);
+          }
+        } else {
+          console.warn("⚠️ [PASSE 2] Revisão não retornou texto. Mantendo geração original.");
+        }
+      } catch (reviewErr: any) {
+        console.error("❌ [PASSE 2] Erro na revisão:", reviewErr.message);
+        // Não falha — mantém a geração original
+      }
     }
 
     // 10. Salvar e Retornar

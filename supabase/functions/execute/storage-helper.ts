@@ -1,13 +1,12 @@
 /**
  * Storage Helper - Gerencia downloads do Supabase Storage
+ * v5 — BASE removida. Apenas CCE como conhecimento externo.
  */
 
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Cache em memória
-let cachedBaseConhecimento: string | null = null;
+// Cache em memória (apenas CCE)
 let cachedConhecimentoCompilado: string | null = null;
-let cachedBancoOuroExemplos: string | null = null;
 let cacheTimestamp: number | null = null;
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora
 
@@ -34,42 +33,32 @@ export async function downloadFile(
 }
 
 /**
- * Carrega arquivos de conhecimento (com cache)
+ * Carrega CCE (Conhecimento Compilado Essencial) com cache
  */
 export async function loadKnowledgeFiles(
     supabase: SupabaseClient,
     bucket: string = 'pvc'
 ): Promise<{
-    baseConhecimento: string;
     conhecimentoCompilado: string;
-    bancoOuroExemplos: string;
 }> {
     const now = Date.now();
     const cacheExpired = !cacheTimestamp || (now - cacheTimestamp) > CACHE_TTL_MS;
 
-    if (cacheExpired || !cachedBaseConhecimento) {
-        console.log('📥 [CACHE] Baixando arquivos de conhecimento...');
+    if (cacheExpired || !cachedConhecimentoCompilado) {
+        console.log('📥 [CACHE] Baixando CCE...');
 
-        const [base, compilado, ouro] = await Promise.all([
-            downloadFile(supabase, bucket, 'base/BASE_DE_CONHECIMENTO_UNIFICADA_v2.txt'),
-            downloadFile(supabase, bucket, 'base/Conhecimento_Compilado_Essencial.v1.4.txt'),
-            downloadFile(supabase, bucket, 'base/BANCO_DE_OURO_EXEMPLOS E BANCO_MICRO_SHOTS.txt')
-        ]);
+        const compilado = await downloadFile(supabase, bucket, 'base/Conhecimento_Compilado_Essencial.v1.4.txt');
 
-        cachedBaseConhecimento = base || '';
         cachedConhecimentoCompilado = compilado || '';
-        cachedBancoOuroExemplos = ouro || '';
         cacheTimestamp = now;
 
-        console.log(`📚 [CACHE] Atualizado. Base=${cachedBaseConhecimento.length} chars`);
+        console.log(`📚 [CACHE] Atualizado. CCE=${cachedConhecimentoCompilado.length} chars`);
     } else {
-        console.log('⚡ [CACHE] Usando cache existente');
+        console.log('⚡ [CACHE] Usando CCE do cache');
     }
 
     return {
-        baseConhecimento: cachedBaseConhecimento!,
-        conhecimentoCompilado: cachedConhecimentoCompilado!,
-        bancoOuroExemplos: cachedBancoOuroExemplos!
+        conhecimentoCompilado: cachedConhecimentoCompilado!
     };
 }
 
@@ -103,9 +92,7 @@ export async function loadRequestFiles(
  * Invalida o cache manualmente
  */
 export function invalidateCache(): void {
-    cachedBaseConhecimento = null;
     cachedConhecimentoCompilado = null;
-    cachedBancoOuroExemplos = null;
     cacheTimestamp = null;
     console.log('🗑️ [CACHE] Invalidado manualmente');
 }
