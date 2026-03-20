@@ -439,19 +439,17 @@ export async function GET(request: Request) {
                 const parsed0 = parseReferencia(partes[0]);
                 const livroIdPrincipal = parsed0?.livroId || 1;
 
-                const melhores = await selecionarMelhoresVersiculosIA(todosVersiculos, referenciaDoDia, 3);
+                const melhores = await selecionarMelhoresVersiculosIA(todosVersiculos, referenciaDoDia, 1);
 
-                // Enviar cada um como mensagem separada
-                for (const v of melhores) {
+                // Enviar apenas o melhor versículo
+                if (melhores.length > 0) {
+                    const v = melhores[0];
                     const livroNome = (v.livroId ? ID_PARA_NOME[v.livroId] : null) || ID_PARA_NOME[livroIdPrincipal] || '';
                     const refCompleta = `${livroNome} ${v.capitulo}:${v.verse}`;
                     const msgVersiculo = `Versiculo do Dia\n\n"${v.text}"\n\n${refCompleta}`;
 
                     const enviou = await enviarTelegram(msgVersiculo);
                     if (enviou) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
-
-                    // Pequena pausa entre mensagens para nao dar flood
-                    await new Promise(r => setTimeout(r, 500));
                 }
             } else {
                 console.log('Nenhum versiculo carregado para:', referenciaDoDia);

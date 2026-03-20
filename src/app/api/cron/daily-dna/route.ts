@@ -16,6 +16,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const ESTILOS_ROTACAO = ['devocional', 'oracao', 'versiculo', 'reflexao', 'exortacao', 'declaracao'];
 const MAX_GENERATION_ATTEMPTS = 2;
+const CANDIDATAS_POR_MODO = 5;
 
 interface ExecuteGenerationResult {
     ok: boolean;
@@ -45,7 +46,7 @@ function getFiltrosDoDia(dataStr: string, modo: 'favoritas' | 'estilo'): Record<
     const diaSemana = dias[data.getDay()];
 
     const filtros: Record<string, unknown> = {
-        quantidade: 5,
+        quantidade: CANDIDATAS_POR_MODO,
         diasSemana: diaSemana,
         contextoEstrategia: 'all',
         usarDnaBase: true,
@@ -135,6 +136,64 @@ async function gerarConteudo(
         console.error('Erro ao chamar Edge Function:', error);
         return null;
     }
+}
+
+async function selecionarMelhorMensagemIA(
+    mensagens: string[],
+    tipo: string
+): Promise<string> {
+    if (mensagens.length <= 1) return mensagens[0] || '';
+
+    try {
+        const listaFormatada = mensagens
+            .map((msg, i) => `--- MENSAGEM ${i + 1} ---\n${msg}`)
+            .join('\n\n');
+
+        const prompt = `Voce e um curador de conteudo cristao. Abaixo estao ${mensagens.length} mensagens do tipo "${tipo}".
+
+Escolha a MELHOR mensagem considerando:
+1. Impacto espiritual - toca o coracao
+2. Originalidade - nao e generica ou cliche
+3. Naturalidade - nao parece gerada por IA
+4. Clareza - a mensagem e facil de entender
+5. Profundidade - tem substancia teologica
+
+Responda APENAS com o numero da melhor mensagem. Exemplo: 3
+
+${listaFormatada}`;
+
+        const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                modo_id: 'chat_pastoral',
+                data: getDataHoje(),
+                pergunta: prompt,
+            }),
+        });
+
+        if (resp.ok) {
+            const json = await resp.json();
+            const resultado = (json.resultado || '').trim();
+            const match = resultado.match(/(\d+)/);
+            if (match) {
+                const idx = parseInt(match[1], 10) - 1;
+                if (idx >= 0 && idx < mensagens.length) {
+                    console.log(`[${tipo}] IA selecionou mensagem #${idx + 1} de ${mensagens.length}`);
+                    return mensagens[idx];
+                }
+            }
+        }
+    } catch (error) {
+        console.error(`[${tipo}] Erro na selecao por IA, usando fallback:`, error);
+    }
+
+    // Fallback: retorna a primeira
+    console.log(`[${tipo}] Fallback: usando primeira mensagem`);
+    return mensagens[0];
 }
 
 async function gerarMensagensValidadas(
@@ -259,28 +318,20 @@ export async function GET(request: Request) {
             console.log(`Estilo: ${records.length} msgs salvas (batch: ${batchId})`);
         }
 
-        const todasMsgs = [...favoritas.messages, ...estilo.messages];
-        if (todasMsgs.length > 0) {
-            const header = `DNA Gerado - ${new Date().toLocaleDateString('pt-BR', {
-                timeZone: 'America/Sao_Paulo',
-            })}\n\nDia: ${String(filtrosFavoritas.diasSemana)} | Fonte: Todas\nEstilo do dia: ${String(
-                filtrosEstilo.estilo || '-'
-            )}\n\nTotal: ${todasMsgs.length} mensagens`;
-
-            await enviarTelegram(header);
-            await delay(300);
+        if (favoritas.messages.length > 0) {
+            const melhorFavorita = await selecionarMelhorMensagemIA(favoritas.messages, 'DNA Geração');
+            const msgDna = `DNA Geração\n\n${melhorFavorita}`;
+            const enviou = await enviarTelegram(msgDna);
+            if (enviou) mensagensEnviadas.push('DNA Geração');
+            await delay(450);
         }
 
-        let num = 1;
-        for (const msg of todasMsgs) {
-            const label = num <= favoritas.messages.length ? 'DNA' : 'Estilo';
-            const msgFinal = `[${num}/${todasMsgs.length}] ${label}\n\n${msg}`;
-            const enviou = await enviarTelegram(msgFinal);
-            if (enviou) {
-                mensagensEnviadas.push(`Msg ${num} (${label})`);
-            }
+        if (estilo.messages.length > 0) {
+            const melhorEstilo = await selecionarMelhorMensagemIA(estilo.messages, 'DNA Estilo');
+            const msgEstilo = `DNA Estilo (${String(filtrosEstilo.estilo || '-')})\n\n${melhorEstilo}`;
+            const enviou = await enviarTelegram(msgEstilo);
+            if (enviou) mensagensEnviadas.push('DNA Estilo');
             await delay(450);
-            num++;
         }
 
         return NextResponse.json({
