@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
@@ -474,7 +475,18 @@ interface InteracoesMap {
     notas: Record<number, BibliaInteracao>;
 }
 
-export default function BibliotecaPage() {
+export default function BibliotecaPageWrapper() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-amber-500 animate-spin" /></div>}>
+            <BibliotecaPage />
+        </Suspense>
+    );
+}
+
+function BibliotecaPage() {
+    const searchParams = useSearchParams();
+    const abrirSalvos = searchParams.get('salvos') === '1';
+
     // Estado principal
     const [livroAtual, setLivroAtual] = useState(LIVROS_BIBLIA[0]);
     const [capituloAtual, setCapituloAtual] = useState(1);
@@ -542,10 +554,20 @@ export default function BibliotecaPage() {
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
 
     // Painel de salvos
-    const [painelAberto, setPainelAberto] = useState(false);
+    const [painelAberto, setPainelAberto] = useState(abrirSalvos);
     const [painelAba, setPainelAba] = useState<'favoritos' | 'destaques' | 'notas'>('favoritos');
     const [painelItens, setPainelItens] = useState<BibliaInteracao[]>([]);
-    const [painelLoading, setPainelLoading] = useState(false);
+    const [painelLoading, setPainelLoading] = useState(abrirSalvos);
+
+    // Carregar dados do painel quando aberto via query param
+    useEffect(() => {
+        if (abrirSalvos) {
+            getAllInteracoesPorTipo('favorito', 200).then(dados => {
+                setPainelItens(dados);
+                setPainelLoading(false);
+            });
+        }
+    }, [abrirSalvos]);
     const [painelNotaEditId, setPainelNotaEditId] = useState<number | null>(null);
     const [painelNotaTexto, setPainelNotaTexto] = useState('');
     const [novaNotaAberta, setNovaNotaAberta] = useState(false);

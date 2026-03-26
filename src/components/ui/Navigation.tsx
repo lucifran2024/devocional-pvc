@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Sparkles, User } from 'lucide-react';
+import { Home, BookOpen, Bookmark, User } from 'lucide-react';
 
 export function Navigation() {
     const pathname = usePathname();
@@ -10,7 +10,7 @@ export function Navigation() {
     const navItems = [
         { name: 'Hoje', href: '/', icon: Home },
         { name: 'Bíblia', href: '/biblioteca', icon: BookOpen },
-        { name: 'Inspiração', href: '/devocional-externo', icon: Sparkles },
+        { name: 'Salvos', href: '/biblioteca?salvos=1', icon: Bookmark },
         { name: 'Diário', href: '/historico', icon: User },
     ];
 
@@ -20,7 +20,8 @@ export function Navigation() {
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-surface-1/80 backdrop-blur-xl border-t border-slate-200 dark:border-border-subtle md:hidden pb-2 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.1)]">
                 <ul className="flex items-center justify-around p-2">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+                        const hrefPath = item.href.split('?')[0];
+                        const isActive = pathname === hrefPath || (hrefPath !== '/' && pathname?.startsWith(hrefPath));
                         return (
                             <li key={item.name} className="flex-1">
                                 <Link
@@ -46,7 +47,8 @@ export function Navigation() {
                 </div>
                 <ul className="flex flex-col gap-6 w-full px-4">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+                        const hrefPath = item.href.split('?')[0];
+                        const isActive = pathname === hrefPath || (hrefPath !== '/' && pathname?.startsWith(hrefPath));
                         return (
                             <li key={item.name} className="w-full">
                                 <Link
