@@ -1,0 +1,662 @@
+// ===========================================
+// PERÍCOPES BÍBLICAS - Títulos das seções/acontecimentos por capítulo
+// Formato: livroId -> capitulo -> [{ versiculo, titulo }]
+// ===========================================
+
+export interface Pericope {
+    verse: number;
+    title: string;
+}
+
+// Mapa: livroId -> capitulo -> perícopes
+const PERICOPES: Record<number, Record<number, Pericope[]>> = {
+    // ==========================================
+    // MATEUS (40)
+    // ==========================================
+    40: {
+        1: [
+            { verse: 1, title: 'A Genealogia de Jesus Cristo' },
+            { verse: 18, title: 'O Nascimento de Jesus' },
+        ],
+        2: [
+            { verse: 1, title: 'A Visita dos Magos' },
+            { verse: 13, title: 'A Fuga para o Egito' },
+            { verse: 16, title: 'A Matança dos Meninos' },
+            { verse: 19, title: 'A Volta do Egito' },
+        ],
+        3: [
+            { verse: 1, title: 'A Pregação de João Batista' },
+            { verse: 13, title: 'O Batismo de Jesus' },
+        ],
+        4: [
+            { verse: 1, title: 'A Tentação de Jesus' },
+            { verse: 12, title: 'O Início do Ministério na Galileia' },
+            { verse: 18, title: 'Jesus Chama os Primeiros Discípulos' },
+            { verse: 23, title: 'Jesus Cura os Doentes' },
+        ],
+        5: [
+            { verse: 1, title: 'O Sermão do Monte: As Bem-Aventuranças' },
+            { verse: 13, title: 'O Sal da Terra e a Luz do Mundo' },
+            { verse: 17, title: 'Jesus e a Lei' },
+            { verse: 21, title: 'A Ira e a Reconciliação' },
+            { verse: 27, title: 'O Adultério' },
+            { verse: 31, title: 'O Divórcio' },
+            { verse: 33, title: 'Os Juramentos' },
+            { verse: 38, title: 'A Vingança' },
+            { verse: 43, title: 'O Amor aos Inimigos' },
+        ],
+        6: [
+            { verse: 1, title: 'A Esmola' },
+            { verse: 5, title: 'A Oração e o Pai Nosso' },
+            { verse: 16, title: 'O Jejum' },
+            { verse: 19, title: 'Os Tesouros no Céu' },
+            { verse: 25, title: 'A Confiança em Deus' },
+        ],
+        7: [
+            { verse: 1, title: 'Não Julguem os Outros' },
+            { verse: 7, title: 'Peçam, Busquem, Batam' },
+            { verse: 13, title: 'A Porta Estreita' },
+            { verse: 15, title: 'A Árvore e Seus Frutos' },
+            { verse: 21, title: 'Os Verdadeiros Discípulos' },
+            { verse: 24, title: 'As Duas Casas' },
+        ],
+        8: [
+            { verse: 1, title: 'Jesus Cura um Leproso' },
+            { verse: 5, title: 'A Fé do Oficial Romano' },
+            { verse: 14, title: 'Jesus Cura a Sogra de Pedro' },
+            { verse: 18, title: 'O Preço de Seguir Jesus' },
+            { verse: 23, title: 'Jesus Acalma a Tempestade' },
+            { verse: 28, title: 'Jesus Cura Dois Endemoninhados' },
+        ],
+        9: [
+            { verse: 1, title: 'Jesus Cura um Paralítico' },
+            { verse: 9, title: 'Jesus Chama Mateus' },
+            { verse: 14, title: 'A Pergunta sobre o Jejum' },
+            { verse: 18, title: 'A Filha de Jairo e a Mulher Doente' },
+            { verse: 27, title: 'Jesus Cura Dois Cegos' },
+            { verse: 32, title: 'Jesus Cura um Mudo' },
+            { verse: 35, title: 'A Compaixão de Jesus' },
+        ],
+        10: [
+            { verse: 1, title: 'Os Doze Apóstolos' },
+            { verse: 5, title: 'A Missão dos Doze' },
+            { verse: 16, title: 'Perseguições Futuras' },
+            { verse: 26, title: 'A Quem Temer' },
+            { verse: 32, title: 'Confessar Cristo Diante dos Homens' },
+            { verse: 34, title: 'Jesus Traz Divisão' },
+        ],
+        11: [
+            { verse: 1, title: 'Jesus e João Batista' },
+            { verse: 16, title: 'Jesus Repreende as Cidades' },
+            { verse: 25, title: 'Venham a Mim' },
+        ],
+        12: [
+            { verse: 1, title: 'Jesus É Senhor do Sábado' },
+            { verse: 9, title: 'Jesus Cura no Sábado' },
+            { verse: 22, title: 'Jesus e Belzebu' },
+            { verse: 33, title: 'A Árvore e Seus Frutos' },
+            { verse: 38, title: 'O Sinal de Jonas' },
+            { verse: 46, title: 'A Mãe e os Irmãos de Jesus' },
+        ],
+        13: [
+            { verse: 1, title: 'A Parábola do Semeador' },
+            { verse: 10, title: 'O Propósito das Parábolas' },
+            { verse: 18, title: 'Jesus Explica a Parábola do Semeador' },
+            { verse: 24, title: 'A Parábola do Joio' },
+            { verse: 31, title: 'A Parábola do Grão de Mostarda' },
+            { verse: 33, title: 'A Parábola do Fermento' },
+            { verse: 36, title: 'Jesus Explica a Parábola do Joio' },
+            { verse: 44, title: 'O Tesouro Escondido e a Pérola' },
+            { verse: 47, title: 'A Parábola da Rede' },
+            { verse: 53, title: 'Jesus em Nazaré' },
+        ],
+        14: [
+            { verse: 1, title: 'A Morte de João Batista' },
+            { verse: 13, title: 'Jesus Alimenta Cinco Mil Homens' },
+            { verse: 22, title: 'Jesus Anda sobre a Água' },
+            { verse: 34, title: 'Jesus Cura os Doentes em Genesaré' },
+        ],
+        15: [
+            { verse: 1, title: 'O Que Torna a Pessoa Impura' },
+            { verse: 21, title: 'A Fé da Mulher Cananeia' },
+            { verse: 29, title: 'Jesus Cura Muitos Doentes' },
+            { verse: 32, title: 'Jesus Alimenta Quatro Mil Homens' },
+        ],
+        16: [
+            { verse: 1, title: 'Os Fariseus Pedem um Sinal' },
+            { verse: 5, title: 'O Fermento dos Fariseus' },
+            { verse: 13, title: 'A Confissão de Pedro' },
+            { verse: 21, title: 'Jesus Anuncia Sua Morte' },
+            { verse: 24, title: 'O Preço de Seguir Jesus' },
+        ],
+        17: [
+            { verse: 1, title: 'A Transfiguração' },
+            { verse: 14, title: 'Jesus Cura um Menino Endemoninhado' },
+            { verse: 22, title: 'Jesus Anuncia Sua Morte Novamente' },
+            { verse: 24, title: 'O Imposto do Templo' },
+        ],
+        18: [
+            { verse: 1, title: 'Quem É o Maior no Reino do Céu' },
+            { verse: 6, title: 'As Tentações' },
+            { verse: 10, title: 'A Parábola da Ovelha Perdida' },
+            { verse: 15, title: 'O Irmão que Peca' },
+            { verse: 21, title: 'A Parábola do Servo Cruel' },
+        ],
+        19: [
+            { verse: 1, title: 'Jesus Ensina sobre o Divórcio' },
+            { verse: 13, title: 'Jesus Abençoa as Crianças' },
+            { verse: 16, title: 'O Jovem Rico' },
+        ],
+        20: [
+            { verse: 1, title: 'A Parábola dos Trabalhadores na Vinha' },
+            { verse: 17, title: 'Jesus Anuncia Sua Morte pela Terceira Vez' },
+            { verse: 20, title: 'O Pedido da Mãe de Tiago e João' },
+            { verse: 29, title: 'Jesus Cura Dois Cegos' },
+        ],
+        21: [
+            { verse: 1, title: 'A Entrada Triunfal em Jerusalém' },
+            { verse: 12, title: 'Jesus Purifica o Templo' },
+            { verse: 18, title: 'A Figueira Seca' },
+            { verse: 23, title: 'A Autoridade de Jesus' },
+            { verse: 28, title: 'A Parábola dos Dois Filhos' },
+            { verse: 33, title: 'A Parábola dos Lavradores Maus' },
+        ],
+        22: [
+            { verse: 1, title: 'A Parábola da Festa de Casamento' },
+            { verse: 15, title: 'O Imposto Devido a César' },
+            { verse: 23, title: 'A Pergunta sobre a Ressurreição' },
+            { verse: 34, title: 'O Maior Mandamento' },
+            { verse: 41, title: 'O Cristo, Filho de Davi' },
+        ],
+        23: [
+            { verse: 1, title: 'Jesus Condena os Fariseus' },
+            { verse: 13, title: 'Ai de Vocês, Mestres da Lei e Fariseus!' },
+            { verse: 37, title: 'Jesus Chora por Jerusalém' },
+        ],
+        24: [
+            { verse: 1, title: 'Jesus Fala sobre a Destruição do Templo' },
+            { verse: 3, title: 'Sinais do Fim dos Tempos' },
+            { verse: 29, title: 'A Vinda do Filho do Homem' },
+            { verse: 36, title: 'Ninguém Sabe o Dia nem a Hora' },
+            { verse: 45, title: 'O Servo Fiel e o Servo Mau' },
+        ],
+        25: [
+            { verse: 1, title: 'A Parábola das Dez Virgens' },
+            { verse: 14, title: 'A Parábola dos Talentos' },
+            { verse: 31, title: 'O Julgamento das Nações' },
+        ],
+        26: [
+            { verse: 1, title: 'A Conspiração contra Jesus' },
+            { verse: 6, title: 'Jesus É Ungido em Betânia' },
+            { verse: 14, title: 'Judas Concorda em Trair Jesus' },
+            { verse: 17, title: 'A Última Ceia' },
+            { verse: 30, title: 'Jesus no Getsêmani' },
+            { verse: 47, title: 'A Prisão de Jesus' },
+            { verse: 57, title: 'Jesus Diante do Sinédrio' },
+            { verse: 69, title: 'Pedro Nega Jesus' },
+        ],
+        27: [
+            { verse: 1, title: 'Jesus É Levado a Pilatos' },
+            { verse: 3, title: 'A Morte de Judas' },
+            { verse: 11, title: 'Jesus Diante de Pilatos' },
+            { verse: 27, title: 'Os Soldados Zombam de Jesus' },
+            { verse: 32, title: 'A Crucificação' },
+            { verse: 45, title: 'A Morte de Jesus' },
+            { verse: 57, title: 'O Sepultamento de Jesus' },
+            { verse: 62, title: 'A Guarda no Sepulcro' },
+        ],
+        28: [
+            { verse: 1, title: 'A Ressurreição de Jesus' },
+            { verse: 11, title: 'O Relatório dos Guardas' },
+            { verse: 16, title: 'A Grande Comissão' },
+        ],
+    },
+
+    // ==========================================
+    // MARCOS (41)
+    // ==========================================
+    41: {
+        1: [
+            { verse: 1, title: 'A Pregação de João Batista' },
+            { verse: 9, title: 'O Batismo de Jesus' },
+            { verse: 12, title: 'A Tentação de Jesus' },
+            { verse: 14, title: 'O Início do Ministério na Galileia' },
+            { verse: 16, title: 'Jesus Chama os Primeiros Discípulos' },
+            { verse: 21, title: 'Jesus Expulsa um Espírito Mau' },
+            { verse: 29, title: 'Jesus Cura a Sogra de Pedro' },
+            { verse: 35, title: 'Jesus Ora num Lugar Deserto' },
+            { verse: 40, title: 'Jesus Cura um Leproso' },
+        ],
+        2: [
+            { verse: 1, title: 'Jesus Cura um Paralítico' },
+            { verse: 13, title: 'Jesus Chama Levi' },
+            { verse: 18, title: 'A Pergunta sobre o Jejum' },
+            { verse: 23, title: 'Jesus É Senhor do Sábado' },
+        ],
+        3: [
+            { verse: 1, title: 'Jesus Cura no Sábado' },
+            { verse: 7, title: 'A Multidão Segue Jesus' },
+            { verse: 13, title: 'Jesus Escolhe os Doze' },
+            { verse: 20, title: 'Jesus e Belzebu' },
+            { verse: 31, title: 'A Mãe e os Irmãos de Jesus' },
+        ],
+        4: [
+            { verse: 1, title: 'A Parábola do Semeador' },
+            { verse: 10, title: 'O Propósito das Parábolas' },
+            { verse: 21, title: 'A Parábola da Candeia' },
+            { verse: 26, title: 'A Parábola da Semente' },
+            { verse: 30, title: 'A Parábola do Grão de Mostarda' },
+            { verse: 35, title: 'Jesus Acalma a Tempestade' },
+        ],
+        5: [
+            { verse: 1, title: 'Jesus Cura o Endemoninhado Geraseno' },
+            { verse: 21, title: 'A Filha de Jairo e a Mulher Doente' },
+        ],
+        6: [
+            { verse: 1, title: 'Jesus em Nazaré' },
+            { verse: 7, title: 'A Missão dos Doze' },
+            { verse: 14, title: 'A Morte de João Batista' },
+            { verse: 30, title: 'Jesus Alimenta Cinco Mil Homens' },
+            { verse: 45, title: 'Jesus Anda sobre a Água' },
+            { verse: 53, title: 'Jesus Cura os Doentes em Genesaré' },
+        ],
+        7: [
+            { verse: 1, title: 'O Que Torna a Pessoa Impura' },
+            { verse: 24, title: 'A Fé da Mulher Siro-Fenícia' },
+            { verse: 31, title: 'Jesus Cura um Surdo-Mudo' },
+        ],
+        8: [
+            { verse: 1, title: 'Jesus Alimenta Quatro Mil Homens' },
+            { verse: 11, title: 'Os Fariseus Pedem um Sinal' },
+            { verse: 14, title: 'O Fermento dos Fariseus' },
+            { verse: 22, title: 'Jesus Cura um Cego em Betsaida' },
+            { verse: 27, title: 'A Confissão de Pedro' },
+            { verse: 31, title: 'Jesus Anuncia Sua Morte' },
+        ],
+        9: [
+            { verse: 1, title: 'A Transfiguração' },
+            { verse: 14, title: 'Jesus Cura um Menino Endemoninhado' },
+            { verse: 30, title: 'Jesus Anuncia Sua Morte Novamente' },
+            { verse: 33, title: 'Quem É o Maior?' },
+            { verse: 38, title: 'Quem Não É contra Nós É a Nosso Favor' },
+            { verse: 42, title: 'As Tentações' },
+        ],
+        10: [
+            { verse: 1, title: 'Jesus Ensina sobre o Divórcio' },
+            { verse: 13, title: 'Jesus Abençoa as Crianças' },
+            { verse: 17, title: 'O Jovem Rico' },
+            { verse: 32, title: 'Jesus Anuncia Sua Morte pela Terceira Vez' },
+            { verse: 35, title: 'O Pedido de Tiago e João' },
+            { verse: 46, title: 'Jesus Cura o Cego Bartimeu' },
+        ],
+        11: [
+            { verse: 1, title: 'A Entrada Triunfal em Jerusalém' },
+            { verse: 12, title: 'A Figueira Seca' },
+            { verse: 15, title: 'Jesus Purifica o Templo' },
+            { verse: 20, title: 'A Lição da Figueira' },
+            { verse: 27, title: 'A Autoridade de Jesus' },
+        ],
+        12: [
+            { verse: 1, title: 'A Parábola dos Lavradores Maus' },
+            { verse: 13, title: 'O Imposto Devido a César' },
+            { verse: 18, title: 'A Pergunta sobre a Ressurreição' },
+            { verse: 28, title: 'O Maior Mandamento' },
+            { verse: 35, title: 'O Cristo, Filho de Davi' },
+            { verse: 38, title: 'Jesus Condena os Mestres da Lei' },
+            { verse: 41, title: 'A Oferta da Viúva' },
+        ],
+        13: [
+            { verse: 1, title: 'Jesus Fala sobre a Destruição do Templo' },
+            { verse: 3, title: 'Sinais do Fim dos Tempos' },
+            { verse: 24, title: 'A Vinda do Filho do Homem' },
+            { verse: 32, title: 'Ninguém Sabe o Dia nem a Hora' },
+        ],
+        14: [
+            { verse: 1, title: 'A Conspiração contra Jesus' },
+            { verse: 3, title: 'Jesus É Ungido em Betânia' },
+            { verse: 10, title: 'Judas Concorda em Trair Jesus' },
+            { verse: 12, title: 'A Última Ceia' },
+            { verse: 32, title: 'Jesus no Getsêmani' },
+            { verse: 43, title: 'A Prisão de Jesus' },
+            { verse: 53, title: 'Jesus Diante do Sinédrio' },
+            { verse: 66, title: 'Pedro Nega Jesus' },
+        ],
+        15: [
+            { verse: 1, title: 'Jesus Diante de Pilatos' },
+            { verse: 16, title: 'Os Soldados Zombam de Jesus' },
+            { verse: 21, title: 'A Crucificação' },
+            { verse: 33, title: 'A Morte de Jesus' },
+            { verse: 42, title: 'O Sepultamento de Jesus' },
+        ],
+        16: [
+            { verse: 1, title: 'A Ressurreição de Jesus' },
+            { verse: 9, title: 'Jesus Aparece a Maria Madalena' },
+            { verse: 12, title: 'Jesus Aparece a Dois Discípulos' },
+            { verse: 14, title: 'A Grande Comissão' },
+            { verse: 19, title: 'A Ascensão de Jesus' },
+        ],
+    },
+
+    // ==========================================
+    // LUCAS (42)
+    // ==========================================
+    42: {
+        1: [
+            { verse: 1, title: 'Introdução' },
+            { verse: 5, title: 'O Anúncio do Nascimento de João' },
+            { verse: 26, title: 'O Anúncio do Nascimento de Jesus' },
+            { verse: 39, title: 'Maria Visita Isabel' },
+            { verse: 46, title: 'O Cântico de Maria' },
+            { verse: 57, title: 'O Nascimento de João Batista' },
+            { verse: 67, title: 'A Profecia de Zacarias' },
+        ],
+        2: [
+            { verse: 1, title: 'O Nascimento de Jesus' },
+            { verse: 8, title: 'Os Pastores e os Anjos' },
+            { verse: 21, title: 'A Apresentação de Jesus no Templo' },
+            { verse: 39, title: 'A Volta a Nazaré' },
+            { verse: 41, title: 'O Menino Jesus no Templo' },
+        ],
+        3: [
+            { verse: 1, title: 'A Pregação de João Batista' },
+            { verse: 21, title: 'O Batismo de Jesus' },
+            { verse: 23, title: 'A Genealogia de Jesus' },
+        ],
+        4: [
+            { verse: 1, title: 'A Tentação de Jesus' },
+            { verse: 14, title: 'Jesus em Nazaré' },
+            { verse: 31, title: 'Jesus Expulsa um Espírito Mau' },
+            { verse: 38, title: 'Jesus Cura a Sogra de Pedro' },
+            { verse: 42, title: 'Jesus Prega na Judeia' },
+        ],
+        5: [
+            { verse: 1, title: 'A Pesca Milagrosa' },
+            { verse: 12, title: 'Jesus Cura um Leproso' },
+            { verse: 17, title: 'Jesus Cura um Paralítico' },
+            { verse: 27, title: 'Jesus Chama Levi' },
+            { verse: 33, title: 'A Pergunta sobre o Jejum' },
+        ],
+        6: [
+            { verse: 1, title: 'Jesus É Senhor do Sábado' },
+            { verse: 6, title: 'Jesus Cura no Sábado' },
+            { verse: 12, title: 'Jesus Escolhe os Doze' },
+            { verse: 17, title: 'As Bem-Aventuranças e os Ais' },
+            { verse: 27, title: 'O Amor aos Inimigos' },
+            { verse: 37, title: 'Não Julguem os Outros' },
+            { verse: 43, title: 'A Árvore e Seus Frutos' },
+            { verse: 46, title: 'As Duas Casas' },
+        ],
+        7: [
+            { verse: 1, title: 'A Fé do Oficial Romano' },
+            { verse: 11, title: 'Jesus Ressuscita o Filho da Viúva' },
+            { verse: 18, title: 'Jesus e João Batista' },
+            { verse: 36, title: 'Jesus na Casa de Simão' },
+        ],
+        8: [
+            { verse: 1, title: 'As Mulheres que Seguiam Jesus' },
+            { verse: 4, title: 'A Parábola do Semeador' },
+            { verse: 16, title: 'A Parábola da Candeia' },
+            { verse: 19, title: 'A Mãe e os Irmãos de Jesus' },
+            { verse: 22, title: 'Jesus Acalma a Tempestade' },
+            { verse: 26, title: 'Jesus Cura o Endemoninhado Geraseno' },
+            { verse: 40, title: 'A Filha de Jairo e a Mulher Doente' },
+        ],
+        9: [
+            { verse: 1, title: 'A Missão dos Doze' },
+            { verse: 7, title: 'A Dúvida de Herodes' },
+            { verse: 10, title: 'Jesus Alimenta Cinco Mil Homens' },
+            { verse: 18, title: 'A Confissão de Pedro' },
+            { verse: 21, title: 'Jesus Anuncia Sua Morte' },
+            { verse: 28, title: 'A Transfiguração' },
+            { verse: 37, title: 'Jesus Cura um Menino Endemoninhado' },
+            { verse: 46, title: 'Quem É o Maior?' },
+            { verse: 51, title: 'A Caminho de Jerusalém' },
+            { verse: 57, title: 'O Preço de Seguir Jesus' },
+        ],
+        10: [
+            { verse: 1, title: 'A Missão dos Setenta e Dois' },
+            { verse: 17, title: 'A Volta dos Setenta e Dois' },
+            { verse: 21, title: 'A Oração de Louvor de Jesus' },
+            { verse: 25, title: 'A Parábola do Bom Samaritano' },
+            { verse: 38, title: 'Jesus na Casa de Marta e Maria' },
+        ],
+        11: [
+            { verse: 1, title: 'Jesus Ensina sobre a Oração' },
+            { verse: 14, title: 'Jesus e Belzebu' },
+            { verse: 29, title: 'O Sinal de Jonas' },
+            { verse: 33, title: 'A Luz do Corpo' },
+            { verse: 37, title: 'Jesus Condena os Fariseus' },
+        ],
+        12: [
+            { verse: 1, title: 'O Fermento dos Fariseus' },
+            { verse: 4, title: 'A Quem Temer' },
+            { verse: 13, title: 'A Parábola do Rico Insensato' },
+            { verse: 22, title: 'A Confiança em Deus' },
+            { verse: 35, title: 'O Servo Fiel' },
+            { verse: 49, title: 'Jesus Traz Divisão' },
+            { verse: 54, title: 'Os Sinais dos Tempos' },
+        ],
+        13: [
+            { verse: 1, title: 'Arrependam-se ou Morrerão' },
+            { verse: 6, title: 'A Parábola da Figueira' },
+            { verse: 10, title: 'Jesus Cura no Sábado' },
+            { verse: 18, title: 'As Parábolas do Grão de Mostarda e do Fermento' },
+            { verse: 22, title: 'A Porta Estreita' },
+            { verse: 31, title: 'Jesus Chora por Jerusalém' },
+        ],
+        14: [
+            { verse: 1, title: 'Jesus Cura no Sábado' },
+            { verse: 7, title: 'A Parábola dos Lugares de Honra' },
+            { verse: 15, title: 'A Parábola do Grande Banquete' },
+            { verse: 25, title: 'O Preço de Ser Discípulo' },
+        ],
+        15: [
+            { verse: 1, title: 'A Parábola da Ovelha Perdida' },
+            { verse: 8, title: 'A Parábola da Moeda Perdida' },
+            { verse: 11, title: 'A Parábola do Filho Pródigo' },
+        ],
+        16: [
+            { verse: 1, title: 'A Parábola do Administrador Desonesto' },
+            { verse: 14, title: 'Jesus Repreende os Fariseus' },
+            { verse: 19, title: 'O Rico e Lázaro' },
+        ],
+        17: [
+            { verse: 1, title: 'As Tentações e o Perdão' },
+            { verse: 5, title: 'A Fé' },
+            { verse: 7, title: 'O Dever do Servo' },
+            { verse: 11, title: 'Jesus Cura Dez Leprosos' },
+            { verse: 20, title: 'A Vinda do Reino de Deus' },
+        ],
+        18: [
+            { verse: 1, title: 'A Parábola da Viúva e do Juiz' },
+            { verse: 9, title: 'A Parábola do Fariseu e do Cobrador de Impostos' },
+            { verse: 15, title: 'Jesus Abençoa as Crianças' },
+            { verse: 18, title: 'O Líder Rico' },
+            { verse: 31, title: 'Jesus Anuncia Sua Morte pela Terceira Vez' },
+            { verse: 35, title: 'Jesus Cura um Cego' },
+        ],
+        19: [
+            { verse: 1, title: 'Zaqueu, o Cobrador de Impostos' },
+            { verse: 11, title: 'A Parábola das Dez Moedas' },
+            { verse: 28, title: 'A Entrada Triunfal em Jerusalém' },
+            { verse: 41, title: 'Jesus Chora por Jerusalém' },
+            { verse: 45, title: 'Jesus Purifica o Templo' },
+        ],
+        20: [
+            { verse: 1, title: 'A Autoridade de Jesus' },
+            { verse: 9, title: 'A Parábola dos Lavradores Maus' },
+            { verse: 20, title: 'O Imposto Devido a César' },
+            { verse: 27, title: 'A Pergunta sobre a Ressurreição' },
+            { verse: 41, title: 'O Cristo, Filho de Davi' },
+            { verse: 45, title: 'Jesus Condena os Mestres da Lei' },
+        ],
+        21: [
+            { verse: 1, title: 'A Oferta da Viúva' },
+            { verse: 5, title: 'Jesus Fala sobre a Destruição do Templo' },
+            { verse: 7, title: 'Sinais do Fim dos Tempos' },
+            { verse: 25, title: 'A Vinda do Filho do Homem' },
+            { verse: 29, title: 'A Parábola da Figueira' },
+        ],
+        22: [
+            { verse: 1, title: 'Judas Concorda em Trair Jesus' },
+            { verse: 7, title: 'A Última Ceia' },
+            { verse: 24, title: 'Quem É o Maior?' },
+            { verse: 31, title: 'Jesus Prediz a Negação de Pedro' },
+            { verse: 39, title: 'Jesus no Getsêmani' },
+            { verse: 47, title: 'A Prisão de Jesus' },
+            { verse: 54, title: 'Pedro Nega Jesus' },
+            { verse: 63, title: 'Jesus Diante do Sinédrio' },
+        ],
+        23: [
+            { verse: 1, title: 'Jesus Diante de Pilatos' },
+            { verse: 6, title: 'Jesus Diante de Herodes' },
+            { verse: 13, title: 'A Sentença de Morte' },
+            { verse: 26, title: 'A Crucificação' },
+            { verse: 44, title: 'A Morte de Jesus' },
+            { verse: 50, title: 'O Sepultamento de Jesus' },
+        ],
+        24: [
+            { verse: 1, title: 'A Ressurreição de Jesus' },
+            { verse: 13, title: 'No Caminho de Emaús' },
+            { verse: 36, title: 'Jesus Aparece aos Discípulos' },
+            { verse: 50, title: 'A Ascensão de Jesus' },
+        ],
+    },
+
+    // ==========================================
+    // JOÃO (43)
+    // ==========================================
+    43: {
+        1: [
+            { verse: 1, title: 'O Verbo Se Fez Carne' },
+            { verse: 6, title: 'O Testemunho de João Batista' },
+            { verse: 19, title: 'João Nega Ser o Cristo' },
+            { verse: 29, title: 'O Cordeiro de Deus' },
+            { verse: 35, title: 'Os Primeiros Discípulos de Jesus' },
+            { verse: 43, title: 'Jesus Chama Filipe e Natanael' },
+        ],
+        2: [
+            { verse: 1, title: 'O Casamento em Caná' },
+            { verse: 13, title: 'Jesus Purifica o Templo' },
+        ],
+        3: [
+            { verse: 1, title: 'Jesus e Nicodemos' },
+            { verse: 22, title: 'O Testemunho de João sobre Jesus' },
+        ],
+        4: [
+            { verse: 1, title: 'Jesus e a Mulher Samaritana' },
+            { verse: 27, title: 'Os Discípulos Voltam' },
+            { verse: 39, title: 'Muitos Samaritanos Creem em Jesus' },
+            { verse: 43, title: 'Jesus Cura o Filho de um Funcionário' },
+        ],
+        5: [
+            { verse: 1, title: 'Jesus Cura na Piscina de Betesda' },
+            { verse: 16, title: 'A Autoridade do Filho' },
+            { verse: 31, title: 'O Testemunho sobre Jesus' },
+        ],
+        6: [
+            { verse: 1, title: 'Jesus Alimenta Cinco Mil Homens' },
+            { verse: 16, title: 'Jesus Anda sobre a Água' },
+            { verse: 22, title: 'O Pão da Vida' },
+            { verse: 60, title: 'Muitos Discípulos Abandonam Jesus' },
+        ],
+        7: [
+            { verse: 1, title: 'Jesus na Festa dos Tabernáculos' },
+            { verse: 14, title: 'Jesus Ensina no Templo' },
+            { verse: 25, title: 'Jesus É o Cristo?' },
+            { verse: 37, title: 'Rios de Água Viva' },
+            { verse: 40, title: 'Divisão entre o Povo' },
+        ],
+        8: [
+            { verse: 1, title: 'A Mulher Adúltera' },
+            { verse: 12, title: 'Jesus, a Luz do Mundo' },
+            { verse: 21, title: 'Jesus Fala da Sua Partida' },
+            { verse: 31, title: 'A Verdade Liberta' },
+            { verse: 48, title: 'Jesus e Abraão' },
+        ],
+        9: [
+            { verse: 1, title: 'Jesus Cura um Cego de Nascença' },
+            { verse: 13, title: 'Os Fariseus Interrogam o Cego' },
+            { verse: 35, title: 'A Cegueira Espiritual' },
+        ],
+        10: [
+            { verse: 1, title: 'O Bom Pastor' },
+            { verse: 22, title: 'Jesus na Festa da Dedicação' },
+        ],
+        11: [
+            { verse: 1, title: 'A Morte de Lázaro' },
+            { verse: 17, title: 'Jesus Consola Marta e Maria' },
+            { verse: 38, title: 'Jesus Ressuscita Lázaro' },
+            { verse: 45, title: 'A Conspiração para Matar Jesus' },
+        ],
+        12: [
+            { verse: 1, title: 'Jesus É Ungido em Betânia' },
+            { verse: 12, title: 'A Entrada Triunfal em Jerusalém' },
+            { verse: 20, title: 'Jesus Fala da Sua Morte' },
+            { verse: 37, title: 'A Incredulidade dos Judeus' },
+        ],
+        13: [
+            { verse: 1, title: 'Jesus Lava os Pés dos Discípulos' },
+            { verse: 18, title: 'Jesus Prediz a Traição de Judas' },
+            { verse: 31, title: 'O Novo Mandamento' },
+            { verse: 36, title: 'Jesus Prediz a Negação de Pedro' },
+        ],
+        14: [
+            { verse: 1, title: 'Jesus, o Caminho para o Pai' },
+            { verse: 15, title: 'A Promessa do Espírito Santo' },
+            { verse: 27, title: 'A Paz de Jesus' },
+        ],
+        15: [
+            { verse: 1, title: 'A Videira e os Ramos' },
+            { verse: 9, title: 'O Mandamento do Amor' },
+            { verse: 18, title: 'O Ódio do Mundo' },
+            { verse: 26, title: 'O Testemunho do Espírito Santo' },
+        ],
+        16: [
+            { verse: 1, title: 'A Perseguição dos Discípulos' },
+            { verse: 5, title: 'A Obra do Espírito Santo' },
+            { verse: 16, title: 'A Tristeza Se Tornará Alegria' },
+            { verse: 25, title: 'Jesus Venceu o Mundo' },
+        ],
+        17: [
+            { verse: 1, title: 'Jesus Ora por Si Mesmo' },
+            { verse: 6, title: 'Jesus Ora pelos Discípulos' },
+            { verse: 20, title: 'Jesus Ora por Todos os Que Creem' },
+        ],
+        18: [
+            { verse: 1, title: 'A Prisão de Jesus' },
+            { verse: 12, title: 'Jesus Diante de Anás' },
+            { verse: 15, title: 'Pedro Nega Jesus' },
+            { verse: 19, title: 'O Sumo Sacerdote Interroga Jesus' },
+            { verse: 28, title: 'Jesus Diante de Pilatos' },
+        ],
+        19: [
+            { verse: 1, title: 'Jesus É Açoitado e Zombado' },
+            { verse: 4, title: 'A Sentença de Morte' },
+            { verse: 17, title: 'A Crucificação' },
+            { verse: 28, title: 'A Morte de Jesus' },
+            { verse: 38, title: 'O Sepultamento de Jesus' },
+        ],
+        20: [
+            { verse: 1, title: 'O Túmulo Vazio' },
+            { verse: 10, title: 'Jesus Aparece a Maria Madalena' },
+            { verse: 19, title: 'Jesus Aparece aos Discípulos' },
+            { verse: 24, title: 'Jesus Aparece a Tomé' },
+        ],
+        21: [
+            { verse: 1, title: 'Jesus Aparece à Beira do Lago' },
+            { verse: 15, title: 'Jesus e Pedro' },
+            { verse: 20, title: 'Jesus e o Discípulo Amado' },
+        ],
+    },
+};
+
+/**
+ * Retorna as perícopes (títulos de seções) para um capítulo específico.
+ * @param livroId ID do livro (ex: 40 = Mateus)
+ * @param capitulo Número do capítulo
+ * @returns Array de perícopes ou array vazio se não disponível
+ */
+export function getPericopes(livroId: number, capitulo: number): Pericope[] {
+    return PERICOPES[livroId]?.[capitulo] || [];
+}

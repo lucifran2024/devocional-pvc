@@ -26,6 +26,7 @@ import ReactMarkdown from 'react-markdown';
 import { useSearchParams } from 'next/navigation'; // Added imports
 import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
+import { getPericopes } from '@/lib/bible-pericopes';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -51,12 +52,14 @@ function VersiculosInterativos({
     livroAbrev,
     livroNome,
     capitulo,
+    livroId,
 }: {
     versiculos: Versiculo[];
     referencia: string;
     livroAbrev: string;
     livroNome: string;
     capitulo: number;
+    livroId?: number;
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
     const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
@@ -278,6 +281,10 @@ function VersiculosInterativos({
                     const mostrarHeaderCapitulo = idx === 0 || cap !== prevCap;
                     const capMap = getInteracoesDoVersiculo(v);
 
+                    // Pericope header check
+                    const pericopes = livroId ? getPericopes(livroId, cap) : [];
+                    const pericope = pericopes.find(p => p.verse === v.verse);
+
                     return (
                         <div key={`${cap}-${v.verse}`}>
                             {/* Separador de capítulo - só mostra quando há múltiplos capítulos */}
@@ -288,6 +295,14 @@ function VersiculosInterativos({
                                         {livroNome} {cap}
                                     </span>
                                     <div className="flex-1 h-px bg-amber-500/20"></div>
+                                </div>
+                            )}
+                            {/* Perícope - cabeçalho do acontecimento */}
+                            {pericope && (
+                                <div className="mt-4 mb-2 first:mt-0">
+                                    <h4 className="text-sm font-bold text-amber-300/90 tracking-wide uppercase pl-1 border-l-2 border-amber-500/40 ml-0.5 pl-2.5">
+                                        {pericope.title}
+                                    </h4>
                                 </div>
                             )}
                             <div
@@ -475,7 +490,7 @@ function PremiumOptionCard({ option, onClick, disabled }: {
 function ChatBubble({ message, versiculosInterativos, livroInfo }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
-    livroInfo?: { abrev: string; nome: string; capitulo: number };
+    livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
 }) {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
@@ -500,6 +515,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                         livroAbrev={livroInfo!.abrev}
                         livroNome={livroInfo!.nome}
                         capitulo={livroInfo!.capitulo}
+                        livroId={livroInfo!.livroId}
                     />
 
                     {/* Texto depois dos versículos */}
@@ -572,7 +588,7 @@ function PlanoLeituraContent() {
     const currentPageRef = useRef(1);  // Ref for immediate access
     const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
     const [versiculosPaginaAtual, setVersiculosPaginaAtual] = useState<Versiculo[]>([]);
-    const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number }>({ abrev: '', nome: '', capitulo: 0 });
+    const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number; livroId?: number }>({ abrev: '', nome: '', capitulo: 0 });
     const [inscricaoAtiva, setInscricaoAtiva] = useState<(InscricaoPlano & { plano: Plano }) | null>(null);
     const [diaExibido, setDiaExibido] = useState<number>(1);
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
@@ -800,7 +816,8 @@ function PlanoLeituraContent() {
             setLivroInfoAtual({
                 abrev,
                 nome: nomeOriginal,
-                capitulo: parsed.capituloInicio
+                capitulo: parsed.capituloInicio,
+                livroId: parsed.livroId
             });
         }
     };
