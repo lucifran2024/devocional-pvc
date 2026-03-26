@@ -58,11 +58,12 @@ function VersiculosInterativos({
     livroNome: string;
     capitulo: number;
 }) {
-    const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
+    // Índice no array de versículos (único mesmo com capítulos repetidos)
+    const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
-    const [interacoesMap, setInteracoesMap] = useState<InteracoesMapPlano>({ destaques: {}, favoritos: {}, notas: {} });
+    const [interacoesMap, setInteracoesMap] = useState<Record<string, InteracoesMapPlano>>({});
     const [estudoAberto, setEstudoAberto] = useState(false);
     const [estudoTexto, setEstudoTexto] = useState('');
     const [estudoLoading, setEstudoLoading] = useState(false);
@@ -72,17 +73,32 @@ function VersiculosInterativos({
     const versiculoAnteriorRef = useRef<number | null>(null);
     const { toasts, removeToast, success } = useToast();
 
-    // Carregar interações do capítulo
+    // Helper: capítulo real de um versículo (usa v.chapter ou fallback para prop)
+    const getCapitulo = (v: Versiculo) => v.chapter ?? capitulo;
+
+    // Helper para acessar interações de um versículo
+    const getInteracoesDoVersiculo = (v: Versiculo) => {
+        const cap = getCapitulo(v);
+        const capMap = interacoesMap[String(cap)] || { destaques: {}, favoritos: {}, notas: {} };
+        return capMap;
+    };
+
+    // Carregar interações de todos os capítulos presentes nos versículos
     const carregarInteracoes = useCallback(async () => {
-        const dados = await getInteracoesPorCapitulo(livroAbrev, capitulo);
-        const map: InteracoesMapPlano = { destaques: {}, favoritos: {}, notas: {} };
-        dados.forEach((item: BibliaInteracao) => {
-            if (item.tipo === 'destaque') map.destaques[item.versiculo] = item;
-            else if (item.tipo === 'favorito') map.favoritos[item.versiculo] = item;
-            else if (item.tipo === 'nota') map.notas[item.versiculo] = item;
-        });
-        setInteracoesMap(map);
-    }, [livroAbrev, capitulo]);
+        const caps = [...new Set(versiculos.map(v => v.chapter ?? capitulo))];
+        const novoMap: Record<string, InteracoesMapPlano> = {};
+        for (const cap of caps) {
+            const dados = await getInteracoesPorCapitulo(livroAbrev, cap);
+            const map: InteracoesMapPlano = { destaques: {}, favoritos: {}, notas: {} };
+            dados.forEach((item: BibliaInteracao) => {
+                if (item.tipo === 'destaque') map.destaques[item.versiculo] = item;
+                else if (item.tipo === 'favorito') map.favoritos[item.versiculo] = item;
+                else if (item.tipo === 'nota') map.notas[item.versiculo] = item;
+            });
+            novoMap[String(cap)] = map;
+        }
+        setInteracoesMap(novoMap);
+    }, [livroAbrev, capitulo, versiculos]);
 
     useEffect(() => { carregarInteracoes(); }, [carregarInteracoes]);
 
@@ -93,7 +109,7 @@ function VersiculosInterativos({
                 const target = e.target as HTMLElement;
                 const versiculoDiv = target.closest('[id^="plano-verse-"]');
                 if (!versiculoDiv) {
-                    setVersiculoSelecionado(null);
+                    setVersiculoSelecionadoIdx(null);
                     setMostrarCores(false);
                     setMostrarNota(false);
                     versiculoAnteriorRef.current = null;
@@ -104,37 +120,43 @@ function VersiculosInterativos({
         return () => document.removeEventListener('mousedown', handleClickFora);
     }, []);
 
-    const handleVersiculoClick = (verse: number) => {
-        if (versiculoAnteriorRef.current === verse) {
-            setVersiculoSelecionado(null);
+    const handleVersiculoClick = (idx: number) => {
+        if (versiculoAnteriorRef.current === idx) {
+            setVersiculoSelecionadoIdx(null);
             setMostrarCores(false);
             setMostrarNota(false);
             versiculoAnteriorRef.current = null;
             return;
         }
-        setVersiculoSelecionado(verse);
-        versiculoAnteriorRef.current = verse;
+        setVersiculoSelecionadoIdx(idx);
+        versiculoAnteriorRef.current = idx;
         setMostrarCores(false);
         setMostrarNota(false);
-        const notaExistente = interacoesMap.notas[verse];
-        setTextoNota(notaExistente?.nota || '');
+        const v = versiculos[idx];
+        if (v) {
+            const capMap = getInteracoesDoVersiculo(v);
+            const notaExistente = capMap.notas[v.verse];
+            setTextoNota(notaExistente?.nota || '');
+        }
     };
 
-    const getVersiculoObj = (verse: number) => versiculos.find(v => v.verse === verse);
-    const getCorClasse = (verse: number): string => {
-        const destaque = interacoesMap.destaques[verse];
+    const getCorClasse = (v: Versiculo): string => {
+        const capMap = getInteracoesDoVersiculo(v);
+        const destaque = capMap.destaques[v.verse];
         if (!destaque) return '';
         const cor = CORES_DESTAQUE_PLANO.find(c => c.id === destaque.cor);
         return cor ? `${cor.bg} ${cor.border} border-l-2` : '';
     };
-    const isFavorito = (verse: number) => !!interacoesMap.favoritos[verse];
-    const temNota = (verse: number) => !!interacoesMap.notas[verse];
+    const isFavorito = (v: Versiculo) => !!getInteracoesDoVersiculo(v).favoritos[v.verse];
+    const temNota = (v: Versiculo) => !!getInteracoesDoVersiculo(v).notas[v.verse];
 
     const handleDestacar = async (cor: string) => {
-        if (!versiculoSelecionado) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
-        const existente = interacoesMap.destaques[versiculoSelecionado];
+        const cap = getCapitulo(v);
+        const capMap = getInteracoesDoVersiculo(v);
+        const existente = capMap.destaques[v.verse];
         if (existente && existente.cor === cor) {
             await removerInteracaoBiblia(existente.id!);
             success('Destaque removido');
@@ -142,7 +164,7 @@ function VersiculosInterativos({
             if (existente) await removerInteracaoBiblia(existente.id!);
             await salvarInteracaoBiblia({
                 tipo: 'destaque', livro_abrev: livroAbrev, livro_nome: livroNome,
-                capitulo, versiculo: v.verse, texto_versiculo: v.text, cor
+                capitulo: cap, versiculo: v.verse, texto_versiculo: v.text, cor
             });
             success('Versículo destacado!');
         }
@@ -151,17 +173,19 @@ function VersiculosInterativos({
     };
 
     const handleFavoritar = async () => {
-        if (!versiculoSelecionado) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
-        const existente = interacoesMap.favoritos[versiculoSelecionado];
+        const cap = getCapitulo(v);
+        const capMap = getInteracoesDoVersiculo(v);
+        const existente = capMap.favoritos[v.verse];
         if (existente) {
             await removerInteracaoBiblia(existente.id!);
             success('Removido dos favoritos');
         } else {
             await salvarInteracaoBiblia({
                 tipo: 'favorito', livro_abrev: livroAbrev, livro_nome: livroNome,
-                capitulo, versiculo: v.verse, texto_versiculo: v.text
+                capitulo: cap, versiculo: v.verse, texto_versiculo: v.text
             });
             success('Salvo nos favoritos!');
         }
@@ -169,21 +193,23 @@ function VersiculosInterativos({
     };
 
     const handleCopiar = async () => {
-        if (!versiculoSelecionado) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
-        const texto = `"${v.text}" — ${livroNome} ${capitulo}:${v.verse}`;
+        const cap = getCapitulo(v);
+        const texto = `"${v.text}" — ${livroNome} ${cap}:${v.verse}`;
         await navigator.clipboard.writeText(texto);
         success('Versículo copiado!');
     };
 
     const handleCompartilhar = async () => {
-        if (!versiculoSelecionado) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
-        const texto = `"${v.text}"\n— ${livroNome} ${capitulo}:${v.verse}`;
+        const cap = getCapitulo(v);
+        const texto = `"${v.text}"\n— ${livroNome} ${cap}:${v.verse}`;
         if (navigator.share) {
-            try { await navigator.share({ title: `${livroNome} ${capitulo}:${v.verse}`, text: texto }); } catch { /* cancelled */ }
+            try { await navigator.share({ title: `${livroNome} ${cap}:${v.verse}`, text: texto }); } catch { /* cancelled */ }
         } else {
             await navigator.clipboard.writeText(texto);
             success('Copiado para compartilhar!');
@@ -191,14 +217,15 @@ function VersiculosInterativos({
     };
 
     const handleEstudar = async () => {
-        if (!versiculoSelecionado) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
+        const cap = getCapitulo(v);
         setEstudoVersiculo(v);
         setEstudoAberto(true);
         setEstudoLoading(true);
         setEstudoTexto('');
-        setVersiculoSelecionado(null);
+        setVersiculoSelecionadoIdx(null);
         versiculoAnteriorRef.current = null;
         try {
             const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
@@ -210,7 +237,7 @@ function VersiculosInterativos({
                 body: JSON.stringify({
                     modo_id: 'explicar_passagem',
                     data: new Date().toISOString().split('T')[0],
-                    referencia: `${livroNome} ${capitulo}:${v.verse}`,
+                    referencia: `${livroNome} ${cap}:${v.verse}`,
                     versiculos: `(${v.verse}) ${v.text}`,
                     parte: 1
                 })
@@ -223,16 +250,18 @@ function VersiculosInterativos({
     };
 
     const handleSalvarNota = async () => {
-        if (!versiculoSelecionado || !textoNota.trim()) return;
-        const v = getVersiculoObj(versiculoSelecionado);
+        if (versiculoSelecionadoIdx == null || !textoNota.trim()) return;
+        const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
-        const existente = interacoesMap.notas[versiculoSelecionado];
+        const cap = getCapitulo(v);
+        const capMap = getInteracoesDoVersiculo(v);
+        const existente = capMap.notas[v.verse];
         if (existente) {
             await atualizarNotaBiblia(existente.id!, textoNota.trim());
         } else {
             await salvarInteracaoBiblia({
                 tipo: 'nota', livro_abrev: livroAbrev, livro_nome: livroNome,
-                capitulo, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
+                capitulo: cap, versiculo: v.verse, texto_versiculo: v.text, nota: textoNota.trim()
             });
         }
         success('Nota salva!');
@@ -243,93 +272,111 @@ function VersiculosInterativos({
     return (
         <>
             <div className="space-y-1 relative" ref={containerRef}>
-                {versiculos.map(v => (
-                    <div
-                        key={v.verse}
-                        id={`plano-verse-${v.verse}`}
-                        onClick={() => handleVersiculoClick(v.verse)}
-                        className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
-                            ${getCorClasse(v.verse)}
-                            ${versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
-                        `}
-                    >
-                        <p className="inline text-lg md:text-xl leading-relaxed text-text-primary font-serif">
-                            <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
-                            {v.text}
-                        </p>
-                        <span className="inline-flex items-center gap-1 ml-1.5">
-                            {isFavorito(v.verse) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
-                            {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
-                        </span>
+                {versiculos.map((v, idx) => {
+                    const cap = getCapitulo(v);
+                    const prevCap = idx > 0 ? getCapitulo(versiculos[idx - 1]) : cap;
+                    const mostrarHeaderCapitulo = idx === 0 || cap !== prevCap;
+                    const capMap = getInteracoesDoVersiculo(v);
 
-                        {/* MINI-TOOLBAR */}
-                        {versiculoSelecionado === v.verse && (
-                            <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
-                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
-                                        <Palette className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
-                                        <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
-                                    </button>
-                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
-                                        <Copy className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
-                                        <Share2 className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
-                                        <Lightbulb className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
-                                        <StickyNote className="w-5 h-5" />
-                                    </button>
+                    return (
+                        <div key={`${cap}-${v.verse}`}>
+                            {/* Separador de capítulo - só mostra quando há múltiplos capítulos */}
+                            {mostrarHeaderCapitulo && new Set(versiculos.map(vv => getCapitulo(vv))).size > 1 && (
+                                <div className="flex items-center gap-3 py-3 mt-2 mb-1">
+                                    <div className="flex-1 h-px bg-amber-500/20"></div>
+                                    <span className="text-xs font-bold text-amber-400 tracking-widest uppercase">
+                                        {livroNome} {cap}
+                                    </span>
+                                    <div className="flex-1 h-px bg-amber-500/20"></div>
                                 </div>
+                            )}
+                            <div
+                                id={`plano-verse-${cap}-${v.verse}`}
+                                onClick={() => handleVersiculoClick(idx)}
+                                className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
+                                    ${getCorClasse(v)}
+                                    ${versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
+                                `}
+                            >
+                                <p className="inline text-lg md:text-xl leading-relaxed text-text-primary font-serif">
+                                    <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
+                                    {v.text}
+                                </p>
+                                <span className="inline-flex items-center gap-1 ml-1.5">
+                                    {isFavorito(v) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
+                                    {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
+                                </span>
 
-                                {mostrarCores && (
-                                    <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
-                                        {CORES_DESTAQUE_PLANO.map(cor => (
-                                            <button key={cor.id} onClick={() => handleDestacar(cor.id)}
-                                                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
-                                                title={cor.nome} />
-                                        ))}
-                                        {interacoesMap.destaques[v.verse] && (
-                                            <button onClick={() => handleDestacar(interacoesMap.destaques[v.verse].cor || 'yellow')}
-                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-text-muted hover:text-red-400" title="Remover destaque">
-                                                <X className="w-5 h-5" />
+                                {/* MINI-TOOLBAR */}
+                                {versiculoSelecionadoIdx === idx && (
+                                    <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                            <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
+                                                <Palette className="w-5 h-5" />
                                             </button>
+                                            <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${isFavorito(v) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
+                                                <Heart className={`w-5 h-5 ${isFavorito(v) ? 'fill-red-400' : ''}`} />
+                                            </button>
+                                            <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
+                                                <Copy className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
+                                                <Share2 className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
+                                                <Lightbulb className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
+                                                <StickyNote className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        {mostrarCores && (
+                                            <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                                {CORES_DESTAQUE_PLANO.map(cor => (
+                                                    <button key={cor.id} onClick={() => handleDestacar(cor.id)}
+                                                        className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${capMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
+                                                        title={cor.nome} />
+                                                ))}
+                                                {capMap.destaques[v.verse] && (
+                                                    <button onClick={() => handleDestacar(capMap.destaques[v.verse].cor || 'yellow')}
+                                                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-text-muted hover:text-red-400" title="Remover destaque">
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {mostrarNota && (
+                                            <div className="mt-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
+                                                <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
+                                                    placeholder="Escreva sua anotação..."
+                                                    className="w-full bg-surface-1 border border-border-strong rounded-xl px-4 py-3 text-text-primary text-base placeholder-text-muted focus:outline-none focus:border-amber-500/50 resize-none"
+                                                    rows={3} autoFocus />
+                                                <div className="flex justify-end gap-2 mt-2">
+                                                    {capMap.notas[v.verse] && (
+                                                        <button onClick={async () => {
+                                                            await removerInteracaoPorVersiculoETipo('nota', livroAbrev, cap, v.verse);
+                                                            success('Nota removida');
+                                                            setMostrarNota(false);
+                                                            await carregarInteracoes();
+                                                        }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
+                                                            Apagar
+                                                        </button>
+                                                    )}
+                                                    <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
+                                                        className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
+                                                        Salvar
+                                                    </button>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 )}
-
-                                {mostrarNota && (
-                                    <div className="mt-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
-                                        <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
-                                            placeholder="Escreva sua anotação..."
-                                            className="w-full bg-surface-1 border border-border-strong rounded-xl px-4 py-3 text-text-primary text-base placeholder-text-muted focus:outline-none focus:border-amber-500/50 resize-none"
-                                            rows={3} autoFocus />
-                                        <div className="flex justify-end gap-2 mt-2">
-                                            {interacoesMap.notas[v.verse] && (
-                                                <button onClick={async () => {
-                                                    await removerInteracaoPorVersiculoETipo('nota', livroAbrev, capitulo, v.verse);
-                                                    success('Nota removida');
-                                                    setMostrarNota(false);
-                                                    await carregarInteracoes();
-                                                }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
-                                                    Apagar
-                                                </button>
-                                            )}
-                                            <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
-                                                className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
-                                                Salvar
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                        )}
-                    </div>
-                ))}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Modal de Estudo IA */}
@@ -339,7 +386,7 @@ function VersiculosInterativos({
                         <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-400" />
-                                <span className="font-bold text-text-primary text-base">Estudo — {livroNome} {capitulo}:{estudoVersiculo?.verse}</span>
+                                <span className="font-bold text-text-primary text-base">Estudo — {livroNome} {estudoVersiculo ? getCapitulo(estudoVersiculo) : capitulo}:{estudoVersiculo?.verse}</span>
                             </div>
                             <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
                         </div>
@@ -698,23 +745,49 @@ function PlanoLeituraContent() {
         }
     };
 
+    // Agrupa versículos por capítulo: [[cap14 versos], [cap15 versos], ...]
+    const getCapitulosAgrupados = (): Versiculo[][] => {
+        if (!bibleData) return [];
+        const grupos: Versiculo[][] = [];
+        let grupoAtual: Versiculo[] = [];
+        let capAtual: number | undefined;
+        for (const v of bibleData.versiculos) {
+            const cap = v.chapter ?? 0;
+            if (cap !== capAtual && grupoAtual.length > 0) {
+                grupos.push(grupoAtual);
+                grupoAtual = [];
+            }
+            capAtual = cap;
+            grupoAtual.push(v);
+        }
+        if (grupoAtual.length > 0) grupos.push(grupoAtual);
+        return grupos;
+    };
+
     const getTotalPartesLeitura = () => {
-        const totalVersiculos = bibleData?.versiculos.length || 30;
-        return Math.max(1, Math.ceil(totalVersiculos / 10));
+        const grupos = getCapitulosAgrupados();
+        return Math.max(1, grupos.length);
+    };
+
+    // Retorna os versículos da parte (capítulo) indicada
+    const getVersiculosDaParte = (parte: number): Versiculo[] => {
+        const grupos = getCapitulosAgrupados();
+        if (grupos.length === 0) return [];
+        const idx = Math.min(Math.max(parte - 1, 0), grupos.length - 1);
+        return grupos[idx];
     };
 
     const atualizarContextoVersiculos = (parte: number) => {
         if (!bibleData || !passagem) return;
 
-        // No modo plano, mostra TODOS os versículos desde o início até a parte atual
-        // para que o que já foi lido continue visível
+        // No modo plano, mostra TODOS os capítulos desde o início até a parte atual
         if (isPlanoMode) {
-            const endIndex = parte * 10;
-            const slice = bibleData.versiculos.slice(0, endIndex);
+            const grupos = getCapitulosAgrupados();
+            const endIdx = Math.min(parte, grupos.length);
+            const slice = grupos.slice(0, endIdx).flat();
             setVersiculosPaginaAtual(slice);
         } else {
-            const startIndex = (parte - 1) * 10;
-            const slice = bibleData.versiculos.slice(startIndex, startIndex + 10);
+            const slice = getVersiculosDaParte(parte);
             setVersiculosPaginaAtual(slice);
         }
 
@@ -796,8 +869,16 @@ function PlanoLeituraContent() {
             ? '\nSeu progresso desta leitura fica salvo até o fim do dia.'
             : '';
 
-        return `📖 **${passagem.referencia}**
-📍 *Parte ${parteAtual} de ${totalPartes}*
+        // Título do capítulo atual (ex: "Mateus 15" em vez de "Mateus 14-16")
+        const versiculosDaParte = getVersiculosDaParte(parteAtual);
+        const capDaParte = versiculosDaParte.length > 0 ? versiculosDaParte[0].chapter : null;
+        const primeiraParte = passagem.referencia.split(';')[0].trim();
+        const refParts = primeiraParte.match(/^(.+?)\s+\d/);
+        const nomeLivro = refParts ? refParts[1] : passagem.referencia;
+        const tituloCapitulo = capDaParte ? `${nomeLivro} ${capDaParte}` : passagem.referencia;
+
+        return `📖 **${tituloCapitulo}**
+📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
 
 ---
 
@@ -914,11 +995,11 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
         const page = currentPageRef.current;
 
-        // Pegar versículos da parte atual
-        const startIndex = (page - 1) * 10;
-        const versiculosAtual = bibleData
-            ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
-            : '';
+        // Pegar versículos do capítulo atual
+        const versiculosDaParte = getVersiculosDaParte(page);
+        const versiculosAtual = versiculosDaParte
+            .map(v => `**${v.verse}.** ${v.text}`)
+            .join('\n');
 
         try {
             console.log('🔍 Chamando Edge Function explicar_passagem...');
@@ -975,10 +1056,10 @@ Ou **MENU** para voltar.`;
         if (!passagem) return '';
 
         const page = currentPageRef.current;
-        const startIndex = (page - 1) * 10;
-        const versiculosAtual = bibleData
-            ? formatarVersiculosParte(bibleData.versiculos, startIndex, 10)
-            : '';
+        const versiculosDaParte = getVersiculosDaParte(page);
+        const versiculosAtual = versiculosDaParte
+            .map(v => `**${v.verse}.** ${v.text}`)
+            .join('\n');
 
         try {
             const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
@@ -1065,8 +1146,7 @@ Ou **MENU** para voltar.`;
 
         // OPÇÃO 1: LEITURA GUIADA (Paginação Dinâmica)
         if (activeOption === '1' || isPlanoMode) {
-            const totalVersiculos = bibleData?.versiculos.length || 30;
-            const totalPartes = Math.ceil(totalVersiculos / 10);
+            const totalPartes = getTotalPartesLeitura();
 
             console.log('📖 Opção 1 - Página atual:', page, 'Total partes:', totalPartes);
 
