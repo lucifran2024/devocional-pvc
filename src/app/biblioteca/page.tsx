@@ -1262,6 +1262,40 @@ function BibliotecaPage() {
         setPainelAberto(false);
     };
 
+    const copiarItemPainel = async (item: BibliaInteracao) => {
+        const ref = `${item.livro_nome} ${item.capitulo}:${item.versiculo}`;
+        const textoBase = `"${item.texto_versiculo}" — ${ref} (${versaoBiblia.nome})`;
+        const texto = item.nota
+            ? `${textoBase}\n\n📝 Nota: ${item.nota}`
+            : textoBase;
+        try {
+            await navigator.clipboard.writeText(texto);
+            success(item.nota ? 'Versículo + nota copiados!' : 'Versículo copiado!');
+        } catch {
+            toastError('Não foi possível copiar');
+        }
+    };
+
+    const compartilharItemPainel = async (item: BibliaInteracao) => {
+        const ref = `${item.livro_nome} ${item.capitulo}:${item.versiculo}`;
+        const textoBase = `"${item.texto_versiculo}"\n— ${ref} (${versaoBiblia.nome})`;
+        const texto = item.nota
+            ? `${textoBase}\n\n📝 ${item.nota}`
+            : textoBase;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: ref, text: texto });
+            } catch { /* user cancelled */ }
+        } else {
+            try {
+                await navigator.clipboard.writeText(texto);
+                success('Copiado para compartilhar!');
+            } catch {
+                toastError('Não foi possível compartilhar');
+            }
+        }
+    };
+
     const iniciarEdicaoNotaPainel = (item: BibliaInteracao) => {
         setPainelNotaEditId(item.id!);
         setPainelNotaTexto(item.nota || '');
@@ -2003,7 +2037,21 @@ function BibliotecaPage() {
                                                     </div>
                                                     <div className={`text-slate-800 dark:text-text-primary ${fontConfig.salvos} mt-1.5 leading-[1.8] font-serif`}>{item.texto_versiculo}</div>
                                                 </button>
-                                                <div className="flex items-center gap-1 shrink-0">
+                                                <div className="flex items-center gap-0.5 shrink-0">
+                                                    <button
+                                                        onClick={() => copiarItemPainel(item)}
+                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-emerald-50 dark:hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+                                                        title={item.nota ? 'Copiar versículo + nota' : 'Copiar versículo'}
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => compartilharItemPainel(item)}
+                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-sky-50 dark:hover:bg-sky-500/15 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                                                        title="Compartilhar"
+                                                    >
+                                                        <Share2 className="w-4 h-4" />
+                                                    </button>
                                                     <button
                                                         onClick={() => painelNotaEditId === item.id ? setPainelNotaEditId(null) : iniciarEdicaoNotaPainel(item)}
                                                         className={`p-2 rounded-lg transition-all ${painelNotaEditId === item.id ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-500' : item.nota ? 'text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'text-slate-300 dark:text-text-muted hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500 dark:hover:text-blue-400'}`}
@@ -2011,7 +2059,7 @@ function BibliotecaPage() {
                                                     >
                                                         <StickyNote className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 dark:hover:text-red-400 transition-all">
+                                                    <button onClick={() => removerItemPainel(item.id!)} className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 dark:hover:text-red-400 transition-all" title="Remover">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
