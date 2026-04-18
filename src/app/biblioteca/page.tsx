@@ -503,6 +503,7 @@ function BibliotecaPage() {
     const [scrollToVerse, setScrollToVerse] = useState<number | null>(null);
     const [totalVersiculosTemp, setTotalVersiculosTemp] = useState(0);
     const [loadingVersiculosTemp, setLoadingVersiculosTemp] = useState(false);
+    const [buscaLivro, setBuscaLivro] = useState('');
 
     // Mini-toolbar (single select)
     const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
@@ -785,6 +786,75 @@ function BibliotecaPage() {
         setFaseSelecao('capitulos');
     };
 
+    // Normaliza string: minúsculas, sem acentos, sem espaços sobrando
+    const normalizar = (s: string) => s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    // Tenta identificar livro a partir do texto digitado (nome ou abreviação)
+    const encontrarLivroPorTexto = (texto: string): typeof LIVROS_BIBLIA[0] | null => {
+        const alvo = normalizar(texto);
+        if (!alvo) return null;
+        // 1) abreviação exata
+        const porAbrev = LIVROS_BIBLIA.find(l => normalizar(l.abrev) === alvo);
+        if (porAbrev) return porAbrev;
+        // 2) nome exato
+        const porNome = LIVROS_BIBLIA.find(l => normalizar(l.nome) === alvo);
+        if (porNome) return porNome;
+        // 3) nome começa com (prioriza mais curto/mais próximo)
+        const comecaCom = LIVROS_BIBLIA
+            .filter(l => normalizar(l.nome).startsWith(alvo))
+            .sort((a, b) => a.nome.length - b.nome.length);
+        if (comecaCom[0]) return comecaCom[0];
+        // 4) nome contém
+        const contem = LIVROS_BIBLIA.find(l => normalizar(l.nome).includes(alvo));
+        return contem || null;
+    };
+
+    // Parse "joão 3:16" / "gn 1:1" / "salmos 23" / "1 co 13:4"
+    const parseReferenciaBiblica = (texto: string): { livro: typeof LIVROS_BIBLIA[0]; capitulo: number; versiculo: number | null } | null => {
+        const t = texto.trim();
+        if (!t) return null;
+        // Regex: captura "nome cap[:ver]"; nome pode ter "1 ", "2 ", "3 " prefixo e letras/acentos/espaços
+        const match = t.match(/^([1-3]?\s*[A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(\d{1,3})(?:\s*[:.]\s*(\d{1,3}))?\s*$/);
+        if (!match) return null;
+        const nomeTexto = match[1].replace(/\s+/g, ' ').trim();
+        const capitulo = parseInt(match[2], 10);
+        const versiculo = match[3] ? parseInt(match[3], 10) : null;
+        const livro = encontrarLivroPorTexto(nomeTexto);
+        if (!livro) return null;
+        if (capitulo < 1 || capitulo > livro.capitulos) return null;
+        return { livro, capitulo, versiculo };
+    };
+
+    const referenciaBusca = parseReferenciaBiblica(buscaLivro);
+
+    // Filtra categorias pelo texto digitado (apenas quando NÃO é referência completa)
+    const categoriasFiltradas = (() => {
+        if (!buscaLivro.trim() || referenciaBusca) return CATEGORIAS_BIBLIA;
+        const alvo = normalizar(buscaLivro);
+        return CATEGORIAS_BIBLIA
+            .map(cat => ({
+                ...cat,
+                livros: cat.livros.filter(l =>
+                    normalizar(l.nome).includes(alvo) ||
+                    normalizar(l.abrev).includes(alvo)
+                ),
+            }))
+            .filter(cat => cat.livros.length > 0);
+    })();
+
+    const irParaReferencia = () => {
+        if (!referenciaBusca) return;
+        setLivroAtual(referenciaBusca.livro);
+        setCapituloAtual(referenciaBusca.capitulo);
+        setScrollToVerse(referenciaBusca.versiculo);
+        setBuscaLivro('');
+        setModalAberto(false);
+    };
+
     const selecionarCapituloTemp = async (cap: number) => {
         setCapituloSelecionadoTemp(cap);
         setFaseSelecao('versiculos');
@@ -804,6 +874,13 @@ function BibliotecaPage() {
         setLivroAtual(livroSelecionadoTemp);
         setCapituloAtual(capituloSelecionadoTemp);
         setScrollToVerse(versiculo || null);
+        setBuscaLivro('');
+        setModalAberto(false);
+    };
+
+    const fecharModalSelecao = () => {
+        setBuscaLivro('');
+        setFaseSelecao('livros');
         setModalAberto(false);
     };
 
@@ -1699,112 +1776,169 @@ function BibliotecaPage() {
 
             {/* --- MODAL DE SELEÇÃO --- */}
             {modalAberto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-surface-1 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
-                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-slate-50 dark:bg-surface-2/50">
+                <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center sm:p-4 bg-black/50 dark:bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
+                    <div
+                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden sm:border border-slate-200 dark:border-border-subtle shadow-2xl"
+                        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+                    >
+                        <div className="px-4 py-3.5 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-white dark:bg-surface-1">
                             {faseSelecao === 'capitulos' ? (
-                                <button onClick={() => setFaseSelecao('livros')} className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium">
+                                <button onClick={() => setFaseSelecao('livros')} className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 text-sm font-semibold">
                                     <ArrowLeft className="w-4 h-4" /> Voltar
                                 </button>
                             ) : faseSelecao === 'versiculos' ? (
-                                <button onClick={() => setFaseSelecao('capitulos')} className="flex items-center gap-1 text-amber-400 hover:text-amber-300 text-sm font-medium">
+                                <button onClick={() => setFaseSelecao('capitulos')} className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 text-sm font-semibold">
                                     <ArrowLeft className="w-4 h-4" /> Voltar
                                 </button>
                             ) : <div className="w-16" />}
-                            <h3 className="text-lg font-bold text-text-primary">
+                            <h3 className="text-base sm:text-lg font-bold text-text-primary tracking-tight">
                                 {faseSelecao === 'livros' ? 'Escolha o Livro' : faseSelecao === 'capitulos' ? livroSelecionadoTemp.nome : `${livroSelecionadoTemp.nome} ${capituloSelecionadoTemp}`}
                             </h3>
-                            <button onClick={() => setModalAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
+                            <button onClick={fecharModalSelecao} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-2 text-text-muted hover:text-text-primary transition-colors"><X className="w-5 h-5" /></button>
                         </div>
-                        <div className="overflow-y-auto flex-1 p-2">
+                        <div className="overflow-y-auto flex-1">
                             {faseSelecao === 'livros' && (
-                                <div className="p-2 space-y-4">
-                                    {CATEGORIAS_BIBLIA.map((categoria, catIdx) => {
-                                        const ehInicioAT = catIdx === 0;
-                                        const ehInicioNT = catIdx === 5;
-                                        return (
-                                            <div key={categoria.nome}>
-                                                {/* Divisor AT / NT */}
-                                                {(ehInicioAT || ehInicioNT) && (
-                                                    <div className="sticky top-0 z-20 bg-white/95 dark:bg-surface-0/95 backdrop-blur-md -mx-2 px-4 py-2 mb-2 border-b border-slate-200 dark:border-border-subtle">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-text-muted">
-                                                                {ehInicioAT ? 'Antigo Testamento' : 'Novo Testamento'}
-                                                            </span>
-                                                            <span className="text-[9px] text-slate-400 dark:text-text-muted font-semibold">
-                                                                {ehInicioAT ? '39 livros' : '27 livros'}
-                                                            </span>
-                                                            <div className="flex-1 h-px bg-gradient-to-r from-slate-300 dark:from-border-subtle to-transparent" />
-                                                        </div>
-                                                    </div>
-                                                )}
+                                <>
+                                    {/* Busca rápida por livro / referência */}
+                                    <div className="sticky top-0 z-30 bg-white dark:bg-surface-1 px-4 pt-3 pb-2 border-b border-slate-200 dark:border-border-subtle">
+                                        <div className="relative">
+                                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-text-muted pointer-events-none" />
+                                            <input
+                                                type="text"
+                                                value={buscaLivro}
+                                                onChange={(e) => setBuscaLivro(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && referenciaBusca) {
+                                                        e.preventDefault();
+                                                        irParaReferencia();
+                                                    }
+                                                }}
+                                                placeholder="Buscar livro ou referência (ex: João 3:16)"
+                                                className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-surface-2/60 border border-slate-200 dark:border-border-subtle text-[14px] text-slate-900 dark:text-text-primary placeholder:text-slate-400 dark:placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40 transition"
+                                                autoComplete="off"
+                                                autoCorrect="off"
+                                                spellCheck={false}
+                                            />
+                                            {buscaLivro && (
+                                                <button
+                                                    onClick={() => setBuscaLivro('')}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-primary transition-colors"
+                                                    title="Limpar"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
 
-                                                {/* Cabeçalho de categoria */}
-                                                <div className="flex items-center gap-2 px-2 pb-2">
-                                                    <span className="text-lg" aria-hidden>{categoria.emoji}</span>
-                                                    <h4 className={`text-[11px] font-bold uppercase tracking-wider ${categoria.cor}`}>
-                                                        {categoria.nome}
-                                                    </h4>
-                                                    <span className="text-[10px] text-slate-400 dark:text-text-muted font-medium">
-                                                        · {categoria.livros.length} {categoria.livros.length === 1 ? 'livro' : 'livros'}
-                                                    </span>
-                                                </div>
+                                        {/* Botão ir direto para referência detectada */}
+                                        {referenciaBusca && (
+                                            <button
+                                                onClick={irParaReferencia}
+                                                className="mt-2 w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 transition-colors active:scale-[0.99]"
+                                            >
+                                                <span className="flex items-center gap-2 text-sm font-semibold">
+                                                    <Book className="w-4 h-4" />
+                                                    Ir para {referenciaBusca.livro.nome} {referenciaBusca.capitulo}{referenciaBusca.versiculo ? `:${referenciaBusca.versiculo}` : ''}
+                                                </span>
+                                                <span className="text-[11px] font-medium opacity-70">Enter ↵</span>
+                                            </button>
+                                        )}
+                                    </div>
 
-                                                {/* Livros da categoria */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                                    {categoria.livros.map(livro => {
-                                                        const isAtual = livro.abrev === livroAtual.abrev;
-                                                        return (
-                                                            <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                                className={`relative group overflow-hidden w-full flex items-center justify-between pl-3 pr-3 py-2.5 rounded-xl text-left transition-all border
-                                                                    ${isAtual
-                                                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-300 shadow-sm shadow-amber-500/10'
-                                                                        : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 text-slate-800 dark:text-text-primary hover:border-slate-300 dark:hover:border-white/15'
-                                                                    }`}
-                                                            >
-                                                                {/* Barra lateral colorida por categoria */}
-                                                                <span className={`absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-40 group-hover:opacity-80'} transition-opacity`} />
-
-                                                                <div className="flex items-center gap-2 min-w-0 ml-1.5">
-                                                                    <span className="font-semibold text-sm truncate">{livro.nome}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${isAtual
-                                                                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                                                                        : 'bg-slate-100 dark:bg-surface-2 text-slate-500 dark:text-text-muted'}`}>
-                                                                        {livro.abrev}
-                                                                    </span>
-                                                                    <span className={`text-[11px] font-medium min-w-[38px] text-right ${isAtual ? 'text-amber-600 dark:text-amber-300' : 'text-slate-500 dark:text-text-muted'}`}>
-                                                                        {livro.capitulos} cap
-                                                                    </span>
-                                                                </div>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
+                                    <div className="px-4 py-3 space-y-5">
+                                        {categoriasFiltradas.length === 0 && (
+                                            <div className="py-12 text-center">
+                                                <Search className="w-10 h-10 mx-auto text-slate-300 dark:text-text-muted/40 mb-3" />
+                                                <p className="text-sm font-medium text-slate-600 dark:text-text-secondary">Nenhum livro encontrado</p>
+                                                <p className="text-xs text-slate-400 dark:text-text-muted mt-1">Tente &ldquo;Salmos&rdquo; ou &ldquo;João 3:16&rdquo;</p>
                                             </div>
+                                        )}
+                                        {categoriasFiltradas.map((categoria) => {
+                                            const idxOriginal = CATEGORIAS_BIBLIA.findIndex(c => c.nome === categoria.nome);
+                                            const semBusca = !buscaLivro.trim();
+                                            const ehInicioAT = semBusca && idxOriginal === 0;
+                                            const ehInicioNT = semBusca && idxOriginal === 5;
+                                            return (
+                                                <div key={categoria.nome}>
+                                                    {/* Divisor AT / NT */}
+                                                    {(ehInicioAT || ehInicioNT) && (
+                                                        <div className="sticky top-[64px] z-20 bg-white/95 dark:bg-surface-1/95 backdrop-blur-md -mx-4 px-4 py-3 mb-3 border-b border-slate-200 dark:border-border-subtle">
+                                                            <div className="flex items-baseline gap-2.5">
+                                                                <span className="text-sm font-black uppercase tracking-[0.15em] text-slate-900 dark:text-text-primary">
+                                                                    {ehInicioAT ? 'Antigo Testamento' : 'Novo Testamento'}
+                                                                </span>
+                                                                <span className="text-[11px] text-slate-400 dark:text-text-muted font-semibold tabular-nums">
+                                                                    {ehInicioAT ? '39 livros' : '27 livros'}
+                                                                </span>
+                                                                <div className="flex-1 h-px bg-gradient-to-r from-slate-200 dark:from-border-subtle to-transparent" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Cabeçalho de categoria (span p/ evitar reset global de h4) */}
+                                                    <div className="flex items-center gap-2.5 pb-2.5">
+                                                        <span className={`h-4 w-1 rounded-full ${categoria.corBarra}`} />
+                                                        <span role="heading" aria-level={4} className={`text-[13px] font-bold tracking-tight ${categoria.cor}`}>
+                                                            {categoria.nome}
+                                                        </span>
+                                                        <span className="text-[11px] text-slate-400 dark:text-text-muted font-medium tabular-nums">
+                                                            · {categoria.livros.length} {categoria.livros.length === 1 ? 'livro' : 'livros'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Livros da categoria */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        {categoria.livros.map(livro => {
+                                                            const isAtual = livro.abrev === livroAtual.abrev;
+                                                            return (
+                                                                <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
+                                                                    className={`relative group overflow-hidden w-full flex items-center justify-between pl-4 pr-4 py-3.5 rounded-xl text-left transition-all border
+                                                                        ${isAtual
+                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 text-amber-700 dark:text-amber-300 shadow-sm shadow-amber-500/10'
+                                                                            : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 text-slate-900 dark:text-text-primary hover:border-slate-300 dark:hover:border-white/15 active:scale-[0.98]'
+                                                                        }`}
+                                                                >
+                                                                    {/* Barra lateral colorida por categoria */}
+                                                                    <span className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'} transition-opacity`} />
+
+                                                                    <span className="font-semibold text-[15px] tracking-tight truncate ml-1.5">{livro.nome}</span>
+                                                                    <span className={`text-xs font-medium tabular-nums ml-3 shrink-0 ${isAtual ? 'text-amber-600 dark:text-amber-300' : 'text-slate-400 dark:text-text-muted'}`}>
+                                                                        {livro.capitulos} {livro.capitulos === 1 ? 'cap' : 'caps'}
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                            {faseSelecao === 'capitulos' && (
+                                <div className="grid grid-cols-5 sm:grid-cols-6 gap-2.5 p-4">
+                                    {Array.from({ length: livroSelecionadoTemp.capitulos }, (_, i) => i + 1).map(cap => {
+                                        const isAtual = livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual;
+                                        return (
+                                            <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
+                                                className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold tabular-nums transition-all border active:scale-[0.95] ${isAtual
+                                                    ? 'bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/30'
+                                                    : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 text-slate-800 dark:text-text-primary hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/40'
+                                                    }`}>
+                                                {cap}
+                                            </button>
                                         );
                                     })}
                                 </div>
                             )}
-                            {faseSelecao === 'capitulos' && (
-                                <div className="grid grid-cols-5 sm:grid-cols-6 gap-3 p-2">
-                                    {Array.from({ length: livroSelecionadoTemp.capitulos }, (_, i) => i + 1).map(cap => (
-                                        <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
-                                            className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold transition-all border ${(livroSelecionadoTemp.abrev === livroAtual.abrev && cap === capituloAtual) ? 'bg-amber-500 text-black border-amber-400' : 'bg-surface-1 border-border-subtle text-text-secondary hover:bg-surface-2'}`}>
-                                            {cap}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                             {faseSelecao === 'versiculos' && (
-                                <div className="p-2">
+                                <div className="p-4">
                                     {/* Botão abrir capítulo inteiro */}
-                                    <button onClick={() => confirmarSelecao()} className="w-full mb-3 py-3 px-4 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-sm hover:bg-amber-500/30 transition-colors">
+                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]">
                                         Abrir capítulo inteiro
                                     </button>
 
-                                    <p className="text-text-muted text-xs text-center mb-3">Ou escolha um versículo para ir direto:</p>
+                                    <p className="text-slate-500 dark:text-text-muted text-xs text-center mb-4 font-medium">Ou escolha um versículo para ir direto:</p>
 
                                     {loadingVersiculosTemp ? (
                                         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-amber-400 animate-spin" /></div>
@@ -1812,7 +1946,7 @@ function BibliotecaPage() {
                                         <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
                                             {Array.from({ length: totalVersiculosTemp }, (_, i) => i + 1).map(v => (
                                                 <button key={v} onClick={() => confirmarSelecao(v)}
-                                                    className="aspect-square flex items-center justify-center rounded-lg text-sm font-bold transition-all border bg-surface-1 border-border-subtle text-text-secondary hover:bg-amber-500/20 hover:border-amber-500/40 hover:text-amber-400">
+                                                    className="aspect-square flex items-center justify-center rounded-lg text-sm font-bold tabular-nums transition-all border bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 text-slate-800 dark:text-text-primary hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/40 active:scale-[0.95]">
                                                     {v}
                                                 </button>
                                             ))}
