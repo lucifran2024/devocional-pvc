@@ -82,14 +82,24 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Header Top Icons */}
+          {/* Streak Badge */}
           <div className="absolute top-0 right-0 flex gap-4">
-            <div className="h-8 md:h-10 px-3 glass-panel rounded-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-500 border-amber-600/30 dark:border-amber-500/20 font-bold bg-white/90 dark:bg-amber-500/10 backdrop-blur-md transition-all shadow-md shadow-amber-500/5 dark:shadow-amber-500/10" title="Dias seguidos abrindo o app">
-              <span className="text-lg">🔥</span>
+            <div
+              title="Dias seguidos abrindo o app"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full
+                bg-gradient-to-r from-amber-50 to-orange-50
+                dark:from-amber-500/15 dark:to-orange-500/10
+                border border-amber-300/60 dark:border-amber-500/25
+                shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20
+                backdrop-blur-md"
+            >
+              <span className="text-base leading-none">🔥</span>
               {isLoaded ? (
-                <span className="text-xs md:text-sm tracking-wide">{streak} Dia{streak !== 1 ? 's' : ''}</span>
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 tracking-wide">
+                  {streak} {streak === 1 ? 'dia' : 'dias'}
+                </span>
               ) : (
-                <span className="text-xs opacity-50">...</span>
+                <span className="text-xs text-amber-600/50 dark:text-amber-500/40">...</span>
               )}
             </div>
           </div>
@@ -115,16 +125,19 @@ export default function DashboardPage() {
       {/* 2. GRID DE FERRAMENTAS (Design Premium) */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 pb-24 z-10">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 animate-enter" style={{ animationDelay: '0.2s' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 animate-enter" style={{ animationDelay: '0.2s' }}>
 
-          {/* Card 1: Gerador (IA) */}
+          {/* Card 1: Gerador (IA) - Featured */}
           <DashboardCard
             href="/gerador"
             title="Gerador de Mensagem"
             desc="Crie devocionais personalizados com Inteligência Artificial."
             icon={Sparkles}
-            accentColor="text-indigo-400"
+            accentColor="text-indigo-500 dark:text-indigo-400"
+            iconBg="bg-indigo-500/10 border-indigo-500/20"
+            badgeColor="bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-300"
             badge="IA POWERED"
+            featured
           />
 
           {/* Card 2: Plano de Leitura */}
@@ -133,26 +146,33 @@ export default function DashboardPage() {
             title="Plano de Leitura"
             desc="Estudo bíblico interativo, comentado e profundo."
             icon={Book}
-            accentColor="text-emerald-400"
-            badge="NOVO MÓDULO"
+            accentColor="text-emerald-600 dark:text-emerald-400"
+            iconBg="bg-emerald-500/10 border-emerald-500/20"
+            badgeColor="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-300"
+            badge="MÓDULO"
           />
 
-          {/* Card 3: Histórico */}
+          {/* Card 3: Bíblia Sagrada */}
           <DashboardCard
-            href="/historico"
-            title="Minhas Memórias"
-            desc="Acesse suas mensagens salvas e histórico espiritual."
-            icon={Anchor}
-            accentColor="text-amber-400"
+            href="/biblioteca"
+            title="Bíblia Sagrada"
+            desc="Leia a Palavra de Deus com navegação intuitiva e busca rápida."
+            icon={Star}
+            accentColor="text-amber-600 dark:text-amber-400"
+            iconBg="bg-amber-500/10 border-amber-500/20"
+            badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+            badge="66 LIVROS"
           />
 
           {/* Card 4: Chat Pastoral */}
           <DashboardCard
             href="/chat"
             title="Chat Pastoral"
-            desc="Converse com um mentor virtual sobre suas dúvidas."
+            desc="Converse com um mentor virtual sobre suas dúvidas e reflexões."
             icon={MessageSquare}
-            accentColor="text-cyan-400"
+            accentColor="text-cyan-600 dark:text-cyan-400"
+            iconBg="bg-cyan-500/10 border-cyan-500/20"
+            badgeColor="bg-cyan-500/10 border-cyan-500/20 text-cyan-700 dark:text-cyan-300"
             badge="NOVO"
           />
 
@@ -162,7 +182,9 @@ export default function DashboardPage() {
             title="Devocional Externo"
             desc="Leia devocionais de sites cristãos renomados, direto da fonte."
             icon={Heart}
-            accentColor="text-rose-400"
+            accentColor="text-rose-600 dark:text-rose-400"
+            iconBg="bg-rose-500/10 border-rose-500/20"
+            badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
             badge="ORIGINAL"
           />
 
@@ -172,10 +194,11 @@ export default function DashboardPage() {
             title="Adicionar Favorita"
             desc="Salve mensagens externas para a IA aprender seu estilo."
             icon={Feather}
-            accentColor="text-amber-400"
+            accentColor="text-orange-600 dark:text-orange-400"
+            iconBg="bg-orange-500/10 border-orange-500/20"
+            badgeColor="bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-300"
             badge="NOVO"
           />
-
 
           {/* Card 7: DNA Categorizado */}
           <DashboardCard
@@ -183,18 +206,20 @@ export default function DashboardPage() {
             title="DNA Categorizado"
             desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
             icon={Layers}
-            accentColor="text-violet-400"
+            accentColor="text-violet-600 dark:text-violet-400"
+            iconBg="bg-violet-500/10 border-violet-500/20"
+            badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
             badge="NOVO"
           />
 
-          {/* Card 8: Biblioteca (Bíblia) */}
+          {/* Card 8: Histórico */}
           <DashboardCard
-            href="/biblioteca"
-            title="Bíblia Sagrada"
-            desc="Leia a Palavra de Deus com navegação simples."
-            icon={Star}
-            accentColor="text-purple-400"
-            badge="NOVO"
+            href="/historico"
+            title="Minhas Memórias"
+            desc="Acesse suas mensagens salvas e histórico espiritual."
+            icon={Anchor}
+            accentColor="text-teal-600 dark:text-teal-400"
+            iconBg="bg-teal-500/10 border-teal-500/20"
           />
 
         </div>

@@ -576,11 +576,13 @@ function PlanoLeituraContent() {
     const searchParams = useSearchParams();
     const planoId = searchParams.get('plano_id');
     const diaQuery = searchParams.get('dia');
+    const lerDirect = searchParams.get('ler') === '1'; // ?ler=1 -> abre direto "Ler Passagem"
     const isPlanoMode = Boolean(planoId);
 
     const [passagem, setPassagem] = useState<PassagemSecao6 | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeOption, setActiveOption] = useState<MenuOption>(null);
+    // Se ?ler=1, já começa no modo "Ler Passagem" (1) para pular o menu
+    const [activeOption, setActiveOption] = useState<MenuOption>(lerDirect ? '1' : null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -1374,6 +1376,10 @@ ${conteudo}
                 return;
             }
 
+            // Se vier ?ler=1, pulamos a mensagem de boas-vindas — o useEffect dedicado
+            // abaixo trata do fluxo direto para "Ler Passagem".
+            if (lerDirect) return;
+
             const welcomeMessage: ChatMessage = {
                 role: 'assistant',
                 content: gerarRespostaMenuInicial(),
@@ -1381,7 +1387,30 @@ ${conteudo}
             };
             setMessages([welcomeMessage]);
         }
-    }, [loading, passagem, messages.length, isPlanoMode, bibleData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, passagem, messages.length, isPlanoMode, bibleData, lerDirect]);
+
+    // Modo direto ?ler=1: abre imediatamente "Ler Passagem" sem passar pelo menu.
+    // Espera passagem + bibleData carregarem para que os versículos apareçam
+    // corretamente na primeira renderização.
+    useEffect(() => {
+        if (!lerDirect) return;
+        if (isPlanoMode) return;
+        if (loading || !passagem || !bibleData) return;
+        if (messages.length > 0) return;
+
+        setActiveOption('1');
+        setMessages([
+            { role: 'user', content: 'Quero ver: Ler Passagem', timestamp: new Date() },
+        ]);
+        setIsProcessing(true);
+        (async () => {
+            const resp = await gerarRespostaOpcao('1');
+            setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
+            setIsProcessing(false);
+        })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lerDirect, isPlanoMode, loading, passagem, bibleData, messages.length]);
 
     // ===========================================
     // RENDER
