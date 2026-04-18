@@ -542,6 +542,7 @@ function BibliotecaPage() {
     const [termoBusca, setTermoBusca] = useState('');
     const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
     const [buscaLoading, setBuscaLoading] = useState(false);
+    const [livrosEncontrados, setLivrosEncontrados] = useState<LivroBiblia[]>([]);
 
     // Offline
     const [isOnline, setIsOnline] = useState(true);
@@ -1123,23 +1124,27 @@ function BibliotecaPage() {
     // BUSCA NA BÍBLIA
     // ==========================================
     const handleBuscar = async () => {
-        if (!termoBusca.trim()) return;
+        const termo = termoBusca.trim();
+        if (!termo) return;
 
-        // Tentar interpretar como referência bíblica (ex: "João 3:16", "Gn 1", "Salmos 23")
-        const refMatch = termoBusca.trim().match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i);
+        // Tentar interpretar como referência bíblica (ex: "João 3:16", "Josué 1-5", "Gn 1", "Salmos 23")
+        // Aceita : ou - como separador de versículo, e ignora acentos
+        const refMatch = termo.match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?:\s*[:\-–]\s*(\d+)(?:\s*[-–]\s*(\d+))?)?$/i);
         if (refMatch) {
-            const nomeLivro = refMatch[1].trim().toLowerCase();
+            const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const alvo = normalizar(refMatch[1].trim());
             const cap = parseInt(refMatch[2]);
-            const livroEncontrado = LIVROS_BIBLIA.find(l =>
-                l.nome.toLowerCase() === nomeLivro ||
-                l.abrev.toLowerCase() === nomeLivro ||
-                l.nome.toLowerCase().startsWith(nomeLivro)
-            );
+            const livroEncontrado = LIVROS_BIBLIA.find(l => {
+                const nome = normalizar(l.nome);
+                const abrev = normalizar(l.abrev);
+                return nome === alvo || abrev === alvo || nome.startsWith(alvo);
+            });
             if (livroEncontrado) {
                 navegarPara(livroEncontrado.abrev, cap, refMatch[3] ? parseInt(refMatch[3]) : undefined);
                 setBuscaAberta(false);
                 setTermoBusca('');
                 setResultadosBusca([]);
+                setLivrosEncontrados([]);
                 return;
             }
         }
@@ -1148,21 +1153,72 @@ function BibliotecaPage() {
         setResultadosBusca([]);
 
         try {
-            const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termoBusca.trim())}/`);
+            const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termo)}/`);
             if (resp.ok) {
                 const data = await resp.json();
                 setResultadosBusca(Array.isArray(data) ? data.slice(0, 100) : []);
+            } else {
+                toastError(`Busca falhou (${resp.status})`);
             }
         } catch {
-            toastError('Erro na busca');
+            toastError('Erro na busca — verifique conexão');
         } finally {
             setBuscaLoading(false);
         }
     };
 
+    // Busca ao vivo: sugere livros instantaneamente e dispara busca de texto após debounce
+    useEffect(() => {
+        const termo = termoBusca.trim().toLowerCase();
+        if (!termo) {
+            setLivrosEncontrados([]);
+            setResultadosBusca([]);
+            return;
+        }
+
+        // Filtro local de livros (instantâneo)
+        const matches = LIVROS_BIBLIA.filter(l =>
+            l.nome.toLowerCase().includes(termo) ||
+            l.abrev.toLowerCase().includes(termo)
+        ).slice(0, 8);
+        setLivrosEncontrados(matches);
+
+        // Debounce para busca de texto na API (só se tiver 3+ chars e não for referência tipo "João 3")
+        if (termo.length < 3) {
+            setResultadosBusca([]);
+            return;
+        }
+        const refMatch = termo.match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?:\s*[:\-–]\s*(\d+)(?:\s*[-–]\s*(\d+))?)?$/i);
+        if (refMatch) {
+            setResultadosBusca([]);
+            // Auto-navegar se referência completa e livro conhecido
+            const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const alvo = normalizar(refMatch[1].trim());
+            const livro = LIVROS_BIBLIA.find(l => {
+                const nome = normalizar(l.nome);
+                const abrev = normalizar(l.abrev);
+                return nome === alvo || abrev === alvo || nome.startsWith(alvo);
+            });
+            if (livro) {
+                const timer = setTimeout(() => {
+                    handleBuscar();
+                }, 600);
+                return () => clearTimeout(timer);
+            }
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            handleBuscar();
+        }, 500);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [termoBusca, versaoBiblia.codigo]);
+
     const limparBusca = () => {
         setTermoBusca('');
         setResultadosBusca([]);
+        setLivrosEncontrados([]);
     };
 
     const highlightTermo = (texto: string): string => {
@@ -1370,6 +1426,29 @@ function BibliotecaPage() {
                             </button>
                         </div>
 
+                        {/* Sugestões de livros (local, instantâneo) */}
+                        {livrosEncontrados.length > 0 && (
+                            <div className="mt-2">
+                                <span className="text-xs text-text-muted font-medium px-2">Livros</span>
+                                <div className="mt-1 space-y-1 bg-slate-100 dark:bg-black/40 rounded-xl p-2 border border-slate-200 dark:border-transparent">
+                                    {livrosEncontrados.map(livro => (
+                                        <button
+                                            key={livro.abrev}
+                                            onClick={() => {
+                                                navegarPara(livro.abrev, 1);
+                                                setBuscaAberta(false);
+                                                limparBusca();
+                                            }}
+                                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 transition-colors flex items-center justify-between"
+                                        >
+                                            <span className="text-text-primary text-sm font-semibold">{livro.nome}</span>
+                                            <span className="text-xs text-text-muted">{livro.capitulos} cap.</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Resultados de busca */}
                         {resultadosBusca.length > 0 && (
                             <div className="mt-2">
@@ -1411,7 +1490,7 @@ function BibliotecaPage() {
                         )}
 
                         {/* Estado vazio após busca sem resultados */}
-                        {!buscaLoading && resultadosBusca.length === 0 && termoBusca.trim() && (
+                        {!buscaLoading && resultadosBusca.length === 0 && livrosEncontrados.length === 0 && termoBusca.trim().length >= 2 && (
                             <div className="mt-3 text-center py-4">
                                 <Search className="w-6 h-6 text-text-muted mx-auto mb-2 opacity-50" />
                                 <p className="text-sm text-text-muted">Nenhum resultado para &quot;{termoBusca}&quot;</p>
@@ -1531,58 +1610,37 @@ function BibliotecaPage() {
                         </div>
                         <div className="overflow-y-auto flex-1 p-2">
                             {faseSelecao === 'livros' && (
-                                <div className="space-y-6 p-3">
-                                    {CATEGORIAS_BIBLIA.map(cat => (
-                                        <div key={cat.nome}>
-                                            <div className="flex items-center gap-2.5 mb-3 sticky top-0 bg-white/95 dark:bg-surface-0/95 backdrop-blur-md py-2.5 px-3 rounded-xl z-10 border border-slate-100 dark:border-border-subtle">
-                                                <span className="text-lg">{cat.emoji}</span>
-                                                <h4 className={`text-xs font-bold uppercase tracking-wider ${cat.cor}`}>{cat.nome}</h4>
-                                                <div className="flex-1 h-px bg-border-subtle" />
-                                                <span className="text-[10px] text-text-muted font-medium">{cat.livros.length} livros</span>
+                                <div className="p-2 space-y-1">
+                                    {LIVROS_BIBLIA.map((livro, idx) => {
+                                        const isAtual = livro.abrev === livroAtual.abrev;
+                                        const header = idx === 0
+                                            ? 'Velho Testamento'
+                                            : idx === 39
+                                                ? 'Novo Testamento'
+                                                : null;
+                                        return (
+                                            <div key={livro.abrev}>
+                                                {header && (
+                                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 sticky top-0 bg-white/95 dark:bg-surface-0/95 backdrop-blur-md z-10">
+                                                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400">{header}</h4>
+                                                        <div className="flex-1 h-px bg-border-subtle" />
+                                                    </div>
+                                                )}
+                                                <button onClick={() => selecionarLivroTemp(livro)}
+                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors border
+                                                        ${isAtual
+                                                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-300'
+                                                            : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 text-slate-800 dark:text-text-primary'
+                                                        }`}
+                                                >
+                                                    <span className="font-semibold text-sm">{livro.nome}</span>
+                                                    <span className={`text-[11px] font-medium ${isAtual ? 'text-amber-500 dark:text-amber-300' : 'text-slate-500 dark:text-text-muted'}`}>
+                                                        {livro.capitulos} cap.
+                                                    </span>
+                                                </button>
                                             </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                {cat.livros.map(livro => {
-                                                    const isAtual = livro.abrev === livroAtual.abrev;
-                                                    return (
-                                                        <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                            className={`relative p-4 rounded-2xl text-left transition-all border group/book overflow-hidden
-                                                                ${isAtual
-                                                                    ? 'bg-amber-500/15 border-amber-500/40 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/20'
-                                                                    : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:border-amber-400/40 dark:hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5 active:scale-[0.97]'
-                                                                }`}
-                                                        >
-                                                            {/* Barra lateral colorida da categoria */}
-                                                            <div className={`absolute top-2 left-0 w-1 h-[calc(100%-16px)] rounded-r-full ${isAtual ? 'bg-amber-400' : cat.corBarra}`} />
-
-                                                            {/* Abreviação decorativa no fundo */}
-                                                            <span className={`absolute -bottom-1 -right-1 text-3xl font-black uppercase select-none pointer-events-none
-                                                                ${isAtual ? 'text-amber-500/10' : 'text-slate-200 dark:text-white/[0.03]'}`}>
-                                                                {livro.abrev}
-                                                            </span>
-
-                                                            {/* Nome do livro */}
-                                                            <div className={`font-bold text-sm mb-2 relative z-10
-                                                                ${isAtual ? 'text-amber-500 dark:text-amber-300' : 'text-slate-800 dark:text-text-primary group-hover/book:text-amber-600 dark:group-hover/book:text-amber-300'}`}>
-                                                                {livro.nome}
-                                                            </div>
-
-                                                            {/* Info do livro */}
-                                                            <div className="flex items-center justify-between relative z-10">
-                                                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
-                                                                    ${isAtual
-                                                                        ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300'
-                                                                        : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-text-muted'
-                                                                    }`}>
-                                                                    {livro.capitulos} cap.
-                                                                </span>
-                                                                <Book className={`w-3.5 h-3.5 ${isAtual ? 'text-amber-400/60' : 'text-slate-300 dark:text-white/10 group-hover/book:text-amber-400/40'}`} />
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                             {faseSelecao === 'capitulos' && (
