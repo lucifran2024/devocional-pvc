@@ -1828,8 +1828,11 @@ function BibliotecaPage() {
 
             {/* --- PAINEL DE SALVOS --- */}
             {painelAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-surface-1 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div
+                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
+                        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+                    >
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-surface-2 dark:to-surface-2">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-400/30 flex items-center justify-center">
