@@ -257,6 +257,226 @@ Se conflitar com MODO/BASE, ignorar a tag.
 2026-05-23 | 1 Tessalonicenses 2-5
 2026-05-24 | 2 Tessalonicenses 1-3
 2026-05-25 | 1 Timóteo 1-3
+2026-05-26 | Gênesis 1-5, Mateus 1-2
+2026-05-27 | Gênesis 6-10, Mateus 3-4
+2026-05-28 | Gênesis 11-15, Mateus 5-6
+2026-05-29 | Gênesis 16-20, Mateus 7-8
+2026-05-30 | Gênesis 21-25, Mateus 9-10
+2026-05-31 | Gênesis 26-30, Mateus 11-12
+2026-06-01 | Gênesis 31-35, Mateus 13-14
+2026-06-02 | Gênesis 36-40, Mateus 15-16
+2026-06-03 | Gênesis 41-45, Mateus 17-18
+2026-06-04 | Gênesis 46-50, Mateus 19-20
+2026-06-05 | Êxodo 1-5, Mateus 21-22
+2026-06-06 | Êxodo 6-10, Mateus 23-24
+2026-06-07 | Êxodo 11-15, Mateus 25-26
+2026-06-08 | Êxodo 16-20, Mateus 27-28
+2026-06-09 | Êxodo 21-25, Marcos 1-2
+2026-06-10 | Êxodo 26-30, Marcos 3-4
+2026-06-11 | Êxodo 31-35, Marcos 5-6
+2026-06-12 | Êxodo 36-40, Marcos 7-8
+2026-06-13 | Levítico 1-5, Marcos 9-10
+2026-06-14 | Levítico 6-10, Marcos 11-12
+2026-06-15 | Levítico 11-15, Marcos 13-14
+2026-06-16 | Levítico 16-20, Marcos 15-16
+2026-06-17 | Levítico 21-25, Lucas 1-2
+2026-06-18 | Levítico 26-27, Números 1-3, Lucas 3-4
+2026-06-19 | Números 4-8, Lucas 5-6
+2026-06-20 | Números 9-13, Lucas 7-8
+2026-06-21 | Números 14-18, Lucas 9-10
+2026-06-22 | Números 19-23, Lucas 11-12
+2026-06-23 | Números 24-28, Lucas 13-14
+2026-06-24 | Números 29-33, Lucas 15-16
+2026-06-25 | Números 34-36, Deuteronômio 1-2, Lucas 17-18
+2026-06-26 | Deuteronômio 3-7, Lucas 19-20
+2026-06-27 | Deuteronômio 8-12, Lucas 21-22
+2026-06-28 | Deuteronômio 13-17, Lucas 23-24
+2026-06-29 | Deuteronômio 18-22, João 1-2
+2026-06-30 | Deuteronômio 23-27, João 3-4
+2026-07-01 | Deuteronômio 28-32, João 5-6
+2026-07-02 | Deuteronômio 33-34, Josué 1-3, João 7-8
+2026-07-03 | Josué 4-8, João 9-10
+2026-07-04 | Josué 9-13, João 11-12
+2026-07-05 | Josué 14-18, João 13
+2026-07-06 | Josué 19-23, João 14
+2026-07-07 | Josué 24, Juízes 1-4, João 15
+2026-07-08 | Juízes 5-9, João 16
+2026-07-09 | Juízes 10-14, João 17
+2026-07-10 | Juízes 15-19, João 18
+2026-07-11 | Juízes 20-21, Rute 1-3, João 19
+2026-07-12 | Rute 4, 1 Samuel 1-4, João 20
+2026-07-13 | 1 Samuel 5-9, João 21
+2026-07-14 | 1 Samuel 10-13, Atos 1
+2026-07-15 | 1 Samuel 14-17, Atos 2
+2026-07-16 | 1 Samuel 18-21, Atos 3
+2026-07-17 | 1 Samuel 22-25, Atos 4
+2026-07-18 | 1 Samuel 26-29, Atos 5
+2026-07-19 | 1 Samuel 30-31, 2 Samuel 1-2, Atos 6
+2026-07-20 | 2 Samuel 3-6, Atos 7
+2026-07-21 | 2 Samuel 7-10, Atos 8
+2026-07-22 | 2 Samuel 11-14, Atos 9
+2026-07-23 | 2 Samuel 15-18, Atos 10
+2026-07-24 | 2 Samuel 19-22, Atos 11
+2026-07-25 | 2 Samuel 23-24, 1 Reis 1-2, Atos 12
+2026-07-26 | 1 Reis 3-6, Atos 13
+2026-07-27 | 1 Reis 7-10, Atos 14
+2026-07-28 | 1 Reis 11-14, Atos 15
+2026-07-29 | 1 Reis 15-18, Atos 16
+2026-07-30 | 1 Reis 19-22, Atos 17
+2026-07-31 | 2 Reis 1-4, Atos 18
+2026-08-01 | 2 Reis 5-8, Atos 19
+2026-08-02 | 2 Reis 9-12, Atos 20
+2026-08-03 | 2 Reis 13-16, Atos 21
+2026-08-04 | 2 Reis 17-20, Atos 22
+2026-08-05 | 2 Reis 21-24, Atos 23
+2026-08-06 | 2 Reis 25, 1 Crônicas 1-3, Atos 24
+2026-08-07 | 1 Crônicas 4-7, Atos 25
+2026-08-08 | 1 Crônicas 8-11, Atos 26
+2026-08-09 | 1 Crônicas 12-15, Atos 27
+2026-08-10 | 1 Crônicas 16-19, Atos 28
+2026-08-11 | 1 Crônicas 20-23, Romanos 1
+2026-08-12 | 1 Crônicas 24-27, Romanos 2
+2026-08-13 | 1 Crônicas 28-29, 2 Crônicas 1-2, Romanos 3
+2026-08-14 | 2 Crônicas 3-6, Romanos 4
+2026-08-15 | 2 Crônicas 7-10, Romanos 5
+2026-08-16 | 2 Crônicas 11-14, Romanos 6
+2026-08-17 | 2 Crônicas 15-18, Romanos 7
+2026-08-18 | 2 Crônicas 19-22, Romanos 8
+2026-08-19 | 2 Crônicas 23-26, Romanos 9
+2026-08-20 | 2 Crônicas 27-30, Romanos 10
+2026-08-21 | 2 Crônicas 31-34, Romanos 11
+2026-08-22 | 2 Crônicas 35-36, Esdras 1-2, Romanos 12
+2026-08-23 | Esdras 3-6, Romanos 13
+2026-08-24 | Esdras 7-10, Romanos 14
+2026-08-25 | Neemias 1-4, Romanos 15
+2026-08-26 | Neemias 5-8, Romanos 16
+2026-08-27 | Neemias 9-12, 1 Coríntios 1
+2026-08-28 | Neemias 13, Ester 1-3, 1 Coríntios 2
+2026-08-29 | Ester 4-7, 1 Coríntios 3
+2026-08-30 | Ester 8-10, Jó 1, 1 Coríntios 4
+2026-08-31 | Jó 2-5, 1 Coríntios 5
+2026-09-01 | Jó 6-9, 1 Coríntios 6
+2026-09-02 | Jó 10-13, 1 Coríntios 7
+2026-09-03 | Jó 14-17, 1 Coríntios 8
+2026-09-04 | Jó 18-21, 1 Coríntios 9
+2026-09-05 | Jó 22-25, 1 Coríntios 10
+2026-09-06 | Jó 26-29, 1 Coríntios 11
+2026-09-07 | Jó 30-33, 1 Coríntios 12
+2026-09-08 | Jó 34-37, 1 Coríntios 13
+2026-09-09 | Jó 38-41, 1 Coríntios 14
+2026-09-10 | Jó 42, Salmos 1-3, 1 Coríntios 15
+2026-09-11 | Salmos 4-7, 1 Coríntios 16
+2026-09-12 | Salmos 8-11, 2 Coríntios 1
+2026-09-13 | Salmos 12-15, 2 Coríntios 2
+2026-09-14 | Salmos 16-19, 2 Coríntios 3
+2026-09-15 | Salmos 20-23, 2 Coríntios 4
+2026-09-16 | Salmos 24-27, 2 Coríntios 5
+2026-09-17 | Salmos 28-31, 2 Coríntios 6
+2026-09-18 | Salmos 32-35, 2 Coríntios 7
+2026-09-19 | Salmos 36-39, 2 Coríntios 8
+2026-09-20 | Salmos 40-43, 2 Coríntios 9
+2026-09-21 | Salmos 44-47, 2 Coríntios 10
+2026-09-22 | Salmos 48-51, 2 Coríntios 11
+2026-09-23 | Salmos 52-55, 2 Coríntios 12
+2026-09-24 | Salmos 56-59, 2 Coríntios 13
+2026-09-25 | Salmos 60-63, Gálatas 1
+2026-09-26 | Salmos 64-67, Gálatas 2
+2026-09-27 | Salmos 68-71, Gálatas 3
+2026-09-28 | Salmos 72-75, Gálatas 4
+2026-09-29 | Salmos 76-79, Gálatas 5
+2026-09-30 | Salmos 80-83, Gálatas 6
+2026-10-01 | Salmos 84-87, Efésios 1
+2026-10-02 | Salmos 88-91, Efésios 2
+2026-10-03 | Salmos 92-95, Efésios 3
+2026-10-04 | Salmos 96-99, Efésios 4
+2026-10-05 | Salmos 100-103, Efésios 5
+2026-10-06 | Salmos 104-107, Efésios 6
+2026-10-07 | Salmos 108-111, Filipenses 1
+2026-10-08 | Salmos 112-115, Filipenses 2
+2026-10-09 | Salmos 116-119, Filipenses 3
+2026-10-10 | Salmos 120-123, Filipenses 4
+2026-10-11 | Salmos 124-127, Colossenses 1
+2026-10-12 | Salmos 128-131, Colossenses 2
+2026-10-13 | Salmos 132-135, Colossenses 3
+2026-10-14 | Salmos 136-139, Colossenses 4
+2026-10-15 | Salmos 140-143, 1 Tessalonicenses 1
+2026-10-16 | Salmos 144-147, 1 Tessalonicenses 2
+2026-10-17 | Salmos 148-150, Provérbios 1, 1 Tessalonicenses 3
+2026-10-18 | Provérbios 2-5, 1 Tessalonicenses 4
+2026-10-19 | Provérbios 6-9, 1 Tessalonicenses 5
+2026-10-20 | Provérbios 10-13, 2 Tessalonicenses 1
+2026-10-21 | Provérbios 14-17, 2 Tessalonicenses 2
+2026-10-22 | Provérbios 18-21, 2 Tessalonicenses 3
+2026-10-23 | Provérbios 22-25, 1 Timóteo 1
+2026-10-24 | Provérbios 26-29, 1 Timóteo 2
+2026-10-25 | Provérbios 30-31, Eclesiastes 1-2, 1 Timóteo 3
+2026-10-26 | Eclesiastes 3-6, 1 Timóteo 4
+2026-10-27 | Eclesiastes 7-10, 1 Timóteo 5
+2026-10-28 | Eclesiastes 11-12, Cantares 1-2, 1 Timóteo 6
+2026-10-29 | Cantares 3-6, 2 Timóteo 1
+2026-10-30 | Cantares 7-8, Isaías 1-2, 2 Timóteo 2
+2026-10-31 | Isaías 3-6, 2 Timóteo 3
+2026-11-01 | Isaías 7-10, 2 Timóteo 4
+2026-11-02 | Isaías 11-14, Tito 1
+2026-11-03 | Isaías 15-18, Tito 2
+2026-11-04 | Isaías 19-22, Tito 3
+2026-11-05 | Isaías 23-26, Filemon 1
+2026-11-06 | Isaías 27-30, Hebreus 1
+2026-11-07 | Isaías 31-34, Hebreus 2
+2026-11-08 | Isaías 35-38, Hebreus 3
+2026-11-09 | Isaías 39-42, Hebreus 4
+2026-11-10 | Isaías 43-46, Hebreus 5
+2026-11-11 | Isaías 47-50, Hebreus 6
+2026-11-12 | Isaías 51-54, Hebreus 7
+2026-11-13 | Isaías 55-58, Hebreus 8
+2026-11-14 | Isaías 59-62, Hebreus 9
+2026-11-15 | Isaías 63-66, Hebreus 10
+2026-11-16 | Jeremias 1-4, Hebreus 11
+2026-11-17 | Jeremias 5-8, Hebreus 12
+2026-11-18 | Jeremias 9-12, Hebreus 13
+2026-11-19 | Jeremias 13-16, Tiago 1
+2026-11-20 | Jeremias 17-20, Tiago 2
+2026-11-21 | Jeremias 21-24, Tiago 3
+2026-11-22 | Jeremias 25-28, Tiago 4
+2026-11-23 | Jeremias 29-32, Tiago 5
+2026-11-24 | Jeremias 33-36, 1 Pedro 1
+2026-11-25 | Jeremias 37-40, 1 Pedro 2
+2026-11-26 | Jeremias 41-44, 1 Pedro 3
+2026-11-27 | Jeremias 45-48, 1 Pedro 4
+2026-11-28 | Jeremias 49-52, 1 Pedro 5
+2026-11-29 | Lamentações 1-4, 2 Pedro 1
+2026-11-30 | Lamentações 5, Ezequiel 1-3, 2 Pedro 2
+2026-12-01 | Ezequiel 4-7, 2 Pedro 3
+2026-12-02 | Ezequiel 8-11, 1 João 1
+2026-12-03 | Ezequiel 12-15, 1 João 2
+2026-12-04 | Ezequiel 16-19, 1 João 3
+2026-12-05 | Ezequiel 20-23, 1 João 4
+2026-12-06 | Ezequiel 24-27, 1 João 5
+2026-12-07 | Ezequiel 28-31, 2 João 1
+2026-12-08 | Ezequiel 32-35, 3 João 1
+2026-12-09 | Ezequiel 36-39, Judas 1
+2026-12-10 | Ezequiel 40-43, Apocalipse 1
+2026-12-11 | Ezequiel 44-47, Apocalipse 2
+2026-12-12 | Ezequiel 48, Daniel 1-3, Apocalipse 3
+2026-12-13 | Daniel 4-7, Apocalipse 4
+2026-12-14 | Daniel 8-11, Apocalipse 5
+2026-12-15 | Daniel 12, Oséias 1-3, Apocalipse 6
+2026-12-16 | Oséias 4-7, Apocalipse 7
+2026-12-17 | Oséias 8-11, Apocalipse 8
+2026-12-18 | Oséias 12-14, Joel 1, Apocalipse 9
+2026-12-19 | Joel 2-3, Amós 1-2, Apocalipse 10
+2026-12-20 | Amós 3-6, Apocalipse 11
+2026-12-21 | Amós 7-9, Obadias 1, Apocalipse 12
+2026-12-22 | Jonas 1-4, Apocalipse 13
+2026-12-23 | Miquéias 1-4, Apocalipse 14
+2026-12-24 | Miquéias 5-7, Naum 1, Apocalipse 15
+2026-12-25 | Naum 2-3, Habacuque 1-2, Apocalipse 16
+2026-12-26 | Habacuque 3, Sofonias 1-3, Apocalipse 17
+2026-12-27 | Ageu 1-2, Zacarias 1-2, Apocalipse 18
+2026-12-28 | Zacarias 3-6, Apocalipse 19
+2026-12-29 | Zacarias 7-10, Apocalipse 20
+2026-12-30 | Zacarias 11-14, Apocalipse 21
+2026-12-31 | Malaquias 1-4, Apocalipse 22
 ### INDEX_DIAS_END
 ### JSON_BEGIN
 [
@@ -10465,7 +10685,4407 @@ Se conflitar com MODO/BASE, ignorar a tag.
         "voz_performance": "Profeta"
       }
     ]
-  }
+  },
+  {
+    "data": "2026-05-26",
+    "referencia": "Gênesis 1-5, Mateus 1-2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 1-5, Mateus 1-2.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 1-5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-05-27",
+    "referencia": "Gênesis 6-10, Mateus 3-4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 6-10, Mateus 3-4.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 6-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-05-28",
+    "referencia": "Gênesis 11-15, Mateus 5-6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 11-15, Mateus 5-6.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 11-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-05-29",
+    "referencia": "Gênesis 16-20, Mateus 7-8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 16-20, Mateus 7-8.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 16-20",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-05-30",
+    "referencia": "Gênesis 21-25, Mateus 9-10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 21-25, Mateus 9-10.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 21-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-05-31",
+    "referencia": "Gênesis 26-30, Mateus 11-12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 26-30, Mateus 11-12.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 26-30",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-01",
+    "referencia": "Gênesis 31-35, Mateus 13-14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 31-35, Mateus 13-14.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 31-35",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-02",
+    "referencia": "Gênesis 36-40, Mateus 15-16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 36-40, Mateus 15-16.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 36-40",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-03",
+    "referencia": "Gênesis 41-45, Mateus 17-18",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 41-45, Mateus 17-18.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 41-45",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-04",
+    "referencia": "Gênesis 46-50, Mateus 19-20",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Gênesis 46-50, Mateus 19-20.",
+            "familia": "Teologia",
+            "verso_suporte": "Gênesis 46-50",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-05",
+    "referencia": "Êxodo 1-5, Mateus 21-22",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 1-5, Mateus 21-22.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 1-5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-06",
+    "referencia": "Êxodo 6-10, Mateus 23-24",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 6-10, Mateus 23-24.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 6-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-07",
+    "referencia": "Êxodo 11-15, Mateus 25-26",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 11-15, Mateus 25-26.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 11-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-08",
+    "referencia": "Êxodo 16-20, Mateus 27-28",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 16-20, Mateus 27-28.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 16-20",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-09",
+    "referencia": "Êxodo 21-25, Marcos 1-2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 21-25, Marcos 1-2.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 21-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-10",
+    "referencia": "Êxodo 26-30, Marcos 3-4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 26-30, Marcos 3-4.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 26-30",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-11",
+    "referencia": "Êxodo 31-35, Marcos 5-6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 31-35, Marcos 5-6.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 31-35",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-12",
+    "referencia": "Êxodo 36-40, Marcos 7-8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Êxodo 36-40, Marcos 7-8.",
+            "familia": "Teologia",
+            "verso_suporte": "Êxodo 36-40",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-13",
+    "referencia": "Levítico 1-5, Marcos 9-10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 1-5, Marcos 9-10.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 1-5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-14",
+    "referencia": "Levítico 6-10, Marcos 11-12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 6-10, Marcos 11-12.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 6-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-15",
+    "referencia": "Levítico 11-15, Marcos 13-14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 11-15, Marcos 13-14.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 11-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-16",
+    "referencia": "Levítico 16-20, Marcos 15-16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 16-20, Marcos 15-16.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 16-20",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-17",
+    "referencia": "Levítico 21-25, Lucas 1-2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 21-25, Lucas 1-2.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 21-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-18",
+    "referencia": "Levítico 26-27, Números 1-3, Lucas 3-4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Levítico 26-27, Números 1-3, Lucas 3-4.",
+            "familia": "Teologia",
+            "verso_suporte": "Levítico 26-27",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-19",
+    "referencia": "Números 4-8, Lucas 5-6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 4-8, Lucas 5-6.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 4-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-20",
+    "referencia": "Números 9-13, Lucas 7-8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 9-13, Lucas 7-8.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 9-13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-21",
+    "referencia": "Números 14-18, Lucas 9-10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 14-18, Lucas 9-10.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 14-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-22",
+    "referencia": "Números 19-23, Lucas 11-12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 19-23, Lucas 11-12.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 19-23",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-23",
+    "referencia": "Números 24-28, Lucas 13-14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 24-28, Lucas 13-14.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 24-28",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-24",
+    "referencia": "Números 29-33, Lucas 15-16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 29-33, Lucas 15-16.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 29-33",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-25",
+    "referencia": "Números 34-36, Deuteronômio 1-2, Lucas 17-18",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Números 34-36, Deuteronômio 1-2, Lucas 17-18.",
+            "familia": "Teologia",
+            "verso_suporte": "Números 34-36",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-26",
+    "referencia": "Deuteronômio 3-7, Lucas 19-20",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 3-7, Lucas 19-20.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 3-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-27",
+    "referencia": "Deuteronômio 8-12, Lucas 21-22",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 8-12, Lucas 21-22.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 8-12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-28",
+    "referencia": "Deuteronômio 13-17, Lucas 23-24",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 13-17, Lucas 23-24.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 13-17",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-29",
+    "referencia": "Deuteronômio 18-22, João 1-2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 18-22, João 1-2.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 18-22",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-06-30",
+    "referencia": "Deuteronômio 23-27, João 3-4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 23-27, João 3-4.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 23-27",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-01",
+    "referencia": "Deuteronômio 28-32, João 5-6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 28-32, João 5-6.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 28-32",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-02",
+    "referencia": "Deuteronômio 33-34, Josué 1-3, João 7-8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Deuteronômio 33-34, Josué 1-3, João 7-8.",
+            "familia": "Teologia",
+            "verso_suporte": "Deuteronômio 33-34",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-03",
+    "referencia": "Josué 4-8, João 9-10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Josué 4-8, João 9-10.",
+            "familia": "Teologia",
+            "verso_suporte": "Josué 4-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-04",
+    "referencia": "Josué 9-13, João 11-12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Josué 9-13, João 11-12.",
+            "familia": "Teologia",
+            "verso_suporte": "Josué 9-13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-05",
+    "referencia": "Josué 14-18, João 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Josué 14-18, João 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Josué 14-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-06",
+    "referencia": "Josué 19-23, João 14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Josué 19-23, João 14.",
+            "familia": "Teologia",
+            "verso_suporte": "Josué 19-23",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-07",
+    "referencia": "Josué 24, Juízes 1-4, João 15",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Josué 24, Juízes 1-4, João 15.",
+            "familia": "Teologia",
+            "verso_suporte": "Josué 24",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-08",
+    "referencia": "Juízes 5-9, João 16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Juízes 5-9, João 16.",
+            "familia": "Teologia",
+            "verso_suporte": "Juízes 5-9",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-09",
+    "referencia": "Juízes 10-14, João 17",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Juízes 10-14, João 17.",
+            "familia": "Teologia",
+            "verso_suporte": "Juízes 10-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-10",
+    "referencia": "Juízes 15-19, João 18",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Juízes 15-19, João 18.",
+            "familia": "Teologia",
+            "verso_suporte": "Juízes 15-19",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-11",
+    "referencia": "Juízes 20-21, Rute 1-3, João 19",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Juízes 20-21, Rute 1-3, João 19.",
+            "familia": "Teologia",
+            "verso_suporte": "Juízes 20-21",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-12",
+    "referencia": "Rute 4, 1 Samuel 1-4, João 20",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Rute 4, 1 Samuel 1-4, João 20.",
+            "familia": "Teologia",
+            "verso_suporte": "Rute 4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-13",
+    "referencia": "1 Samuel 5-9, João 21",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 5-9, João 21.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 5-9",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-14",
+    "referencia": "1 Samuel 10-13, Atos 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 10-13, Atos 1.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 10-13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-15",
+    "referencia": "1 Samuel 14-17, Atos 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 14-17, Atos 2.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 14-17",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-16",
+    "referencia": "1 Samuel 18-21, Atos 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 18-21, Atos 3.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 18-21",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-17",
+    "referencia": "1 Samuel 22-25, Atos 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 22-25, Atos 4.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 22-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-18",
+    "referencia": "1 Samuel 26-29, Atos 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 26-29, Atos 5.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 26-29",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-19",
+    "referencia": "1 Samuel 30-31, 2 Samuel 1-2, Atos 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Samuel 30-31, 2 Samuel 1-2, Atos 6.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Samuel 30-31",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-20",
+    "referencia": "2 Samuel 3-6, Atos 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 3-6, Atos 7.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-21",
+    "referencia": "2 Samuel 7-10, Atos 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 7-10, Atos 8.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-22",
+    "referencia": "2 Samuel 11-14, Atos 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 11-14, Atos 9.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 11-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-23",
+    "referencia": "2 Samuel 15-18, Atos 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 15-18, Atos 10.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 15-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-24",
+    "referencia": "2 Samuel 19-22, Atos 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 19-22, Atos 11.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 19-22",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-25",
+    "referencia": "2 Samuel 23-24, 1 Reis 1-2, Atos 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Samuel 23-24, 1 Reis 1-2, Atos 12.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Samuel 23-24",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-26",
+    "referencia": "1 Reis 3-6, Atos 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Reis 3-6, Atos 13.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Reis 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-27",
+    "referencia": "1 Reis 7-10, Atos 14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Reis 7-10, Atos 14.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Reis 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-28",
+    "referencia": "1 Reis 11-14, Atos 15",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Reis 11-14, Atos 15.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Reis 11-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-29",
+    "referencia": "1 Reis 15-18, Atos 16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Reis 15-18, Atos 16.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Reis 15-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-30",
+    "referencia": "1 Reis 19-22, Atos 17",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Reis 19-22, Atos 17.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Reis 19-22",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-07-31",
+    "referencia": "2 Reis 1-4, Atos 18",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 1-4, Atos 18.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-01",
+    "referencia": "2 Reis 5-8, Atos 19",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 5-8, Atos 19.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 5-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-02",
+    "referencia": "2 Reis 9-12, Atos 20",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 9-12, Atos 20.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 9-12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-03",
+    "referencia": "2 Reis 13-16, Atos 21",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 13-16, Atos 21.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 13-16",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-04",
+    "referencia": "2 Reis 17-20, Atos 22",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 17-20, Atos 22.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 17-20",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-05",
+    "referencia": "2 Reis 21-24, Atos 23",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 21-24, Atos 23.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 21-24",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-06",
+    "referencia": "2 Reis 25, 1 Crônicas 1-3, Atos 24",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Reis 25, 1 Crônicas 1-3, Atos 24.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Reis 25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-07",
+    "referencia": "1 Crônicas 4-7, Atos 25",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 4-7, Atos 25.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-08",
+    "referencia": "1 Crônicas 8-11, Atos 26",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 8-11, Atos 26.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 8-11",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-09",
+    "referencia": "1 Crônicas 12-15, Atos 27",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 12-15, Atos 27.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 12-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-10",
+    "referencia": "1 Crônicas 16-19, Atos 28",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 16-19, Atos 28.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 16-19",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-11",
+    "referencia": "1 Crônicas 20-23, Romanos 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 20-23, Romanos 1.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 20-23",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-12",
+    "referencia": "1 Crônicas 24-27, Romanos 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 24-27, Romanos 2.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 24-27",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-13",
+    "referencia": "1 Crônicas 28-29, 2 Crônicas 1-2, Romanos 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 1 Crônicas 28-29, 2 Crônicas 1-2, Romanos 3.",
+            "familia": "Teologia",
+            "verso_suporte": "1 Crônicas 28-29",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-14",
+    "referencia": "2 Crônicas 3-6, Romanos 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 3-6, Romanos 4.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-15",
+    "referencia": "2 Crônicas 7-10, Romanos 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 7-10, Romanos 5.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-16",
+    "referencia": "2 Crônicas 11-14, Romanos 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 11-14, Romanos 6.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 11-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-17",
+    "referencia": "2 Crônicas 15-18, Romanos 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 15-18, Romanos 7.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 15-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-18",
+    "referencia": "2 Crônicas 19-22, Romanos 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 19-22, Romanos 8.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 19-22",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-19",
+    "referencia": "2 Crônicas 23-26, Romanos 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 23-26, Romanos 9.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 23-26",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-20",
+    "referencia": "2 Crônicas 27-30, Romanos 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 27-30, Romanos 10.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 27-30",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-21",
+    "referencia": "2 Crônicas 31-34, Romanos 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 31-34, Romanos 11.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 31-34",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-22",
+    "referencia": "2 Crônicas 35-36, Esdras 1-2, Romanos 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para 2 Crônicas 35-36, Esdras 1-2, Romanos 12.",
+            "familia": "Teologia",
+            "verso_suporte": "2 Crônicas 35-36",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-23",
+    "referencia": "Esdras 3-6, Romanos 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Esdras 3-6, Romanos 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Esdras 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-24",
+    "referencia": "Esdras 7-10, Romanos 14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Esdras 7-10, Romanos 14.",
+            "familia": "Teologia",
+            "verso_suporte": "Esdras 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-25",
+    "referencia": "Neemias 1-4, Romanos 15",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Neemias 1-4, Romanos 15.",
+            "familia": "Teologia",
+            "verso_suporte": "Neemias 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-26",
+    "referencia": "Neemias 5-8, Romanos 16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Neemias 5-8, Romanos 16.",
+            "familia": "Teologia",
+            "verso_suporte": "Neemias 5-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-27",
+    "referencia": "Neemias 9-12, 1 Coríntios 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Neemias 9-12, 1 Coríntios 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Neemias 9-12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-28",
+    "referencia": "Neemias 13, Ester 1-3, 1 Coríntios 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Neemias 13, Ester 1-3, 1 Coríntios 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Neemias 13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-29",
+    "referencia": "Ester 4-7, 1 Coríntios 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ester 4-7, 1 Coríntios 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Ester 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-30",
+    "referencia": "Ester 8-10, Jó 1, 1 Coríntios 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ester 8-10, Jó 1, 1 Coríntios 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Ester 8-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-08-31",
+    "referencia": "Jó 2-5, 1 Coríntios 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 2-5, 1 Coríntios 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 2-5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-01",
+    "referencia": "Jó 6-9, 1 Coríntios 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 6-9, 1 Coríntios 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 6-9",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-02",
+    "referencia": "Jó 10-13, 1 Coríntios 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 10-13, 1 Coríntios 7.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 10-13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-03",
+    "referencia": "Jó 14-17, 1 Coríntios 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 14-17, 1 Coríntios 8.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 14-17",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-04",
+    "referencia": "Jó 18-21, 1 Coríntios 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 18-21, 1 Coríntios 9.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 18-21",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-05",
+    "referencia": "Jó 22-25, 1 Coríntios 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 22-25, 1 Coríntios 10.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 22-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-06",
+    "referencia": "Jó 26-29, 1 Coríntios 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 26-29, 1 Coríntios 11.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 26-29",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-07",
+    "referencia": "Jó 30-33, 1 Coríntios 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 30-33, 1 Coríntios 12.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 30-33",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-08",
+    "referencia": "Jó 34-37, 1 Coríntios 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 34-37, 1 Coríntios 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 34-37",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-09",
+    "referencia": "Jó 38-41, 1 Coríntios 14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 38-41, 1 Coríntios 14.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 38-41",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-10",
+    "referencia": "Jó 42, Salmos 1-3, 1 Coríntios 15",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jó 42, Salmos 1-3, 1 Coríntios 15.",
+            "familia": "Teologia",
+            "verso_suporte": "Jó 42",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-11",
+    "referencia": "Salmos 4-7, 1 Coríntios 16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 4-7, 1 Coríntios 16.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-12",
+    "referencia": "Salmos 8-11, 2 Coríntios 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 8-11, 2 Coríntios 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 8-11",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-13",
+    "referencia": "Salmos 12-15, 2 Coríntios 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 12-15, 2 Coríntios 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 12-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-14",
+    "referencia": "Salmos 16-19, 2 Coríntios 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 16-19, 2 Coríntios 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 16-19",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-15",
+    "referencia": "Salmos 20-23, 2 Coríntios 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 20-23, 2 Coríntios 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 20-23",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-16",
+    "referencia": "Salmos 24-27, 2 Coríntios 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 24-27, 2 Coríntios 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 24-27",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-17",
+    "referencia": "Salmos 28-31, 2 Coríntios 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 28-31, 2 Coríntios 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 28-31",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-18",
+    "referencia": "Salmos 32-35, 2 Coríntios 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 32-35, 2 Coríntios 7.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 32-35",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-19",
+    "referencia": "Salmos 36-39, 2 Coríntios 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 36-39, 2 Coríntios 8.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 36-39",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-20",
+    "referencia": "Salmos 40-43, 2 Coríntios 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 40-43, 2 Coríntios 9.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 40-43",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-21",
+    "referencia": "Salmos 44-47, 2 Coríntios 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 44-47, 2 Coríntios 10.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 44-47",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-22",
+    "referencia": "Salmos 48-51, 2 Coríntios 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 48-51, 2 Coríntios 11.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 48-51",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-23",
+    "referencia": "Salmos 52-55, 2 Coríntios 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 52-55, 2 Coríntios 12.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 52-55",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-24",
+    "referencia": "Salmos 56-59, 2 Coríntios 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 56-59, 2 Coríntios 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 56-59",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-25",
+    "referencia": "Salmos 60-63, Gálatas 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 60-63, Gálatas 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 60-63",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-26",
+    "referencia": "Salmos 64-67, Gálatas 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 64-67, Gálatas 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 64-67",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-27",
+    "referencia": "Salmos 68-71, Gálatas 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 68-71, Gálatas 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 68-71",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-28",
+    "referencia": "Salmos 72-75, Gálatas 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 72-75, Gálatas 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 72-75",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-29",
+    "referencia": "Salmos 76-79, Gálatas 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 76-79, Gálatas 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 76-79",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-09-30",
+    "referencia": "Salmos 80-83, Gálatas 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 80-83, Gálatas 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 80-83",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-01",
+    "referencia": "Salmos 84-87, Efésios 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 84-87, Efésios 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 84-87",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-02",
+    "referencia": "Salmos 88-91, Efésios 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 88-91, Efésios 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 88-91",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-03",
+    "referencia": "Salmos 92-95, Efésios 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 92-95, Efésios 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 92-95",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-04",
+    "referencia": "Salmos 96-99, Efésios 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 96-99, Efésios 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 96-99",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-05",
+    "referencia": "Salmos 100-103, Efésios 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 100-103, Efésios 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 100-103",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-06",
+    "referencia": "Salmos 104-107, Efésios 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 104-107, Efésios 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 104-107",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-07",
+    "referencia": "Salmos 108-111, Filipenses 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 108-111, Filipenses 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 108-111",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-08",
+    "referencia": "Salmos 112-115, Filipenses 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 112-115, Filipenses 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 112-115",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-09",
+    "referencia": "Salmos 116-119, Filipenses 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 116-119, Filipenses 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 116-119",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-10",
+    "referencia": "Salmos 120-123, Filipenses 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 120-123, Filipenses 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 120-123",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-11",
+    "referencia": "Salmos 124-127, Colossenses 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 124-127, Colossenses 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 124-127",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-12",
+    "referencia": "Salmos 128-131, Colossenses 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 128-131, Colossenses 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 128-131",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-13",
+    "referencia": "Salmos 132-135, Colossenses 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 132-135, Colossenses 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 132-135",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-14",
+    "referencia": "Salmos 136-139, Colossenses 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 136-139, Colossenses 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 136-139",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-15",
+    "referencia": "Salmos 140-143, 1 Tessalonicenses 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 140-143, 1 Tessalonicenses 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 140-143",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-16",
+    "referencia": "Salmos 144-147, 1 Tessalonicenses 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 144-147, 1 Tessalonicenses 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 144-147",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-17",
+    "referencia": "Salmos 148-150, Provérbios 1, 1 Tessalonicenses 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Salmos 148-150, Provérbios 1, 1 Tessalonicenses 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Salmos 148-150",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-18",
+    "referencia": "Provérbios 2-5, 1 Tessalonicenses 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 2-5, 1 Tessalonicenses 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 2-5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-19",
+    "referencia": "Provérbios 6-9, 1 Tessalonicenses 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 6-9, 1 Tessalonicenses 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 6-9",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-20",
+    "referencia": "Provérbios 10-13, 2 Tessalonicenses 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 10-13, 2 Tessalonicenses 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 10-13",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-21",
+    "referencia": "Provérbios 14-17, 2 Tessalonicenses 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 14-17, 2 Tessalonicenses 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 14-17",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-22",
+    "referencia": "Provérbios 18-21, 2 Tessalonicenses 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 18-21, 2 Tessalonicenses 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 18-21",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-23",
+    "referencia": "Provérbios 22-25, 1 Timóteo 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 22-25, 1 Timóteo 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 22-25",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-24",
+    "referencia": "Provérbios 26-29, 1 Timóteo 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 26-29, 1 Timóteo 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 26-29",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-25",
+    "referencia": "Provérbios 30-31, Eclesiastes 1-2, 1 Timóteo 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Provérbios 30-31, Eclesiastes 1-2, 1 Timóteo 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Provérbios 30-31",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-26",
+    "referencia": "Eclesiastes 3-6, 1 Timóteo 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Eclesiastes 3-6, 1 Timóteo 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Eclesiastes 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-27",
+    "referencia": "Eclesiastes 7-10, 1 Timóteo 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Eclesiastes 7-10, 1 Timóteo 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Eclesiastes 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-28",
+    "referencia": "Eclesiastes 11-12, Cantares 1-2, 1 Timóteo 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Eclesiastes 11-12, Cantares 1-2, 1 Timóteo 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Eclesiastes 11-12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-29",
+    "referencia": "Cantares 3-6, 2 Timóteo 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Cantares 3-6, 2 Timóteo 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Cantares 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-30",
+    "referencia": "Cantares 7-8, Isaías 1-2, 2 Timóteo 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Cantares 7-8, Isaías 1-2, 2 Timóteo 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Cantares 7-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-10-31",
+    "referencia": "Isaías 3-6, 2 Timóteo 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 3-6, 2 Timóteo 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-01",
+    "referencia": "Isaías 7-10, 2 Timóteo 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 7-10, 2 Timóteo 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-02",
+    "referencia": "Isaías 11-14, Tito 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 11-14, Tito 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 11-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-03",
+    "referencia": "Isaías 15-18, Tito 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 15-18, Tito 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 15-18",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-04",
+    "referencia": "Isaías 19-22, Tito 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 19-22, Tito 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 19-22",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-05",
+    "referencia": "Isaías 23-26, Filemon 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 23-26, Filemon 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 23-26",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-06",
+    "referencia": "Isaías 27-30, Hebreus 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 27-30, Hebreus 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 27-30",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-07",
+    "referencia": "Isaías 31-34, Hebreus 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 31-34, Hebreus 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 31-34",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-08",
+    "referencia": "Isaías 35-38, Hebreus 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 35-38, Hebreus 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 35-38",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-09",
+    "referencia": "Isaías 39-42, Hebreus 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 39-42, Hebreus 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 39-42",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-10",
+    "referencia": "Isaías 43-46, Hebreus 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 43-46, Hebreus 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 43-46",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-11",
+    "referencia": "Isaías 47-50, Hebreus 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 47-50, Hebreus 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 47-50",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-12",
+    "referencia": "Isaías 51-54, Hebreus 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 51-54, Hebreus 7.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 51-54",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-13",
+    "referencia": "Isaías 55-58, Hebreus 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 55-58, Hebreus 8.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 55-58",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-14",
+    "referencia": "Isaías 59-62, Hebreus 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 59-62, Hebreus 9.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 59-62",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-15",
+    "referencia": "Isaías 63-66, Hebreus 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Isaías 63-66, Hebreus 10.",
+            "familia": "Teologia",
+            "verso_suporte": "Isaías 63-66",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-16",
+    "referencia": "Jeremias 1-4, Hebreus 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 1-4, Hebreus 11.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-17",
+    "referencia": "Jeremias 5-8, Hebreus 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 5-8, Hebreus 12.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 5-8",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-18",
+    "referencia": "Jeremias 9-12, Hebreus 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 9-12, Hebreus 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 9-12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-19",
+    "referencia": "Jeremias 13-16, Tiago 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 13-16, Tiago 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 13-16",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-20",
+    "referencia": "Jeremias 17-20, Tiago 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 17-20, Tiago 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 17-20",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-21",
+    "referencia": "Jeremias 21-24, Tiago 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 21-24, Tiago 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 21-24",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-22",
+    "referencia": "Jeremias 25-28, Tiago 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 25-28, Tiago 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 25-28",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-23",
+    "referencia": "Jeremias 29-32, Tiago 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 29-32, Tiago 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 29-32",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-24",
+    "referencia": "Jeremias 33-36, 1 Pedro 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 33-36, 1 Pedro 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 33-36",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-25",
+    "referencia": "Jeremias 37-40, 1 Pedro 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 37-40, 1 Pedro 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 37-40",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-26",
+    "referencia": "Jeremias 41-44, 1 Pedro 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 41-44, 1 Pedro 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 41-44",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-27",
+    "referencia": "Jeremias 45-48, 1 Pedro 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 45-48, 1 Pedro 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 45-48",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-28",
+    "referencia": "Jeremias 49-52, 1 Pedro 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jeremias 49-52, 1 Pedro 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Jeremias 49-52",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-29",
+    "referencia": "Lamentações 1-4, 2 Pedro 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Lamentações 1-4, 2 Pedro 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Lamentações 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-11-30",
+    "referencia": "Lamentações 5, Ezequiel 1-3, 2 Pedro 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Lamentações 5, Ezequiel 1-3, 2 Pedro 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Lamentações 5",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-01",
+    "referencia": "Ezequiel 4-7, 2 Pedro 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 4-7, 2 Pedro 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-02",
+    "referencia": "Ezequiel 8-11, 1 João 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 8-11, 1 João 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 8-11",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-03",
+    "referencia": "Ezequiel 12-15, 1 João 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 12-15, 1 João 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 12-15",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-04",
+    "referencia": "Ezequiel 16-19, 1 João 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 16-19, 1 João 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 16-19",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-05",
+    "referencia": "Ezequiel 20-23, 1 João 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 20-23, 1 João 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 20-23",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-06",
+    "referencia": "Ezequiel 24-27, 1 João 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 24-27, 1 João 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 24-27",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-07",
+    "referencia": "Ezequiel 28-31, 2 João 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 28-31, 2 João 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 28-31",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-08",
+    "referencia": "Ezequiel 32-35, 3 João 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 32-35, 3 João 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 32-35",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-09",
+    "referencia": "Ezequiel 36-39, Judas 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 36-39, Judas 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 36-39",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-10",
+    "referencia": "Ezequiel 40-43, Apocalipse 1",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 40-43, Apocalipse 1.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 40-43",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-11",
+    "referencia": "Ezequiel 44-47, Apocalipse 2",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 44-47, Apocalipse 2.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 44-47",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-12",
+    "referencia": "Ezequiel 48, Daniel 1-3, Apocalipse 3",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ezequiel 48, Daniel 1-3, Apocalipse 3.",
+            "familia": "Teologia",
+            "verso_suporte": "Ezequiel 48",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-13",
+    "referencia": "Daniel 4-7, Apocalipse 4",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Daniel 4-7, Apocalipse 4.",
+            "familia": "Teologia",
+            "verso_suporte": "Daniel 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-14",
+    "referencia": "Daniel 8-11, Apocalipse 5",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Daniel 8-11, Apocalipse 5.",
+            "familia": "Teologia",
+            "verso_suporte": "Daniel 8-11",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-15",
+    "referencia": "Daniel 12, Oséias 1-3, Apocalipse 6",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Daniel 12, Oséias 1-3, Apocalipse 6.",
+            "familia": "Teologia",
+            "verso_suporte": "Daniel 12",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-16",
+    "referencia": "Oséias 4-7, Apocalipse 7",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Oséias 4-7, Apocalipse 7.",
+            "familia": "Teologia",
+            "verso_suporte": "Oséias 4-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-17",
+    "referencia": "Oséias 8-11, Apocalipse 8",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Oséias 8-11, Apocalipse 8.",
+            "familia": "Teologia",
+            "verso_suporte": "Oséias 8-11",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-18",
+    "referencia": "Oséias 12-14, Joel 1, Apocalipse 9",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Oséias 12-14, Joel 1, Apocalipse 9.",
+            "familia": "Teologia",
+            "verso_suporte": "Oséias 12-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-19",
+    "referencia": "Joel 2-3, Amós 1-2, Apocalipse 10",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Joel 2-3, Amós 1-2, Apocalipse 10.",
+            "familia": "Teologia",
+            "verso_suporte": "Joel 2-3",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-20",
+    "referencia": "Amós 3-6, Apocalipse 11",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Amós 3-6, Apocalipse 11.",
+            "familia": "Teologia",
+            "verso_suporte": "Amós 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-21",
+    "referencia": "Amós 7-9, Obadias 1, Apocalipse 12",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Amós 7-9, Obadias 1, Apocalipse 12.",
+            "familia": "Teologia",
+            "verso_suporte": "Amós 7-9",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-22",
+    "referencia": "Jonas 1-4, Apocalipse 13",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Jonas 1-4, Apocalipse 13.",
+            "familia": "Teologia",
+            "verso_suporte": "Jonas 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-23",
+    "referencia": "Miquéias 1-4, Apocalipse 14",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Miquéias 1-4, Apocalipse 14.",
+            "familia": "Teologia",
+            "verso_suporte": "Miquéias 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-24",
+    "referencia": "Miquéias 5-7, Naum 1, Apocalipse 15",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Miquéias 5-7, Naum 1, Apocalipse 15.",
+            "familia": "Teologia",
+            "verso_suporte": "Miquéias 5-7",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-25",
+    "referencia": "Naum 2-3, Habacuque 1-2, Apocalipse 16",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Naum 2-3, Habacuque 1-2, Apocalipse 16.",
+            "familia": "Teologia",
+            "verso_suporte": "Naum 2-3",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-26",
+    "referencia": "Habacuque 3, Sofonias 1-3, Apocalipse 17",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Habacuque 3, Sofonias 1-3, Apocalipse 17.",
+            "familia": "Teologia",
+            "verso_suporte": "Habacuque 3",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-27",
+    "referencia": "Ageu 1-2, Zacarias 1-2, Apocalipse 18",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Ageu 1-2, Zacarias 1-2, Apocalipse 18.",
+            "familia": "Teologia",
+            "verso_suporte": "Ageu 1-2",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-28",
+    "referencia": "Zacarias 3-6, Apocalipse 19",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Zacarias 3-6, Apocalipse 19.",
+            "familia": "Teologia",
+            "verso_suporte": "Zacarias 3-6",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-29",
+    "referencia": "Zacarias 7-10, Apocalipse 20",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Zacarias 7-10, Apocalipse 20.",
+            "familia": "Teologia",
+            "verso_suporte": "Zacarias 7-10",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-30",
+    "referencia": "Zacarias 11-14, Apocalipse 21",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Zacarias 11-14, Apocalipse 21.",
+            "familia": "Teologia",
+            "verso_suporte": "Zacarias 11-14",
+            "voz_performance": "Mestre"
+        }
+    ]
+},
+  {
+    "data": "2026-12-31",
+    "referencia": "Malaquias 1-4, Apocalipse 22",
+    "arquetipo_maestro": "Mestre",
+    "lexico_do_dia": [],
+    "estrutura_dinamica": [
+        "FraseImpacto",
+        "VersoPrimeiro",
+        "MiniThread3",
+        "InsightPilula"
+    ],
+    "insights_pre_minerados": [
+        {
+            "tese": "Estudo bíblico guiado para Malaquias 1-4, Apocalipse 22.",
+            "familia": "Teologia",
+            "verso_suporte": "Malaquias 1-4",
+            "voz_performance": "Mestre"
+        }
+    ]
+}
 ]
 ### JSON_END
 ### FIM DA SEÇÃO 6
