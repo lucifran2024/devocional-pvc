@@ -837,15 +837,57 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
             return null;
         }
 
-        // 2. Extrair texto
-        const text = await data.text();
+        if (!data) {
+            console.error('❌ [STORAGE] Download retornou dados vazios');
+            return null;
+        }
 
-        // 3. Encontrar o início do JSON
+        // 2. Extrair texto (tentar UTF-8 e Latin-1)
+        let text: string;
+        try {
+            text = await data.text();
+        } catch {
+            // Fallback: ler como ArrayBuffer e decodificar manualmente
+            const buffer = await data.arrayBuffer();
+            const decoder = new TextDecoder('windows-1252');
+            text = decoder.decode(buffer);
+        }
+
+        console.log(`📦 [STORAGE] Arquivo baixado: ${text.length} caracteres`);
+
+        // 2.5 PRIMEIRO: Tentar formato de texto puro (data | referência)
+        const linhas = text.split(/\r?\n/);
+        console.log(`📦 [STORAGE] Total de linhas: ${linhas.length}`);
+
+        for (const linha of linhas) {
+            const match = linha.match(/^(\d{4}-\d{2}-\d{2})\s*\|\s*(.+)$/);
+            if (match && match[1] === dataPreferida) {
+                const referencia = match[2].trim();
+                console.log('✅ [STORAGE] Passagem encontrada em texto puro:', referencia);
+                return {
+                    data: dataPreferida,
+                    referencia,
+                    arquetipo_maestro: 'Leitura do Dia',
+                    lexico_do_dia: [],
+                    estrutura_dinamica: [],
+                    insights_pre_minerados: [{
+                        tese: 'Estudo bíblico guiado.',
+                        familia: 'Teologia',
+                        verso_suporte: referencia,
+                        voz_performance: 'Profeta'
+                    }]
+                };
+            }
+        }
+
+        console.warn(`⚠️ [STORAGE] Data ${dataPreferida} não encontrada em ${linhas.length} linhas`);
+
+        // 3. Se não achou em texto puro, tentar JSON
         const jsonMarker = '### JSON_BEGIN';
         const jsonStartIndex = text.indexOf(jsonMarker);
 
         if (jsonStartIndex === -1) {
-            console.error('❌ [STORAGE] Marcador JSON não encontrado no arquivo.');
+            console.error('❌ [STORAGE] Data não encontrada em texto puro nem em JSON.');
             return null;
         }
 

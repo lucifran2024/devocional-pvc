@@ -279,8 +279,8 @@ export async function buscarPassagem(referencia: string): Promise<{
     versiculos: Versiculo[];
     capitulosCarregados: number[];
 } | null> {
-    // Suporte a referências multi-livro (ex: "Jeremias 51-52; Lamentações 1")
-    const partes = referencia.split(';').map(p => p.trim()).filter(Boolean);
+    // Suporte a referências multi-livro (ex: "Jeremias 51-52; Lamentações 1" ou "Gênesis 1-5, Mateus 1-2")
+    const partes = referencia.split(/[,;]/).map(p => p.trim()).filter(Boolean);
 
     let todosVersiculos: Versiculo[] = [];
     const capitulosCarregados: number[] = [];
