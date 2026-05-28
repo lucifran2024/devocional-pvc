@@ -60,12 +60,10 @@ export const LazyBibliotecaContent = dynamic(
  * Preload hint for critical routes
  * Call this on hover over navigation links
  */
-export function preloadRoute(route: 'gerador' | 'historico' | 'biblioteca' | 'chat') {
+export function preloadRoute(route: 'historico' | 'biblioteca') {
     const preloaders: Record<string, () => void> = {
-        gerador: () => import('@/app/gerador/page'),
         historico: () => import('@/app/historico/page'),
         biblioteca: () => import('@/app/biblioteca/page'),
-        chat: () => import('@/app/chat/page'),
     };
 
     preloaders[route]?.();

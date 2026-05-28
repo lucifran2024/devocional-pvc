@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Sparkles, Book, MessageSquare, Heart, Anchor, Feather, Star, Layers
+  Calendar, Book, Heart, Anchor, Feather, Star, Layers
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -13,6 +13,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useDailyStreak } from '@/hooks/useDailyStreak';
+import { RandomVerse } from '@/components/RandomVerse';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -122,25 +123,17 @@ export default function DashboardPage() {
         </div>
       </section>
 
+
+      {/* 1.5 VERSICULO DO DIA */}
+      <section className="w-full px-6 -mt-8 mb-8 z-10">
+        <RandomVerse />
+      </section>
       {/* 2. GRID DE FERRAMENTAS (Design Premium) */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 pb-24 z-10">
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 animate-enter" style={{ animationDelay: '0.2s' }}>
 
-          {/* Card 1: Gerador (IA) - Featured */}
-          <DashboardCard
-            href="/gerador"
-            title="Gerador de Mensagem"
-            desc="Crie devocionais personalizados com Inteligência Artificial."
-            icon={Sparkles}
-            accentColor="text-indigo-500 dark:text-indigo-400"
-            iconBg="bg-indigo-500/10 border-indigo-500/20"
-            badgeColor="bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-300"
-            badge="IA POWERED"
-            featured
-          />
-
-          {/* Card 2: Plano de Leitura */}
+          {/* Card 1: Plano de Leitura */}
           <DashboardCard
             href="/planos"
             title="Plano de Leitura"
@@ -164,19 +157,7 @@ export default function DashboardPage() {
             badge="66 LIVROS"
           />
 
-          {/* Card 4: Chat Pastoral */}
-          <DashboardCard
-            href="/chat"
-            title="Chat Pastoral"
-            desc="Converse com um mentor virtual sobre suas dúvidas e reflexões."
-            icon={MessageSquare}
-            accentColor="text-cyan-600 dark:text-cyan-400"
-            iconBg="bg-cyan-500/10 border-cyan-500/20"
-            badgeColor="bg-cyan-500/10 border-cyan-500/20 text-cyan-700 dark:text-cyan-300"
-            badge="NOVO"
-          />
-
-          {/* Card 5: Devocional Externo */}
+          {/* Card 4: Devocional Externo */}
           <DashboardCard
             href="/devocional-externo"
             title="Devocional Externo"

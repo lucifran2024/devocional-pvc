@@ -32,9 +32,7 @@ devocional-pvc/
 ├── src/
 │   ├── app/              # Páginas (Next.js App Router)
 │   │   ├── page.tsx      # Dashboard
-│   │   ├── gerador/      # Gerador de mensagens
 │   │   ├── historico/    # Histórico de gerações
-│   │   ├── chat/         # Chat pastoral
 │   │   └── biblioteca/   # Leitor bíblico
 │   ├── components/       # Componentes React
 │   │   └── ui/           # Componentes de UI
@@ -97,9 +95,7 @@ npm run lint
 | Rota | Descrição |
 |------|-----------|
 | `/` | Dashboard principal |
-| `/gerador` | Gerador de devocionais com IA |
 | `/historico` | Histórico de mensagens geradas |
-| `/chat` | Chat pastoral interativo |
 | `/biblioteca` | Leitor da Bíblia |
 | `/plano-de-leitura` | Plano de leitura bíblica |
 | `/diario` | Adicionar favoritos manuais |
