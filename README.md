@@ -32,7 +32,6 @@ devocional-pvc/
 ├── src/
 │   ├── app/              # Páginas (Next.js App Router)
 │   │   ├── page.tsx      # Dashboard
-│   │   ├── historico/    # Histórico de gerações
 │   │   └── biblioteca/   # Leitor bíblico
 │   ├── components/       # Componentes React
 │   │   └── ui/           # Componentes de UI
@@ -95,10 +94,8 @@ npm run lint
 | Rota | Descrição |
 |------|-----------|
 | `/` | Dashboard principal |
-| `/historico` | Histórico de mensagens geradas |
 | `/biblioteca` | Leitor da Bíblia |
 | `/plano-de-leitura` | Plano de leitura bíblica |
-| `/diario` | Adicionar favoritos manuais |
 | `/devocional-externo` | Devocionais de fontes externas |
 
 ## 🔒 Segurança

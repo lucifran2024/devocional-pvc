@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Heart, Anchor, Feather, Star, Layers
+  Calendar, Book, Heart, Star, Layers
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
-import { HeroSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -169,19 +168,7 @@ export default function DashboardPage() {
             badge="ORIGINAL"
           />
 
-          {/* Card 6: Diário de Favoritos */}
-          <DashboardCard
-            href="/diario"
-            title="Adicionar Favorita"
-            desc="Salve mensagens externas para a IA aprender seu estilo."
-            icon={Feather}
-            accentColor="text-orange-600 dark:text-orange-400"
-            iconBg="bg-orange-500/10 border-orange-500/20"
-            badgeColor="bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-300"
-            badge="NOVO"
-          />
-
-          {/* Card 7: DNA Categorizado */}
+          {/* Card 6: DNA Categorizado */}
           <DashboardCard
             href="/dna-categorizado"
             title="DNA Categorizado"
@@ -191,16 +178,6 @@ export default function DashboardPage() {
             iconBg="bg-violet-500/10 border-violet-500/20"
             badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
             badge="NOVO"
-          />
-
-          {/* Card 8: Histórico */}
-          <DashboardCard
-            href="/historico"
-            title="Minhas Memórias"
-            desc="Acesse suas mensagens salvas e histórico espiritual."
-            icon={Anchor}
-            accentColor="text-teal-600 dark:text-teal-400"
-            iconBg="bg-teal-500/10 border-teal-500/20"
           />
 
         </div>

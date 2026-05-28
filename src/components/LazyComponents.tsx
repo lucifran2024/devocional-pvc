@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Skeleton, CardSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 /**
  * Lazy-loaded components for better initial page load
@@ -33,17 +33,6 @@ export const LazyErrorBoundary = dynamic(
 );
 
 // Page-level lazy loading
-export const LazyHistoricoContent = dynamic(
-    () => import('@/app/historico/page').then(mod => ({ default: mod.default })),
-    {
-        loading: () => (
-            <div className="grid gap-4">
-                {[1, 2, 3].map(i => <CardSkeleton key={i} />)}
-            </div>
-        )
-    }
-);
-
 export const LazyBibliotecaContent = dynamic(
     () => import('@/app/biblioteca/page').then(mod => ({ default: mod.default })),
     {
@@ -60,9 +49,8 @@ export const LazyBibliotecaContent = dynamic(
  * Preload hint for critical routes
  * Call this on hover over navigation links
  */
-export function preloadRoute(route: 'historico' | 'biblioteca') {
+export function preloadRoute(route: 'biblioteca') {
     const preloaders: Record<string, () => void> = {
-        historico: () => import('@/app/historico/page'),
         biblioteca: () => import('@/app/biblioteca/page'),
     };
 

@@ -47,7 +47,6 @@
 
 ### Proximos passos:
 - Testar manualmente o widget de versiculo no dashboard
-- Proxima feature sugerida: "Historico de geracoes na propria pagina" ou "Botao de copiar mensagem gerada" (ja existe individual, falta por batch)
 
 ---
 

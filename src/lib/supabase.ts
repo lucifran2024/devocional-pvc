@@ -406,37 +406,6 @@ export async function atualizarFeedback(id: number, aprovado: boolean): Promise<
     }
 }
 
-/**
- * Busca o histórico de gerações
- */
-export async function getHistorico(showOnlyFavorites: boolean = false) {
-    console.log(`📜 [HISTORICO] Buscando gerações (Apenas Favoritos: ${showOnlyFavorites})...`);
-
-    try {
-        let query = supabase
-            .from('historico_geracoes')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50);
-
-        if (showOnlyFavorites) {
-            query = query.eq('aprovado', true);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.error('❌ [HISTORICO] Erro:', error);
-            return [];
-        }
-
-        return data;
-    } catch (err) {
-        console.error('💥 [HISTORICO] Exceção:', err);
-        return [];
-    }
-}
-
 // ===========================================
 // FUNÇÕES PARA DNA_GERACOES (Nova Tabela)
 // ===========================================
@@ -747,77 +716,6 @@ export async function saveDnaGeracoes(
 }
 
 
-/**
- * Alterna o like (aprovado) de um item
- */
-export async function toggleLike(id: number, currentStatus: boolean | null): Promise<boolean> {
-    const novoStatus = !currentStatus;
-    console.log(`❤️ [LIKE] Alterando ID ${id} para ${novoStatus}`);
-
-    // Reutiliza a função existente atualizarFeedback para manter consistência
-    return await atualizarFeedback(id, novoStatus);
-}
-
-/**
- * Deleta um item do histórico de gerações
- */
-export async function deleteHistoricoItem(id: number): Promise<boolean> {
-    console.log(`🗑️ [DELETE] Deletando item ID ${id}`);
-
-    try {
-        // Primeiro, verifica se o item existe
-        const { data: existingItem, error: checkError } = await supabase
-            .from('historico_geracoes')
-            .select('id')
-            .eq('id', id)
-            .maybeSingle();
-
-        if (checkError) {
-            console.error('❌ [DELETE] Erro ao verificar item:', checkError);
-            return false;
-        }
-
-        if (!existingItem) {
-            console.warn('⚠️ [DELETE] Item não encontrado (já deletado?):', id);
-            return true; // Considera sucesso se já não existe
-        }
-
-        // Executa o delete
-        const { error, count } = await supabase
-            .from('historico_geracoes')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            console.error('❌ [DELETE] Erro ao deletar:', error);
-            return false;
-        }
-
-        // Verifica se realmente deletou (para garantir que RLS não bloqueou silenciosamente)
-        const { data: stillExists, error: verifyError } = await supabase
-            .from('historico_geracoes')
-            .select('id')
-            .eq('id', id)
-            .maybeSingle();
-
-        if (verifyError) {
-            console.error('❌ [DELETE] Erro ao verificar exclusão:', verifyError);
-            return false;
-        }
-
-        if (stillExists) {
-            console.error('❌ [DELETE] Item ainda existe! Possível bloqueio de RLS:', id);
-            return false;
-        }
-
-        console.log('✅ [DELETE] Sucesso! Item removido permanentemente.');
-        return true;
-    } catch (err) {
-        console.error('💥 [DELETE] Exceção:', err);
-        return false;
-    }
-}
-
 import { PassagemSecao6 } from './secao6';
 
 /**
@@ -1098,102 +996,6 @@ export async function getPassagemUnificada(dataPreferida: string): Promise<Passa
     return getPassagemDoDia(dataPreferida);
 }
 
-// ===========================================
-// FAVORITOS DE MENSAGENS INDIVIDUAIS
-// ===========================================
-
-// CONSOLIDADO: FavoritoMensagem agora é alias de DnaCategorizado
-// Mantido para compatibilidade com imports existentes
-export type FavoritoMensagem = DnaCategorizado;
-
-/**
- * Adiciona uma mensagem individual aos favoritos (agora em dna_categorizado)
- */
-export async function addFavoritoMensagem(
-    historicoId: number,
-    indiceMensagem: number,
-    textoMensagem: string,
-    categoria: CategoriaDna = 'outro'
-): Promise<DnaCategorizado | null> {
-    console.log(`⭐ [FAVORITO] Adicionando mensagem ${indiceMensagem} do histórico ${historicoId} (${categoria})`);
-
-    try {
-        const { data, error } = await supabase
-            .from('dna_categorizado')
-            .insert({
-                historico_id: historicoId,
-                indice_msg: indiceMensagem,
-                texto_msg: textoMensagem,
-                categoria,
-                tags: ['favorito_gerador']
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('❌ [FAVORITO] Erro ao adicionar:', error);
-            return null;
-        }
-
-        console.log('✅ [FAVORITO] Adicionado com sucesso:', data.id);
-        return data as DnaCategorizado;
-    } catch (err) {
-        console.error('💥 [FAVORITO] Exceção:', err);
-        return null;
-    }
-}
-
-/**
- * Remove uma mensagem individual dos favoritos (agora de dna_categorizado)
- */
-export async function removeFavoritoMensagem(
-    historicoId: number,
-    indiceMensagem: number
-): Promise<boolean> {
-    console.log(`💔 [FAVORITO] Removendo mensagem ${indiceMensagem} do histórico ${historicoId}`);
-
-    try {
-        const { error } = await supabase
-            .from('dna_categorizado')
-            .delete()
-            .eq('historico_id', historicoId)
-            .eq('indice_msg', indiceMensagem);
-
-        if (error) {
-            console.error('❌ [FAVORITO] Erro ao remover:', error);
-            return false;
-        }
-
-        console.log('✅ [FAVORITO] Removido com sucesso');
-        return true;
-    } catch (err) {
-        console.error('💥 [FAVORITO] Exceção:', err);
-        return false;
-    }
-}
-
-/**
- * Busca todos os favoritos de um histórico específico (agora de dna_categorizado)
- */
-export async function getFavoritosByHistorico(historicoId: number): Promise<number[]> {
-    try {
-        const { data, error } = await supabase
-            .from('dna_categorizado')
-            .select('indice_msg')
-            .eq('historico_id', historicoId);
-
-        if (error) {
-            console.error('❌ [FAVORITO] Erro ao buscar:', error);
-            return [];
-        }
-
-        return data?.map(f => f.indice_msg) || [];
-    } catch (err) {
-        console.error('💥 [FAVORITO] Exceção:', err);
-        return [];
-    }
-}
-
 /**
  * Busca todos os favoritos individuais (agora delega para dna_categorizado)
  */
@@ -1325,22 +1127,6 @@ export async function addDnaCategorizado(
         console.error('💥 [DNA] Exceção:', err);
         return null;
     }
-}
-
-/**
- * FUNÇÃO UNIFICADA: Agora insere apenas em dna_categorizado (tabela única)
- */
-export async function addFavoritoUnificado(
-    textoMensagem: string,
-    categoria: CategoriaDna = 'outro',
-    tags: string[] = []
-): Promise<{ dna: DnaCategorizado | null }> {
-    console.log(`🔗 [UNIFICADO] Adicionando em dna_categorizado (${categoria})`);
-
-    const dna = await addDnaCategorizado(textoMensagem, categoria, tags);
-
-    console.log(`✅ [UNIFICADO] DNA: ${dna?.id || 'erro'}`);
-    return { dna };
 }
 
 /**
