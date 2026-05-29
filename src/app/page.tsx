@@ -13,6 +13,7 @@ import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { RandomVerse } from '@/components/RandomVerse';
+import { DashboardSkeleton } from '@/components/ui/DashboardSkeleton';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -58,6 +59,17 @@ export default function DashboardPage() {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
+        <header className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </header>
+        <DashboardSkeleton />
+      </CosmicBackground>
+    );
+  }
 
   return (
     <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
@@ -130,55 +142,63 @@ export default function DashboardPage() {
       {/* 2. GRID DE FERRAMENTAS (Design Premium) */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 pb-24 z-10">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 animate-enter" style={{ animationDelay: '0.2s' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
 
           {/* Card 1: Plano de Leitura */}
-          <DashboardCard
-            href="/planos"
-            title="Plano de Leitura"
-            desc="Estudo bíblico interativo, comentado e profundo."
-            icon={Book}
-            accentColor="text-emerald-600 dark:text-emerald-400"
-            iconBg="bg-emerald-500/10 border-emerald-500/20"
-            badgeColor="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-300"
-            badge="MÓDULO"
-          />
+          <div className="stagger-item">
+            <DashboardCard
+              href="/planos"
+              title="Plano de Leitura"
+              desc="Estudo bíblico interativo, comentado e profundo."
+              icon={Book}
+              accentColor="text-emerald-600 dark:text-emerald-400"
+              iconBg="bg-emerald-500/10 border-emerald-500/20"
+              badgeColor="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-300"
+              badge="MÓDULO"
+            />
+          </div>
 
           {/* Card 3: Bíblia Sagrada */}
-          <DashboardCard
-            href="/biblioteca"
-            title="Bíblia Sagrada"
-            desc="Leia a Palavra de Deus com navegação intuitiva e busca rápida."
-            icon={Star}
-            accentColor="text-amber-600 dark:text-amber-400"
-            iconBg="bg-amber-500/10 border-amber-500/20"
-            badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-            badge="66 LIVROS"
-          />
+          <div className="stagger-item">
+            <DashboardCard
+              href="/biblioteca"
+              title="Bíblia Sagrada"
+              desc="Leia a Palavra de Deus com navegação intuitiva e busca rápida."
+              icon={Star}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="66 LIVROS"
+            />
+          </div>
 
           {/* Card 4: Devocional Externo */}
-          <DashboardCard
-            href="/devocional-externo"
-            title="Devocional Externo"
-            desc="Leia devocionais de sites cristãos renomados, direto da fonte."
-            icon={Heart}
-            accentColor="text-rose-600 dark:text-rose-400"
-            iconBg="bg-rose-500/10 border-rose-500/20"
-            badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
-            badge="ORIGINAL"
-          />
+          <div className="stagger-item">
+            <DashboardCard
+              href="/devocional-externo"
+              title="Devocional Externo"
+              desc="Leia devocionais de sites cristãos renomados, direto da fonte."
+              icon={Heart}
+              accentColor="text-rose-600 dark:text-rose-400"
+              iconBg="bg-rose-500/10 border-rose-500/20"
+              badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
+              badge="ORIGINAL"
+            />
+          </div>
 
           {/* Card 6: DNA Categorizado */}
-          <DashboardCard
-            href="/dna-categorizado"
-            title="DNA Categorizado"
-            desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
-            icon={Layers}
-            accentColor="text-violet-600 dark:text-violet-400"
-            iconBg="bg-violet-500/10 border-violet-500/20"
-            badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
-            badge="NOVO"
-          />
+          <div className="stagger-item">
+            <DashboardCard
+              href="/dna-categorizado"
+              title="DNA Categorizado"
+              desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
+              icon={Layers}
+              accentColor="text-violet-600 dark:text-violet-400"
+              iconBg="bg-violet-500/10 border-violet-500/20"
+              badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
+              badge="NOVO"
+            />
+          </div>
 
         </div>
       </section>
