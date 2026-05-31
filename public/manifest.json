@@ -21,6 +21,60 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Bíblia Sagrada",
+      "short_name": "Bíblia",
+      "description": "Leia a Palavra de Deus com navegação intuitiva",
+      "url": "/biblioteca",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Plano de Leitura",
+      "short_name": "Plano",
+      "description": "Estudo bíblico interativo e profundo",
+      "url": "/planos",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Devocional Externo",
+      "short_name": "Devocional",
+      "description": "Leia devocionais de sites cristãos renomados",
+      "url": "/devocional-externo",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "DNA Categorizado",
+      "short_name": "DNA",
+      "description": "Gere mensagens baseadas no seu DNA espiritual",
+      "url": "/dna-categorizado",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "categories": ["lifestyle", "education", "books"],
   "lang": "pt-BR",
   "dir": "ltr"

@@ -7,7 +7,8 @@ import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
-    CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download
+    CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download,
+    BookmarkCheck
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -550,6 +551,21 @@ function BibliotecaPage() {
     const [cameFromCache, setCameFromCache] = useState(false);
     const [offlineManagerAberto, setOfflineManagerAberto] = useState(false);
 
+    // Bookmarks de leitura
+    interface Bookmark {
+        id: string;
+        nome: string;
+        livro_abrev: string;
+        livro_nome: string;
+        capitulo: number;
+        versiculo: number | null;
+        created_at: string;
+    }
+    const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+    const [bookmarksAberto, setBookmarksAberto] = useState(false);
+    const [novoBookmarkNome, setNovoBookmarkNome] = useState('');
+    const [criandoBookmark, setCriandoBookmark] = useState(false);
+
     // Fonte e versão
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
@@ -647,6 +663,13 @@ function BibliotecaPage() {
         const goOffline = () => setIsOnline(false);
         window.addEventListener('online', goOnline);
         window.addEventListener('offline', goOffline);
+
+        // Carregar bookmarks do localStorage
+        try {
+            const stored = localStorage.getItem('biblia-bookmarks');
+            if (stored) setBookmarks(JSON.parse(stored));
+        } catch { /* ignore */ }
+
         return () => {
             window.removeEventListener('online', goOnline);
             window.removeEventListener('offline', goOffline);
@@ -854,6 +877,49 @@ function BibliotecaPage() {
         setBuscaLivro('');
         setModalAberto(false);
     };
+
+    // ==========================================
+    // BOOKMARKS
+    // ==========================================
+    const salvarBookmark = () => {
+        const nome = novoBookmarkNome.trim() || `${livroAtual.nome} ${capituloAtual}`;
+        const bookmark: Bookmark = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            nome,
+            livro_abrev: livroAtual.abrev,
+            livro_nome: livroAtual.nome,
+            capitulo: capituloAtual,
+            versiculo: versiculoSelecionado,
+            created_at: new Date().toISOString(),
+        };
+        const novos = [bookmark, ...bookmarks];
+        setBookmarks(novos);
+        localStorage.setItem('biblia-bookmarks', JSON.stringify(novos));
+        setCriandoBookmark(false);
+        setNovoBookmarkNome('');
+        success(`Bookmark "${nome}" salvo!`);
+    };
+
+    const removerBookmark = (id: string) => {
+        const novos = bookmarks.filter(b => b.id !== id);
+        setBookmarks(novos);
+        localStorage.setItem('biblia-bookmarks', JSON.stringify(novos));
+        success('Bookmark removido');
+    };
+
+    const navegarParaBookmark = (bookmark: Bookmark) => {
+        const livro = LIVROS_BIBLIA.find(l => l.abrev === bookmark.livro_abrev);
+        if (livro) {
+            setLivroAtual(livro);
+            setCapituloAtual(bookmark.capitulo);
+            if (bookmark.versiculo) setScrollToVerse(bookmark.versiculo);
+        }
+        setBookmarksAberto(false);
+    };
+
+    const bookmarkAtualExiste = bookmarks.some(
+        b => b.livro_abrev === livroAtual.abrev && b.capitulo === capituloAtual
+    );
 
     const selecionarCapituloTemp = async (cap: number) => {
         setCapituloSelecionadoTemp(cap);
@@ -1576,6 +1642,9 @@ function BibliotecaPage() {
                     <div className="flex items-center gap-1">
                         <button onClick={() => setBuscaAberta(!buscaAberta)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Buscar">
                             <Search className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => setBookmarksAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Bookmarks">
+                            <BookmarkCheck className="w-5 h-5" />
                         </button>
                         <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Offline">
                             <Download className="w-5 h-5" />
@@ -2532,6 +2601,97 @@ function BibliotecaPage() {
                     </button>
                 </div>
             </main>
+
+            {/* --- PAINEL DE BOOKMARKS --- */}
+            {bookmarksAberto && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[70dvh] sm:h-auto sm:max-h-[75vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
+                        {/* Header */}
+                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-blue-50/50 dark:from-surface-2 dark:to-surface-2">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-xl bg-indigo-500/15 dark:bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
+                                    <BookmarkCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-slate-900 dark:text-text-primary leading-none">Meus Bookmarks</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-text-muted mt-0.5">
+                                        {bookmarks.length} {bookmarks.length === 1 ? 'marcador' : 'marcadores'}
+                                    </span>
+                                </div>
+                            </div>
+                            <button onClick={() => setBookmarksAberto(false)} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Botão criar bookmark */}
+                        <div className="px-4 pt-3 pb-2">
+                            {criandoBookmark ? (
+                                <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 animate-in fade-in duration-150">
+                                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mb-2">
+                                        Salvar: {livroAtual.nome} {capituloAtual}
+                                        {versiculoSelecionado ? `:${versiculoSelecionado}` : ''}
+                                    </p>
+                                    <input
+                                        type="text"
+                                        value={novoBookmarkNome}
+                                        onChange={e => setNovoBookmarkNome(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') salvarBookmark(); }}
+                                        placeholder={`Nome (padrão: ${livroAtual.nome} ${capituloAtual})`}
+                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-indigo-400 dark:focus:border-indigo-500/50 mb-2"
+                                        autoFocus
+                                    />
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={() => { setCriandoBookmark(false); setNovoBookmarkNome(''); }} className="px-3 py-1.5 text-xs rounded-lg text-slate-500 dark:text-text-muted hover:bg-slate-100 dark:hover:bg-surface-2 font-medium">Cancelar</button>
+                                        <button onClick={salvarBookmark} className="px-3 py-1.5 text-xs rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors">Salvar</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setCriandoBookmark(true)}
+                                    disabled={bookmarkAtualExiste}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    {bookmarkAtualExiste ? 'Já marcado neste capítulo' : 'Marcar posição atual'}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Lista de bookmarks */}
+                        <div className="flex-1 overflow-y-auto px-4 pb-4">
+                            {bookmarks.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                                    <BookmarkCheck className="w-12 h-12 text-slate-200 dark:text-text-muted/30" />
+                                    <p className="text-sm text-slate-500 dark:text-text-muted font-medium">Nenhum bookmark ainda</p>
+                                    <p className="text-xs text-slate-400 dark:text-text-muted max-w-[200px]">Marque posições de leitura para continuar de onde parou.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 pt-1">
+                                    {bookmarks.map(bm => (
+                                        <div key={bm.id} className="group flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors border border-slate-100 dark:border-transparent">
+                                            <button onClick={() => navegarParaBookmark(bm)} className="flex-1 text-left min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-indigo-600 dark:text-indigo-400 text-sm font-bold">{bm.livro_nome} {bm.capitulo}{bm.versiculo ? `:${bm.versiculo}` : ''}</span>
+                                                </div>
+                                                <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5 truncate">{bm.nome}</p>
+                                                {bm.created_at && (
+                                                    <p className="text-[10px] text-slate-400 dark:text-text-muted mt-0.5">
+                                                        {new Date(bm.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </p>
+                                                )}
+                                            </button>
+                                            <button onClick={() => removerBookmark(bm.id)} className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 dark:hover:text-red-400 transition-all opacity-0 group-hover:opacity-100" title="Remover">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- OFFLINE MANAGER --- */}
             {offlineManagerAberto && (

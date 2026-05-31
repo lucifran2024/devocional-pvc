@@ -9,6 +9,7 @@ import {
     Calendar, Trophy, Flame, Target, ChevronRight, Play
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import ReadingPlanProgress from '@/components/ReadingPlanProgress';
 import { getTodosOsDiasDoPlano, getDiasConcluidos, getMinhasInscricoes } from '@/lib/plans';
 import type { PlanoDia, InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -93,26 +94,6 @@ function PlanoDetalhesContent() {
     const percentual = totalDias > 0 ? Math.round((totalConcluidos / totalDias) * 100) : 0;
     const diaAtual = inscricao?.dia_atual || 1;
 
-    // Calcular sequência de dias consecutivos
-    const calcularSequencia = (): number => {
-        if (diasConcluidos.length === 0) return 0;
-        const sorted = [...diasConcluidos].sort((a, b) => b - a);
-        let seq = 1;
-        for (let i = 1; i < sorted.length; i++) {
-            if (sorted[i] === sorted[i - 1] - 1) {
-                seq++;
-            } else {
-                break;
-            }
-        }
-        return seq;
-    };
-
-    const sequencia = calcularSequencia();
-
-    // Estimar data de conclusão (dias restantes)
-    const diasRestantes = totalDias - totalConcluidos;
-
     return (
         <CosmicBackground className="min-h-screen px-6 py-8 selection:bg-amber-500/30">
             <div className="max-w-4xl mx-auto space-y-8">
@@ -185,30 +166,13 @@ function PlanoDetalhesContent() {
                                 />
                             </div>
 
-                            {/* Estatísticas */}
-                            <div className="grid grid-cols-3 gap-4 pt-2">
-                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-2/50 border border-border-subtle">
-                                    <Target className="w-5 h-5 text-emerald-400 shrink-0" />
-                                    <div>
-                                        <p className="text-lg font-bold text-text-primary">{totalConcluidos}<span className="text-text-muted font-normal text-sm">/{totalDias}</span></p>
-                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">Dias Lidos</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-2/50 border border-border-subtle">
-                                    <Flame className="w-5 h-5 text-orange-400 shrink-0" />
-                                    <div>
-                                        <p className="text-lg font-bold text-text-primary">{sequencia}</p>
-                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">Sequência</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-2/50 border border-border-subtle">
-                                    <Calendar className="w-5 h-5 text-blue-400 shrink-0" />
-                                    <div>
-                                        <p className="text-lg font-bold text-text-primary">{diasRestantes}</p>
-                                        <p className="text-[10px] text-text-muted uppercase tracking-widest">Restantes</p>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Componente de Progresso Visual */}
+                            <ReadingPlanProgress
+                                totalDias={totalDias}
+                                diasConcluidos={diasConcluidos}
+                                diaAtual={diaAtual}
+                                dataInicio={inscricao?.data_inicio}
+                            />
 
                             {/* Botão Continuar Leitura */}
                             <Link

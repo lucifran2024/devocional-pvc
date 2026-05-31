@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { NotificationManager } from "@/components/NotificationManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { SplashScreen } from "@/components/SplashScreen";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,6 +55,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider defaultTheme="dark" storageKey="devocional-theme">
+          <SplashScreen />
           <Navigation />
           <div className="md:pl-24 pb-20 md:pb-0 min-h-screen">
             <ErrorBoundary>
@@ -67,4 +69,3 @@ export default function RootLayout({
     </html>
   );
 }
-
