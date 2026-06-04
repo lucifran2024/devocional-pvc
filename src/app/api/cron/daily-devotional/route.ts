@@ -22,10 +22,20 @@ function getDataHoje(): string {
 
 function extrairOCR(content: string): string {
     if (!content) return '';
+    
     if (content.includes('[OCR]:')) {
-        const parts = content.split('[LEGENDA]:');
-        return parts[0].replace('[OCR]:', '').trim();
+        const posOcr = content.indexOf('[OCR]:') + 6;
+        let substringOcr = content.substring(posOcr);
+        if (substringOcr.includes('[LEGENDA]:')) {
+            substringOcr = substringOcr.substring(0, substringOcr.indexOf('[LEGENDA]:'));
+        }
+        return substringOcr.trim();
     }
+    
+    if (content.includes('[LEGENDA]:')) {
+        return content.substring(0, content.indexOf('[LEGENDA]:')).trim();
+    }
+    
     return content.trim();
 }
 
