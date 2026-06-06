@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { RefreshCw, BookOpen } from 'lucide-react';
+import { RefreshCw, BookOpen, Copy, Check } from 'lucide-react';
 
 // Versículos curados — frases fortes, curtas, compartilháveis
 const VERSES = [
@@ -37,8 +37,16 @@ function getDailyIndex(): number {
 export function RandomVerse() {
     const [verseIndex, setVerseIndex] = useState(getDailyIndex);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const verse = VERSES[verseIndex];
+
+    const handleCopy = useCallback(() => {
+        const texto = `📖 *VERSÍCULO DO DIA*\n\n"${verse.text}"\n— ${verse.ref}\n\n📲 _Devocional PVC_`;
+        navigator.clipboard.writeText(texto);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [verse]);
 
     const handleRefresh = useCallback(() => {
         setIsRefreshing(true);
@@ -66,14 +74,27 @@ export function RandomVerse() {
                                 Versículo do Dia
                             </span>
                         </div>
-                        <button
-                            onClick={handleRefresh}
-                            disabled={isRefreshing}
-                            className="p-1.5 rounded-lg hover:bg-amber-500/10 text-text-muted hover:text-amber-500 transition-all"
-                            title="Sortear outro versículo"
-                        >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleCopy}
+                                className={`p-1.5 rounded-lg transition-all ${
+                                    copied
+                                        ? 'text-green-500 bg-green-500/10'
+                                        : 'text-text-muted hover:text-amber-500 hover:bg-amber-500/10'
+                                }`}
+                                title="Copiar versículo"
+                            >
+                                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                className="p-1.5 rounded-lg hover:bg-amber-500/10 text-text-muted hover:text-amber-500 transition-all"
+                                title="Sortear outro versículo"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Versículo */}
