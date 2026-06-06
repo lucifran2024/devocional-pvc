@@ -82,7 +82,7 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
 // Chamada individual ao Gemini Vision
 async function callGeminiVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
-    const MODEL_NAME = "gemini-2.0-flash";
+    const MODEL_NAME = "gemini-3.1-flash-lite";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
 
     const body = {

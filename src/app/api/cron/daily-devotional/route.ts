@@ -65,8 +65,8 @@ function limparTexto(texto: string): string {
     // 3. Remove URLs
     limpo = limpo.replace(/https?:\/\/[^\s]+/g, '');
 
-    // 4. Remove hashtags (#devocional, #deus, etc)
-    limpo = limpo.replace(/#[\w]+/g, '');
+    // 4. Remove hashtags (#devocional, #deus, #DevocionalDiário, etc)
+    limpo = limpo.replace(/#[^\s#]+/g, '');
 
     // 5. Remove emojis comuns de call-to-action (👉👆📲 etc) em linhas de CTA
     limpo = limpo.replace(/^.*(?:siga|curta|compartilhe|ative|link|bio|inscreva).*$/gim, '');
@@ -107,7 +107,7 @@ function ehDevocionalDoDia(textoOCR: string): boolean {
     );
 }
 
-async function enviarTelegram(texto: string): Promise<boolean> {
+async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_id?: number }> {
     try {
         const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -120,12 +120,13 @@ async function enviarTelegram(texto: string): Promise<boolean> {
         const data = await resp.json();
         if (!data.ok) {
             console.error('Telegram error:', data.description);
-            return false;
+            return { ok: false };
         }
-        return true;
+        console.log(`Telegram enviado: message_id=${data.result?.message_id}`);
+        return { ok: true, message_id: data.result?.message_id };
     } catch (e) {
         console.error('Erro ao enviar Telegram:', e);
-        return false;
+        return { ok: false };
     }
 }
 
@@ -213,7 +214,7 @@ export async function GET(request: Request) {
 
                         // Enviar apenas texto
                         const enviou = await enviarTelegram(caption);
-                        if (enviou) {
+                        if (enviou.ok) {
                             await supabase.from('telegram_enviados').insert({
                                 external_id: postEscolhido.external_id,
                                 data_envio: dataHoje,
@@ -228,7 +229,7 @@ export async function GET(request: Request) {
                                 else console.log('DNA alimentado (evangelhoparatodos)');
                             });
                             idsEnviados.add(postEscolhido.external_id);
-                            resultado.evangelhoparatodos = 'enviado';
+                            resultado.evangelhoparatodos = `enviado(msg_${enviou.message_id})`;
                         } else {
                             resultado.evangelhoparatodos = 'falha_telegram';
                         }
@@ -243,7 +244,7 @@ export async function GET(request: Request) {
             resultado.evangelhoparatodos = 'erro: ' + evErr.message;
         }
 
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 2500));
 
         // =============================================
         // PARTE 2: TRIBO DE JUDÁ (2 mensagens)
@@ -293,7 +294,7 @@ export async function GET(request: Request) {
                     // Enviar texto (sem imagem e sem mencionar "Tribo de Judá")
                     const enviouTribo = await enviarTelegram(captionTribo);
 
-                    if (enviouTribo) {
+                    if (enviouTribo.ok) {
                         await supabase.from('telegram_enviados').insert({
                             external_id: post.external_id,
                             data_envio: dataHoje,
@@ -311,7 +312,7 @@ export async function GET(request: Request) {
 
                         triboEnviados++;
                         idsEnviados.add(post.external_id);
-                        await new Promise(r => setTimeout(r, 500));
+                        await new Promise(r => setTimeout(r, 2500));
                     }
                 }
 
@@ -357,7 +358,7 @@ export async function GET(request: Request) {
                         const msgBG = `Versículo do Dia\n${dataFormatada}\n\n${textoBG}`;
                         const enviouBG = await enviarTelegram(msgBG);
 
-                        if (enviouBG) {
+                        if (enviouBG.ok) {
                             await supabase.from('telegram_enviados').insert({
                                 external_id: bgExternalId,
                                 data_envio: dataHoje,
@@ -373,7 +374,7 @@ export async function GET(request: Request) {
                                 else console.log('DNA alimentado (Bible Gateway)');
                             });
 
-                            resultado.bible_gateway = 'enviado';
+                            resultado.bible_gateway = `enviado(msg_${enviouBG.message_id})`;
                             console.log('Bible Gateway: versículo enviado');
                         }
                     } else {

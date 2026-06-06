@@ -70,13 +70,14 @@ function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function enviarTelegram(texto: string): Promise<boolean> {
+async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_ids: number[] }> {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
         console.error('Telegram não configurado.');
-        return false;
+        return { ok: false, message_ids: [] };
     }
 
     const partes = splitTelegramText(texto);
+    const message_ids: number[] = [];
     let envioCompleto = true;
 
     for (const parte of partes) {
@@ -94,16 +95,20 @@ async function enviarTelegram(texto: string): Promise<boolean> {
             if (!data.ok) {
                 console.error('Telegram error:', data.description);
                 envioCompleto = false;
+            } else {
+                const mid = data.result?.message_id;
+                message_ids.push(mid);
+                console.log(`DNA enviado: message_id=${mid}`);
             }
         } catch (error) {
             console.error('Erro ao enviar Telegram:', error);
             envioCompleto = false;
         }
 
-        await delay(180);
+        await delay(1000);
     }
 
-    return envioCompleto;
+    return { ok: envioCompleto, message_ids };
 }
 
 async function gerarConteudo(
@@ -322,16 +327,16 @@ export async function GET(request: Request) {
             const melhorFavorita = await selecionarMelhorMensagemIA(favoritas.messages, 'DNA Geração');
             const msgDna = `DNA Geração\n\n${melhorFavorita}`;
             const enviou = await enviarTelegram(msgDna);
-            if (enviou) mensagensEnviadas.push('DNA Geração');
-            await delay(450);
+            if (enviou.ok) mensagensEnviadas.push('DNA Geração');
+            await delay(2000);
         }
 
         if (estilo.messages.length > 0) {
             const melhorEstilo = await selecionarMelhorMensagemIA(estilo.messages, 'DNA Estilo');
             const msgEstilo = `DNA Estilo (${String(filtrosEstilo.estilo || '-')})\n\n${melhorEstilo}`;
             const enviou = await enviarTelegram(msgEstilo);
-            if (enviou) mensagensEnviadas.push('DNA Estilo');
-            await delay(450);
+            if (enviou.ok) mensagensEnviadas.push('DNA Estilo');
+            await delay(2000);
         }
 
         return NextResponse.json({

@@ -1251,7 +1251,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 `;
 
       // 4. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       // Temperatura estável por perfil para reduzir variância de qualidade.
@@ -1733,7 +1733,7 @@ Gere agora:
 `;
 
       // 7. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       // Temperatura estável por perfil para reduzir variância de qualidade.
@@ -1841,7 +1841,7 @@ Gere uma explicação usando EXATAMENTE este formato com bullets (•):
 Gere a explicação agora:
 `;
 
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       const resp = await fetch(url, {
@@ -2077,7 +2077,7 @@ ${versiculosTexto}
 
       console.log(`📝 Prompt selecionado: ${tipoEstudo} (${promptFinal.length} chars)`);
 
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       const resp = await fetch(url, {
@@ -2237,7 +2237,7 @@ Gere as 10 mensagens agora:
 `;
 
       // 4. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       const resp = await fetch(url, {
@@ -2407,7 +2407,7 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
 `;
 
       // 6. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
+      const MODEL_NAME = "gemini-3.1-flash-lite";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
       const resp = await fetch(url, {

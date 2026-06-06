@@ -108,7 +108,7 @@ function getDataHoje(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
-async function enviarTelegram(texto: string): Promise<boolean> {
+async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_id?: number }> {
     try {
         const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -121,12 +121,13 @@ async function enviarTelegram(texto: string): Promise<boolean> {
         const data = await resp.json();
         if (!data.ok) {
             console.error('Telegram error:', data.description);
-            return false;
+            return { ok: false };
         }
-        return true;
+        console.log(`Telegram enviado: message_id=${data.result?.message_id}`);
+        return { ok: true, message_id: data.result?.message_id };
     } catch (e) {
         console.error('Erro ao enviar Telegram:', e);
-        return false;
+        return { ok: false };
     }
 }
 
@@ -395,7 +396,7 @@ export async function GET(request: Request) {
 
             const msgPalavra = `Palavra da Manha\n${dataFormatada}\n\n${textoLimpo}`;
             const enviou = await enviarTelegram(msgPalavra);
-            if (enviou) mensagensEnviadas.push('Palavra da Manha');
+            if (enviou.ok) mensagensEnviadas.push('Palavra da Manha');
         } else {
             console.log('Palavra da Manha nao encontrada para hoje:', dataHoje);
         }
@@ -449,7 +450,7 @@ export async function GET(request: Request) {
                     const msgVersiculo = `Versiculo do Dia\n\n"${v.text}"\n\n${refCompleta}`;
 
                     const enviou = await enviarTelegram(msgVersiculo);
-                    if (enviou) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
+                    if (enviou.ok) mensagensEnviadas.push(`Versiculo: ${refCompleta}`);
                 }
             } else {
                 console.log('Nenhum versiculo carregado para:', referenciaDoDia);
