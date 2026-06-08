@@ -6,6 +6,8 @@ export interface Versiculo {
     verse: number;
     text: string;
     chapter?: number;
+    livroId?: number;
+    livro?: string;
 }
 
 // Mapeamento de livros para IDs da API
@@ -307,7 +309,7 @@ export async function buscarPassagem(referencia: string): Promise<{
         resultados.forEach((versiculos, idx) => {
             if (versiculos.length > 0) {
                 capitulosCarregados.push(capitulos[idx]);
-                const versiculosComCap = versiculos.map(v => ({ ...v, chapter: capitulos[idx] }));
+                const versiculosComCap = versiculos.map(v => ({ ...v, chapter: capitulos[idx], livroId, livro: parsed.livro }));
                 todosVersiculos = todosVersiculos.concat(versiculosComCap);
             }
         });

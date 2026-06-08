@@ -6,7 +6,8 @@ import {
     Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
     ChevronRight, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
-    Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X
+    Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
+    ZoomIn, ZoomOut
 } from 'lucide-react';
 import {
     getDataHoje,
@@ -38,6 +39,16 @@ const CORES_DESTAQUE_PLANO: { id: string; nome: string; bg: string; border: stri
     { id: 'pink', nome: 'Rosa', bg: 'bg-pink-500/20', border: 'border-pink-500/40' },
 ];
 
+const DEFAULT_READING_FONT_SIZE = 20;
+const MIN_READING_FONT_SIZE = 16;
+const MAX_READING_FONT_SIZE = 30;
+const READING_FONT_SIZE_KEY = 'plano-reading-font-size';
+const NOVO_TESTAMENTO_ANCHOR_ID = 'plano-novo-testamento';
+
+function limitarFonteLeitura(size: number) {
+    return Math.min(MAX_READING_FONT_SIZE, Math.max(MIN_READING_FONT_SIZE, size));
+}
+
 // Mapa de interações por versículo
 interface InteracoesMapPlano {
     destaques: Record<number, BibliaInteracao>;
@@ -53,6 +64,7 @@ function VersiculosInterativos({
     livroNome,
     capitulo,
     livroId,
+    readingFontSize,
 }: {
     versiculos: Versiculo[];
     referencia: string;
@@ -60,6 +72,7 @@ function VersiculosInterativos({
     livroNome: string;
     capitulo: number;
     livroId?: number;
+    readingFontSize: number;
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
     const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
@@ -280,13 +293,15 @@ function VersiculosInterativos({
                     const prevCap = idx > 0 ? getCapitulo(versiculos[idx - 1]) : cap;
                     const mostrarHeaderCapitulo = idx === 0 || cap !== prevCap;
                     const capMap = getInteracoesDoVersiculo(v);
+                    const primeiroVersiculoNovoTestamento = Boolean(v.livroId && v.livroId >= 40)
+                        && !versiculos.slice(0, idx).some(vv => vv.livroId && vv.livroId >= 40);
 
                     // Pericope header check
                     const pericopes = livroId ? getPericopes(livroId, cap) : [];
                     const pericope = pericopes.find(p => p.verse === v.verse);
 
                     return (
-                        <div key={`${cap}-${v.verse}`}>
+                        <div key={`${cap}-${v.verse}`} id={primeiroVersiculoNovoTestamento ? NOVO_TESTAMENTO_ANCHOR_ID : undefined}>
                             {/* Separador de capítulo - só mostra quando há múltiplos capítulos */}
                             {mostrarHeaderCapitulo && new Set(versiculos.map(vv => getCapitulo(vv))).size > 1 && (
                                 <div className="flex items-center gap-3 py-3 mt-2 mb-1">
@@ -313,7 +328,7 @@ function VersiculosInterativos({
                                     ${versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
                             >
-                                <p className="inline text-lg md:text-xl leading-relaxed text-text-primary font-serif">
+                                <p className="inline leading-relaxed text-text-primary font-serif" style={{ fontSize: `${readingFontSize}px` }}>
                                     <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
                                     {v.text}
                                 </p>
@@ -487,10 +502,11 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     );
 }
 
-function ChatBubble({ message, versiculosInterativos, livroInfo }: {
+function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
     livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
+    readingFontSize: number;
 }) {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
@@ -503,7 +519,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                 <div className="animate-enter mb-4">
                     {/* Texto antes dos versículos */}
                     {partes[0] && (
-                        <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-3">
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
                     )}
@@ -516,11 +532,12 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
                         livroNome={livroInfo!.nome}
                         capitulo={livroInfo!.capitulo}
                         livroId={livroInfo!.livroId}
+                        readingFontSize={readingFontSize}
                     />
 
                     {/* Texto depois dos versículos */}
                     {partes[1] && (
-                        <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3">
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
@@ -533,7 +550,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo }: {
 
         return (
             <div className="animate-enter mb-4">
-                <div className="text-base md:text-lg whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none">
+                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                     <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                 </div>
             </div>
@@ -595,7 +612,11 @@ function PlanoLeituraContent() {
     const [diaExibido, setDiaExibido] = useState<number>(1);
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
     const [isLoadingExplicacao, setIsLoadingExplicacao] = useState(false);
+    const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE);
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const chatStartRef = useRef<HTMLDivElement>(null);
+    const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | null>(null);
+    const isRestoringScrollRef = useRef(false);
 
     const dataHoje = getDataHoje();
 
@@ -723,8 +744,29 @@ function PlanoLeituraContent() {
 
     // Scroll automático no chat
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (typeof window === 'undefined') return;
+        const saved = Number(localStorage.getItem(READING_FONT_SIZE_KEY));
+        if (Number.isFinite(saved)) {
+            setReadingFontSize(limitarFonteLeitura(saved));
+        }
+    }, []);
+
+    const alterarFonteLeitura = (delta: number) => {
+        setReadingFontSize(prev => {
+            const next = limitarFonteLeitura(prev + delta);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(READING_FONT_SIZE_KEY, String(next));
+            }
+            return next;
+        });
+    };
+
+    const resetarFonteLeitura = () => {
+        setReadingFontSize(DEFAULT_READING_FONT_SIZE);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(READING_FONT_SIZE_KEY, String(DEFAULT_READING_FONT_SIZE));
+        }
+    };
 
     // Formatar data
     const formatarDataExtenso = (dataStr: string) => {
@@ -741,9 +783,24 @@ function PlanoLeituraContent() {
         return `plano-progress:${planoId}:${diaExibido}`;
     };
 
+    const getPlanoScrollKey = () => {
+        if (!planoId) return null;
+        return `plano-scroll:${planoId}:${diaExibido}`;
+    };
+
     const getPlanoCompletedKey = () => {
         if (!planoId) return null;
         return `plano-completed:${planoId}:${diaExibido}`;
+    };
+
+    const getLeituraDiariaProgressKey = () => {
+        if (isPlanoMode || !passagem?.referencia) return null;
+        return `daily-reading-progress:${passagem.referencia}`;
+    };
+
+    const getLeituraDiariaScrollKey = () => {
+        if (isPlanoMode || !passagem?.referencia) return null;
+        return `daily-reading-scroll:${passagem.referencia}`;
     };
 
     // Chave permanente para salvar lista de dias concluídos no localStorage
@@ -769,13 +826,16 @@ function PlanoLeituraContent() {
         const grupos: Versiculo[][] = [];
         let grupoAtual: Versiculo[] = [];
         let capAtual: number | undefined;
+        let livroAtual: number | undefined;
         for (const v of bibleData.versiculos) {
             const cap = v.chapter ?? 0;
-            if (cap !== capAtual && grupoAtual.length > 0) {
+            const livro = v.livroId ?? 0;
+            if ((cap !== capAtual || livro !== livroAtual) && grupoAtual.length > 0) {
                 grupos.push(grupoAtual);
                 grupoAtual = [];
             }
             capAtual = cap;
+            livroAtual = livro;
             grupoAtual.push(v);
         }
         if (grupoAtual.length > 0) grupos.push(grupoAtual);
@@ -809,18 +869,27 @@ function PlanoLeituraContent() {
             setVersiculosPaginaAtual(slice);
         }
 
+        const versiculosDaParte = getVersiculosDaParte(parte);
+        const primeiroVersiculoDaParte = versiculosDaParte[0];
+
+        if (primeiroVersiculoDaParte?.livroId) {
+            const livroIdParte = primeiroVersiculoDaParte.livroId;
+            setLivroInfoAtual({
+                abrev: getAbrevFromId(livroIdParte),
+                nome: primeiroVersiculoDaParte.livro || passagem.referencia,
+                capitulo: primeiroVersiculoDaParte.chapter ?? 0,
+                livroId: livroIdParte
+            });
+            return;
+        }
+
         const primeiraParte = passagem.referencia.split(';')[0].trim();
         const parsed = parseReferencia(primeiraParte);
         if (parsed) {
             const abrev = getAbrevFromId(parsed.livroId);
             const refParts = primeiraParte.match(/^(.+?)\s+\d/);
             const nomeOriginal = refParts ? refParts[1] : parsed.livro;
-            setLivroInfoAtual({
-                abrev,
-                nome: nomeOriginal,
-                capitulo: parsed.capituloInicio,
-                livroId: parsed.livroId
-            });
+            setLivroInfoAtual({ abrev, nome: nomeOriginal, capitulo: parsed.capituloInicio, livroId: parsed.livroId });
         }
     };
 
@@ -833,6 +902,16 @@ function PlanoLeituraContent() {
             parte: Math.max(1, parte)
         };
         localStorage.setItem(progressKey, JSON.stringify(payload));
+    };
+
+    const salvarProgressoLeituraDiariaLocal = (parte: number) => {
+        const progressKey = getLeituraDiariaProgressKey();
+        if (!progressKey || typeof window === 'undefined') return;
+
+        localStorage.setItem(progressKey, JSON.stringify({
+            referencia: passagem?.referencia,
+            parte: Math.max(1, parte)
+        }));
     };
 
     const salvarLeituraConcluidaLocal = () => {
@@ -870,6 +949,177 @@ function PlanoLeituraContent() {
         }
     };
 
+    const lerProgressoLeituraDiariaLocal = () => {
+        const progressKey = getLeituraDiariaProgressKey();
+        if (!progressKey || typeof window === 'undefined') return 1;
+
+        const raw = localStorage.getItem(progressKey);
+        if (!raw) return 1;
+
+        try {
+            const parsed = JSON.parse(raw) as { referencia?: string; parte?: number };
+            if (!parsed?.referencia || parsed.referencia !== passagem?.referencia) {
+                localStorage.removeItem(progressKey);
+                return 1;
+            }
+
+            const parte = Number(parsed?.parte ?? 1);
+            if (!Number.isFinite(parte) || parte < 1) return 1;
+
+            return Math.min(parte, getTotalPartesLeitura());
+        } catch {
+            return 1;
+        }
+    };
+
+    const salvarScrollPlanoLocal = (y: number) => {
+        const scrollKey = getPlanoScrollKey();
+        if (!isPlanoMode || !scrollKey || typeof window === 'undefined') return;
+        localStorage.setItem(scrollKey, JSON.stringify({
+            data: dataHoje,
+            y: Math.max(0, Math.round(y)),
+            parte: currentPageRef.current
+        }));
+    };
+
+    const salvarScrollLeituraDiariaLocal = (y: number) => {
+        const scrollKey = getLeituraDiariaScrollKey();
+        if (!scrollKey || typeof window === 'undefined') return;
+
+        localStorage.setItem(scrollKey, JSON.stringify({
+            referencia: passagem?.referencia,
+            y: Math.max(0, Math.round(y)),
+            parte: currentPageRef.current
+        }));
+    };
+
+    const lerScrollPlanoLocal = () => {
+        const scrollKey = getPlanoScrollKey();
+        if (!isPlanoMode || !scrollKey || typeof window === 'undefined') return 0;
+
+        const raw = localStorage.getItem(scrollKey);
+        if (!raw) return 0;
+
+        try {
+            const parsed = JSON.parse(raw) as { data?: string; y?: number };
+            if (parsed?.data !== dataHoje) {
+                localStorage.removeItem(scrollKey);
+                return 0;
+            }
+
+            const y = Number(parsed?.y ?? 0);
+            return Number.isFinite(y) && y > 0 ? y : 0;
+        } catch {
+            return 0;
+        }
+    };
+
+    const lerScrollLeituraDiariaLocal = () => {
+        const scrollKey = getLeituraDiariaScrollKey();
+        if (!scrollKey || typeof window === 'undefined') return 0;
+
+        const raw = localStorage.getItem(scrollKey);
+        if (!raw) return 0;
+
+        try {
+            const parsed = JSON.parse(raw) as { referencia?: string; y?: number };
+            if (!parsed?.referencia || parsed.referencia !== passagem?.referencia) {
+                localStorage.removeItem(scrollKey);
+                return 0;
+            }
+
+            const y = Number(parsed?.y ?? 0);
+            return Number.isFinite(y) && y > 0 ? y : 0;
+        } catch {
+            return 0;
+        }
+    };
+
+    const getParteNovoTestamento = () => {
+        if (!bibleData) return null;
+        const grupos = getCapitulosAgrupados();
+        const idx = grupos.findIndex(grupo => grupo.some(v => v.livroId && v.livroId >= 40));
+        return idx >= 0 ? idx + 1 : null;
+    };
+
+    const temNovoTestamento = Boolean(getParteNovoTestamento());
+
+    useEffect(() => {
+        const action = pendingScrollRef.current;
+        if (!action || typeof window === 'undefined') return;
+        pendingScrollRef.current = null;
+
+        window.requestAnimationFrame(() => {
+            if (action === 'bottom') {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            if (action === 'novo-testamento') {
+                window.setTimeout(() => {
+                    const target = document.getElementById(NOVO_TESTAMENTO_ANCHOR_ID);
+                    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+                return;
+            }
+
+            if (action === 'restore') {
+                const y = isPlanoMode ? lerScrollPlanoLocal() : lerScrollLeituraDiariaLocal();
+                isRestoringScrollRef.current = true;
+                if (y > 0) {
+                    window.scrollTo({ top: y, behavior: 'auto' });
+                } else {
+                    chatStartRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }
+                window.setTimeout(() => {
+                    isRestoringScrollRef.current = false;
+                }, 500);
+                return;
+            }
+
+            chatStartRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, versiculosPaginaAtual]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (isPlanoMode) {
+            let timer: number | null = null;
+            const handleScroll = () => {
+                if (isRestoringScrollRef.current) return;
+                if (timer) window.clearTimeout(timer);
+                timer = window.setTimeout(() => {
+                    salvarScrollPlanoLocal(window.scrollY);
+                }, 200);
+            };
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            return () => {
+                if (timer) window.clearTimeout(timer);
+                window.removeEventListener('scroll', handleScroll);
+            };
+        }
+
+        if (activeOption !== '1') return;
+
+        let timer: number | null = null;
+        const handleScroll = () => {
+            if (isRestoringScrollRef.current) return;
+            if (timer) window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                salvarScrollLeituraDiariaLocal(window.scrollY);
+            }, 200);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            if (timer) window.clearTimeout(timer);
+            window.removeEventListener('scroll', handleScroll);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPlanoMode, planoId, diaExibido, dataHoje, activeOption, passagem?.referencia]);
+
     const gerarLeituraParte = (parteDesejada: number): string => {
         if (!passagem) return '';
 
@@ -882,19 +1132,19 @@ function PlanoLeituraContent() {
         atualizarContextoVersiculos(parteAtual);
         if (isPlanoMode) {
             salvarProgressoPlanoLocal(parteAtual);
+        } else {
+            salvarProgressoLeituraDiariaLocal(parteAtual);
         }
 
         const linhaPersistencia = isPlanoMode
             ? '\nSeu progresso desta leitura fica salvo até o fim do dia.'
-            : '';
+            : '\nSeu progresso desta passagem fica salvo até a passagem mudar.';
 
-        // Título do capítulo atual (ex: "Mateus 15" em vez de "Mateus 14-16")
         const versiculosDaParte = getVersiculosDaParte(parteAtual);
-        const capDaParte = versiculosDaParte.length > 0 ? versiculosDaParte[0].chapter : null;
-        const primeiraParte = passagem.referencia.split(';')[0].trim();
-        const refParts = primeiraParte.match(/^(.+?)\s+\d/);
-        const nomeLivro = refParts ? refParts[1] : passagem.referencia;
-        const tituloCapitulo = capDaParte ? `${nomeLivro} ${capDaParte}` : passagem.referencia;
+        const primeiroVersiculoDaParte = versiculosDaParte[0];
+        const capDaParte = primeiroVersiculoDaParte?.chapter ?? null;
+        const nomeLivroDaParte = primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia;
+        const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
 
         return `📖 **${tituloCapitulo}**
 📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
@@ -916,7 +1166,7 @@ Ou **MENU** para voltar.${linhaPersistencia}`;
         if (!passagem) return 'Preparando ambiente de estudo...';
 
         return `Olá! Sou seu Mentor Bíblico. 🌌
-        
+
 Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 
 ---
@@ -1004,7 +1254,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
     // Opção 1: Leitura Pura (Sem Explicação)
     const gerarLeituraGuiada = (): string => {
-        const parteInicial = isPlanoMode ? lerProgressoPlanoLocal() : 1;
+        const parteInicial = isPlanoMode ? lerProgressoPlanoLocal() : lerProgressoLeituraDiariaLocal();
         return gerarLeituraParte(parteInicial);
     };
 
@@ -1311,6 +1561,7 @@ ${conteudo}
                 timestamp: new Date()
             };
 
+            pendingScrollRef.current = 'bottom';
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error) {
             const errorMessage: ChatMessage = {
@@ -1330,6 +1581,25 @@ ${conteudo}
     };
 
     // Handler dos Botões de Ação Rápida
+    const handleIrParaNovoTestamento = () => {
+        const parteNovoTestamento = getParteNovoTestamento();
+        if (!parteNovoTestamento || !passagem) return;
+
+        setActiveOption('1');
+        const content = gerarLeituraParte(parteNovoTestamento);
+        pendingScrollRef.current = 'novo-testamento';
+        setMessages(prev => {
+            const updated = [...prev];
+            for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant' && updated[i].content.includes('%%VERSICULOS_INTERATIVOS%%')) {
+                    updated[i] = { ...updated[i], content, timestamp: new Date() };
+                    return updated;
+                }
+            }
+            return [...updated, { role: 'assistant', content, timestamp: new Date() }];
+        });
+    };
+
     const handleQuickAction = (action: string) => {
         submitMessage(action);
     };
@@ -1354,6 +1624,7 @@ ${conteudo}
                 timestamp: new Date()
             };
 
+            pendingScrollRef.current = 'bottom';
             setMessages(prev => [...prev, assistantMessage]);
         } finally {
             setIsProcessing(false);
@@ -1366,12 +1637,13 @@ ${conteudo}
             if (isPlanoMode) {
                 if (!bibleData) return;
                 setActiveOption('1');
-                const parteSalva = lerProgressoPlanoLocal();
+                const parteSalva = isPlanoMode ? lerProgressoPlanoLocal() : lerProgressoLeituraDiariaLocal();
                 const primeiraMensagemPlano: ChatMessage = {
                     role: 'assistant',
                     content: gerarLeituraParte(parteSalva),
                     timestamp: new Date()
                 };
+                pendingScrollRef.current = 'restore';
                 setMessages([primeiraMensagemPlano]);
                 return;
             }
@@ -1400,12 +1672,15 @@ ${conteudo}
         if (messages.length > 0) return;
 
         setActiveOption('1');
+        const parteSalva = lerProgressoLeituraDiariaLocal();
+        pendingScrollRef.current = parteSalva > 1 ? 'restore' : 'top';
         setMessages([
             { role: 'user', content: 'Quero ver: Ler Passagem', timestamp: new Date() },
         ]);
         setIsProcessing(true);
         (async () => {
             const resp = await gerarRespostaOpcao('1');
+            pendingScrollRef.current = parteSalva > 1 ? 'restore' : 'top';
             setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
             setIsProcessing(false);
         })();
@@ -1548,6 +1823,7 @@ ${conteudo}
                                             setActiveOption(option.id as MenuOption);
                                             // Adiciona mensagem inicial do usuário (simulada) e resposta do sistema
                                             const opcaoTexto = option.label;
+                                            const parteSalva = option.id === '1' ? lerProgressoLeituraDiariaLocal() : 1;
                                             setMessages([
                                                 { role: 'user', content: `Quero ver: ${opcaoTexto}`, timestamp: new Date() },
                                                 // A resposta virá via useEffect ou chamada direta?
@@ -1558,6 +1834,9 @@ ${conteudo}
                                             setIsProcessing(true);
                                             setTimeout(async () => {
                                                 const resp = await gerarRespostaOpcao(option.id as MenuOption);
+                                                pendingScrollRef.current = option.id === '1'
+                                                    ? (parteSalva > 1 ? 'restore' : 'top')
+                                                    : 'bottom';
                                                 setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
                                                 setIsProcessing(false);
                                             }, 600);
@@ -1574,29 +1853,71 @@ ${conteudo}
                     <div className="max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
 
                         {/* Chat Header - compacto e sticky */}
-                        <div className="px-4 py-3 border-b border-border-subtle/50 flex items-center justify-between sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setActiveOption(null)}
-                                    className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                </button>
-                                <div>
-                                    <h2 className="font-bold text-white text-base">
-                                        {isPlanoMode
-                                            ? 'Leitura do Plano'
-                                            : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
-                                    </h2>
-                                    <p className="text-[11px] text-slate-400">
-                                        {passagem?.referencia}
-                                    </p>
+                        <div className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <button
+                                        onClick={() => setActiveOption(null)}
+                                        className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                    </button>
+                                    <div className="min-w-0">
+                                        <h2 className="font-bold text-white text-base">
+                                            {isPlanoMode
+                                                ? 'Leitura do Plano'
+                                                : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                        </h2>
+                                        <p className="text-[11px] text-slate-400 truncate">
+                                            {passagem?.referencia}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => alterarFonteLeitura(-2)}
+                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-300 hover:text-white disabled:opacity-40"
+                                        title="Diminuir fonte"
+                                        disabled={readingFontSize <= MIN_READING_FONT_SIZE}
+                                    >
+                                        <ZoomOut className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={resetarFonteLeitura}
+                                        className="px-2.5 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-xs font-bold text-slate-300 hover:text-white"
+                                        title="Restaurar fonte"
+                                    >
+                                        A
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => alterarFonteLeitura(2)}
+                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-300 hover:text-white disabled:opacity-40"
+                                        title="Aumentar fonte"
+                                        disabled={readingFontSize >= MAX_READING_FONT_SIZE}
+                                    >
+                                        <ZoomIn className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
+
+                            {temNovoTestamento && (
+                                <button
+                                    type="button"
+                                    onClick={handleIrParaNovoTestamento}
+                                    className="self-start px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-amber-300 hover:bg-amber-500/10 hover:border-amber-400/30 transition-colors"
+                                >
+                                    Novo Testamento
+                                </button>
+                            )}
                         </div>
 
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                            <div ref={chatStartRef} />
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
                                 return (
@@ -1605,6 +1926,7 @@ ${conteudo}
                                         message={msg}
                                         versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
                                         livroInfo={temPlaceholder ? livroInfoAtual : undefined}
+                                        readingFontSize={readingFontSize}
                                     />
                                 );
                             })}
