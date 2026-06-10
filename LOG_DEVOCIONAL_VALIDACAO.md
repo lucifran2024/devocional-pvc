@@ -131,3 +131,19 @@ Nenhuma correcao necessaria nesta execucao. TypeScript 100% limpo.
 ---
 
 _Gerado automaticamente pelo agente devocional-validate em 2026-05-31_
+
+## 2026-06-05 — Revalidacao operacional
+
+- **Comando executado:** `npm run build`
+- **Resultado:** ✅ PASSOU
+- **Ajuste aplicado antes da validacao:** `themeColor` movido de `metadata` para `viewport` em `src/app/layout.tsx`, eliminando o warning do Next.js na build
+- **Features 7-9 conferidas:** `ReadingPlanProgress`, `SplashScreen` e `PWA Shortcuts` presentes e integradas nas rotas/layouts esperados
+- **Estado atual:** a validação manual e a build confirmam que as features novas estao operacionais no codigo; o log historico de "aguardando validacao" fica superado por esta revalidacao
+- **Observacao:** o warning residual de `edge runtime` segue informativo e nao bloqueia a build
+## 2026-06-07 — Revalidacao operacional
+
+- **Comando executado:** `npm run build`
+- **Resultado:** ✅ PASSOU
+- **Features 7-9 conferidas:** `ReadingPlanProgress`, `SplashScreen` e `PWA Shortcuts` continuam presentes e integradas
+- **Estado atual:** a build segue saudavel no estado atual do codigo
+- **Observacao:** o warning residual de `edge runtime` continua informativo e nao bloqueia a build

@@ -69,7 +69,7 @@ export async function callGeminiStreaming(
     onComplete: (fullText: string) => void,
     onError: (error: Error) => void
 ): Promise<void> {
-    const MODEL_NAME = 'gemini-3-flash-preview';
+    const MODEL_NAME = 'gemini-2.0-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:streamGenerateContent?key=${geminiKey}&alt=sse`;
 
     try {

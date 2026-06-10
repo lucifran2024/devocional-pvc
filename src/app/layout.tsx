@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -6,6 +6,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { NotificationManager } from "@/components/NotificationManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SplashScreen } from "@/components/SplashScreen";
+import { Navigation } from "@/components/ui/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +24,6 @@ export const metadata: Metadata = {
   keywords: ["devocional", "bíblia", "leitura diária", "espiritualidade", "PVC"],
   authors: [{ name: "Devocional PVC" }],
   manifest: "/manifest.json",
-  themeColor: "#F59E0B",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -41,7 +41,10 @@ export const metadata: Metadata = {
   },
 };
 
-import { Navigation } from "@/components/ui/Navigation";
+export const viewport: Viewport = {
+  themeColor: "#F59E0B",
+  colorScheme: "dark",
+};
 
 export default function RootLayout({
   children,

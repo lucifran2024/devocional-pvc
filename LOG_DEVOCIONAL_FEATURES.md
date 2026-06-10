@@ -121,3 +121,8 @@
 ---
 
 _Ultimo update: 2026-05-31 (features 8 e 9 — splash screen + atalhos de tela, build limpa, 0 erros TS)_
+
+## 2026-06-05 — Revalidacao atual
+- Build `npm run build`: PASSOU
+- `themeColor` movido para `viewport` em `src/app/layout.tsx`
+- Features 7, 8 e 9 confirmadas no codigo e na build

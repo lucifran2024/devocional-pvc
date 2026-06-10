@@ -18,15 +18,6 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const [amei, setAmei] = useState(false); // Estado local do feedback
     const [isPlaying, setIsPlaying] = useState(false); // Áudio TTS
 
-    useEffect(() => {
-        loadData();
-        return () => {
-            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-        };
-    }, []);
-
     async function loadData() {
         setLoading(true);
         const hoje = getDataHoje();
@@ -65,6 +56,15 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         setLoading(false);
         setGenerating(false);
     }
+
+    useEffect(() => {
+        loadData();
+        return () => {
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
 
     const handleCopy = () => {
         if (!data) return;

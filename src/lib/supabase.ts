@@ -247,6 +247,99 @@ export function getDataHoje(): string {
     return dataLocal.toISOString().split('T')[0];
 }
 
+const CONFIG_PALAVRA_MANHA: Record<number, { dia: string; categoria: string; formato: string }> = {
+    1: { dia: 'Segunda', categoria: 'ORACAO', formato: 'Curto' },
+    2: { dia: 'Terca', categoria: 'VERSICULO', formato: 'Medio' },
+    3: { dia: 'Quarta', categoria: 'REFLEXAO', formato: 'Medio' },
+    4: { dia: 'Quinta', categoria: 'DEVOCIONAL', formato: 'Medio' },
+    5: { dia: 'Sexta', categoria: 'EXORTACAO', formato: 'Medio' },
+    6: { dia: 'Sabado', categoria: 'MEDITACAO', formato: 'Curto' },
+    0: { dia: 'Domingo', categoria: 'LOUVOR', formato: 'Medio' },
+};
+
+function getConfigPalavraManha(data: string) {
+    const dataObj = new Date(`${data}T00:00:00Z`);
+    return CONFIG_PALAVRA_MANHA[dataObj.getUTCDay()] || CONFIG_PALAVRA_MANHA[1];
+}
+
+function criarPalavraManhaFallback(data: string): PalavraManhaCache {
+    const config = getConfigPalavraManha(data);
+
+    const mensagens: Record<string, string> = {
+        ORACAO: `**SENHOR, GUIA O MEU DIA**
+
+Pai, antes que as demandas falem alto, eu entrego este dia nas tuas maos.
+
+Que minha pressa nao seja maior que a tua paz. Que minhas decisoes sejam governadas por sabedoria, mansidao e coragem. Guarda meu coracao de agir no impulso e me ensina a perceber tua direcao nas pequenas coisas.
+
+> "Entrega o teu caminho ao Senhor; confia nele, e ele tudo fara." - Salmos 37:5
+
+Amem.`,
+        VERSICULO: `**UMA LUZ PARA O PROXIMO PASSO**
+
+> "Lampada para os meus pes e a tua palavra, e luz para o meu caminho." - Salmos 119:105
+
+Deus nao precisa revelar toda a estrada para sustentar a sua obediencia hoje. Muitas vezes, a graca vem como luz suficiente para o proximo passo.
+
+Caminhe com fidelidade no que ja foi colocado diante de voce.`,
+        REFLEXAO: `**O DIA COMECA PELO CORACAO**
+
+Nem todo dia nasce leve, mas todo dia pode comecar rendido.
+
+Antes de tentar controlar o que ainda nao aconteceu, volte para o lugar onde a fe e reorganiza a alma: a presenca de Deus. O que voce carrega hoje nao precisa ser carregado sozinho.
+
+> "Lancando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vos." - 1 Pedro 5:7
+
+Receba paz para atravessar este dia com firmeza.`,
+        DEVOCIONAL: `**FIRME NO QUE PERMANECE**
+
+As circunstancias mudam rapido, mas Deus continua sendo fundamento.
+
+Hoje, escolha construir suas respostas sobre aquilo que permanece: a Palavra, a fe, a paciencia e o amor. Nem toda batalha pede pressa; algumas pedem constancia.
+
+> "Jesus Cristo e o mesmo ontem, hoje e eternamente." - Hebreus 13:8
+
+Permanece nele.`,
+        EXORTACAO: `**NAO ENTREGUE SUA VISAO AO CANSACO**
+
+O cansaco pode tentar convencer voce a abandonar o que Deus ainda esta formando.
+
+Respire, ajuste o ritmo e continue fiel. Nem toda demora e negativa; algumas demoras sao preparo. Hoje, faca o que e certo mesmo que pareca pequeno.
+
+> "E nao nos cansemos de fazer o bem." - Galatas 6:9
+
+Ha fruto vindo da obediencia constante.`,
+        MEDITACAO: `**DESCANSAR TAMBEM E FE**
+
+Descanso nao e fuga quando nasce da confianca.
+
+Permita que sua alma desacelere diante de Deus. Voce nao sustenta tudo sozinho, e nao precisa provar valor pelo excesso de peso que carrega.
+
+> "Aquietai-vos e sabei que eu sou Deus." - Salmos 46:10
+
+Que hoje haja quietude por dentro.`,
+        LOUVOR: `**GRATIDAO ABRE ESPACO**
+
+Hoje, escolha lembrar do que Deus ja fez.
+
+A gratidao nao nega as lutas, mas impede que elas ocupem todo o altar do coracao. Louvar e declarar que Deus continua sendo bom antes mesmo de tudo se resolver.
+
+> "Rendei gracas ao Senhor, porque ele e bom." - Salmos 136:1
+
+Que seu dia tenha memoria, alegria e descanso.`,
+    };
+
+    return {
+        id: 0,
+        data,
+        dia_semana: config.dia,
+        categoria: config.categoria,
+        formato: `${config.formato} Offline`,
+        mensagem: mensagens[config.categoria] || mensagens.REFLEXAO,
+        passagem_ref: undefined,
+    };
+}
+
 // Interface para filtros de geração
 export interface FiltrosGeracao {
     tema?: string;
@@ -1255,24 +1348,19 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
             return { data: existente, error: null };
         }
 
-        // 1. Chama Edge Function
-        const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+        // 1. Chama Edge Function via SDK (mais confiável que fetch direto)
+        const { data: json, error: invokeError } = await supabase.functions.invoke('execute', {
+            body: {
                 modo_id: 'modo_palavra_manha',
                 data: data
-            })
+            }
         });
 
-        if (!resp.ok) throw new Error(`Erro na API: ${resp.status}`);
+        if (invokeError) {
+            throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
+        }
 
-        const json = await resp.json();
-
-        if (!json.ok || !json.resultado) throw new Error(json.error || 'Erro ao gerar mensagem');
+        if (!json || !json.ok || !json.resultado) throw new Error(json?.error || 'Erro ao gerar mensagem');
 
         // 2. O Backend agora retorna o registro salvo!
         if (json.registro) {
@@ -1304,7 +1392,8 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 
     } catch (e) {
         console.error('Erro gerarPalavraManha:', e);
-        return { data: null, error: e instanceof Error ? e.message : 'Erro desconhecido' };
+        console.warn('[PALAVRA] Usando fallback local porque a geracao remota falhou.');
+        return { data: criarPalavraManhaFallback(data), error: null };
     }
 }
 

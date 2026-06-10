@@ -26,7 +26,7 @@ export async function callGemini(
     geminiKey: string,
     maxTurns: number = 5
 ): Promise<GeminiResponse> {
-    const MODEL_NAME = 'gemini-3-flash-preview';
+    const MODEL_NAME = 'gemini-2.0-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
 
     let messages: any[] = [{ role: 'user', parts: [{ text: prompt }] }];
