@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Heart, Star, Layers
+  Calendar, Book, Heart, Star, Layers, LogOut
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -14,6 +14,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { RandomVerse } from '@/components/RandomVerse';
 import { DashboardSkeleton } from '@/components/ui/DashboardSkeleton';
+import { useAuth } from '@/components/AuthProvider';
 
 // ===============================================
 // PÁGINA DASHBOARD
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const dataHoje = getDataHoje();
   const { streak, isLoaded } = useDailyStreak();
+  const { isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -36,7 +38,6 @@ export default function DashboardPage() {
       );
 
       try {
-        // @ts-ignore
         const res = await Promise.race([
           getPayloadDoDia(dataHoje),
           timeoutPromise
@@ -73,8 +74,15 @@ export default function DashboardPage() {
 
   return (
     <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
-      <header className="fixed top-4 right-4 z-50">
+      <header className="fixed top-4 right-4 z-50 flex items-center gap-2">
         <ThemeToggle />
+        <button
+          onClick={signOut}
+          className="md:hidden p-2.5 rounded-full bg-white/80 dark:bg-surface-2 border border-slate-300 dark:border-border-subtle text-slate-500 dark:text-text-muted hover:text-red-500 transition-colors shadow-sm"
+          title="Sair da conta"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </header>
 
       {/* 1. HERO SECTION (Imersiva) */}
@@ -172,33 +180,37 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Card 4: Devocional Externo */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/devocional-externo"
-              title="Devocional Externo"
-              desc="Leia devocionais de sites cristãos renomados, direto da fonte."
-              icon={Heart}
-              accentColor="text-rose-600 dark:text-rose-400"
-              iconBg="bg-rose-500/10 border-rose-500/20"
-              badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
-              badge="ORIGINAL"
-            />
-          </div>
+          {/* Card 4: Devocional Externo (versão completa — admin) */}
+          {isAdmin && (
+            <div className="stagger-item">
+              <DashboardCard
+                href="/devocional-externo"
+                title="Devocional Externo"
+                desc="Leia devocionais de sites cristãos renomados, direto da fonte."
+                icon={Heart}
+                accentColor="text-rose-600 dark:text-rose-400"
+                iconBg="bg-rose-500/10 border-rose-500/20"
+                badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
+                badge="ORIGINAL"
+              />
+            </div>
+          )}
 
-          {/* Card 6: DNA Categorizado */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/dna-categorizado"
-              title="DNA Categorizado"
-              desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
-              icon={Layers}
-              accentColor="text-violet-600 dark:text-violet-400"
-              iconBg="bg-violet-500/10 border-violet-500/20"
-              badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
-              badge="NOVO"
-            />
-          </div>
+          {/* Card 6: DNA Categorizado (versão completa — admin) */}
+          {isAdmin && (
+            <div className="stagger-item">
+              <DashboardCard
+                href="/dna-categorizado"
+                title="DNA Categorizado"
+                desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
+                icon={Layers}
+                accentColor="text-violet-600 dark:text-violet-400"
+                iconBg="bg-violet-500/10 border-violet-500/20"
+                badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
+                badge="NOVO"
+              />
+            </div>
+          )}
 
         </div>
       </section>

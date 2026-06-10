@@ -48,7 +48,7 @@ export interface ExecuteResponse {
     resumo?: string; // Para transcrição
     transcricao?: string; // Para transcrição
     fonte?: string;
-    dados_estruturados?: any[];
+    dados_estruturados?: Array<Record<string, unknown>>;
 }
 
 export interface PalavraManhaCache {
@@ -809,7 +809,7 @@ export async function saveDnaGeracoes(
 }
 
 
-import { PassagemSecao6 } from './secao6';
+import { PassagemSecao6, InsightPreMinerado } from './secao6';
 
 /**
  * Busca a passagem do dia diretamente do arquivo SECAO6.TXT no Storage
@@ -970,7 +970,7 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
 
             // Extrair insights (mais complexo)
             const insightsStart = jsonString.indexOf('"insights_pre_minerados"', objStart);
-            const insights: any[] = [];
+            const insights: InsightPreMinerado[] = [];
 
             if (insightsStart !== -1 && insightsStart < searchEnd) {
                 // Procurar por cada insight dentro deste bloco
@@ -1373,7 +1373,7 @@ export async function gerarPalavraManha(data: string): Promise<{ data: PalavraMa
 
         // Fallback legado (caso backend antigo responda ou erro de save)
         const config = json.config;
-        const novoCache: any = {
+        const novoCache: Record<string, unknown> = {
             data: data,
             dia_semana: config?.dia || 'Hoje',
             categoria: config?.categoria || 'devocional',

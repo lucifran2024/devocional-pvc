@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Código Deno (Edge Functions) — outro runtime, não faz sentido lintar
+    // com o ESLint do Next; era a causa do CI falhar em todos os pushes
+    "supabase/functions/**",
+    // Scripts utilitários de debug locais
+    "scripts/**",
+    "debug_db.js",
+    "start-dev.js",
   ]),
 ]);
 

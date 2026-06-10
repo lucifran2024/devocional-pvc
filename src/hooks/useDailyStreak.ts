@@ -14,6 +14,7 @@ export function useDailyStreak() {
 
         if (storedLastActive === today) {
             // Já acessou hoje, mantém a ofensiva
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage/window na montagem (hydration-safe)
             setStreak(storedStreak);
         } else {
             // Diferença de dias

@@ -2,10 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Bookmark, Calendar } from 'lucide-react';
+import { Home, BookOpen, Bookmark, Calendar, LogOut } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 export function Navigation() {
     const pathname = usePathname();
+    const { user, signOut } = useAuth();
+
+    // Sem navegação na tela de login (ou antes de logar)
+    if (!user || pathname?.startsWith('/login')) return null;
 
     const navItems = [
         { name: 'Hoje', href: '/', icon: Home },
@@ -81,6 +86,16 @@ export function Navigation() {
                         );
                     })}
                 </ul>
+
+                {/* Sair (desktop) */}
+                <button
+                    onClick={signOut}
+                    className="mt-auto flex flex-col items-center gap-1.5 py-3.5 px-3 rounded-2xl text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 w-full"
+                    title="Sair da conta"
+                >
+                    <LogOut className="w-5 h-5 stroke-[1.8]" />
+                    <span className="text-[10px] font-medium">Sair</span>
+                </button>
             </nav>
         </>
     );

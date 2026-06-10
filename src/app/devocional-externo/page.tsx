@@ -342,9 +342,9 @@ export default function DevocionalExternoPage() {
                 setResultado(data.resultado);
             }
 
-        } catch (e: any) {
+        } catch (e) {
             console.error('Erro:', e);
-            setErro(e.message || 'Erro de conexão.');
+            setErro(e instanceof Error && e.message ? e.message : 'Erro de conexão.');
         } finally {
             setCarregando(false);
         }

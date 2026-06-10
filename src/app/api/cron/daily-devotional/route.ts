@@ -23,7 +23,7 @@ function getDataHoje(): string {
 
 function extrairOCR(content: string): string {
     if (!content) return '';
-    
+
     if (content.includes('[OCR]:')) {
         const posOcr = content.indexOf('[OCR]:') + 6;
         let substringOcr = content.substring(posOcr);
@@ -32,12 +32,11 @@ function extrairOCR(content: string): string {
         }
         return substringOcr.trim();
     }
-    
-    if (content.includes('[LEGENDA]:')) {
-        return content.substring(0, content.indexOf('[LEGENDA]:')).trim();
-    }
-    
-    return content.trim();
+
+    // ESTRITO: sem tag [OCR] o conteúdo é só a legenda do post — não é a
+    // extração do reel/imagem. Retorna vazio para o post ser PULADO em vez
+    // de enviar legenda no Telegram.
+    return '';
 }
 
 function limparTexto(texto: string): string {
@@ -281,9 +280,10 @@ export async function GET(request: Request) {
                     }
                 }
             }
-        } catch (evErr: any) {
-            console.error('Erro evangelhoparatodos:', evErr.message);
-            resultado.evangelhoparatodos = 'erro: ' + evErr.message;
+        } catch (evErr) {
+            const m = evErr instanceof Error ? evErr.message : String(evErr);
+            console.error('Erro evangelhoparatodos:', m);
+            resultado.evangelhoparatodos = 'erro: ' + m;
         }
 
         await new Promise(r => setTimeout(r, 2500));
@@ -377,9 +377,10 @@ export async function GET(request: Request) {
                 resultado.tribo_juda = `${triboEnviados} msgs enviadas`;
                 console.log(`Tribo de Judá: ${triboEnviados} mensagens enviadas`);
             }
-        } catch (triboErr: any) {
-            console.error('Erro Tribo de Judá:', triboErr.message);
-            resultado.tribo_juda = 'erro: ' + triboErr.message;
+        } catch (triboErr) {
+            const m = triboErr instanceof Error ? triboErr.message : String(triboErr);
+            console.error('Erro Tribo de Judá:', m);
+            resultado.tribo_juda = 'erro: ' + m;
         }
 
         // =============================================
@@ -444,9 +445,10 @@ export async function GET(request: Request) {
                 console.log('Bible Gateway: já enviado hoje');
                 resultado.bible_gateway = 'ja_enviado';
             }
-        } catch (bgErr: any) {
-            console.error('Erro Bible Gateway:', bgErr.message);
-            resultado.bible_gateway = 'erro: ' + bgErr.message;
+        } catch (bgErr) {
+            const m = bgErr instanceof Error ? bgErr.message : String(bgErr);
+            console.error('Erro Bible Gateway:', m);
+            resultado.bible_gateway = 'erro: ' + m;
         }
 
         return NextResponse.json({
@@ -455,8 +457,8 @@ export async function GET(request: Request) {
             resultado
         });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error('Erro no cron:', e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

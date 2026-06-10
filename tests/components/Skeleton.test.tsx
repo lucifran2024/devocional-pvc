@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { Skeleton, CardSkeleton, HeroSkeleton } from '@/components/ui/Skeleton';
 
 describe('Skeleton Components', () => {
@@ -20,7 +20,7 @@ describe('Skeleton Components', () => {
     describe('CardSkeleton', () => {
         it('renders card skeleton structure', () => {
             render(<CardSkeleton />);
-            const skeletons = document.querySelectorAll('.animate-pulse');
+            const skeletons = document.querySelectorAll('.animate-pulse, .skeleton-shimmer');
             expect(skeletons.length).toBeGreaterThan(0);
         });
     });
@@ -28,7 +28,7 @@ describe('Skeleton Components', () => {
     describe('HeroSkeleton', () => {
         it('renders hero skeleton structure', () => {
             render(<HeroSkeleton />);
-            const skeletons = document.querySelectorAll('.animate-pulse');
+            const skeletons = document.querySelectorAll('.animate-pulse, .skeleton-shimmer');
             expect(skeletons.length).toBeGreaterThan(0);
         });
     });

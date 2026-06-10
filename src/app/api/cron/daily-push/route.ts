@@ -470,8 +470,8 @@ export async function GET(request: Request) {
             total: mensagensEnviadas.length,
         });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error('Erro no cron daily-push:', e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     }
 }

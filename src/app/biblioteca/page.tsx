@@ -542,7 +542,7 @@ function BibliotecaPage() {
     // Busca
     const [buscaAberta, setBuscaAberta] = useState(false);
     const [termoBusca, setTermoBusca] = useState('');
-    const [resultadosBusca, setResultadosBusca] = useState<any[]>([]);
+    const [resultadosBusca, setResultadosBusca] = useState<{ book: number; chapter: number; verse: number; text: string }[]>([]);
     const [buscaLoading, setBuscaLoading] = useState(false);
     const [livrosEncontrados, setLivrosEncontrados] = useState<LivroBiblia[]>([]);
 
@@ -1298,7 +1298,7 @@ function BibliotecaPage() {
                 const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termo)}/`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    const validos = Array.isArray(data) ? data.filter((d: any) => d.book) : [];
+                    const validos = Array.isArray(data) ? data.filter((d: { book?: number }) => d.book) : [];
                     setResultadosBusca(validos.slice(0, 100));
                 } else {
                     toastError(`Busca falhou (${resp.status})`);

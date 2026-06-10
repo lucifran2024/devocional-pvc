@@ -899,7 +899,7 @@ export default function DnaCategorizadoPage() {
                                             >
                                                 <div className="flex flex-col items-start text-left">
                                                     <span className="font-medium">Filtro Neutro (Sem Saudações)</span>
-                                                    <span className="text-[10px] opacity-70">Remove "Bom dia", "Boa tarde", etc.</span>
+                                                    <span className="text-[10px] opacity-70">Remove &quot;Bom dia&quot;, &quot;Boa tarde&quot;, etc.</span>
                                                 </div>
                                                 <div className={`w-8 h-4 rounded-full relative transition-colors ${filtroNeutro ? 'bg-slate-500' : 'bg-slate-700'}`}>
                                                     <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${filtroNeutro ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />

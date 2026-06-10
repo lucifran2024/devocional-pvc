@@ -58,6 +58,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     }
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage/window na montagem (hydration-safe)
         loadData();
         return () => {
             if (typeof window !== 'undefined' && 'speechSynthesis' in window) {

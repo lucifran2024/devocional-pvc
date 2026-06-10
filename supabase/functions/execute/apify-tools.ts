@@ -80,6 +80,61 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
     }
 }
 
+// Prompt para extração de reels (vídeo): texto na tela + narração
+const VIDEO_PROMPT = `Você é especialista em extrair conteúdo de reels devocionais cristãos do Instagram.
+Este vídeo contém uma mensagem devocional.
+
+INSTRUÇÕES:
+1. Extraia TODO o texto exibido na tela ao longo do vídeo (títulos, legendas embutidas, versículos, referências bíblicas)
+2. Se houver narração/fala, transcreva a mensagem falada na íntegra
+3. Combine texto da tela e fala em um texto único, coerente e na ordem do vídeo
+4. NÃO descreva o vídeo, NÃO comente — retorne APENAS o conteúdo extraído
+5. Mantenha parágrafos naturais`;
+
+// Limite de tamanho para envio inline ao Gemini (base64 aumenta ~33%)
+const MAX_VIDEO_BYTES = 19 * 1024 * 1024;
+
+function bytesToBase64(bytes: Uint8Array): string {
+    const CHUNK_SIZE = 8192;
+    let binaryString = '';
+    for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+        binaryString += String.fromCharCode(...chunk);
+    }
+    return btoa(binaryString);
+}
+
+/**
+ * Extrai o conteúdo exato de um reel (vídeo): texto na tela + narração.
+ * Usa o Gemini com o vídeo inline (suportado até ~20MB). Se o vídeo for
+ * grande demais ou falhar, retorna "" e o chamador cai no OCR da thumbnail.
+ */
+async function extractTextFromVideo(videoUrl: string): Promise<string> {
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+    if (!GEMINI_KEY || !videoUrl) return "";
+
+    try {
+        const vidResp = await fetch(videoUrl);
+        if (!vidResp.ok) return "";
+
+        const buffer = await vidResp.arrayBuffer();
+        if (buffer.byteLength > MAX_VIDEO_BYTES) {
+            console.log(`⚠️ [VIDEO] Reel muito grande (${(buffer.byteLength / 1048576).toFixed(1)}MB), usando thumbnail`);
+            return "";
+        }
+
+        const base64Video = bytesToBase64(new Uint8Array(buffer));
+        const mimeType = vidResp.headers.get("content-type") || "video/mp4";
+
+        console.log(`🎬 [VIDEO] Extraindo reel (${(buffer.byteLength / 1048576).toFixed(1)}MB)...`);
+        const text = await callGeminiVision(GEMINI_KEY, base64Video, mimeType, VIDEO_PROMPT);
+        return text;
+    } catch (e) {
+        console.error("❌ [VIDEO] Exception:", e);
+        return "";
+    }
+}
+
 // Chamada individual ao Gemini Vision
 async function callGeminiVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
     const MODEL_NAME = "gemini-2.0-flash";
@@ -158,13 +213,24 @@ export async function consultarInstagram(username: string): Promise<any[]> {
         const postsPromises = data.map(async (post: any) => {
             const caption = post.caption || post.description || "";
             const imageUrl = post.displayUrl || post.url || "";
+            const videoUrl = post.videoUrl || "";
+            const isVideo = Boolean(videoUrl) || post.type === 'Video' || post.productType === 'clips';
             const postUrl = post.url || `https://instagram.com/${username}`;
             const publishedAt = post.timestamp || new Date().toISOString();
             const externalId = post.id || post.shortCode || `inst_${Date.now()}_${Math.random()}`;
 
             let ocrText = "";
-            if (imageUrl) {
-                // Delay aleatório pequeno
+
+            // Reels: extrai o conteúdo exato do vídeo (texto na tela + narração).
+            // A legenda NÃO substitui a extração — é só metadado.
+            if (isVideo && videoUrl) {
+                await new Promise(r => setTimeout(r, Math.random() * 500));
+                console.log(`🎬 [VIDEO] Processando reel de ${externalId}...`);
+                ocrText = await extractTextFromVideo(videoUrl);
+            }
+
+            // Fallback (ou post de imagem): OCR da imagem/thumbnail
+            if (!ocrText && imageUrl) {
                 await new Promise(r => setTimeout(r, Math.random() * 500));
                 console.log(`🔍 [OCR] Processando imagem de ${externalId}...`);
                 ocrText = await extractTextFromImage(imageUrl);

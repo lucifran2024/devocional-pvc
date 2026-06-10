@@ -178,6 +178,7 @@ export function useNotifications() {
     const [supported, setSupported] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage/window na montagem (hydration-safe)
         setSupported('Notification' in window);
         if ('Notification' in window) {
             setPermission(Notification.permission);
