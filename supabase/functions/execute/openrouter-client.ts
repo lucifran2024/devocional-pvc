@@ -16,7 +16,9 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // CADEIAS DE FALLBACK (modelos free verificados em 10/06/2026)
 // ============================================================
 
-// Texto/geração: ordem por qualidade em PT-BR + disponibilidade
+// Texto/geração: ordem por qualidade em PT-BR + disponibilidade.
+// deepseek-v4-flash fecha a cadeia: ultra-barato (não :free), contexto 1M —
+// só é acionado se TODOS os modelos free estiverem indisponíveis.
 export const FREE_TEXT_MODELS = [
     'openai/gpt-oss-120b:free',
     'meta-llama/llama-3.3-70b-instruct:free',
@@ -24,6 +26,7 @@ export const FREE_TEXT_MODELS = [
     'qwen/qwen3-next-80b-a3b-instruct:free',
     'google/gemma-4-31b-it:free',
     'nvidia/nemotron-3-nano-30b-a3b:free',
+    'deepseek/deepseek-v4-flash',
 ];
 
 // Function calling (todos suportam tools)
@@ -33,6 +36,7 @@ export const FREE_TOOL_MODELS = [
     'nvidia/nemotron-3-super-120b-a12b:free',
     'qwen/qwen3-next-80b-a3b-instruct:free',
     'google/gemma-4-31b-it:free',
+    'deepseek/deepseek-v4-flash',
 ];
 
 // Visão (OCR de imagens de posts)
