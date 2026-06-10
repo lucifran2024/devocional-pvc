@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
+import { gerarTexto, chamarCompatGemini } from './openrouter-client.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -712,7 +713,7 @@ Deno.serve(async (req) => {
       // Inicializar Supabase
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
 
       if (!supabaseUrl || !serviceKey || !geminiKey) {
         throw new Error("Variáveis de ambiente não configuradas.");
@@ -1250,10 +1251,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 </output_format>
 `;
 
-      // 4. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
-
+      // 4. Chamar LLM (OpenRouter free com fallbacks)
       // Temperatura estável por perfil para reduzir variância de qualidade.
       let tempSorteada = 0.78;
       if (filtros?.formato === 'Staccato') tempSorteada = 0.72;
@@ -1261,26 +1259,17 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
 
       console.log(`🌡️ [FAVORITAS] Temperature: ${tempSorteada}`);
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptFavoritas }] }],
-          generationConfig: {
-            temperature: tempSorteada,
-            maxOutputTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192
-          }
-        })
+      const llmResp = await gerarTexto(promptFavoritas, {
+        temperature: tempSorteada,
+        maxTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192
       });
 
-      if (!resp.ok) {
-        const errorBody = await resp.text();
-        console.error(`❌ Erro Gemini:`, errorBody);
-        throw new Error(`Erro API Gemini: ${resp.status}`);
+      if (!llmResp.ok) {
+        console.error(`❌ Erro LLM:`, llmResp.error);
+        throw new Error(`Erro API LLM: ${llmResp.error}`);
       }
 
-      const aiData = await resp.json();
-      let resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+      let resultado = llmResp.text || "Erro ao gerar mensagens.";
 
       // CLEANER: Remover bloco de pensamento (<thinking>) e metadados de sementes
       resultado = resultado.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
@@ -1346,7 +1335,7 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
       // Inicializar Supabase
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
 
       if (!supabaseUrl || !serviceKey || !geminiKey) {
         throw new Error("Variáveis de ambiente não configuradas.");
@@ -1732,10 +1721,7 @@ ${neutro ? `${instrucaoLexicoEstilo ? '8' : '7'}. [NEUTRO] NENHUMA mensagem come
 Gere agora:
 `;
 
-      // 7. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
-      const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
-
+      // 7. Chamar LLM (OpenRouter free com fallbacks)
       // Temperatura estável por perfil para reduzir variância de qualidade.
       let tempSorteadaEstilo = 0.78;
       if (formatoEstilo === 'Staccato') tempSorteadaEstilo = 0.72;
@@ -1743,26 +1729,17 @@ Gere agora:
 
       console.log(`🌡️ [ESTILO] Temperature: ${tempSorteadaEstilo}`);
 
-      const resp = await fetch(genUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
-          generationConfig: {
-            temperature: tempSorteadaEstilo,
-            maxOutputTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192,
-          }
-        })
+      const llmRespEstilo = await gerarTexto(promptHibrido, {
+        temperature: tempSorteadaEstilo,
+        maxTokens: quantidade <= 5 ? 4096 : quantidade <= 15 ? 6000 : 8192,
       });
 
-      if (!resp.ok) {
-        const errorText = await resp.text();
-        console.error(`❌ MODO ESTILO - Erro Gemini (${resp.status}):`, errorText);
-        throw new Error(`Erro Gemini: ${resp.status} - ${errorText}`);
+      if (!llmRespEstilo.ok) {
+        console.error(`❌ MODO ESTILO - Erro LLM:`, llmRespEstilo.error);
+        throw new Error(`Erro LLM: ${llmRespEstilo.error}`);
       }
-      const aiData = await resp.json();
 
-      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
+      const resultado = llmRespEstilo.text || "Erro na geração.";
 
       // FIX 3: Pós-processamento — verificar palavras banidas
       const PALAVRAS_BANIDAS_CHECK = ['norte', 'rota', 'neblina', 'bússola', 'farol', 'cais', 'porto seguro', 'âncora', 'obra-prima', 'confie no processo', 'jornada de fé', 'propósito divino'];
@@ -1792,7 +1769,7 @@ Gere agora:
     if (modo_id === 'explicar_passagem') {
       console.log(`🔍 [EXPLICAR PASSAGEM] Gerando explicação com IA...`);
 
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
       if (!geminiKey) {
         throw new Error("GEMINI_API_KEY não configurada.");
       }
@@ -1841,29 +1818,14 @@ Gere uma explicação usando EXATAMENTE este formato com bullets (•):
 Gere a explicação agora:
 `;
 
-      const MODEL_NAME = "gemini-2.0-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+      const llmExplicar = await gerarTexto(promptExplicar, { temperature: 0.7, maxTokens: 2048 });
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptExplicar }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048
-          }
-        })
-      });
-
-      if (!resp.ok) {
-        const errorBody = await resp.text();
-        console.error(`❌ Erro Gemini:`, errorBody);
-        throw new Error(`Erro API Gemini: ${resp.status}`);
+      if (!llmExplicar.ok) {
+        console.error(`❌ Erro LLM:`, llmExplicar.error);
+        throw new Error(`Erro API LLM: ${llmExplicar.error}`);
       }
 
-      const aiData = await resp.json();
-      const explicacao = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar explicação.";
+      const explicacao = llmExplicar.text || "Erro ao gerar explicação.";
 
       console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada com sucesso!`);
 
@@ -1889,7 +1851,7 @@ Gere a explicação agora:
     if (modo_id === 'estudo_biblico') {
       console.log(`📚 [ESTUDO BÍBLICO] Tipo: ${tipo_estudo}`);
 
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
       if (!geminiKey) throw new Error("GEMINI_API_KEY não configurada.");
 
       const versiculosTexto = versiculos || '';
@@ -2077,29 +2039,14 @@ ${versiculosTexto}
 
       console.log(`📝 Prompt selecionado: ${tipoEstudo} (${promptFinal.length} chars)`);
 
-      const MODEL_NAME = "gemini-2.0-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+      const llmEstudo = await gerarTexto(promptFinal, { temperature: 0.75, maxTokens: 3072 });
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptFinal }] }],
-          generationConfig: {
-            temperature: 0.75,
-            maxOutputTokens: 3072
-          }
-        })
-      });
-
-      if (!resp.ok) {
-        const errorBody = await resp.text();
-        console.error(`❌ Erro Gemini:`, errorBody);
-        throw new Error(`Erro API Gemini: ${resp.status}`);
+      if (!llmEstudo.ok) {
+        console.error(`❌ Erro LLM:`, llmEstudo.error);
+        throw new Error(`Erro API LLM: ${llmEstudo.error}`);
       }
 
-      const aiData = await resp.json();
-      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar estudo.";
+      const resultado = llmEstudo.text || "Erro ao gerar estudo.";
 
       console.log(`✅ [ESTUDO BÍBLICO] ${tipoEstudo} gerado com sucesso!`);
 
@@ -2130,7 +2077,7 @@ ${versiculosTexto}
       // Inicializar Supabase
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
 
       if (!supabaseUrl || !serviceKey || !geminiKey) {
         throw new Error("Variáveis de ambiente não configuradas.");
@@ -2236,30 +2183,15 @@ ${contextoAnterior}
 Gere as 10 mensagens agora:
 `;
 
-      // 4. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+      // 4. Chamar LLM (OpenRouter free com fallbacks)
+      const llmHibrido = await gerarTexto(promptHibrido, { temperature: 0.85, maxTokens: 4096 });
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: promptHibrido }] }],
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: 4096
-          }
-        })
-      });
-
-      if (!resp.ok) {
-        const errorBody = await resp.text();
-        console.error(`❌ Erro Gemini:`, errorBody);
-        throw new Error(`Erro API Gemini: ${resp.status}`);
+      if (!llmHibrido.ok) {
+        console.error(`❌ Erro LLM:`, llmHibrido.error);
+        throw new Error(`Erro API LLM: ${llmHibrido.error}`);
       }
 
-      const aiData = await resp.json();
-      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar mensagens.";
+      const resultado = llmHibrido.text || "Erro ao gerar mensagens.";
 
       console.log(`✅ [MODO HÍBRIDO] Geração concluída!`);
 
@@ -2304,7 +2236,7 @@ Gere as 10 mensagens agora:
 
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
 
       if (!supabaseUrl || !serviceKey || !geminiKey) {
         throw new Error("Variáveis de ambiente não configuradas.");
@@ -2406,26 +2338,12 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
 [Fechamento Breve]
 `;
 
-      // 6. Chamar Gemini
-      const MODEL_NAME = "gemini-2.0-flash";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
+      // 6. Chamar LLM (OpenRouter free com fallbacks)
+      const llmPalavra = await gerarTexto(prompt, { temperature: 0.85, maxTokens: 2000 });
 
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: 2000
-          }
-        })
-      });
+      if (!llmPalavra.ok) throw new Error(`Erro LLM: ${llmPalavra.error}`);
 
-      if (!resp.ok) throw new Error(`Erro Gemini: ${resp.status}`);
-
-      const aiData = await resp.json();
-      const resultado = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Erro na geração.";
+      const resultado = llmPalavra.text || "Erro na geração.";
 
       console.log(`✅ [PALAVRA DA MANHÃ] Geração concluída!`);
 
@@ -2574,7 +2492,7 @@ REGRAS FINAIS DE NUANCE:
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     // Tenta pegar a chave de duas variáveis possíveis para garantir
-    const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+    const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
     const bibleApiKey = Deno.env.get("BIBLE_API_KEY"); // Opcional - para API.Bible
 
     if (!supabaseUrl || !serviceKey || !geminiKey) {
@@ -2940,41 +2858,11 @@ Seja conversacional, não gere 15 devocionais - gere UMA resposta de chat.
     ];
 
     async function callGeminiAPI(msgs: any[]) {
-      const MODEL_NAME = "gemini-2.0-flash";
-      console.log(`🤖 Chamando ${MODEL_NAME} (Endpoint v1beta)...`);
-
-      // MUDANÇA: Voltando para v1beta pois modelos "preview" geralmente não estão na v1 (GA)
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
-
+      // OpenRouter (modelos free com fallback), mantendo o formato Gemini
+      // de entrada/saída para não alterar o loop de ferramentas abaixo.
+      console.log(`🤖 Chamando LLM via OpenRouter (cadeia free com fallbacks)...`);
       try {
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: msgs,
-            tools: [{ function_declarations: ALL_TOOLS }]
-          })
-        });
-
-        if (!resp.ok) {
-          const errorBody = await resp.text();
-          console.error(`❌ Erro Gemini (Status ${resp.status}):`, errorBody);
-
-          // TENTATIVA DE DEBUG: Listar modelos disponíveis
-          console.log("🔍 Tentando listar modelos disponíveis para esta Chave (v1beta)...");
-          try {
-            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`;
-            const listResp = await fetch(listUrl);
-            const listData = await listResp.json();
-            console.log("📋 MODELOS DISPONÍVEIS:", JSON.stringify(listData, null, 2));
-          } catch (listErr) {
-            console.error("❌ Falha ao listar modelos:", listErr);
-          }
-
-          return { error: { message: `Erro API: ${resp.status} - ${errorBody}` } };
-        }
-
-        return await resp.json();
+        return await chamarCompatGemini(msgs, ALL_TOOLS);
       } catch (err: any) {
         return { error: { message: err.message || "Erro de conexão fetch" } };
       }

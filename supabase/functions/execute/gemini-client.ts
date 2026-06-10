@@ -1,10 +1,12 @@
 /**
- * Gemini API Client
- * Centraliza chamadas à API Gemini com retry e function calling
+ * LLM Client (legado "gemini-client")
+ * Centraliza chamadas com retry e function calling.
+ * Agora usa OpenRouter (modelos free com fallback) por baixo.
  */
 
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
+import { chamarCompatGemini } from './openrouter-client.ts';
 
 // Combina todas as tools disponíveis
 const ALL_TOOLS = [
@@ -23,33 +25,21 @@ export interface GeminiResponse {
  */
 export async function callGemini(
     prompt: string,
-    geminiKey: string,
+    _geminiKey: string,
     maxTurns: number = 5
 ): Promise<GeminiResponse> {
-    const MODEL_NAME = 'gemini-2.0-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${geminiKey}`;
-
     let messages: any[] = [{ role: 'user', parts: [{ text: prompt }] }];
     let resultadoFinal = '';
 
     for (let turn = 1; turn <= maxTurns; turn++) {
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: messages,
-                    tools: [{ function_declarations: ALL_TOOLS }]
-                })
-            });
+            const data: any = await chamarCompatGemini(messages, ALL_TOOLS);
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                console.error(`❌ Erro Gemini (Status ${response.status}):`, errorBody);
-                return { ok: false, error: `API Error: ${response.status} - ${errorBody}` };
+            if (data.error) {
+                console.error(`❌ Erro LLM:`, data.error.message);
+                return { ok: false, error: `API Error: ${data.error.message}` };
             }
 
-            const data = await response.json();
             const firstPart = data.candidates?.[0]?.content?.parts?.[0];
 
             if (!firstPart) {

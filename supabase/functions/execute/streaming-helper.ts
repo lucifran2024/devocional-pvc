@@ -59,72 +59,17 @@ export function getSSEHeaders(corsHeaders: Record<string, string>): Record<strin
 }
 
 /**
- * Chama Gemini com streaming (quando disponível)
- * Fallback para chamada normal se streaming não suportado
+ * Chama o LLM com streaming via OpenRouter (modelos free com fallback).
+ * A assinatura mantém o parâmetro de chave por compatibilidade (ignorado).
  */
+import { gerarTextoStreaming } from './openrouter-client.ts';
+
 export async function callGeminiStreaming(
     prompt: string,
-    geminiKey: string,
+    _geminiKey: string,
     onChunk: (text: string) => void,
     onComplete: (fullText: string) => void,
     onError: (error: Error) => void
 ): Promise<void> {
-    const MODEL_NAME = 'gemini-2.0-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:streamGenerateContent?key=${geminiKey}&alt=sse`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-            throw new Error('No response body');
-        }
-
-        const decoder = new TextDecoder();
-        let fullText = '';
-        let buffer = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-
-            // Parse SSE events
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.slice(6);
-                    if (data === '[DONE]') continue;
-
-                    try {
-                        const parsed = JSON.parse(data);
-                        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (text) {
-                            fullText += text;
-                            onChunk(text);
-                        }
-                    } catch {
-                        // Ignore parse errors for incomplete chunks
-                    }
-                }
-            }
-        }
-
-        onComplete(fullText);
-    } catch (error) {
-        onError(error instanceof Error ? error : new Error(String(error)));
-    }
+    return gerarTextoStreaming(prompt, onChunk, onComplete, onError);
 }

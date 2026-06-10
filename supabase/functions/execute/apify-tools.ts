@@ -2,6 +2,8 @@
 // APIFY TOOLS - Ferramentas para Scraping via Apify
 // =====================================================
 
+import { extrairTextoDeImagem, extrairTextoDeVideo } from './openrouter-client.ts';
+
 export const APIFY_TOOLS_DEFINITION = [{
     function_declarations: [{
         name: "consultar_instagram",
@@ -37,10 +39,10 @@ O texto pode estar em fontes decorativas, cursivas, com sombra ou sobre fundo co
 Extraia CADA PALAVRA visível, mesmo que difícil de ler. Inclua TUDO.
 Retorne APENAS o texto, mantendo a formatação de parágrafos.`;
 
-// Função auxiliar para OCR com Gemini Vision
+// OCR de imagem: OpenRouter (modelos de visão free com fallback) primeiro;
+// Gemini direto só como último recurso (se houver chave com créditos).
 async function extractTextFromImage(imageUrl: string): Promise<string> {
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
-    if (!GEMINI_KEY || !imageUrl) return "";
+    if (!imageUrl) return "";
 
     try {
         // Baixar a imagem e converter para base64
@@ -59,16 +61,26 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
         const base64Image = btoa(binaryString);
         const mimeType = imgResp.headers.get("content-type") || "image/jpeg";
 
-        // Primeira tentativa com prompt contextualizado
-        let text = await callGeminiVision(GEMINI_KEY, base64Image, mimeType, OCR_PROMPT_PRIMARY);
+        // 1) OpenRouter: cadeia de modelos de visão free
+        let text = await extrairTextoDeImagem(base64Image, mimeType, OCR_PROMPT_PRIMARY);
 
-        // Retry se texto muito curto (provavelmente OCR falhou)
+        // Retry com prompt mais agressivo se texto muito curto
         if (text.length < 30) {
             console.log(`🔄 [OCR] Texto curto (${text.length} chars), tentando retry...`);
             await new Promise(r => setTimeout(r, 300));
-            const retryText = await callGeminiVision(GEMINI_KEY, base64Image, mimeType, OCR_PROMPT_RETRY);
+            const retryText = await extrairTextoDeImagem(base64Image, mimeType, OCR_PROMPT_RETRY);
             if (retryText.length > text.length) {
                 text = retryText;
+            }
+        }
+
+        // 2) Último recurso: Gemini direto (se configurado e com créditos)
+        if (text.length < 30) {
+            const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+            if (GEMINI_KEY) {
+                console.log(`🔄 [OCR] Fallback final: Gemini direto...`);
+                const geminiText = await callGeminiVision(GEMINI_KEY, base64Image, mimeType, OCR_PROMPT_PRIMARY);
+                if (geminiText.length > text.length) text = geminiText;
             }
         }
 
@@ -106,12 +118,13 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 /**
  * Extrai o conteúdo exato de um reel (vídeo): texto na tela + narração.
- * Usa o Gemini com o vídeo inline (suportado até ~20MB). Se o vídeo for
- * grande demais ou falhar, retorna "" e o chamador cai no OCR da thumbnail.
+ * 1) OpenRouter: modelos free com suporte a vídeo (nemotron-omni aceita
+ *    áudio+vídeo — extrai inclusive a narração; gemma-4 aceita vídeo)
+ * 2) Fallback final: Gemini direto (se houver chave com créditos)
+ * Se tudo falhar, retorna "" e o chamador cai no OCR da thumbnail.
  */
 async function extractTextFromVideo(videoUrl: string): Promise<string> {
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
-    if (!GEMINI_KEY || !videoUrl) return "";
+    if (!videoUrl) return "";
 
     try {
         const vidResp = await fetch(videoUrl);
@@ -126,8 +139,18 @@ async function extractTextFromVideo(videoUrl: string): Promise<string> {
         const base64Video = bytesToBase64(new Uint8Array(buffer));
         const mimeType = vidResp.headers.get("content-type") || "video/mp4";
 
-        console.log(`🎬 [VIDEO] Extraindo reel (${(buffer.byteLength / 1048576).toFixed(1)}MB)...`);
-        const text = await callGeminiVision(GEMINI_KEY, base64Video, mimeType, VIDEO_PROMPT);
+        console.log(`🎬 [VIDEO] Extraindo reel (${(buffer.byteLength / 1048576).toFixed(1)}MB) via OpenRouter...`);
+        let text = await extrairTextoDeVideo(base64Video, mimeType, VIDEO_PROMPT);
+
+        if (text.length < 30) {
+            const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+            if (GEMINI_KEY) {
+                console.log(`🔄 [VIDEO] Fallback final: Gemini direto...`);
+                const geminiText = await callGeminiVision(GEMINI_KEY, base64Video, mimeType, VIDEO_PROMPT);
+                if (geminiText.length > text.length) text = geminiText;
+            }
+        }
+
         return text;
     } catch (e) {
         console.error("❌ [VIDEO] Exception:", e);
