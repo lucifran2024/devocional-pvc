@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 // ============================================
 // CONFIG
 // ============================================
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -335,6 +335,10 @@ export async function GET(request: Request) {
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID não configurados' }, { status: 500 });
     }
 
     try {

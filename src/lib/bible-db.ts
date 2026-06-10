@@ -222,6 +222,69 @@ export async function clearCache(versao?: string): Promise<void> {
 }
 
 // ============================================
+// BUSCA LOCAL (offline, sem acento, sem limite de tamanho)
+// ============================================
+
+export interface LocalSearchResult {
+    book: number;
+    chapter: number;
+    verse: number;
+    text: string;
+}
+
+function normalizarBusca(s: string): string {
+    return s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '');
+}
+
+/**
+ * Busca texto nos capítulos baixados (IndexedDB).
+ * Ignora acentos ("coracao" acha "coração"), aceita termos curtos ("fé")
+ * e múltiplas palavras (todas precisam aparecer no versículo).
+ * A API bolls.life é accent-sensitive e rejeita termos ≤2 chars — esta
+ * busca local cobre exatamente esses casos e ainda funciona offline.
+ */
+export async function searchVersesLocal(
+    versao: string,
+    termo: string,
+    limit: number = 100
+): Promise<LocalSearchResult[]> {
+    const palavras = normalizarBusca(termo.trim()).split(/\s+/).filter(Boolean);
+    if (palavras.length === 0) return [];
+
+    try {
+        const db = await getDB();
+        const chapters = await db.getAllFromIndex('chapters', 'by-versao', versao);
+        if (chapters.length === 0) return [];
+
+        // Ordena por livro/capítulo para resultados em ordem bíblica
+        chapters.sort((a, b) => a.livroId - b.livroId || a.capitulo - b.capitulo);
+
+        const resultados: LocalSearchResult[] = [];
+        for (const ch of chapters) {
+            for (const v of ch.versiculos) {
+                const textoNorm = normalizarBusca(v.text);
+                if (palavras.every(p => textoNorm.includes(p))) {
+                    resultados.push({
+                        book: ch.livroId,
+                        chapter: ch.capitulo,
+                        verse: v.verse,
+                        text: v.text,
+                    });
+                    if (resultados.length >= limit) return resultados;
+                }
+            }
+        }
+        return resultados;
+    } catch (err) {
+        console.warn('[BIBLE-DB] Erro na busca local:', err);
+        return [];
+    }
+}
+
+// ============================================
 // FASE 2: DOWNLOAD EM BATCH
 // ============================================
 

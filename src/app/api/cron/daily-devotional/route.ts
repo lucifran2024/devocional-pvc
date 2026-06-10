@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 
 // ============================================
 // CONFIG
 // ============================================
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8785996157:AAHaRBPg7wKFZ6aTgesRAR9CaCwDU1C3_00';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '8239043013';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 
 
@@ -95,6 +96,23 @@ function limparTexto(texto: string): string {
     return limpo.trim();
 }
 
+/**
+ * Hash do conteúdo para dedupe semântico.
+ * Posts como o card de "Bom dia" da Tribo de Judá mudam só o dia da semana —
+ * external_id novo a cada dia, mas texto igual. Normaliza removendo dia da
+ * semana, datas, emojis e pontuação antes de hashear, para que o mesmo card
+ * seja bloqueado mesmo vindo de um post novo.
+ */
+function gerarHashConteudo(texto: string): string {
+    const normalizado = texto
+        .toLowerCase()
+        .replace(/\b(segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)(-feira)?\b/gi, '')
+        .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
+        .replace(/\d{1,2}\s+de\s+[a-zç]+(\s+de\s+\d{4})?/gi, '')
+        .replace(/[^a-z0-9à-ü]/gi, '');
+    return 'hash_' + createHash('sha1').update(normalizado).digest('hex').slice(0, 32);
+}
+
 function ehDevocionalDoDia(textoOCR: string): boolean {
     const lower = textoOCR.toLowerCase();
     return (
@@ -143,16 +161,24 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID não configurados' }, { status: 500 });
+    }
+
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const dataHoje = getDataHoje();
         const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         const resultado: Record<string, string> = {};
 
-        // Buscar todos os IDs já enviados (compartilhado entre as 3 fontes)
+        // Buscar IDs já enviados (compartilhado entre as 3 fontes).
+        // Supabase limita a 1000 linhas por padrão; ordena pelos mais recentes
+        // para que o dedupe nunca perca os envios atuais quando a tabela crescer.
         const { data: enviados } = await supabase
             .from('telegram_enviados')
-            .select('external_id');
+            .select('external_id')
+            .order('enviado_em', { ascending: false })
+            .limit(3000);
         const idsEnviados = new Set((enviados || []).map(e => e.external_id));
 
         // =============================================
@@ -210,16 +236,30 @@ export async function GET(request: Request) {
                     if (postEscolhido) {
                         const textoOCR = extrairOCR(postEscolhido.content);
                         const textoLimpo = limparTexto(textoOCR);
+                        const hashConteudo = gerarHashConteudo(textoLimpo);
+
+                        if (idsEnviados.has(hashConteudo)) {
+                            console.log('Evangelhoparatodos: conteúdo idêntico já enviado (hash), pulando');
+                            resultado.evangelhoparatodos = 'conteudo_repetido';
+                        } else {
+
                         const caption = `Devocional do Dia\n${dataFormatada}\n\n${textoLimpo}`;
 
                         // Enviar apenas texto
                         const enviou = await enviarTelegram(caption);
                         if (enviou.ok) {
-                            await supabase.from('telegram_enviados').insert({
-                                external_id: postEscolhido.external_id,
-                                data_envio: dataHoje,
-                                enviado_em: new Date().toISOString()
-                            });
+                            await supabase.from('telegram_enviados').insert([
+                                {
+                                    external_id: postEscolhido.external_id,
+                                    data_envio: dataHoje,
+                                    enviado_em: new Date().toISOString()
+                                },
+                                {
+                                    external_id: hashConteudo,
+                                    data_envio: dataHoje,
+                                    enviado_em: new Date().toISOString()
+                                }
+                            ]);
                             await supabase.from('dna_categorizado').insert({
                                 texto_msg: textoLimpo,
                                 categoria: 'devocional',
@@ -229,9 +269,11 @@ export async function GET(request: Request) {
                                 else console.log('DNA alimentado (evangelhoparatodos)');
                             });
                             idsEnviados.add(postEscolhido.external_id);
+                            idsEnviados.add(hashConteudo);
                             resultado.evangelhoparatodos = `enviado(msg_${enviou.message_id})`;
                         } else {
                             resultado.evangelhoparatodos = 'falha_telegram';
+                        }
                         }
                     } else {
                         console.log('Evangelhoparatodos: nenhum post com OCR');
@@ -290,16 +332,31 @@ export async function GET(request: Request) {
                     const textoTribo = limparTexto(ocr);
                     if (textoTribo.length < 20) continue; // Muito curto, pular
 
+                    // Dedupe por conteúdo: o card de "Bom dia" da tribo muda só o
+                    // dia da semana — sem isso ele é reenviado todo dia.
+                    const hashTribo = gerarHashConteudo(textoTribo);
+                    if (idsEnviados.has(hashTribo)) {
+                        console.log('Tribo: conteúdo idêntico já enviado (hash), pulando');
+                        continue;
+                    }
+
                     const captionTribo = `Devocional do Dia\n${dataFormatada}\n\n${textoTribo}`;
                     // Enviar texto (sem imagem e sem mencionar "Tribo de Judá")
                     const enviouTribo = await enviarTelegram(captionTribo);
 
                     if (enviouTribo.ok) {
-                        await supabase.from('telegram_enviados').insert({
-                            external_id: post.external_id,
-                            data_envio: dataHoje,
-                            enviado_em: new Date().toISOString()
-                        });
+                        await supabase.from('telegram_enviados').insert([
+                            {
+                                external_id: post.external_id,
+                                data_envio: dataHoje,
+                                enviado_em: new Date().toISOString()
+                            },
+                            {
+                                external_id: hashTribo,
+                                data_envio: dataHoje,
+                                enviado_em: new Date().toISOString()
+                            }
+                        ]);
 
                         await supabase.from('dna_categorizado').insert({
                             texto_msg: textoTribo,
@@ -312,6 +369,7 @@ export async function GET(request: Request) {
 
                         triboEnviados++;
                         idsEnviados.add(post.external_id);
+                        idsEnviados.add(hashTribo);
                         await new Promise(r => setTimeout(r, 2500));
                     }
                 }

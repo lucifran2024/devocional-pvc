@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pvc-v2';
+const CACHE_NAME = 'pvc-v3';
 const STATIC_ASSETS = [
     '/',
     '/biblioteca',
@@ -8,6 +8,20 @@ const STATIC_ASSETS = [
     '/icon-512.png',
     '/offline.html',
 ];
+
+// Timeout para navegações: em conexão instável (lie-fi) o fetch pode
+// pendurar por minutos — após esse limite, serve o cache.
+const NAV_TIMEOUT_MS = 4000;
+
+function fetchComTimeout(request, ms) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('timeout')), ms);
+        fetch(request).then(
+            (res) => { clearTimeout(timer); resolve(res); },
+            (err) => { clearTimeout(timer); reject(err); }
+        );
+    });
+}
 
 // Install: Cache static assets + offline fallback
 self.addEventListener('install', (event) => {
@@ -64,7 +78,43 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // ESTRATEGIA 2: Paginas e outros assets → Network-first, cache fallback, offline fallback
+    // ESTRATEGIA 2: Navegações (HTML) → Network-first com timeout + fallback robusto
+    // CRÍTICO: as abas do app usam query strings (/biblioteca?salvos=1) — o match
+    // precisa ignorar a query, senão o cache de /biblioteca nunca é encontrado e
+    // o app não abre offline mesmo com tudo baixado.
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetchComTimeout(event.request, NAV_TIMEOUT_MS)
+                .then((response) => {
+                    if (response.ok) {
+                        // Clones criados ANTES de retornar (depois o body já foi consumido)
+                        const cloneExato = response.clone();
+                        const cloneSemQuery = url.search ? response.clone() : null;
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, cloneExato);
+                            // Guarda também sem query para servir qualquer variante offline
+                            if (cloneSemQuery) cache.put(url.pathname, cloneSemQuery);
+                        });
+                    }
+                    return response;
+                })
+                .catch(async () => {
+                    // 1. Cache exato → 2. ignorando query → 3. home → 4. offline.html
+                    const exato = await caches.match(event.request);
+                    if (exato) return exato;
+                    const semQuery = await caches.match(event.request, { ignoreSearch: true });
+                    if (semQuery) return semQuery;
+                    const porPathname = await caches.match(url.pathname);
+                    if (porPathname) return porPathname;
+                    const home = await caches.match('/');
+                    if (home) return home;
+                    return caches.match('/offline.html');
+                })
+        );
+        return;
+    }
+
+    // ESTRATEGIA 3: Outros assets → Network-first, cache fallback
     event.respondWith(
         fetch(event.request)
             .then((response) => {
@@ -78,16 +128,9 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // Fallback to cache
-                return caches.match(event.request).then((cached) => {
+                // Fallback to cache (ignora query: cobre variações de URL)
+                return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
                     if (cached) return cached;
-
-                    // Se e uma navegacao (pagina HTML) e nao tem cache, mostrar offline.html
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('/offline.html');
-                    }
-
-                    // Para outros recursos sem cache, retornar erro
                     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
                 });
             })

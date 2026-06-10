@@ -13,7 +13,7 @@ import {
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
-import { getCachedChapter, cacheChapter } from '@/lib/bible-db';
+import { getCachedChapter, cacheChapter, searchVersesLocal } from '@/lib/bible-db';
 import { OfflineManager } from './components/OfflineManager';
 import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import {
@@ -570,6 +570,7 @@ function BibliotecaPage() {
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
+    const [mostrarFontes, setMostrarFontes] = useState(false);
 
     // Painel de salvos
     const [painelAberto, setPainelAberto] = useState(abrirSalvos);
@@ -590,6 +591,8 @@ function BibliotecaPage() {
     const [painelNotaTexto, setPainelNotaTexto] = useState('');
     const [painelBusca, setPainelBusca] = useState('');
     const [painelOrdem, setPainelOrdem] = useState<'recente' | 'antigo' | 'livro'>('recente');
+    const [painelCorFiltro, setPainelCorFiltro] = useState<string | null>(null);
+    const [painelCounts, setPainelCounts] = useState<{ favorito: number; destaque: number; nota: number } | null>(null);
     const [novaNotaAberta, setNovaNotaAberta] = useState(false);
     const [novaNotaRef, setNovaNotaRef] = useState('');
     const [novaNotaTexto, setNovaNotaTexto] = useState('');
@@ -602,23 +605,6 @@ function BibliotecaPage() {
 
     // Helpers de fonte
     const fontConfig = FONT_SIZES[fontSizeIndex];
-    const canIncrease = fontSizeIndex < FONT_SIZES.length - 1;
-    const canDecrease = fontSizeIndex > 0;
-
-    const aumentarFonte = () => {
-        if (canIncrease) {
-            const next = fontSizeIndex + 1;
-            setFontSizeIndex(next);
-            localStorage.setItem('biblia-font-size', String(next));
-        }
-    };
-    const diminuirFonte = () => {
-        if (canDecrease) {
-            const next = fontSizeIndex - 1;
-            setFontSizeIndex(next);
-            localStorage.setItem('biblia-font-size', String(next));
-        }
-    };
 
     const trocarVersao = (versao: typeof VERSOES_BIBLIA[0]) => {
         setVersaoBiblia(versao);
@@ -1298,12 +1284,25 @@ function BibliotecaPage() {
         setResultadosBusca([]);
 
         try {
-            const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termo)}/`);
-            if (resp.ok) {
-                const data = await resp.json();
-                setResultadosBusca(Array.isArray(data) ? data.slice(0, 100) : []);
-            } else {
-                toastError(`Busca falhou (${resp.status})`);
+            // 1) Busca LOCAL primeiro (Bíblia baixada): ignora acentos
+            //    ("coracao" acha "coração"), aceita termos curtos ("fé") e
+            //    funciona offline. A API bolls.life falha nesses casos.
+            const locais = await searchVersesLocal(versaoBiblia.codigo, termo, 100);
+            if (locais.length > 0) {
+                setResultadosBusca(locais);
+                return;
+            }
+
+            // 2) Fallback: API remota (exige acentos corretos e 3+ caracteres)
+            if (termo.length >= 3 && navigator.onLine) {
+                const resp = await fetch(`https://bolls.life/search/${versaoBiblia.codigo}/${encodeURIComponent(termo)}/`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const validos = Array.isArray(data) ? data.filter((d: any) => d.book) : [];
+                    setResultadosBusca(validos.slice(0, 100));
+                } else {
+                    toastError(`Busca falhou (${resp.status})`);
+                }
             }
         } catch {
             toastError('Erro na busca — verifique conexão');
@@ -1328,8 +1327,9 @@ function BibliotecaPage() {
         ).slice(0, 8);
         setLivrosEncontrados(matches);
 
-        // Debounce para busca de texto na API (só se tiver 3+ chars e não for referência tipo "João 3")
-        if (termo.length < 3) {
+        // Debounce para busca de texto (2+ chars; a busca local aceita termos
+        // curtos como "fé" — a API remota continua exigindo 3+)
+        if (termo.length < 2) {
             setResultadosBusca([]);
             return;
         }
@@ -1366,11 +1366,24 @@ function BibliotecaPage() {
         setLivrosEncontrados([]);
     };
 
+    // Highlight tolerante a acentos: "coracao" marca "coração" no resultado
+    const ACCENT_CLASSES: Record<string, string> = {
+        a: '[aáàâãä]', e: '[eéèêë]', i: '[iíìîï]', o: '[oóòôõö]', u: '[uúùûü]', c: '[cç]', n: '[nñ]',
+    };
     const highlightTermo = (texto: string): string => {
         if (!termoBusca.trim()) return texto;
         const clean = texto.replace(/<[^>]*>/g, '');
-        const escaped = termoBusca.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return clean.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="bg-amber-400/40 text-inherit rounded px-0.5">$1</mark>');
+        const base = termoBusca.trim().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const pattern = base
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            .split('')
+            .map(ch => ACCENT_CLASSES[ch.toLowerCase()] || ch)
+            .join('');
+        try {
+            return clean.replace(new RegExp(`(${pattern})`, 'gi'), '<mark class="bg-amber-400/40 text-inherit rounded px-0.5">$1</mark>');
+        } catch {
+            return clean;
+        }
     };
 
     const getLivroByBookId = (bookId: number) => {
@@ -1386,18 +1399,41 @@ function BibliotecaPage() {
         setPainelAba(aba);
         setPainelAberto(true);
         setPainelLoading(true);
+        setPainelCorFiltro(null);
 
-        const tipo = aba === 'favoritos' ? 'favorito' : aba === 'destaques' ? 'destaque' : 'nota';
-        const dados = await getAllInteracoesPorTipo(tipo, 200);
-        setPainelItens(dados);
+        // Carrega os 3 tipos em paralelo: a aba ativa + contadores das outras
+        const [favoritos, destaques, notas] = await Promise.all([
+            getAllInteracoesPorTipo('favorito', 200),
+            getAllInteracoesPorTipo('destaque', 200),
+            getAllInteracoesPorTipo('nota', 200),
+        ]);
+        const porAba = { favoritos, destaques, notas };
+        setPainelItens(porAba[aba]);
+        setPainelCounts({ favorito: favoritos.length, destaque: destaques.length, nota: notas.length });
         setPainelLoading(false);
     };
 
     const removerItemPainel = async (id: number) => {
         await removerInteracao(id);
         setPainelItens(prev => prev.filter(i => i.id !== id));
+        const tipoAtual = painelAba === 'favoritos' ? 'favorito' : painelAba === 'destaques' ? 'destaque' : 'nota';
+        setPainelCounts(prev => prev ? { ...prev, [tipoAtual]: Math.max(0, prev[tipoAtual] - 1) } : prev);
         success('Removido!');
         await carregarInteracoes();
+    };
+
+    const exportarSalvos = async () => {
+        if (painelItensFiltrados.length === 0) return;
+        const linhas = painelItensFiltrados.map(it => {
+            const ref = `${it.livro_nome} ${it.capitulo}:${it.versiculo}`;
+            return `"${it.texto_versiculo}" — ${ref}${it.nota ? `\n📝 ${it.nota}` : ''}`;
+        });
+        try {
+            await navigator.clipboard.writeText(linhas.join('\n\n'));
+            success(`${linhas.length} ${linhas.length === 1 ? 'item copiado' : 'itens copiados'}!`);
+        } catch {
+            toastError('Não foi possível copiar');
+        }
     };
 
     const navegarParaItem = (item: BibliaInteracao) => {
@@ -1578,7 +1614,7 @@ function BibliotecaPage() {
         return grupos.filter(g => g.items.length > 0);
     };
 
-    // Filtra + ordena os itens do painel com base em busca/ordem
+    // Filtra + ordena os itens do painel com base em busca/ordem/cor
     const painelItensFiltrados = (() => {
         const termo = painelBusca.trim().toLowerCase();
         let arr = termo
@@ -1589,6 +1625,10 @@ function BibliotecaPage() {
                 `${it.livro_nome} ${it.capitulo}:${it.versiculo}`.toLowerCase().includes(termo)
             )
             : [...painelItens];
+
+        if (painelAba === 'destaques' && painelCorFiltro) {
+            arr = arr.filter(it => it.cor === painelCorFiltro);
+        }
 
         if (painelOrdem === 'recente') {
             arr.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
@@ -1749,6 +1789,13 @@ function BibliotecaPage() {
                                 <Search className="w-6 h-6 text-text-muted mx-auto mb-2 opacity-50" />
                                 <p className="text-sm text-text-muted">Nenhum resultado para &quot;{termoBusca}&quot;</p>
                                 <p className="text-xs text-text-muted mt-1">Tente outros termos ou busque por referência (ex: Gn 1, Sl 23)</p>
+                                <button
+                                    onClick={() => { setBuscaAberta(false); setOfflineManagerAberto(true); }}
+                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                                >
+                                    <Download className="w-3.5 h-3.5" />
+                                    Baixe a Bíblia para busca completa (sem acentos e offline)
+                                </button>
                             </div>
                         )}
                     </div>
@@ -1807,24 +1854,42 @@ function BibliotecaPage() {
                     </div>
 
                     {/* Controle de Fonte */}
-                    <div className="flex items-center glass-panel rounded-xl overflow-hidden">
+                    <div className="relative">
                         <button
-                            onClick={diminuirFonte}
-                            disabled={!canDecrease}
-                            className="p-2.5 hover:bg-surface-2 transition-colors disabled:opacity-30"
-                            title="Diminuir fonte"
+                            onClick={() => setMostrarFontes(!mostrarFontes)}
+                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-surface-2 transition-colors flex items-center gap-1"
+                            title="Tamanho da fonte"
                         >
-                            <Minus className="w-4 h-4 text-text-primary" />
+                            <span className="text-[11px] font-bold text-text-primary leading-none">A</span>
+                            <span className="text-[15px] font-bold text-amber-400 leading-none">A</span>
                         </button>
-                        <span className="text-[10px] font-bold text-amber-400 px-1 min-w-[20px] text-center">{fontConfig.label}</span>
-                        <button
-                            onClick={aumentarFonte}
-                            disabled={!canIncrease}
-                            className="p-2.5 hover:bg-surface-2 transition-colors disabled:opacity-30"
-                            title="Aumentar fonte"
-                        >
-                            <Plus className="w-4 h-4 text-text-primary" />
-                        </button>
+
+                        {mostrarFontes && (
+                            <div className="absolute top-full right-0 mt-1.5 w-56 bg-white/98 dark:bg-surface-2/98 border border-slate-200 dark:border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                                <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Tamanho do texto</p>
+                                </div>
+                                <div className="flex items-end justify-between gap-1 p-3">
+                                    {FONT_SIZES.map((f, idx) => (
+                                        <button
+                                            key={f.label}
+                                            onClick={() => {
+                                                setFontSizeIndex(idx);
+                                                localStorage.setItem('biblia-font-size', String(idx));
+                                            }}
+                                            className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border transition-all active:scale-95 ${fontSizeIndex === idx
+                                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 dark:text-amber-400'
+                                                : 'border-transparent hover:bg-surface-1 text-text-secondary'
+                                                }`}
+                                            title={`Fonte ${f.label}`}
+                                        >
+                                            <span className="font-bold leading-none" style={{ fontSize: `${14 + idx * 4}px` }}>A</span>
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">{f.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -1838,9 +1903,9 @@ function BibliotecaPage() {
                 </div>
             </div>
 
-            {/* Backdrop para fechar dropdown de versões */}
-            {mostrarVersoes && (
-                <div className="fixed inset-0 z-30" onClick={() => setMostrarVersoes(false)} />
+            {/* Backdrop para fechar dropdowns (versões / fontes) */}
+            {(mostrarVersoes || mostrarFontes) && (
+                <div className="fixed inset-0 z-30" onClick={() => { setMostrarVersoes(false); setMostrarFontes(false); }} />
             )}
 
             {/* --- MODAL DE SELEÇÃO --- */}
@@ -2099,7 +2164,8 @@ function BibliotecaPage() {
                         {/* Abas com contadores */}
                         <div className="flex border-b border-slate-200 dark:border-border-subtle bg-white dark:bg-transparent">
                             {(['favoritos', 'destaques', 'notas'] as const).map(aba => {
-                                const count = aba === painelAba ? painelItens.length : null;
+                                const tipoKey = aba === 'favoritos' ? 'favorito' : aba === 'destaques' ? 'destaque' : 'nota';
+                                const count = painelCounts ? painelCounts[tipoKey] : (aba === painelAba ? painelItens.length : null);
                                 const icon = aba === 'favoritos' ? Heart : aba === 'destaques' ? Palette : StickyNote;
                                 const Icon = icon;
                                 return (
@@ -2145,6 +2211,40 @@ function BibliotecaPage() {
                                     <option value="antigo">Antigos</option>
                                     <option value="livro">Por livro</option>
                                 </select>
+                                <button
+                                    onClick={exportarSalvos}
+                                    className="p-1.5 rounded-lg border border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-500/40 transition-colors"
+                                    title="Copiar todos os itens filtrados"
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Filtro por cor (somente Destaques) */}
+                        {!painelLoading && painelAba === 'destaques' && painelItens.length > 0 && (
+                            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-200 dark:border-border-subtle bg-white dark:bg-surface-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-text-muted mr-1">Cor:</span>
+                                <button
+                                    onClick={() => setPainelCorFiltro(null)}
+                                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border ${painelCorFiltro === null
+                                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-600 dark:text-amber-400'
+                                        : 'border-slate-200 dark:border-border-subtle text-slate-400 dark:text-text-muted hover:border-slate-300'
+                                        }`}
+                                >
+                                    Todas
+                                </button>
+                                {([['yellow', 'bg-yellow-400'], ['blue', 'bg-blue-400'], ['green', 'bg-green-400'], ['pink', 'bg-pink-400']] as const).map(([cor, classe]) => (
+                                    <button
+                                        key={cor}
+                                        onClick={() => setPainelCorFiltro(painelCorFiltro === cor ? null : cor)}
+                                        className={`w-6 h-6 rounded-full ${classe} transition-all border-2 ${painelCorFiltro === cor
+                                            ? 'border-slate-700 dark:border-white scale-110 shadow-md'
+                                            : 'border-transparent opacity-60 hover:opacity-100'
+                                            }`}
+                                        title={`Filtrar por ${cor}`}
+                                    />
+                                ))}
                             </div>
                         )}
 
@@ -2223,8 +2323,11 @@ function BibliotecaPage() {
                                                     const corDestaque = item.tipo === 'destaque' && item.cor
                                                         ? ({ yellow: 'bg-yellow-400', blue: 'bg-blue-400', green: 'bg-green-400', pink: 'bg-pink-400' } as Record<string, string>)[item.cor]
                                                         : null;
+                                                    const corBorda = item.tipo === 'destaque' && item.cor
+                                                        ? ({ yellow: '#facc15', blue: '#60a5fa', green: '#4ade80', pink: '#f472b6' } as Record<string, string>)[item.cor]
+                                                        : null;
                                                     return (
-                                        <div key={item.id} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors group border border-slate-100 dark:border-transparent">
+                                        <div key={item.id} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors group border border-slate-100 dark:border-transparent" style={corBorda ? { borderLeft: `3px solid ${corBorda}` } : undefined}>
                                             <div className="flex items-start gap-3">
                                                 <button onClick={() => navegarParaItem(item)} className="flex-1 text-left min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
