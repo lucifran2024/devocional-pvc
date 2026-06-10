@@ -462,9 +462,9 @@ type MenuOption = '1' | '2' | '3' | '4' | null;
 
 const MENU_OPTIONS = [
     { id: '1', icon: Book, label: 'Ler Passagem', desc: 'Texto bíblico puro, leitura rápida.' },
-    { id: '2', icon: Search, label: 'Estudo Profundo', desc: 'Teologia, palavras-chave e simbolismos.' },
-    { id: '3', icon: Rocket, label: 'Aplicação Prática', desc: 'Como viver isso nas próximas 24–48h.' },
-    { id: '4', icon: Zap, label: 'Síntese Rápida', desc: 'Visão panorâmica e resumo executivo.' },
+    { id: '2', icon: Search, label: 'Entender a Passagem', desc: 'Contexto e explicação simples, bloco a bloco.' },
+    { id: '3', icon: Rocket, label: 'Meditar e Viver', desc: 'Verso-chave, perguntas e um desafio para hoje.' },
+    { id: '4', icon: Zap, label: 'Fixar em 1 Minuto', desc: 'Resumo, 3 pontos e teste rápido para lembrar.' },
 ] as const;
 
 // ===========================================
@@ -1174,9 +1174,9 @@ Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 Escolha uma das opções abaixo:
 
 1. 📖 **Ler Passagem** — Texto bíblico puro
-2. 🔍 **Estudo Profundo** — Teologia e simbolismos
-3. 🚀 **Aplicação Prática** — Como viver isso hoje
-4. ⚡ **Síntese Rápida** — Resumo executivo
+2. 🔍 **Entender a Passagem** — Contexto e explicação simples
+3. 🙏 **Meditar e Viver** — Perguntas e desafio para hoje
+4. ⚡ **Fixar em 1 Minuto** — Resumo e teste rápido
 
 Estou pronto para guiá-lo nesta jornada espiritual.`;
     };
