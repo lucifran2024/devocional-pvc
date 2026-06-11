@@ -14,6 +14,7 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { getCachedChapter, cacheChapter, searchVersesLocal } from '@/lib/bible-db';
+import { getPericopes } from '@/lib/bible-pericopes';
 import { OfflineManager } from './components/OfflineManager';
 import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import {
@@ -1562,11 +1563,17 @@ function BibliotecaPage() {
     const isFavorito = (verse: number): boolean => !!interacoesMap.favoritos[verse];
     const temNota = (verse: number): boolean => !!interacoesMap.notas[verse];
 
+    // Títulos de acontecimentos: lib compartilhada com cobertura da Bíblia
+    // inteira (66 livros) — a mesma usada no Ler Passagem do plano.
     const getTituloSecao = (verse: number): string | null => {
-        const chave = `${livroAtual.abrev}:${capituloAtual}`;
-        const titulos = TITULOS_SECAO[chave];
-        if (!titulos) return null;
-        return titulos[verse] || null;
+        const bookId = LIVRO_PARA_ID[livroAtual.abrev];
+        if (!bookId) return null;
+        const pericopes = getPericopes(bookId, capituloAtual);
+        const encontrada = pericopes.find(p => p.verse === verse);
+        if (encontrada) return encontrada.title;
+        // Fallback: mapa local antigo (alguns títulos personalizados)
+        const titulos = TITULOS_SECAO[`${livroAtual.abrev}:${capituloAtual}`];
+        return titulos?.[verse] || null;
     };
 
     // Formata data relativa (ex: "agora", "há 5 min", "ontem", "há 3 dias", "15 abr")
@@ -2591,7 +2598,7 @@ function BibliotecaPage() {
                     <div className="glass-panel rounded-2xl p-5 md:p-8 relative overflow-visible" ref={versiculosRef}>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                        <div className={`space-y-1 ${fontConfig.value} leading-relaxed text-text-primary font-serif relative`}>
+                        <div className={`space-y-1 ${fontConfig.value} leading-[1.85] text-text-primary reading-serif relative`}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
@@ -2622,7 +2629,7 @@ function BibliotecaPage() {
                                                     }
                                                 </span>
                                             )}
-                                            <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
+                                            <span className="verse-num select-none">{v.verse}</span>
                                             {v.text}
                                         </p>
 

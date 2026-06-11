@@ -1858,6 +1858,31 @@ Gere a explicação agora:
       const referenciaPassagem = referencia || 'Passagem bíblica';
       const tipoEstudo = tipo_estudo || 'estudo_profundo';
 
+      // CACHE: o estudo é determinístico por (referência, tipo). Se já existe,
+      // retorna instantaneamente — sem chamar a IA.
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+        if (supabaseUrl && serviceKey) {
+          const cacheClient = createClient(supabaseUrl, serviceKey);
+          const { data: cached } = await cacheClient
+            .from('estudo_cache')
+            .select('resultado')
+            .eq('referencia', referenciaPassagem)
+            .eq('tipo_estudo', tipoEstudo)
+            .maybeSingle();
+          if (cached?.resultado) {
+            console.log(`⚡ [ESTUDO BÍBLICO] Cache hit: ${referenciaPassagem} / ${tipoEstudo}`);
+            return new Response(
+              JSON.stringify({ ok: true, resultado: cached.resultado, tipo: 'estudo_biblico', tipo_estudo: tipoEstudo, cached: true }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('[ESTUDO BÍBLICO] Falha ao ler cache (segue gerando):', cacheErr);
+      }
+
       // Prompts pedagógicos: ENTENDER (2) → VIVER (3) → FIXAR (4)
       // (as chaves antigas são mantidas por compatibilidade com o app)
       const PROMPTS: Record<string, string> = {
@@ -2036,6 +2061,23 @@ ${versiculosTexto}
       const resultado = llmEstudo.text || "Erro ao gerar estudo.";
 
       console.log(`✅ [ESTUDO BÍBLICO] ${tipoEstudo} gerado com sucesso!`);
+
+      // Salva no cache para as próximas leituras da mesma passagem (fire-and-forget)
+      if (resultado && !resultado.startsWith('Erro')) {
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+          if (supabaseUrl && serviceKey) {
+            const cacheClient = createClient(supabaseUrl, serviceKey);
+            await cacheClient.from('estudo_cache').upsert(
+              { referencia: referenciaPassagem, tipo_estudo: tipoEstudo, resultado },
+              { onConflict: 'referencia,tipo_estudo' }
+            );
+          }
+        } catch (saveErr) {
+          console.warn('[ESTUDO BÍBLICO] Falha ao salvar cache:', saveErr);
+        }
+      }
 
       return new Response(
         JSON.stringify({

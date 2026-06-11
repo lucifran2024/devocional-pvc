@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -17,6 +17,14 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Serifada de leitura (Bíblia / passagem do dia) — elegante e legível
+const newsreader = Newsreader({
+  variable: "--font-reading",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -55,7 +63,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-surface-0 text-text-primary transition-colors duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} antialiased min-h-screen bg-surface-0 text-text-primary transition-colors duration-300`}
         suppressHydrationWarning
       >
         <ThemeProvider defaultTheme="dark" storageKey="devocional-theme">

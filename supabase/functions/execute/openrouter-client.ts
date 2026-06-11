@@ -104,7 +104,9 @@ export async function chamarOpenRouter(
     for (const model of cadeia) {
         try {
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 90_000);
+            // 40s por modelo: se travar, o fallback assume rápido em vez de
+            // deixar o usuário esperando um modelo pendurado.
+            const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 40_000);
 
             const body: Record<string, unknown> = {
                 model,

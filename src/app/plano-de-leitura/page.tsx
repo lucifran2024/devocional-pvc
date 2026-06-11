@@ -57,6 +57,28 @@ interface InteracoesMapPlano {
 }
 
 // Componente de versículos interativos para o Plano de Leitura
+// Destaca as palavras-chave do dia (lexico_do_dia) dentro do texto do versículo.
+// Retorna nós React, marcando cada ocorrência com a classe keyword-highlight.
+function destacarLexico(texto: string, lexico?: string[]): React.ReactNode {
+    if (!lexico || lexico.length === 0) return texto;
+    const termos = lexico
+        .map(t => t.trim())
+        .filter(t => t.length >= 3)
+        .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (termos.length === 0) return texto;
+    try {
+        const re = new RegExp(`(${termos.join('|')})`, 'gi');
+        const partes = texto.split(re);
+        return partes.map((parte, i) =>
+            re.test(parte)
+                ? <mark key={i} className="keyword-highlight">{parte}</mark>
+                : <span key={i}>{parte}</span>
+        );
+    } catch {
+        return texto;
+    }
+}
+
 function VersiculosInterativos({
     versiculos,
     referencia,
@@ -65,6 +87,7 @@ function VersiculosInterativos({
     capitulo,
     livroId,
     readingFontSize,
+    lexico,
 }: {
     versiculos: Versiculo[];
     referencia: string;
@@ -73,6 +96,7 @@ function VersiculosInterativos({
     capitulo: number;
     livroId?: number;
     readingFontSize: number;
+    lexico?: string[];
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
     const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
@@ -328,9 +352,9 @@ function VersiculosInterativos({
                                     ${versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
                             >
-                                <p className="inline leading-relaxed text-text-primary font-serif" style={{ fontSize: `${readingFontSize}px` }}>
-                                    <sup className="text-xs text-amber-400 font-bold mr-1.5 select-none opacity-60">{v.verse}</sup>
-                                    {v.text}
+                                <p className="inline leading-[1.85] text-text-primary reading-serif" style={{ fontSize: `${readingFontSize}px` }}>
+                                    <span className="verse-num select-none">{v.verse}</span>
+                                    {destacarLexico(v.text, lexico)}
                                 </p>
                                 <span className="inline-flex items-center gap-1 ml-1.5">
                                     {isFavorito(v) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
@@ -502,11 +526,12 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     );
 }
 
-function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize }: {
+function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, lexico }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
     livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
     readingFontSize: number;
+    lexico?: string[];
 }) {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
@@ -533,6 +558,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         capitulo={livroInfo!.capitulo}
                         livroId={livroInfo!.livroId}
                         readingFontSize={readingFontSize}
+                        lexico={lexico}
                     />
 
                     {/* Texto depois dos versículos */}
@@ -1360,50 +1386,79 @@ Ou **MENU** para voltar.`;
     };
 
     // Gerar estudo via IA (Edge Function)
-    const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
-        if (!passagem) return 'Passagem não carregada.';
-
-        // Pegar todos os versículos disponíveis como texto
+    // Busca o estudo (cache de sessão → servidor). Usado tanto pela ação do
+    // usuário quanto pelo prefetch silencioso em background.
+    const buscarEstudo = async (tipoEstudo: string): Promise<string | null> => {
+        if (!passagem) return null;
         const versiculosTexto = bibleData
             ? bibleData.versiculos.map(v => `${v.verse}. ${v.text?.replace(/<[^>]*>/g, '') || ''}`).join('\n')
             : '';
+        if (!versiculosTexto) return null;
 
-        if (!versiculosTexto) {
-            return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
+        // Cache de sessão (instantâneo na 2ª vez no mesmo aparelho)
+        const cacheKey = `estudo:${passagem.referencia}:${tipoEstudo}`;
+        if (typeof window !== 'undefined') {
+            const local = sessionStorage.getItem(cacheKey);
+            if (local) return local;
         }
 
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                modo_id: 'estudo_biblico',
+                data: new Date().toISOString().split('T')[0],
+                referencia: passagem.referencia,
+                versiculos: versiculosTexto,
+                tipo_estudo: tipoEstudo
+            })
+        });
+        if (!resp.ok) throw new Error(`Erro ${resp.status}`);
+        const data = await resp.json();
+        if (!data.ok || !data.resultado) throw new Error(data.error || 'Erro ao gerar estudo');
+
+        if (typeof window !== 'undefined') {
+            try { sessionStorage.setItem(cacheKey, data.resultado); } catch { /* quota */ }
+        }
+        return data.resultado;
+    };
+
+    const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
+        if (!passagem) return 'Passagem não carregada.';
+        if (!bibleData) return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
+
         try {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
-                    modo_id: 'estudo_biblico',
-                    data: new Date().toISOString().split('T')[0],
-                    referencia: passagem.referencia,
-                    versiculos: versiculosTexto,
-                    tipo_estudo: tipoEstudo
-                })
-            });
-
-            if (!resp.ok) {
-                throw new Error(`Erro ${resp.status}`);
-            }
-
-            const data = await resp.json();
-
-            if (data.ok && data.resultado) {
-                return `${data.resultado}\n\n---\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
-            } else {
-                throw new Error(data.error || 'Erro ao gerar estudo');
-            }
+            const resultado = await buscarEstudo(tipoEstudo);
+            if (!resultado) return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
+            return `${resultado}\n\n---\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
         } catch (error) {
             console.error('Erro ao gerar estudo IA:', error);
             return `❌ **Erro ao gerar estudo**\n\nNão foi possível gerar o conteúdo no momento. Tente novamente.\n\n---\nDigite **MENU** para voltar.`;
         }
     };
+
+    // PREFETCH: quando a passagem e os versículos estão prontos, aquece as 3
+    // opções em background (sequencial, sem travar a UI). A 1ª também popula o
+    // cache do servidor — então a opção que o usuário clicar já volta pronta.
+    const prefetchDispARadoRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!passagem?.referencia || !bibleData) return;
+        if (prefetchDispARadoRef.current === passagem.referencia) return;
+        prefetchDispARadoRef.current = passagem.referencia;
+
+        let cancelado = false;
+        (async () => {
+            for (const tipo of ['estudo_profundo', 'aplicacao_pratica', 'sintese_rapida']) {
+                if (cancelado) return;
+                try { await buscarEstudo(tipo); } catch { /* silencioso */ }
+            }
+        })();
+        return () => { cancelado = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [passagem?.referencia, bibleData]);
 
 
     // Processar comando CONTINUAR
@@ -1863,13 +1918,17 @@ ${conteudo}
                                         <ArrowLeft className="w-4 h-4" />
                                     </button>
                                     <div className="min-w-0">
-                                        <h2 className="font-bold text-white text-base">
-                                            {isPlanoMode
-                                                ? 'Leitura do Plano'
-                                                : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                        <h2 className="font-bold text-white text-base truncate">
+                                            {(isPlanoMode || activeOption === '1') && versiculosPaginaAtual.length > 0
+                                                ? `${livroInfoAtual.nome} ${versiculosPaginaAtual[0]?.chapter ?? livroInfoAtual.capitulo}`
+                                                : isPlanoMode
+                                                    ? 'Leitura do Plano'
+                                                    : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
                                         </h2>
-                                        <p className="text-[11px] text-slate-400 truncate">
-                                            {passagem?.referencia}
+                                        <p className="text-[11px] text-amber-400/80 truncate font-semibold">
+                                            {(isPlanoMode || activeOption === '1') && getTotalPartesLeitura() > 1
+                                                ? `Parte ${currentPage} de ${getTotalPartesLeitura()} · ${passagem?.referencia}`
+                                                : passagem?.referencia}
                                         </p>
                                     </div>
                                 </div>
@@ -1927,6 +1986,7 @@ ${conteudo}
                                         versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
                                         livroInfo={temPlaceholder ? livroInfoAtual : undefined}
                                         readingFontSize={readingFontSize}
+                                        lexico={passagem?.lexico_do_dia}
                                     />
                                 );
                             })}
