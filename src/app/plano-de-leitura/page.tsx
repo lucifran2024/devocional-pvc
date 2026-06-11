@@ -7,7 +7,7 @@ import {
     ChevronRight, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
-    ZoomIn, ZoomOut
+    ZoomIn, ZoomOut, BookOpen
 } from 'lucide-react';
 import {
     getDataHoje,
@@ -328,18 +328,24 @@ function VersiculosInterativos({
                         <div key={`${cap}-${v.verse}`} id={primeiroVersiculoNovoTestamento ? NOVO_TESTAMENTO_ANCHOR_ID : undefined}>
                             {/* Separador de capítulo - só mostra quando há múltiplos capítulos */}
                             {mostrarHeaderCapitulo && new Set(versiculos.map(vv => getCapitulo(vv))).size > 1 && (
-                                <div className="flex items-center gap-3 py-3 mt-2 mb-1">
-                                    <div className="flex-1 h-px bg-amber-500/20"></div>
-                                    <span className="text-xs font-bold text-amber-400 tracking-widest uppercase">
+                                <div className="flex items-center gap-3 py-4 mt-3 mb-1">
+                                    <div className="flex-1 h-px bg-amber-500/25"></div>
+                                    <span
+                                        className="font-black text-amber-500 dark:text-amber-400 tracking-[0.2em] uppercase"
+                                        style={{ fontSize: `${Math.max(14, readingFontSize - 5)}px` }}
+                                    >
                                         {livroNome} {cap}
                                     </span>
-                                    <div className="flex-1 h-px bg-amber-500/20"></div>
+                                    <div className="flex-1 h-px bg-amber-500/25"></div>
                                 </div>
                             )}
-                            {/* Perícope - cabeçalho do acontecimento */}
+                            {/* Perícope - cabeçalho do acontecimento (escala com a fonte de leitura) */}
                             {pericope && (
-                                <div className="mt-4 mb-2 first:mt-0">
-                                    <h4 className="text-sm font-bold text-amber-300/90 tracking-wide uppercase pl-1 border-l-2 border-amber-500/40 ml-0.5 pl-2.5">
+                                <div className="mt-5 mb-2.5 first:mt-0">
+                                    <h4
+                                        className="font-bold text-amber-600 dark:text-amber-300 tracking-tight border-l-[3px] border-amber-500/50 pl-3"
+                                        style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
+                                    >
                                         {pericope.title}
                                     </h4>
                                 </div>
@@ -641,7 +647,7 @@ function PlanoLeituraContent() {
     const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatStartRef = useRef<HTMLDivElement>(null);
-    const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | null>(null);
+    const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | 'inicio-ultima' | null>(null);
     const isRestoringScrollRef = useRef(false);
 
     const dataHoje = getDataHoje();
@@ -1078,6 +1084,15 @@ function PlanoLeituraContent() {
         window.requestAnimationFrame(() => {
             if (action === 'bottom') {
                 chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            // Início da última mensagem: ao CONTINUAR (ou gerar estudo), o leitor
+            // deve aterrissar no COMEÇO da nova parte — não no fim dela.
+            if (action === 'inicio-ultima') {
+                window.setTimeout(() => {
+                    document.getElementById('msg-ultima')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
                 return;
             }
 
@@ -1616,7 +1631,10 @@ ${conteudo}
                 timestamp: new Date()
             };
 
-            pendingScrollRef.current = 'bottom';
+            // Conteúdo longo (leitura/estudo) → começa do início; resto → fim
+            pendingScrollRef.current = resposta.includes('%%VERSICULOS_INTERATIVOS%%') || resposta.length > 600
+                ? 'inicio-ultima'
+                : 'bottom';
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error) {
             const errorMessage: ChatMessage = {
@@ -1679,7 +1697,9 @@ ${conteudo}
                 timestamp: new Date()
             };
 
-            pendingScrollRef.current = 'bottom';
+            pendingScrollRef.current = resposta.includes('%%VERSICULOS_INTERATIVOS%%') || resposta.length > 600
+                ? 'inicio-ultima'
+                : 'bottom';
             setMessages(prev => [...prev, assistantMessage]);
         } finally {
             setIsProcessing(false);
@@ -1967,9 +1987,16 @@ ${conteudo}
                                 <button
                                     type="button"
                                     onClick={handleIrParaNovoTestamento}
-                                    className="self-start px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-amber-300 hover:bg-amber-500/10 hover:border-amber-400/30 transition-colors"
+                                    className="group self-start flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
                                 >
-                                    Novo Testamento
+                                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                                        <BookOpen className="w-4 h-4 text-amber-400" />
+                                    </span>
+                                    <span className="flex flex-col items-start leading-tight">
+                                        <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Novo Testamento</span>
+                                        <span className="text-[10px] text-amber-500/70 font-medium">Pular direto para a leitura</span>
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all ml-1" />
                                 </button>
                             )}
                         </div>
@@ -1979,15 +2006,17 @@ ${conteudo}
                             <div ref={chatStartRef} />
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
+                                const ehUltima = idx === messages.length - 1 && msg.role === 'assistant';
                                 return (
-                                    <ChatBubble
-                                        key={idx}
-                                        message={msg}
-                                        versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
-                                        livroInfo={temPlaceholder ? livroInfoAtual : undefined}
-                                        readingFontSize={readingFontSize}
-                                        lexico={passagem?.lexico_do_dia}
-                                    />
+                                    <div key={idx} id={ehUltima ? 'msg-ultima' : undefined} className="scroll-mt-28">
+                                        <ChatBubble
+                                            message={msg}
+                                            versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
+                                            livroInfo={temPlaceholder ? livroInfoAtual : undefined}
+                                            readingFontSize={readingFontSize}
+                                            lexico={passagem?.lexico_do_dia}
+                                        />
+                                    </div>
                                 );
                             })}
 

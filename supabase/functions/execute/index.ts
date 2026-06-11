@@ -965,9 +965,9 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         }
 
         if (filtros.diasSemana) {
-          // BUG FIX: Instrução mais restritiva para evitar dias não selecionados
-          const diasArray = filtros.diasSemana.split(',').map((d: string) => d.trim());
-          instrucoesFiltro += `3. **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: "${filtros.diasSemana}". Distribua-os entre as mensagens.\n`;
+          // Citação do dia: opcional, sutil e NUNCA repetitiva — modelos tendem
+          // a martelar o dia em toda mensagem se a instrução for "distribua".
+          instrucoesFiltro += `3. **DIA DA SEMANA (USO SUTIL)**: Se citar um dia da semana, use APENAS: "${filtros.diasSemana}". REGRA: no máximo 1 a cada 3 mensagens pode citar o dia, sempre de forma natural no MEIO do texto — NUNCA no título, NUNCA em todas as mensagens. As demais mensagens NÃO citam dia nenhum.\n`;
         }
         if (filtros.momento) {
           const descMomento = filtros.momento === 'Fim de Semana' ? 'foco em descanso e renovação'
@@ -1601,9 +1601,8 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
           instrucoesFiltro += `• **CONTEXTO**: Foque no momento "${filtros.momento}"\n`;
         }
         if (diasSemana) {
-          // BUG FIX: Instrução mais restritiva para evitar dias não selecionados
-          const diasArrayEstilo = diasSemana.split(',').map((d: string) => d.trim());
-          instrucoesFiltro += `• **DIAS DA SEMANA (RESTRITIVO)**: Mencione APENAS e EXCLUSIVAMENTE estes dias: ${diasSemana}. NÃO mencione NENHUM outro dia da semana que não esteja nesta lista. Distribua os ${diasArrayEstilo.length} dia(s) entre as ${quantidade} mensagens. (Ex: "Neste(a) ${diasArrayEstilo[0]} abençoado(a)...")\n`;
+          // Citação do dia: opcional e sutil — nunca em todas as mensagens
+          instrucoesFiltro += `• **DIA DA SEMANA (USO SUTIL)**: Se citar um dia da semana, use APENAS: ${diasSemana} (nenhum outro). REGRA: no máximo 1 a cada 3 mensagens pode citar o dia, de forma natural no MEIO do texto — NUNCA no título, NUNCA em todas. As demais mensagens NÃO citam dia nenhum.\n`;
         }
       }
 
@@ -1712,7 +1711,7 @@ Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 1. [GÊNERO] O texto é realmente uma ${estiloAlvo}? (Se Oração, fala com Deus? Se Devocional, ensina?)
 2. [VERSÍCULO] ${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo') ? '100% tem versículo central? Cada uma com versículo DIFERENTE?' : '40% tem bíblia? AT e NT equilibrados?'}
 3. [TEMA] ${temaFinalEstilo ? `Abordou "${temaFinalEstilo}" em todas?` : 'Cada mensagem tem tema único?'}
-4. [FILTROS] ${diasSemana ? `Citou APENAS ${diasSemana}? (NÃO citou outros dias?)` : 'Ok.'}
+4. [FILTROS] ${diasSemana ? `Se citou dia, foi APENAS ${diasSemana}, em NO MÁXIMO 1 a cada 3 mensagens e nunca no título?` : 'Ok.'}
 5. [SEPARAÇÃO] Use "---" entre as mensagens.
 6. [ANTI-REP] Nenhum tema ou versículo da lista proibida foi repetido?
 ${instrucaoLexicoEstilo ? `7. [LEXICO DNA] Cada mensagem tem pelo menos ${minLexTermEstilo} termos do léxico DNA?` : ''}
