@@ -22,7 +22,7 @@ export function Navigation() {
     return (
         <>
             {/* Mobile Bottom Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/5 md:hidden shadow-[0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]">
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-border-subtle md:hidden shadow-[0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]">
                 <ul className="flex items-stretch justify-around px-2 pt-1.5 pb-3">
                     {navItems.map((item) => {
                         const hrefPath = item.href.split('?')[0];
@@ -55,7 +55,7 @@ export function Navigation() {
             </nav>
 
             {/* Desktop Sidebar */}
-            <nav className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[88px] bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-white/5 z-50 items-center py-7">
+            <nav className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[88px] bg-white/95 dark:bg-surface-1/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-border-subtle z-50 items-center py-7">
                 {/* Logo */}
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center text-white text-xs font-black mb-10 shadow-lg shadow-amber-500/30 tracking-wider select-none">
                     PVC
