@@ -573,9 +573,7 @@ ${blocoChecklist}
 
   contexto += instrucaoTestamento;
 
-  if (style === 'estilo') {
-    contexto += `\n**PENALIDADE**: Se repetir tema, versículo, imagem central ou padrão de abertura/fechamento da lista, a mensagem será DESCARTADA.\n`;
-  }
+  contexto += `\n**PENALIDADE**: Se repetir tema, versículo, imagem central, PALAVRA-CHAVE de algum título recente listado acima, ou padrão de abertura/fechamento da lista, a mensagem será DESCARTADA. Os títulos recentes mostram o que JÁ FOI dito nos últimos dias — crie algo de assunto DIFERENTE.\n`;
 
   return { contexto, temasUnicos, versiculosUnicos, versiculosDnaUnicos, contAT, contNT };
 }
@@ -967,7 +965,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         if (filtros.diasSemana) {
           // Citação do dia: opcional, sutil e NUNCA repetitiva — modelos tendem
           // a martelar o dia em toda mensagem se a instrução for "distribua".
-          instrucoesFiltro += `3. **DIA DA SEMANA (USO SUTIL)**: Se citar um dia da semana, use APENAS: "${filtros.diasSemana}". REGRA: no máximo 1 a cada 3 mensagens pode citar o dia, sempre de forma natural no MEIO do texto — NUNCA no título, NUNCA em todas as mensagens. As demais mensagens NÃO citam dia nenhum.\n`;
+          instrucoesFiltro += `3. **DIA DA SEMANA (REGRA RÍGIDA)**: No MÁXIMO 1 mensagem DO LOTE INTEIRO pode citar o dia da semana (se citar, use apenas "${filtros.diasSemana}", de forma natural no MEIO do texto — NUNCA no título, NUNCA na primeira frase). TODAS as outras mensagens NÃO mencionam dia nenhum. Frases como "Nesta quinta...", "Hoje é segunda..." em mais de 1 mensagem = LOTE DESCARTADO.\n`;
         }
         if (filtros.momento) {
           const descMomento = filtros.momento === 'Fim de Semana' ? 'foco em descanso e renovação'
@@ -1003,12 +1001,16 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
      Evite explicar demais a metáfora.
    - **ÂNCORA BÍBLICA:** Inclua **1 versículo curto OU 1 referência bíblica** que sustente a ideia.
      Evite “mensagem bonita” sem base bíblica.
-   - **PALAVRAS SATURADAS (EVITAR):**
+   - **PALAVRAS SATURADAS (PROIBIDAS):**
      Evite: "confie no processo", "Deus está no controle", "abrace o processo",
-     "obra-prima", "plenitude do ser", "porto seguro", "melhor versão".
+     "obra-prima", "plenitude do ser", "porto seguro", "melhor versão",
+     "abre portas no tempo certo", "no tempo certo", "profetize",
+     "Deus está cuidando de você/mim", "recomeço" (como tema central repetido).
      Use linguagem bíblica simples e concreta.
-   - **IMPACTO FINAL (PUNCHLINE):** Termine com 1 frase final memorável,
-     **máx. 12 palavras**, sem clichê e sem repetir a última ideia do versículo.
+   - **FECHAMENTOS VARIADOS (OBRIGATÓRIO):** NÃO termine todas com punchline.
+     Distribua os fechamentos do lote entre: (A) punchline memorável (máx. 12 palavras),
+     (B) oração de 1 linha, (C) desafio prático para hoje, (D) declaração de fé em 1ª pessoa.
+     Cada fechamento sem clichê e sem repetir a última ideia do versículo.
 `;
 
         if (filtros.tamanho) {
@@ -1206,10 +1208,17 @@ ${REGRAS_ESTILO_GLOBAIS}
 
 <task>
   Gere EXATAMENTE ${quantidade} mensagens remixadas.
-  
+
   <distribution>
 ${distribuicaoCategoria || 'Distribua o remix variando as sementes usadas (não repita a mesma semente primária seguidas vezes).'}
   </distribution>
+
+  <variety priority="critical">
+    REGRAS DE VARIEDADE DO LOTE (mensagens iguais entre si = lote descartado):
+    1. TEMAS DISTINTOS: cada mensagem do lote aborda um tema/personagem/passagem bíblica DIFERENTE das outras. PROIBIDO duas mensagens com a mesma imagem central (ex: "porta", "recomeço", "deserto").
+    2. ABERTURAS DISTINTAS: varie a estrutura da primeira frase entre as mensagens — (A) afirmação de impacto, (B) mini-cena bíblica (personagem + ação), (C) versículo citado direto, (D) declaração em 1ª pessoa. Não repita a mesma estrutura de abertura em mais de 2 mensagens.
+    3. NÃO COMECE duas mensagens com a mesma palavra.
+  </variety>
   
   <filters>
 ${instrucoesFiltro}
@@ -1602,7 +1611,7 @@ EM VEZ DISSO, busque **ANGULAÇÕES ESPECÍFICAS** que você detecta no DNA, por
         }
         if (diasSemana) {
           // Citação do dia: opcional e sutil — nunca em todas as mensagens
-          instrucoesFiltro += `• **DIA DA SEMANA (USO SUTIL)**: Se citar um dia da semana, use APENAS: ${diasSemana} (nenhum outro). REGRA: no máximo 1 a cada 3 mensagens pode citar o dia, de forma natural no MEIO do texto — NUNCA no título, NUNCA em todas. As demais mensagens NÃO citam dia nenhum.\n`;
+          instrucoesFiltro += `• **DIA DA SEMANA (REGRA RÍGIDA)**: No MÁXIMO 1 mensagem DO LOTE INTEIRO pode citar o dia da semana (se citar, use apenas "${diasSemana}", de forma natural no MEIO do texto — NUNCA no título, NUNCA na primeira frase, NUNCA em linha própria). TODAS as outras mensagens NÃO mencionam dia nenhum.\n`;
         }
       }
 
@@ -1653,10 +1662,17 @@ ${estiloAlvo === 'declaração' ? 'O texto DEVE ser uma proclamação de fé em 
 ${estiloAlvo === 'reflexão' ? 'O texto DEVE ser uma reflexão contemplativa e profunda sobre a vida espiritual e a jornada de fé.' : ''}
 ${estiloAlvo === 'exortação' ? 'O texto DEVE ser uma exortação — mensagem de encorajamento forte, chamado à ação, motivação espiritual.' : ''}
 NÃO GERE OUTRO TIPO DE TEXTO. SE É ${estiloAlvo}, FAÇA ${estiloAlvo}!
-1545: 
-1546: 🚫 **PROIBIDO USAR TAGS/RÓTULOS NO INÍCIO**:
-1547: NÃO comece escrevendo **[ORAÇÃO]**, **[REFLEXÃO]** ou similar.
-1548: O texto deve ser LIMPO. O leitor saberá o que é pelo conteúdo.
+
+🚫 **PROIBIDO USAR TAGS/RÓTULOS NO INÍCIO**:
+NÃO comece escrevendo **[ORAÇÃO]**, **[REFLEXÃO]** ou similar.
+O texto deve ser LIMPO. O leitor saberá o que é pelo conteúdo.
+
+📌 **FORMATO DE CADA MENSAGEM (OBRIGATÓRIO)**:
+- A PRIMEIRA LINHA de cada mensagem é um TÍTULO curto (3-6 palavras) em **negrito**.
+- PROIBIDO prefixo de estilo no título (nada de "Devocional |", "Oração |", etc).
+- PROIBIDO linha separada com o dia da semana (nada de "Segunda-feira" sozinho numa linha).
+- Depois do título: 1 linha em branco e o corpo da mensagem.
+- Mesmo copiando a estrutura visual dos exemplos, o cabeçalho segue ESTA regra (os exemplos podem ter cabeçalhos antigos — ignore-os).
 
 ## 1. FONTE DE ESTRUTURA VISUAL (COPIAR FORMATO):
 Use os exemplos abaixo APENAS para copiar a formatação (emojis, quebras de linha, estrutura visual).
@@ -1711,7 +1727,8 @@ Gere **${quantidade} NOVAS ${estiloAlvo.toUpperCase()}S**.
 1. [GÊNERO] O texto é realmente uma ${estiloAlvo}? (Se Oração, fala com Deus? Se Devocional, ensina?)
 2. [VERSÍCULO] ${(estiloAlvo === 'versículo' || estiloAlvo === 'versiculo') ? '100% tem versículo central? Cada uma com versículo DIFERENTE?' : '40% tem bíblia? AT e NT equilibrados?'}
 3. [TEMA] ${temaFinalEstilo ? `Abordou "${temaFinalEstilo}" em todas?` : 'Cada mensagem tem tema único?'}
-4. [FILTROS] ${diasSemana ? `Se citou dia, foi APENAS ${diasSemana}, em NO MÁXIMO 1 a cada 3 mensagens e nunca no título?` : 'Ok.'}
+4. [FILTROS] ${diasSemana ? `Se citou dia, foi APENAS ${diasSemana}, em NO MÁXIMO 1 mensagem do lote, nunca no título nem na primeira frase?` : 'Ok.'}
+4b. [TÍTULO] Cada mensagem começa com título curto em **negrito**, SEM prefixo de estilo e SEM linha de dia da semana?
 5. [SEPARAÇÃO] Use "---" entre as mensagens.
 6. [ANTI-REP] Nenhum tema ou versículo da lista proibida foi repetido?
 ${instrucaoLexicoEstilo ? `7. [LEXICO DNA] Cada mensagem tem pelo menos ${minLexTermEstilo} termos do léxico DNA?` : ''}

@@ -351,7 +351,7 @@ export async function GET(request: Request) {
         const mensagensEnviadas: string[] = [];
 
         // =============================================
-        // 1. PALAVRA DA MANHA (pre-gera para o app; NAO envia ao Telegram)
+        // 1. PALAVRA DA MANHA (mesma do app; versao curta — max 400-600 chars)
         // =============================================
         let palavraManha = (await supabase
             .from('palavra_manha_diaria')
@@ -392,10 +392,19 @@ export async function GET(request: Request) {
             }
         }
 
-        // A Palavra da Manha fica SO no app (o Telegram recebe apenas o
-        // Versiculo do Dia abaixo e as mensagens do DNA no cron daily-dna).
         if (palavraManha && palavraManha.mensagem) {
-            console.log('Palavra da Manha pronta para o app (nao enviada ao Telegram).');
+            // Limpa markdown para texto puro
+            const textoLimpo = palavraManha.mensagem
+                .replace(/\*\*/g, '')
+                .replace(/\*/g, '')
+                .replace(/#{1,6}\s/g, '')
+                .replace(/>\s?/g, '')
+                .trim();
+
+            const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            const msgPalavra = `Palavra da Manha\n${dataFormatada}\n\n${textoLimpo}`;
+            const enviou = await enviarTelegram(msgPalavra);
+            if (enviou.ok) mensagensEnviadas.push('Palavra da Manha');
         } else {
             console.log('Palavra da Manha nao encontrada para hoje:', dataHoje);
         }
