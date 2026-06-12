@@ -17,6 +17,7 @@ import { getCachedChapter, cacheChapter, searchVersesLocal } from '@/lib/bible-d
 import { getPericopes } from '@/lib/bible-pericopes';
 import { OfflineManager } from './components/OfflineManager';
 import { useOfflineInteractions } from './hooks/useOfflineInteractions';
+import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import {
     supabase,
     getAllInteracoesPorTipo,
@@ -510,6 +511,15 @@ function BibliotecaPage() {
 
     // Mini-toolbar (single select)
     const [versiculoSelecionado, setVersiculoSelecionado] = useState<number | null>(null);
+    // Versículo atualmente narrado pelo player de áudio (destaque tipo legenda)
+    const [audioVerse, setAudioVerse] = useState<number | null>(null);
+
+    // Acompanha a narração: rola suavemente até o versículo sendo lido
+    useEffect(() => {
+        if (audioVerse == null) return;
+        const el = document.getElementById(`verse-${audioVerse}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [audioVerse]);
     const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
@@ -2584,10 +2594,21 @@ function BibliotecaPage() {
 
             {/* Conteúdo Principal */}
             <main className="max-w-4xl mx-auto px-4 py-6">
-                <h1 className="text-2xl md:text-3xl font-black text-text-primary mb-6 text-center tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-black text-text-primary mb-3 text-center tracking-tight">
                     {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
                     <span className="ml-2 text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
                 </h1>
+
+                {/* Player de áudio opcional — narração profissional (Bible Brain) */}
+                <div className="flex flex-col items-center mb-6">
+                    <BibleAudioPlayer
+                        key={`${livroAtual.abrev}-${capituloAtual}`}
+                        livroId={LIVRO_PARA_ID[livroAtual.abrev] || 1}
+                        capitulo={capituloAtual}
+                        onVerseChange={setAudioVerse}
+                        className="w-full max-w-md"
+                    />
+                </div>
 
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -2625,6 +2646,7 @@ function BibliotecaPage() {
                                         onClick={(e) => handleVersiculoClick(v.verse, e)}
                                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                             ${getCorClasse(v.verse)}
+                                            ${audioVerse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
                                             ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-emerald-500/15 ring-1 ring-emerald-500/40' : ''}
                                             ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : ''}
                                             ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-surface-1' : ''}
