@@ -18,6 +18,7 @@ import { getPericopes } from '@/lib/bible-pericopes';
 import { OfflineManager } from './components/OfflineManager';
 import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import {
+    supabase,
     getAllInteracoesPorTipo,
     salvarHistoricoLeitura,
     getUltimaLeitura,
@@ -88,7 +89,7 @@ interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
 const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: string; livros: LivroBiblia[] }[] = [
     // ===== ANTIGO TESTAMENTO =====
     {
-        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-400', corBarra: 'bg-amber-400', livros: [
+        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400', livros: [
             { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
             { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
             { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
@@ -97,7 +98,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-400', corBarra: 'bg-blue-400', livros: [
+        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-600 dark:text-blue-400', corBarra: 'bg-blue-400', livros: [
             { nome: 'Josué', abrev: 'js', capitulos: 24 },
             { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
             { nome: 'Rute', abrev: 'rt', capitulos: 4 },
@@ -113,7 +114,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-400', corBarra: 'bg-purple-400', livros: [
+        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-600 dark:text-purple-400', corBarra: 'bg-purple-400', livros: [
             { nome: 'Jó', abrev: 'jó', capitulos: 42 },
             { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
             { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
@@ -122,7 +123,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-400', corBarra: 'bg-red-400', livros: [
+        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-600 dark:text-red-400', corBarra: 'bg-red-400', livros: [
             { nome: 'Isaías', abrev: 'is', capitulos: 66 },
             { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
             { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
@@ -131,7 +132,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-400', corBarra: 'bg-orange-400', livros: [
+        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-600 dark:text-orange-400', corBarra: 'bg-orange-400', livros: [
             { nome: 'Oséias', abrev: 'os', capitulos: 14 },
             { nome: 'Joel', abrev: 'jl', capitulos: 3 },
             { nome: 'Amós', abrev: 'am', capitulos: 9 },
@@ -148,7 +149,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
     },
     // ===== NOVO TESTAMENTO =====
     {
-        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-400', corBarra: 'bg-emerald-400', livros: [
+        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-600 dark:text-emerald-400', corBarra: 'bg-emerald-400', livros: [
             { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
             { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
             { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
@@ -156,12 +157,12 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-400', corBarra: 'bg-cyan-400', livros: [
+        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-600 dark:text-cyan-400', corBarra: 'bg-cyan-400', livros: [
             { nome: 'Atos', abrev: 'at', capitulos: 28 },
         ]
     },
     {
-        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-400', corBarra: 'bg-sky-400', livros: [
+        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-600 dark:text-sky-400', corBarra: 'bg-sky-400', livros: [
             { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
             { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
             { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
@@ -178,7 +179,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-400', corBarra: 'bg-teal-400', livros: [
+        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-600 dark:text-teal-400', corBarra: 'bg-teal-400', livros: [
             { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
             { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
             { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
@@ -190,7 +191,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-400', corBarra: 'bg-yellow-400', livros: [
+        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-600 dark:text-yellow-400', corBarra: 'bg-yellow-400', livros: [
             { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
         ]
     },
@@ -1224,22 +1225,18 @@ function BibliotecaPage() {
         setVersiculoSelecionado(null);
 
         try {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
+            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                body: {
                     modo_id: 'explicar_passagem',
                     data: new Date().toISOString().split('T')[0],
                     referencia: `${livroAtual.nome} ${capituloAtual}:${v.verse}`,
                     versiculos: `(${v.verse}) ${v.text}`,
                     parte: 1
-                })
+                }
             });
 
-            const data = await resp.json();
+            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
+
             if (data.ok && data.resultado) {
                 setEstudoTexto(data.resultado);
             } else {
@@ -2028,23 +2025,37 @@ function BibliotecaPage() {
                                                     </div>
 
                                                     {/* Livros da categoria */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <div className="grid grid-cols-2 gap-2">
                                                         {categoria.livros.map(livro => {
                                                             const isAtual = livro.abrev === livroAtual.abrev;
                                                             return (
                                                                 <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                                    className={`relative group overflow-hidden w-full flex items-center justify-between pl-4 pr-4 py-3.5 rounded-xl text-left transition-all border
+                                                                    className={`relative group overflow-hidden w-full flex items-center gap-2.5 pl-2 pr-2.5 py-2 min-h-[60px] rounded-2xl text-left transition-all duration-200 border active:scale-[0.97]
                                                                         ${isAtual
-                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 text-amber-700 dark:text-amber-300 shadow-sm shadow-amber-500/10'
-                                                                            : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 text-slate-900 dark:text-text-primary hover:border-slate-300 dark:hover:border-white/15 active:scale-[0.98]'
+                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                                                                            : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 hover:border-slate-300 dark:hover:border-white/15 hover:shadow-sm'
                                                                         }`}
                                                                 >
-                                                                    {/* Barra lateral colorida por categoria */}
-                                                                    <span className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'} transition-opacity`} />
+                                                                    {/* Barra lateral fina da categoria */}
+                                                                    <span className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-80 dark:opacity-50 group-hover:opacity-100 dark:group-hover:opacity-90'} transition-opacity`} />
 
-                                                                    <span className="font-semibold text-[15px] tracking-tight truncate ml-1.5">{livro.nome}</span>
-                                                                    <span className={`text-xs font-medium tabular-nums ml-3 shrink-0 ${isAtual ? 'text-amber-600 dark:text-amber-300' : 'text-slate-400 dark:text-text-muted'}`}>
-                                                                        {livro.capitulos} {livro.capitulos === 1 ? 'cap' : 'caps'}
+                                                                    {/* Monograma com abreviação do livro */}
+                                                                    <span className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-xl text-[13px] font-black uppercase tracking-tight transition-colors
+                                                                        ${isAtual
+                                                                            ? 'bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/40 text-amber-600 dark:text-amber-300'
+                                                                            : `bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20 ${categoria.cor}`
+                                                                        }`}>
+                                                                        {livro.abrev.toUpperCase()}
+                                                                    </span>
+
+                                                                    {/* Nome + capítulos */}
+                                                                    <span className="flex flex-col min-w-0 flex-1">
+                                                                        <span className={`font-semibold text-[13.5px] leading-snug tracking-tight truncate ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
+                                                                            {livro.nome}
+                                                                        </span>
+                                                                        <span className={`text-[11px] font-medium tabular-nums truncate ${isAtual ? 'text-amber-600/80 dark:text-amber-300/70' : 'text-slate-400 dark:text-text-muted'}`}>
+                                                                            {livro.capitulos} {livro.capitulos === 1 ? 'capítulo' : 'capítulos'}
+                                                                        </span>
                                                                     </span>
                                                                 </button>
                                                             );

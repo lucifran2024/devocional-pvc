@@ -10,6 +10,7 @@ import {
     ZoomIn, ZoomOut, BookOpen
 } from 'lucide-react';
 import {
+    supabase,
     getDataHoje,
     salvarInteracaoBiblia,
     removerInteracaoBiblia,
@@ -268,21 +269,16 @@ function VersiculosInterativos({
         setVersiculoSelecionadoIdx(null);
         versiculoAnteriorRef.current = null;
         try {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
+            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                body: {
                     modo_id: 'explicar_passagem',
                     data: new Date().toISOString().split('T')[0],
                     referencia: `${livroNome} ${cap}:${v.verse}`,
                     versiculos: `(${v.verse}) ${v.text}`,
                     parte: 1
-                })
+                }
             });
-            const data = await resp.json();
+            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
             if (data.ok && data.resultado) setEstudoTexto(data.resultado);
             else setEstudoTexto('Erro ao gerar explicação. Tente novamente.');
         } catch { setEstudoTexto('Erro de conexão. Tente novamente.'); }
@@ -748,6 +744,7 @@ function PlanoLeituraContent() {
         setActiveOption(null);
         setCurrentPage(1);
         currentPageRef.current = 1;
+        setLivroInfoAtual({ abrev: '', nome: '', capitulo: 0 });
     }, [isPlanoMode, planoId, diaExibido]);
 
     // Carregar texto bíblico da API quando a passagem estiver disponível
@@ -1314,26 +1311,19 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         try {
             console.log('🔍 Chamando Edge Function explicar_passagem...');
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
+            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                body: {
                     modo_id: 'explicar_passagem',
                     data: new Date().toISOString().split('T')[0],
                     referencia: passagem.referencia,
                     versiculos: versiculosAtual,
                     parte: page
-                })
+                }
             });
 
-            if (!resp.ok) {
-                throw new Error(`Erro ${resp.status}`);
+            if (invokeError) {
+                throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
             }
-
-            const data = await resp.json();
 
             if (data.ok && data.resultado) {
                 return `🔍 **EXPLICAÇÃO GERADA POR IA**
@@ -1372,23 +1362,17 @@ Ou **MENU** para voltar.`;
             .join('\n');
 
         try {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
+            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                body: {
                     modo_id: 'explicar_passagem',
                     data: new Date().toISOString().split('T')[0],
                     referencia: passagem.referencia,
                     versiculos: versiculosAtual,
                     parte: page
-                })
+                }
             });
 
-            if (!resp.ok) throw new Error(`Erro ${resp.status}`);
-            const data = await resp.json();
+            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
 
             if (data.ok && data.resultado) {
                 return data.resultado;
@@ -1417,22 +1401,16 @@ Ou **MENU** para voltar.`;
             if (local) return local;
         }
 
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/execute`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({
+        const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+            body: {
                 modo_id: 'estudo_biblico',
                 data: new Date().toISOString().split('T')[0],
                 referencia: passagem.referencia,
                 versiculos: versiculosTexto,
                 tipo_estudo: tipoEstudo
-            })
+            }
         });
-        if (!resp.ok) throw new Error(`Erro ${resp.status}`);
-        const data = await resp.json();
+        if (invokeError) throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
         if (!data.ok || !data.resultado) throw new Error(data.error || 'Erro ao gerar estudo');
 
         if (typeof window !== 'undefined') {
@@ -1938,9 +1916,14 @@ ${conteudo}
                                         <ArrowLeft className="w-4 h-4" />
                                     </button>
                                     <div className="min-w-0">
-                                        <h2 className="font-bold text-white text-base truncate">
-                                            {(isPlanoMode || activeOption === '1') && versiculosPaginaAtual.length > 0
-                                                ? `${livroInfoAtual.nome} ${versiculosPaginaAtual[0]?.chapter ?? livroInfoAtual.capitulo}`
+                                        {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome && (
+                                            <p className="text-[10px] uppercase tracking-[0.18em] text-text-muted font-semibold truncate">
+                                                Você está lendo agora
+                                            </p>
+                                        )}
+                                        <h2 className="font-bold text-slate-900 dark:text-white text-base truncate">
+                                            {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome
+                                                ? `${livroInfoAtual.nome} ${livroInfoAtual.capitulo}`
                                                 : isPlanoMode
                                                     ? 'Leitura do Plano'
                                                     : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
