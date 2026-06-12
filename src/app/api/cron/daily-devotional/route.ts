@@ -5,6 +5,10 @@ import { createHash } from 'crypto';
 // ============================================
 // CONFIG
 // ============================================
+// OCR + multiplas fontes externas podem passar de 60s;
+// sem isso a Vercel mata a funcao no meio.
+export const maxDuration = 300;
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 

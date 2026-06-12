@@ -2344,6 +2344,12 @@ ${dnaFavoritas}
 - **CONTEXTO EXTRA:** ${config.extra}
 ${passagemRef ? `- **BASE BÍBLICA OBRIGATÓRIA:** ${passagemRef}\n"${passagemTexto}"` : ''}
 
+## TAMANHO (REGRA RÍGIDA — A MAIS IMPORTANTE):
+- Formato "Curto": mensagem COMPLETA com no máximo 400 caracteres.
+- Formato "Médio": mensagem COMPLETA com no máximo 600 caracteres.
+- O limite inclui título, corpo, versículo de apoio e fechamento.
+- Seja direto e impactante: UMA ideia central, frases curtas, sem parágrafos longos. Qualidade sobre quantidade. NUNCA ultrapasse o limite.
+
 ## ANTI-REPETIÇÃO (O QUE NÃO FAZER):
 ${contextoEvitar}
 

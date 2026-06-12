@@ -18,6 +18,10 @@ const ESTILOS_ROTACAO = ['devocional', 'oracao', 'versiculo', 'reflexao', 'exort
 const MAX_GENERATION_ATTEMPTS = 2;
 const CANDIDATAS_POR_MODO = 5;
 
+// As geracoes de IA levam 30-90s cada (ate 4 chamadas); sem isso a Vercel
+// mata a funcao no meio e nenhuma mensagem chega ao Telegram.
+export const maxDuration = 300;
+
 interface ExecuteGenerationResult {
     ok: boolean;
     resultado?: string;
@@ -283,13 +287,12 @@ export async function GET(request: Request) {
         const dataHoje = getDataHoje();
         const mensagensEnviadas: string[] = [];
 
+        // ===== DNA GERACAO (favoritas): gera -> salva -> ENVIA imediatamente =====
+        // Envia assim que pronto (antes de gerar o estilo) para garantir a
+        // entrega no Telegram mesmo se a funcao estourar o tempo depois.
         const filtrosFavoritas = getFiltrosDoDia(dataHoje, 'favoritas');
         console.log('Filtros Favoritas:', JSON.stringify(filtrosFavoritas));
         const favoritas = await gerarMensagensValidadas('modo_favoritas', dataHoje, filtrosFavoritas);
-
-        const filtrosEstilo = getFiltrosDoDia(dataHoje, 'estilo');
-        console.log('Filtros Estilo:', JSON.stringify(filtrosEstilo));
-        const estilo = await gerarMensagensValidadas('modo_estilo', dataHoje, filtrosEstilo);
 
         if (favoritas.messages.length > 0) {
             const { batchId, records } = buildDnaGeracaoRecords(favoritas.messages, {
@@ -301,11 +304,23 @@ export async function GET(request: Request) {
 
             const { error } = await supabase.from('dna_geracoes').insert(records);
             if (error) {
-                throw new Error(`Erro ao salvar favoritas (${batchId}): ${error.message}`);
+                // Falha ao salvar nao impede a entrega ao Telegram
+                console.error(`Erro ao salvar favoritas (${batchId}): ${error.message}`);
+            } else {
+                console.log(`Favoritas: ${records.length} msgs salvas (batch: ${batchId})`);
             }
 
-            console.log(`Favoritas: ${records.length} msgs salvas (batch: ${batchId})`);
+            const melhorFavorita = await selecionarMelhorMensagemIA(favoritas.messages, 'DNA Geração');
+            const msgDna = `DNA Geração\n\n${melhorFavorita}`;
+            const enviou = await enviarTelegram(msgDna);
+            if (enviou.ok) mensagensEnviadas.push('DNA Geração');
+            await delay(2000);
         }
+
+        // ===== DNA ESTILO: gera -> salva -> envia =====
+        const filtrosEstilo = getFiltrosDoDia(dataHoje, 'estilo');
+        console.log('Filtros Estilo:', JSON.stringify(filtrosEstilo));
+        const estilo = await gerarMensagensValidadas('modo_estilo', dataHoje, filtrosEstilo);
 
         if (estilo.messages.length > 0) {
             const { batchId, records } = buildDnaGeracaoRecords(estilo.messages, {
@@ -317,21 +332,11 @@ export async function GET(request: Request) {
 
             const { error } = await supabase.from('dna_geracoes').insert(records);
             if (error) {
-                throw new Error(`Erro ao salvar estilo (${batchId}): ${error.message}`);
+                console.error(`Erro ao salvar estilo (${batchId}): ${error.message}`);
+            } else {
+                console.log(`Estilo: ${records.length} msgs salvas (batch: ${batchId})`);
             }
 
-            console.log(`Estilo: ${records.length} msgs salvas (batch: ${batchId})`);
-        }
-
-        if (favoritas.messages.length > 0) {
-            const melhorFavorita = await selecionarMelhorMensagemIA(favoritas.messages, 'DNA Geração');
-            const msgDna = `DNA Geração\n\n${melhorFavorita}`;
-            const enviou = await enviarTelegram(msgDna);
-            if (enviou.ok) mensagensEnviadas.push('DNA Geração');
-            await delay(2000);
-        }
-
-        if (estilo.messages.length > 0) {
             const melhorEstilo = await selecionarMelhorMensagemIA(estilo.messages, 'DNA Estilo');
             const msgEstilo = `DNA Estilo (${String(filtrosEstilo.estilo || '-')})\n\n${melhorEstilo}`;
             const enviou = await enviarTelegram(msgEstilo);

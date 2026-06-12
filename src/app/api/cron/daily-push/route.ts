@@ -4,6 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 // ============================================
 // CONFIG
 // ============================================
+// Geracao da Palavra + selecao de versiculo por IA podem passar de 60s;
+// sem isso a Vercel mata a funcao no meio.
+export const maxDuration = 300;
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
@@ -344,11 +348,10 @@ export async function GET(request: Request) {
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const dataHoje = getDataHoje();
-        const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         const mensagensEnviadas: string[] = [];
 
         // =============================================
-        // 1. PALAVRA DA MANHA (mesma do app)
+        // 1. PALAVRA DA MANHA (pre-gera para o app; NAO envia ao Telegram)
         // =============================================
         let palavraManha = (await supabase
             .from('palavra_manha_diaria')
@@ -389,18 +392,10 @@ export async function GET(request: Request) {
             }
         }
 
+        // A Palavra da Manha fica SO no app (o Telegram recebe apenas o
+        // Versiculo do Dia abaixo e as mensagens do DNA no cron daily-dna).
         if (palavraManha && palavraManha.mensagem) {
-            // Limpa markdown para texto puro
-            const textoLimpo = palavraManha.mensagem
-                .replace(/\*\*/g, '')
-                .replace(/\*/g, '')
-                .replace(/#{1,6}\s/g, '')
-                .replace(/>\s?/g, '')
-                .trim();
-
-            const msgPalavra = `Palavra da Manha\n${dataFormatada}\n\n${textoLimpo}`;
-            const enviou = await enviarTelegram(msgPalavra);
-            if (enviou.ok) mensagensEnviadas.push('Palavra da Manha');
+            console.log('Palavra da Manha pronta para o app (nao enviada ao Telegram).');
         } else {
             console.log('Palavra da Manha nao encontrada para hoje:', dataHoje);
         }
