@@ -111,7 +111,7 @@ function VersiculosInterativos({
     const [estudoLoading, setEstudoLoading] = useState(false);
     const [estudoVersiculo, setEstudoVersiculo] = useState<Versiculo | null>(null);
     // Versículo atualmente narrado pelo player de áudio (destaque tipo legenda)
-    const [audioVerse, setAudioVerse] = useState<number | null>(null);
+    const [audioVerse, setAudioVerse] = useState<{ verse: number; chapter: number } | null>(null);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const versiculoAnteriorRef = useRef<number | null>(null);
@@ -149,9 +149,9 @@ function VersiculosInterativos({
     // Acompanha a narração: rola suavemente até o versículo sendo lido
     useEffect(() => {
         if (audioVerse == null) return;
-        const el = document.getElementById(`plano-verse-${capitulo}-${audioVerse}`);
+        const el = document.getElementById(`plano-verse-${audioVerse.chapter}-${audioVerse.verse}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, [audioVerse, capitulo]);
+    }, [audioVerse]);
 
     // Fechar toolbar ao clicar fora
     useEffect(() => {
@@ -322,9 +322,11 @@ function VersiculosInterativos({
                 <div className="mb-4">
                     <BibleAudioPlayer
                         key={`${livroId}-${capitulo}`}
-                        livroId={livroId}
+                        versiculos={versiculos}
                         capitulo={capitulo}
-                        onVerseChange={setAudioVerse}
+                        onVerseChange={(verse, chapter) =>
+                            setAudioVerse(verse == null ? null : { verse, chapter: chapter ?? capitulo })
+                        }
                         className="w-full max-w-md"
                     />
                 </div>
@@ -373,7 +375,7 @@ function VersiculosInterativos({
                                 onClick={() => handleVersiculoClick(idx)}
                                 className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                     ${getCorClasse(v)}
-                                    ${cap === capitulo && audioVerse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
+                                    ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
                                     ${versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
                             >

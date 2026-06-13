@@ -2599,13 +2599,13 @@ function BibliotecaPage() {
                     <span className="ml-2 text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
                 </h1>
 
-                {/* Player de áudio opcional — narração profissional (Bible Brain) */}
+                {/* Player de áudio opcional — voz do dispositivo (Web Speech API) */}
                 <div className="flex flex-col items-center mb-6">
                     <BibleAudioPlayer
                         key={`${livroAtual.abrev}-${capituloAtual}`}
-                        livroId={LIVRO_PARA_ID[livroAtual.abrev] || 1}
+                        versiculos={versiculos}
                         capitulo={capituloAtual}
-                        onVerseChange={setAudioVerse}
+                        onVerseChange={(verse) => setAudioVerse(verse)}
                         className="w-full max-w-md"
                     />
                 </div>
