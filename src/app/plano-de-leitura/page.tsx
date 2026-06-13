@@ -1198,14 +1198,18 @@ function PlanoLeituraContent() {
         }
 
         const linhaPersistencia = isPlanoMode
-            ? '\nSeu progresso desta leitura fica salvo até o fim do dia.'
-            : '\nSeu progresso desta passagem fica salvo até a passagem mudar.';
+            ? '\n\n📌 *Seu progresso fica salvo até o fim do dia.*'
+            : '\n\n📌 *Seu progresso fica salvo até você trocar de passagem.*';
 
         const versiculosDaParte = getVersiculosDaParte(parteAtual);
         const primeiroVersiculoDaParte = versiculosDaParte[0];
         const capDaParte = primeiroVersiculoDaParte?.chapter ?? null;
         const nomeLivroDaParte = primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia;
         const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
+
+        const rodapeAcao = ehUltimaParte
+            ? `🎉 **Você concluiu ${tituloCapitulo}!** Essa era a última parte.\nDigite **CONTINUAR** para finalizar a leitura.`
+            : 'Digite **CONTINUAR** para ler a próxima parte.';
 
         return `📖 **${tituloCapitulo}**
 📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
@@ -1216,10 +1220,9 @@ function PlanoLeituraContent() {
 
 ---
 
-%%EXPLICACAO_SLOT%%${ehUltimaParte
-                ? 'Digite **CONTINUAR** para finalizar a leitura.'
-                : 'Digite **CONTINUAR** para os próximos versículos.'}
-Ou **MENU** para voltar.${linhaPersistencia}`;
+%%EXPLICACAO_SLOT%%✅ **Você acabou de ler a Parte ${parteAtual} de ${totalPartes}** — ${tituloCapitulo}
+
+${rodapeAcao}${linhaPersistencia}`;
     };
 
     // Gerar resposta do menu inicial
