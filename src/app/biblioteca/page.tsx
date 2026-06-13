@@ -2605,6 +2605,7 @@ function BibliotecaPage() {
                         key={`${livroAtual.abrev}-${capituloAtual}`}
                         versiculos={versiculos}
                         capitulo={capituloAtual}
+                        livroId={LIVRO_PARA_ID[livroAtual.abrev] || 1}
                         onVerseChange={(verse) => setAudioVerse(verse)}
                         className="w-full max-w-md"
                     />

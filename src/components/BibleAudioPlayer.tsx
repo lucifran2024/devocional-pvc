@@ -4,12 +4,16 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Headphones, Play, Pause, Square, Loader2 } from 'lucide-react';
 
 // ============================================
-// PLAYER DE ÁUDIO BÍBLICO (opcional) — voz do navegador
-// Botão "Ouvir" discreto. Usa a Web Speech API (speechSynthesis),
-// gratuita e nativa do dispositivo, em português (pt-BR).
-// Lê versículo por versículo: a cada versículo avisa qual está sendo
-// lido (onVerseChange) para o destaque tipo "legenda" na página.
-// Se o aparelho não tiver síntese de voz, o botão fica oculto.
+// PLAYER DE ÁUDIO BÍBLICO (opcional) — dois motores:
+//
+//  1) NEURAL (preferido): MP3 de voz neural natural (Azure), gerado uma
+//     vez por versículo e cacheado no servidor (/api/bible-audio).
+//  2) NAVEGADOR (fallback): síntese de voz do dispositivo (speechSynthesis),
+//     usada quando a voz neural não está configurada/disponível.
+//
+// Em ambos os modos lê versículo por versículo e avisa qual está sendo
+// lido (onVerseChange) para o destaque tipo "legenda" + auto-scroll.
+// Se nada estiver disponível, o botão fica oculto.
 // ============================================
 
 interface VersiculoFala {
@@ -20,9 +24,9 @@ interface VersiculoFala {
 
 const VELOCIDADES = [1, 0.85, 1.25, 1.5];
 
-// Limpa marcações para a leitura soar natural (negrito, números soltos, etc.)
 function limparTexto(t: string): string {
     return t
+        .replace(/<[^>]*>/g, '')
         .replace(/\*\*/g, '')
         .replace(/[*_#`>]/g, '')
         .replace(/\s+/g, ' ')
@@ -32,25 +36,30 @@ function limparTexto(t: string): string {
 export function BibleAudioPlayer({
     versiculos,
     capitulo,
+    livroId,
     onVerseChange,
     className = '',
 }: {
     versiculos: VersiculoFala[];
     capitulo: number;
+    livroId: number;
     onVerseChange?: (verse: number | null, chapter?: number) => void;
     className?: string;
 }) {
-    const [estado, setEstado] = useState<'fechado' | 'tocando' | 'pausado' | 'indisponivel'>('fechado');
-    const [posicao, setPosicao] = useState(0); // índice do versículo atual
+    const [estado, setEstado] = useState<'fechado' | 'carregando' | 'tocando' | 'pausado' | 'indisponivel'>('fechado');
+    const [posicao, setPosicao] = useState(0);
     const [velocidadeIdx, setVelocidadeIdx] = useState(0);
-    const [vozPronta, setVozPronta] = useState(false);
+    const [vozNavegadorPronta, setVozNavegadorPronta] = useState(false);
+    const [fonte, setFonte] = useState('');
 
     const idxRef = useRef(0);
     const pararRef = useRef(false);
-    const estadoRef = useRef(estado);
-    estadoRef.current = estado;
+    const modoRef = useRef<'neural' | 'navegador'>('navegador');
     const rateRef = useRef(VELOCIDADES[0]);
     const vozRef = useRef<SpeechSynthesisVoice | null>(null);
+    const urlMapRef = useRef<Map<number, string>>(new Map());
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const versiculosRef = useRef<VersiculoFala[]>(versiculos);
     versiculosRef.current = versiculos;
     const onVerseChangeRef = useRef(onVerseChange);
@@ -58,99 +67,151 @@ export function BibleAudioPlayer({
     const capituloRef = useRef(capitulo);
     capituloRef.current = capitulo;
 
-    // Escolhe a melhor voz pt disponível (prefere pt-BR e vozes "Google"/naturais)
+    const temSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+    // Escolhe a melhor voz pt do dispositivo (prefere pt-BR e vozes naturais)
     const escolherVoz = useCallback(() => {
-        if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+        if (!temSpeech) return null;
         const vozes = window.speechSynthesis.getVoices();
         const pt = vozes.filter((v) => v.lang && v.lang.toLowerCase().startsWith('pt'));
         if (pt.length === 0) return null;
         const ptBR = pt.filter((v) => v.lang.toLowerCase().replace('_', '-') === 'pt-br');
         const pool = ptBR.length ? ptBR : pt;
-        const natural =
+        return (
             pool.find((v) => /google/i.test(v.name)) ||
-            pool.find((v) => /natural|premium|online/i.test(v.name));
-        return natural || pool[0];
-    }, []);
+            pool.find((v) => /natural|premium|online/i.test(v.name)) ||
+            pool[0]
+        );
+    }, [temSpeech]);
 
-    // Detecta suporte e carrega as vozes (que chegam de forma assíncrona)
+    // Carrega vozes do navegador (assíncrono) — base do fallback
     useEffect(() => {
-        if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-            setEstado('indisponivel');
-            return;
-        }
+        if (!temSpeech) return;
         const carregar = () => {
             vozRef.current = escolherVoz();
-            setVozPronta(true);
+            setVozNavegadorPronta(true);
         };
         carregar();
         window.speechSynthesis.addEventListener('voiceschanged', carregar);
-        return () => {
-            window.speechSynthesis.removeEventListener('voiceschanged', carregar);
-        };
-    }, [escolherVoz]);
+        return () => window.speechSynthesis.removeEventListener('voiceschanged', carregar);
+    }, [temSpeech, escolherVoz]);
 
     const pararTudo = useCallback(() => {
         pararRef.current = true;
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-            window.speechSynthesis.cancel();
+        if (temSpeech) window.speechSynthesis.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.onended = null;
+            audioRef.current.onerror = null;
         }
         if (onVerseChangeRef.current) onVerseChangeRef.current(null);
-    }, []);
+    }, [temSpeech]);
 
-    // Encerra a leitura ao trocar de capítulo/parte (remontagem) ou sair
+    // Encerra ao trocar de capítulo/parte (remontagem via key) ou sair
     useEffect(() => {
         return () => pararTudo();
     }, [pararTudo]);
 
-    const falar = (idx: number) => {
+    // --- Reprodução versículo a versículo (compartilhada pelos 2 modos) ---
+    const falarTTS = (texto: string, idx: number) => {
+        if (!temSpeech) { proximo(idx + 1); return; }
+        const u = new SpeechSynthesisUtterance(limparTexto(texto));
+        u.lang = 'pt-BR';
+        if (vozRef.current) u.voice = vozRef.current;
+        u.rate = rateRef.current;
+        u.onend = () => { if (!pararRef.current) proximo(idx + 1); };
+        u.onerror = () => { if (!pararRef.current) proximo(idx + 1); };
+        window.speechSynthesis.speak(u);
+    };
+
+    const tocarUrl = (url: string, idx: number) => {
+        const audio = audioRef.current || new Audio();
+        audioRef.current = audio;
+        audio.src = url;
+        audio.playbackRate = rateRef.current;
+        audio.onended = () => { if (!pararRef.current) proximo(idx + 1); };
+        audio.onerror = () => { if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx); };
+        audio.play().catch(() => { if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx); });
+    };
+
+    const proximo = (idx: number) => {
+        if (pararRef.current) return;
         const lista = versiculosRef.current;
-        if (!window.speechSynthesis || idx >= lista.length) {
-            // chegou ao fim
+        if (idx >= lista.length) {
             setEstado('fechado');
             setPosicao(0);
             idxRef.current = 0;
             if (onVerseChangeRef.current) onVerseChangeRef.current(null);
             return;
         }
-
         idxRef.current = idx;
         setPosicao(idx);
         const v = lista[idx];
         if (onVerseChangeRef.current) onVerseChangeRef.current(v.verse, v.chapter ?? capituloRef.current);
 
-        const u = new SpeechSynthesisUtterance(limparTexto(v.text));
-        u.lang = 'pt-BR';
-        if (vozRef.current) u.voice = vozRef.current;
-        u.rate = rateRef.current;
-        u.onend = () => {
-            if (pararRef.current) return;
-            // pequena folga para o motor de voz respirar entre versículos
-            falar(idx + 1);
-        };
-        u.onerror = () => {
-            if (pararRef.current) return;
-            falar(idx + 1);
-        };
-        window.speechSynthesis.speak(u);
+        if (modoRef.current === 'neural') {
+            const url = urlMapRef.current.get(v.verse);
+            if (url) { tocarUrl(url, idx); return; }
+        }
+        falarTTS(v.text, idx);
     };
 
-    const iniciar = () => {
-        if (!window.speechSynthesis || versiculosRef.current.length === 0) return;
-        window.speechSynthesis.cancel(); // limpa qualquer fila pendente
+    const iniciar = async () => {
+        const lista = versiculosRef.current;
+        if (lista.length === 0) return;
         pararRef.current = false;
         rateRef.current = VELOCIDADES[velocidadeIdx];
+        // cria o elemento de áudio já durante o clique (ajuda no autoplay)
+        if (!audioRef.current) audioRef.current = new Audio();
+
+        setEstado('carregando');
+
+        // Tenta a voz neural cacheada no servidor
+        let usouNeural = false;
+        try {
+            const resp = await fetch('/api/bible-audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    livroId,
+                    capitulo,
+                    verses: lista.map((v) => ({ verse: v.verse, text: v.text })),
+                }),
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.ok && Array.isArray(data.verses) && data.verses.length > 0) {
+                    const m = new Map<number, string>();
+                    for (const x of data.verses) m.set(Number(x.verse), String(x.url));
+                    urlMapRef.current = m;
+                    modoRef.current = 'neural';
+                    setFonte(data.fonte || 'Voz neural');
+                    usouNeural = true;
+                }
+            }
+        } catch {
+            /* ignora — cai no fallback */
+        }
+
+        if (!usouNeural) {
+            if (!temSpeech) { setEstado('fechado'); return; }
+            modoRef.current = 'navegador';
+            setFonte('Voz do dispositivo');
+        }
+
+        if (pararRef.current) return;
         setEstado('tocando');
-        // alguns navegadores precisam de um tique antes de aceitar speak()
-        falar(0);
+        proximo(0);
     };
 
     const alternarPlay = () => {
-        if (!window.speechSynthesis) return;
         if (estado === 'tocando') {
-            window.speechSynthesis.pause();
+            if (modoRef.current === 'neural' && audioRef.current) audioRef.current.pause();
+            else if (temSpeech) window.speechSynthesis.pause();
             setEstado('pausado');
         } else if (estado === 'pausado') {
-            window.speechSynthesis.resume();
+            if (modoRef.current === 'neural' && audioRef.current) audioRef.current.play().catch(() => {});
+            else if (temSpeech) window.speechSynthesis.resume();
             setEstado('tocando');
         }
     };
@@ -160,7 +221,6 @@ export function BibleAudioPlayer({
         setEstado('fechado');
         setPosicao(0);
         idxRef.current = 0;
-        // libera para um novo play
         setTimeout(() => { pararRef.current = false; }, 50);
     };
 
@@ -168,10 +228,12 @@ export function BibleAudioPlayer({
         const novoIdx = (velocidadeIdx + 1) % VELOCIDADES.length;
         setVelocidadeIdx(novoIdx);
         rateRef.current = VELOCIDADES[novoIdx];
-        // aplica já no versículo atual: recomeça a fala dele com a nova velocidade
-        if (estado === 'tocando' && window.speechSynthesis) {
+        if (estado !== 'tocando') return;
+        if (modoRef.current === 'neural' && audioRef.current) {
+            audioRef.current.playbackRate = rateRef.current; // aplica ao vivo
+        } else if (temSpeech) {
             window.speechSynthesis.cancel();
-            falar(idxRef.current);
+            falarTTS(versiculosRef.current[idxRef.current]?.text || '', idxRef.current);
         }
     };
 
@@ -187,9 +249,9 @@ export function BibleAudioPlayer({
                 <button
                     type="button"
                     onClick={iniciar}
-                    disabled={!vozPronta || total === 0}
+                    disabled={total === 0}
                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50 text-amber-700 dark:text-amber-300 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50"
-                    title="Ouvir este capítulo (voz do dispositivo)"
+                    title="Ouvir este capítulo"
                 >
                     <Headphones className="w-4 h-4" />
                     Ouvir
@@ -198,34 +260,35 @@ export function BibleAudioPlayer({
         );
     }
 
-    // Barra do player (ativa)
+    // Barra do player (carregando/tocando/pausado)
     return (
         <div className={className}>
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/90 dark:bg-surface-2/90 border border-slate-200 dark:border-border-subtle shadow-md backdrop-blur-md">
                 <button
                     type="button"
                     onClick={alternarPlay}
-                    className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 text-black transition-colors"
+                    disabled={estado === 'carregando'}
+                    className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 text-black transition-colors disabled:opacity-60"
                     title={estado === 'tocando' ? 'Pausar' : 'Continuar'}
                 >
-                    {estado === 'tocando'
-                        ? <Pause className="w-4 h-4" />
-                        : <Play className="w-4 h-4 ml-0.5" />}
+                    {estado === 'carregando'
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : estado === 'tocando'
+                            ? <Pause className="w-4 h-4" />
+                            : <Play className="w-4 h-4 ml-0.5" />}
                 </button>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
-                            Versículo {posicao + 1} de {total}
+                            {estado === 'carregando' ? 'Preparando áudio…' : `Versículo ${posicao + 1} de ${total}`}
                         </span>
-                        {estado === 'pausado' && (
-                            <span className="text-[10px] text-text-muted">pausado</span>
-                        )}
+                        {estado === 'pausado' && <span className="text-[10px] text-text-muted">pausado</span>}
                     </div>
                     <div className="h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
                         <div
                             className="h-full bg-amber-500 rounded-full transition-all duration-300"
-                            style={{ width: `${progresso}%` }}
+                            style={{ width: `${estado === 'carregando' ? 6 : progresso}%` }}
                         />
                     </div>
                 </div>
@@ -233,7 +296,8 @@ export function BibleAudioPlayer({
                 <button
                     type="button"
                     onClick={mudarVelocidade}
-                    className="shrink-0 px-2 py-1 rounded-lg text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors tabular-nums"
+                    disabled={estado === 'carregando'}
+                    className="shrink-0 px-2 py-1 rounded-lg text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors tabular-nums disabled:opacity-60"
                     title="Velocidade"
                 >
                     {VELOCIDADES[velocidadeIdx]}x
@@ -248,9 +312,11 @@ export function BibleAudioPlayer({
                     <Square className="w-3.5 h-3.5" />
                 </button>
             </div>
-            <p className="mt-1 text-[10px] text-text-muted text-center">
-                🔊 Voz do dispositivo · toque em ▶ para ouvir
-            </p>
+            {fonte && (
+                <p className="mt-1 text-[10px] text-text-muted text-center truncate">
+                    🔊 {fonte}
+                </p>
+            )}
         </div>
     );
 }
