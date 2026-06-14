@@ -3,17 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Headphones, Play, Pause, Square, Loader2 } from 'lucide-react';
 
-// ============================================
-// PLAYER DE ÁUDIO BÍBLICO — dois motores:
-//
-//  1) NEURAL (preferido): Web Audio API com AudioBufferSourceNode.
-//     Cada versículo é agendado com node.start(scheduledEnd), garantindo
-//     reprodução gapless (zero pausa entre versículos) na linha de tempo
-//     do processador de áudio, sem latência do HTMLAudioElement.play().
-//
-//  2) NAVEGADOR (fallback): speechSynthesis do dispositivo.
-// ============================================
-
 interface VersiculoFala {
     verse: number;
     text: string;
@@ -57,9 +46,11 @@ export function BibleAudioPlayer({
     const vozRef = useRef<SpeechSynthesisVoice | null>(null);
     const urlMapRef = useRef<Map<number, string>>(new Map());
 
-    // Web Audio API — motor neural gapless
-    const audioCtxRef = useRef<AudioContext | null>(null);
-    const scheduledEndRef = useRef<number>(0); // quando o último versículo agendado termina
+    // Double-buffer: dois HTMLAudioElement que se alternam
+    const audioARef = useRef<HTMLAudioElement | null>(null);
+    const audioBRef = useRef<HTMLAudioElement | null>(null);
+    const activeRef = useRef<'A' | 'B'>('A');
+    const nextReadyRef = useRef(false);
 
     const versiculosRef = useRef<VersiculoFala[]>(versiculos);
     versiculosRef.current = versiculos;
@@ -95,21 +86,44 @@ export function BibleAudioPlayer({
         return () => window.speechSynthesis.removeEventListener('voiceschanged', carregar);
     }, [temSpeech, escolherVoz]);
 
-    const getCtx = (): AudioContext => {
-        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-            audioCtxRef.current = new AudioContext();
-        }
-        return audioCtxRef.current;
+    const getActive = () => activeRef.current === 'A' ? audioARef.current : audioBRef.current;
+    const getNext = () => activeRef.current === 'A' ? audioBRef.current : audioARef.current;
+
+    const prepararProximo = (idx: number) => {
+        const lista = versiculosRef.current;
+        if (idx >= lista.length) { nextReadyRef.current = false; return; }
+        const v = lista[idx];
+        const url = urlMapRef.current.get(v.verse);
+        if (!url) { nextReadyRef.current = false; return; }
+
+        const next = getNext();
+        if (!next) { nextReadyRef.current = false; return; }
+
+        nextReadyRef.current = false;
+        next.onended = null;
+        next.onerror = null;
+        next.src = url;
+        next.playbackRate = rateRef.current;
+        next.load();
+        next.oncanplaythrough = () => { nextReadyRef.current = true; };
     };
 
     const pararTudo = useCallback(() => {
         pararRef.current = true;
         if (temSpeech) window.speechSynthesis.cancel();
-        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-            audioCtxRef.current.close();
-            audioCtxRef.current = null;
+        if (audioARef.current) {
+            audioARef.current.pause();
+            audioARef.current.onended = null;
+            audioARef.current.onerror = null;
+            audioARef.current.oncanplaythrough = null;
         }
-        scheduledEndRef.current = 0;
+        if (audioBRef.current) {
+            audioBRef.current.pause();
+            audioBRef.current.onended = null;
+            audioBRef.current.onerror = null;
+            audioBRef.current.oncanplaythrough = null;
+        }
+        nextReadyRef.current = false;
         if (onVerseChangeRef.current) onVerseChangeRef.current(null);
     }, [temSpeech]);
 
@@ -117,19 +131,48 @@ export function BibleAudioPlayer({
         return () => pararTudo();
     }, [pararTudo]);
 
-    // --- TTS fallback (versículo a versículo) ---
     const falarTTS = (texto: string, idx: number) => {
-        if (!temSpeech) { proximoTTS(idx + 1); return; }
+        if (!temSpeech) { proximo(idx + 1); return; }
         const u = new SpeechSynthesisUtterance(limparTexto(texto));
         u.lang = 'pt-BR';
         if (vozRef.current) u.voice = vozRef.current;
         u.rate = rateRef.current;
-        u.onend = () => { if (!pararRef.current) proximoTTS(idx + 1); };
-        u.onerror = () => { if (!pararRef.current) proximoTTS(idx + 1); };
+        u.onend = () => { if (!pararRef.current) proximo(idx + 1); };
+        u.onerror = () => { if (!pararRef.current) proximo(idx + 1); };
         window.speechSynthesis.speak(u);
     };
 
-    const proximoTTS = (idx: number) => {
+    const tocarUrl = (url: string, idx: number) => {
+        const active = getActive();
+        if (!active) return;
+
+        // Se o próximo já está pré-carregado neste elemento, usa ele direto
+        if (nextReadyRef.current && active.src && active.readyState >= 3) {
+            // Já está pronto — toca direto
+        } else {
+            active.src = url;
+            active.playbackRate = rateRef.current;
+            active.load();
+        }
+
+        active.onended = () => {
+            if (pararRef.current) return;
+            // Troca o buffer ativo
+            activeRef.current = activeRef.current === 'A' ? 'B' : 'A';
+            proximo(idx + 1);
+        };
+        active.onerror = () => {
+            if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
+        };
+        active.play().catch(() => {
+            if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
+        });
+
+        // Pré-carrega o próximo no elemento inativo
+        prepararProximo(idx + 1);
+    };
+
+    const proximo = (idx: number) => {
         if (pararRef.current) return;
         const lista = versiculosRef.current;
         if (idx >= lista.length) {
@@ -143,77 +186,34 @@ export function BibleAudioPlayer({
         setPosicao(idx);
         const v = lista[idx];
         if (onVerseChangeRef.current) onVerseChangeRef.current(v.verse, v.chapter ?? capituloRef.current);
-        falarTTS(v.text, idx);
-    };
 
-    // --- Motor neural: Web Audio API com scheduling gapless ---
-    //
-    // agendarNeural(idx) busca o MP3, decodifica e agenda com
-    // node.start(scheduledEndRef) para tocar imediatamente após o anterior.
-    // Depois chama agendarNeural(idx+1) sem await para buscar o próximo
-    // em paralelo enquanto o atual toca — garantindo zero gap.
-    const agendarNeural = async (idx: number) => {
-        if (pararRef.current) return;
-        const lista = versiculosRef.current;
-        if (idx >= lista.length) return;
-
-        const v = lista[idx];
-        const url = urlMapRef.current.get(v.verse);
-        if (!url) {
-            // versículo sem URL → pula (raro)
-            if (!pararRef.current) agendarNeural(idx + 1);
-            return;
-        }
-
-        let buffer: AudioBuffer | null = null;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('fetch falhou');
-            const ab = await resp.arrayBuffer();
-            if (pararRef.current) return;
-            buffer = await getCtx().decodeAudioData(ab);
-        } catch {
-            if (!pararRef.current) agendarNeural(idx + 1);
-            return;
-        }
-
-        if (pararRef.current || !buffer) return;
-
-        const ctx = getCtx();
-        if (ctx.state === 'suspended') await ctx.resume();
-        if (pararRef.current) return;
-
-        const node = ctx.createBufferSource();
-        node.buffer = buffer;
-        node.playbackRate.value = rateRef.current;
-        node.connect(ctx.destination);
-
-        // Agenda imediatamente após o versículo anterior (sem gap)
-        const startAt = Math.max(ctx.currentTime + 0.005, scheduledEndRef.current);
-        node.start(startAt);
-        scheduledEndRef.current = startAt + buffer.duration / rateRef.current;
-
-        // Atualiza UI quando ESTE versículo começa (= quando o anterior termina)
-        // Para o verso 0 a atualização já foi feita em iniciar()
-        node.onended = () => {
-            if (pararRef.current) return;
-            const nextIdx = idx + 1;
-            if (nextIdx >= versiculosRef.current.length) {
-                setEstado('fechado');
-                setPosicao(0);
-                idxRef.current = 0;
-                if (onVerseChangeRef.current) onVerseChangeRef.current(null);
+        if (modoRef.current === 'neural') {
+            const url = urlMapRef.current.get(v.verse);
+            if (url) {
+                // Se o próximo elemento já tem este URL pré-carregado, usa ele
+                const next = getActive();
+                if (nextReadyRef.current && next && next.readyState >= 3) {
+                    next.playbackRate = rateRef.current;
+                    next.onended = () => {
+                        if (pararRef.current) return;
+                        activeRef.current = activeRef.current === 'A' ? 'B' : 'A';
+                        proximo(idx + 1);
+                    };
+                    next.onerror = () => {
+                        if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
+                    };
+                    next.play().catch(() => {
+                        if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
+                    });
+                    nextReadyRef.current = false;
+                    prepararProximo(idx + 1);
+                    return;
+                }
+                tocarUrl(url, idx);
                 return;
             }
-            // Versículo seguinte já está tocando — atualiza destaque
-            const nextV = versiculosRef.current[nextIdx];
-            idxRef.current = nextIdx;
-            setPosicao(nextIdx);
-            if (onVerseChangeRef.current) onVerseChangeRef.current(nextV.verse, nextV.chapter ?? capituloRef.current);
-        };
-
-        // Busca e agenda o próximo em paralelo (sem await)
-        if (idx + 1 < lista.length) agendarNeural(idx + 1);
+        }
+        falarTTS(v.text, idx);
     };
 
     const iniciar = async () => {
@@ -221,11 +221,12 @@ export function BibleAudioPlayer({
         if (lista.length === 0) return;
         pararRef.current = false;
         rateRef.current = VELOCIDADES[velocidadeIdx];
-        scheduledEndRef.current = 0;
 
-        // AudioContext DEVE ser criado dentro do handler de clique (política autoplay)
-        const ctx = getCtx();
-        if (ctx.state === 'suspended') ctx.resume();
+        // Cria os dois elementos de áudio no handler de clique (autoplay)
+        if (!audioARef.current) audioARef.current = new Audio();
+        if (!audioBRef.current) audioBRef.current = new Audio();
+        activeRef.current = 'A';
+        nextReadyRef.current = false;
 
         setEstado('carregando');
 
@@ -249,40 +250,41 @@ export function BibleAudioPlayer({
                     modoRef.current = 'neural';
                     setFonte(data.fonte || 'Voz neural');
                     usouNeural = true;
+
+                    // Pré-carrega o versículo 0 no elemento A
+                    const v0 = lista[0];
+                    const url0 = m.get(v0.verse);
+                    if (url0 && audioARef.current) {
+                        audioARef.current.src = url0;
+                        audioARef.current.playbackRate = rateRef.current;
+                        audioARef.current.load();
+                    }
                 }
             }
         } catch {
             /* ignora — cai no fallback */
         }
 
-        if (pararRef.current) return;
-
-        if (usouNeural) {
-            setEstado('tocando');
-            // Atualiza UI para versículo 0 antes de iniciar (agendarNeural só atualiza a partir do 1)
-            idxRef.current = 0;
-            setPosicao(0);
-            const v0 = lista[0];
-            if (onVerseChangeRef.current) onVerseChangeRef.current(v0.verse, v0.chapter ?? capituloRef.current);
-            agendarNeural(0);
-        } else {
+        if (!usouNeural) {
             if (!temSpeech) { setEstado('fechado'); return; }
             modoRef.current = 'navegador';
             setFonte('Voz do dispositivo');
-            setEstado('tocando');
-            proximoTTS(0);
         }
+
+        if (pararRef.current) return;
+        setEstado('tocando');
+        proximo(0);
     };
 
-    const alternarPlay = async () => {
+    const alternarPlay = () => {
         if (estado === 'tocando') {
-            if (modoRef.current === 'neural' && audioCtxRef.current) {
-                audioCtxRef.current.suspend();
+            if (modoRef.current === 'neural') {
+                getActive()?.pause();
             } else if (temSpeech) window.speechSynthesis.pause();
             setEstado('pausado');
         } else if (estado === 'pausado') {
-            if (modoRef.current === 'neural' && audioCtxRef.current) {
-                await audioCtxRef.current.resume();
+            if (modoRef.current === 'neural') {
+                getActive()?.play().catch(() => {});
             } else if (temSpeech) window.speechSynthesis.resume();
             setEstado('tocando');
         }
@@ -302,16 +304,10 @@ export function BibleAudioPlayer({
         rateRef.current = VELOCIDADES[novoIdx];
         if (estado !== 'tocando') return;
         if (modoRef.current === 'neural') {
-            const currentIdx = idxRef.current;
-            // Cria novo contexto ANTES de fechar o anterior (ainda no handler de clique)
-            const newCtx = new AudioContext();
-            if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-                audioCtxRef.current.close();
-            }
-            audioCtxRef.current = newCtx;
-            scheduledEndRef.current = 0;
-            pararRef.current = false;
-            agendarNeural(currentIdx);
+            const active = getActive();
+            if (active) active.playbackRate = rateRef.current;
+            const next = getNext();
+            if (next) next.playbackRate = rateRef.current;
         } else if (temSpeech) {
             window.speechSynthesis.cancel();
             falarTTS(versiculosRef.current[idxRef.current]?.text || '', idxRef.current);
