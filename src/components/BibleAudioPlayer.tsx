@@ -9,6 +9,13 @@ interface VersiculoFala {
     chapter?: number;
 }
 
+interface Segmento {
+    verse: number;
+    start: number;
+    end: number;
+    listIdx: number;
+}
+
 const VELOCIDADES = [1, 0.85, 1.25, 1.5];
 
 function limparTexto(t: string): string {
@@ -44,13 +51,9 @@ export function BibleAudioPlayer({
     const modoRef = useRef<'neural' | 'navegador'>('navegador');
     const rateRef = useRef(VELOCIDADES[0]);
     const vozRef = useRef<SpeechSynthesisVoice | null>(null);
-    const urlMapRef = useRef<Map<number, string>>(new Map());
-
-    // Double-buffer: dois HTMLAudioElement que se alternam
-    const audioARef = useRef<HTMLAudioElement | null>(null);
-    const audioBRef = useRef<HTMLAudioElement | null>(null);
-    const activeRef = useRef<'A' | 'B'>('A');
-    const nextReadyRef = useRef(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const segmentsRef = useRef<Segmento[]>([]);
+    const lastSegIdxRef = useRef(-1);
 
     const versiculosRef = useRef<VersiculoFala[]>(versiculos);
     versiculosRef.current = versiculos;
@@ -86,44 +89,17 @@ export function BibleAudioPlayer({
         return () => window.speechSynthesis.removeEventListener('voiceschanged', carregar);
     }, [temSpeech, escolherVoz]);
 
-    const getActive = () => activeRef.current === 'A' ? audioARef.current : audioBRef.current;
-    const getNext = () => activeRef.current === 'A' ? audioBRef.current : audioARef.current;
-
-    const prepararProximo = (idx: number) => {
-        const lista = versiculosRef.current;
-        if (idx >= lista.length) { nextReadyRef.current = false; return; }
-        const v = lista[idx];
-        const url = urlMapRef.current.get(v.verse);
-        if (!url) { nextReadyRef.current = false; return; }
-
-        const next = getNext();
-        if (!next) { nextReadyRef.current = false; return; }
-
-        nextReadyRef.current = false;
-        next.onended = null;
-        next.onerror = null;
-        next.src = url;
-        next.playbackRate = rateRef.current;
-        next.load();
-        next.oncanplaythrough = () => { nextReadyRef.current = true; };
-    };
-
     const pararTudo = useCallback(() => {
         pararRef.current = true;
         if (temSpeech) window.speechSynthesis.cancel();
-        if (audioARef.current) {
-            audioARef.current.pause();
-            audioARef.current.onended = null;
-            audioARef.current.onerror = null;
-            audioARef.current.oncanplaythrough = null;
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.ontimeupdate = null;
+            audioRef.current.onended = null;
+            audioRef.current.onerror = null;
         }
-        if (audioBRef.current) {
-            audioBRef.current.pause();
-            audioBRef.current.onended = null;
-            audioBRef.current.onerror = null;
-            audioBRef.current.oncanplaythrough = null;
-        }
-        nextReadyRef.current = false;
+        segmentsRef.current = [];
+        lastSegIdxRef.current = -1;
         if (onVerseChangeRef.current) onVerseChangeRef.current(null);
     }, [temSpeech]);
 
@@ -131,48 +107,19 @@ export function BibleAudioPlayer({
         return () => pararTudo();
     }, [pararTudo]);
 
+    // --- TTS fallback (versículo a versículo) ---
     const falarTTS = (texto: string, idx: number) => {
-        if (!temSpeech) { proximo(idx + 1); return; }
+        if (!temSpeech) { proximoTTS(idx + 1); return; }
         const u = new SpeechSynthesisUtterance(limparTexto(texto));
         u.lang = 'pt-BR';
         if (vozRef.current) u.voice = vozRef.current;
         u.rate = rateRef.current;
-        u.onend = () => { if (!pararRef.current) proximo(idx + 1); };
-        u.onerror = () => { if (!pararRef.current) proximo(idx + 1); };
+        u.onend = () => { if (!pararRef.current) proximoTTS(idx + 1); };
+        u.onerror = () => { if (!pararRef.current) proximoTTS(idx + 1); };
         window.speechSynthesis.speak(u);
     };
 
-    const tocarUrl = (url: string, idx: number) => {
-        const active = getActive();
-        if (!active) return;
-
-        // Se o próximo já está pré-carregado neste elemento, usa ele direto
-        if (nextReadyRef.current && active.src && active.readyState >= 3) {
-            // Já está pronto — toca direto
-        } else {
-            active.src = url;
-            active.playbackRate = rateRef.current;
-            active.load();
-        }
-
-        active.onended = () => {
-            if (pararRef.current) return;
-            // Troca o buffer ativo
-            activeRef.current = activeRef.current === 'A' ? 'B' : 'A';
-            proximo(idx + 1);
-        };
-        active.onerror = () => {
-            if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
-        };
-        active.play().catch(() => {
-            if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
-        });
-
-        // Pré-carrega o próximo no elemento inativo
-        prepararProximo(idx + 1);
-    };
-
-    const proximo = (idx: number) => {
+    const proximoTTS = (idx: number) => {
         if (pararRef.current) return;
         const lista = versiculosRef.current;
         if (idx >= lista.length) {
@@ -186,34 +133,41 @@ export function BibleAudioPlayer({
         setPosicao(idx);
         const v = lista[idx];
         if (onVerseChangeRef.current) onVerseChangeRef.current(v.verse, v.chapter ?? capituloRef.current);
-
-        if (modoRef.current === 'neural') {
-            const url = urlMapRef.current.get(v.verse);
-            if (url) {
-                // Se o próximo elemento já tem este URL pré-carregado, usa ele
-                const next = getActive();
-                if (nextReadyRef.current && next && next.readyState >= 3) {
-                    next.playbackRate = rateRef.current;
-                    next.onended = () => {
-                        if (pararRef.current) return;
-                        activeRef.current = activeRef.current === 'A' ? 'B' : 'A';
-                        proximo(idx + 1);
-                    };
-                    next.onerror = () => {
-                        if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
-                    };
-                    next.play().catch(() => {
-                        if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx);
-                    });
-                    nextReadyRef.current = false;
-                    prepararProximo(idx + 1);
-                    return;
-                }
-                tocarUrl(url, idx);
-                return;
-            }
-        }
         falarTTS(v.text, idx);
+    };
+
+    // --- Tracking do versículo pelo tempo de reprodução ---
+    const onTimeUpdate = () => {
+        if (pararRef.current || !audioRef.current) return;
+        const ct = audioRef.current.currentTime;
+        const segs = segmentsRef.current;
+        const lista = versiculosRef.current;
+
+        const last = lastSegIdxRef.current;
+        // Ainda no mesmo segmento?
+        if (last >= 0 && last < segs.length && ct >= segs[last].start && ct < segs[last].end) return;
+        // Próximo segmento? (transição mais comum)
+        if (last + 1 < segs.length && ct >= segs[last + 1].start && ct < segs[last + 1].end) {
+            atualizarVerse(last + 1, lista);
+            return;
+        }
+        // Busca geral
+        const idx = segs.findIndex(s => ct >= s.start && ct < s.end);
+        if (idx >= 0 && idx !== last) atualizarVerse(idx, lista);
+        else if (idx < 0 && segs.length > 0 && ct >= segs[segs.length - 1].start) {
+            atualizarVerse(segs.length - 1, lista);
+        }
+    };
+
+    const atualizarVerse = (segIdx: number, lista: VersiculoFala[]) => {
+        lastSegIdxRef.current = segIdx;
+        const seg = segmentsRef.current[segIdx];
+        idxRef.current = seg.listIdx;
+        setPosicao(seg.listIdx);
+        const v = lista[seg.listIdx];
+        if (onVerseChangeRef.current && v) {
+            onVerseChangeRef.current(v.verse, v.chapter ?? capituloRef.current);
+        }
     };
 
     const iniciar = async () => {
@@ -221,13 +175,9 @@ export function BibleAudioPlayer({
         if (lista.length === 0) return;
         pararRef.current = false;
         rateRef.current = VELOCIDADES[velocidadeIdx];
+        lastSegIdxRef.current = -1;
 
-        // Cria os dois elementos de áudio no handler de clique (autoplay)
-        if (!audioARef.current) audioARef.current = new Audio();
-        if (!audioBRef.current) audioBRef.current = new Audio();
-        activeRef.current = 'A';
-        nextReadyRef.current = false;
-
+        if (!audioRef.current) audioRef.current = new Audio();
         setEstado('carregando');
 
         let usouNeural = false;
@@ -243,49 +193,78 @@ export function BibleAudioPlayer({
             });
             if (resp.ok) {
                 const data = await resp.json();
-                if (data.ok && Array.isArray(data.verses) && data.verses.length > 0) {
-                    const m = new Map<number, string>();
-                    for (const x of data.verses) m.set(Number(x.verse), String(x.url));
-                    urlMapRef.current = m;
+                if (data.ok && data.fullUrl && Array.isArray(data.segments)) {
+                    segmentsRef.current = data.segments.map((s: { verse: number; start: number; end: number }) => ({
+                        verse: Number(s.verse),
+                        start: Number(s.start),
+                        end: Number(s.end),
+                        listIdx: lista.findIndex(v => v.verse === Number(s.verse)),
+                    }));
+
+                    const audio = audioRef.current!;
+                    audio.src = data.fullUrl;
+                    audio.playbackRate = rateRef.current;
                     modoRef.current = 'neural';
                     setFonte(data.fonte || 'Voz neural');
                     usouNeural = true;
-
-                    // Pré-carrega o versículo 0 no elemento A
-                    const v0 = lista[0];
-                    const url0 = m.get(v0.verse);
-                    if (url0 && audioARef.current) {
-                        audioARef.current.src = url0;
-                        audioARef.current.playbackRate = rateRef.current;
-                        audioARef.current.load();
-                    }
                 }
             }
         } catch {
-            /* ignora — cai no fallback */
-        }
-
-        if (!usouNeural) {
-            if (!temSpeech) { setEstado('fechado'); return; }
-            modoRef.current = 'navegador';
-            setFonte('Voz do dispositivo');
+            /* fallback TTS */
         }
 
         if (pararRef.current) return;
-        setEstado('tocando');
-        proximo(0);
+
+        if (usouNeural) {
+            const audio = audioRef.current!;
+            audio.ontimeupdate = onTimeUpdate;
+            audio.onended = () => {
+                if (pararRef.current) return;
+                setEstado('fechado');
+                setPosicao(0);
+                idxRef.current = 0;
+                lastSegIdxRef.current = -1;
+                if (onVerseChangeRef.current) onVerseChangeRef.current(null);
+            };
+            audio.onerror = () => {
+                if (!pararRef.current && temSpeech) {
+                    modoRef.current = 'navegador';
+                    setFonte('Voz do dispositivo');
+                    setEstado('tocando');
+                    proximoTTS(0);
+                }
+            };
+
+            idxRef.current = 0;
+            setPosicao(0);
+            const v0 = lista[0];
+            if (onVerseChangeRef.current) onVerseChangeRef.current(v0.verse, v0.chapter ?? capituloRef.current);
+
+            setEstado('tocando');
+            audio.play().catch(() => {
+                if (!pararRef.current && temSpeech) {
+                    modoRef.current = 'navegador';
+                    setFonte('Voz do dispositivo');
+                    proximoTTS(0);
+                }
+            });
+        } else {
+            if (!temSpeech) { setEstado('fechado'); return; }
+            modoRef.current = 'navegador';
+            setFonte('Voz do dispositivo');
+            setEstado('tocando');
+            proximoTTS(0);
+        }
     };
 
     const alternarPlay = () => {
         if (estado === 'tocando') {
-            if (modoRef.current === 'neural') {
-                getActive()?.pause();
-            } else if (temSpeech) window.speechSynthesis.pause();
+            if (modoRef.current === 'neural' && audioRef.current) audioRef.current.pause();
+            else if (temSpeech) window.speechSynthesis.pause();
             setEstado('pausado');
         } else if (estado === 'pausado') {
-            if (modoRef.current === 'neural') {
-                getActive()?.play().catch(() => {});
-            } else if (temSpeech) window.speechSynthesis.resume();
+            if (modoRef.current === 'neural' && audioRef.current) audioRef.current.play().catch(() => {});
+            else if (temSpeech) window.speechSynthesis.resume();
             setEstado('tocando');
         }
     };
@@ -303,11 +282,8 @@ export function BibleAudioPlayer({
         setVelocidadeIdx(novoIdx);
         rateRef.current = VELOCIDADES[novoIdx];
         if (estado !== 'tocando') return;
-        if (modoRef.current === 'neural') {
-            const active = getActive();
-            if (active) active.playbackRate = rateRef.current;
-            const next = getNext();
-            if (next) next.playbackRate = rateRef.current;
+        if (modoRef.current === 'neural' && audioRef.current) {
+            audioRef.current.playbackRate = rateRef.current;
         } else if (temSpeech) {
             window.speechSynthesis.cancel();
             falarTTS(versiculosRef.current[idxRef.current]?.text || '', idxRef.current);
