@@ -4,16 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 export const maxDuration = 60;
 
 // ============================================
-// ÁUDIO BÍBLICO — capítulo inteiro sintetizado como texto contínuo
+// ÁUDIO BÍBLICO — síntese por versículo + concatenação gapless
 //
-// Ao invés de sintetizar cada versículo separadamente (o que causava
-// pausas/cortes entre versículos), agora o capítulo inteiro é enviado
-// ao Azure como um único SSML. Resultado: leitura fluida e natural,
-// como se fosse uma pessoa lendo o capítulo de uma vez.
+// Cada versículo é sintetizado individualmente pelo Azure (melhor
+// qualidade e entonação natural) e depois concatenado em um único
+// full.mp3 no servidor. O player toca um único arquivo sem gaps.
 //
-// O áudio é cacheado como full.mp3 no Supabase Storage.
-// A posição de cada versículo é estimada por proporção de caracteres
-// e salva em full.json para o destaque tipo legenda no player.
+// A posição de cada versículo é calculada pelo tamanho real do MP3
+// de cada verso (preciso, sem estimativa por caracteres).
 // ============================================
 
 const AZURE_KEY = process.env.AZURE_SPEECH_KEY;
@@ -26,8 +24,8 @@ const BUCKET = 'bible-audio';
 
 const MAX_VERSES = 250;
 const MAX_TEXT = 1200;
-const MAX_CHUNK_CHARS = 2500;
 const MP3_BITRATE = 48000; // audio-24khz-48kbitrate-mono-mp3
+const BATCH_SIZE = 5;
 
 interface VersiculoEntrada {
     verse: number;
@@ -53,17 +51,12 @@ function limparTexto(t: string): string {
         .slice(0, MAX_TEXT);
 }
 
-function construirSSML(textos: string[]): string {
-    const sentences = textos.map(t => `<s>${escaparXml(t)}</s>`).join('');
-    return (
+async function sintetizarVerso(texto: string): Promise<ArrayBuffer | null> {
+    const ssml =
         `<speak version='1.0' xml:lang='pt-BR'>` +
         `<voice name='${VOZ}'>` +
-        `<prosody rate='-4%'>${sentences}</prosody>` +
-        `</voice></speak>`
-    );
-}
-
-async function sintetizarSSML(ssml: string): Promise<ArrayBuffer | null> {
+        `<prosody rate='-4%'>${escaparXml(texto)}</prosody>` +
+        `</voice></speak>`;
     try {
         const resp = await fetch(
             `https://${AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
@@ -87,28 +80,6 @@ async function sintetizarSSML(ssml: string): Promise<ArrayBuffer | null> {
         console.error('🔊 [BIBLE-AUDIO] Erro Azure:', e);
         return null;
     }
-}
-
-interface VersoLimpo {
-    verse: number;
-    texto: string;
-}
-
-function agruparVersos(versos: VersoLimpo[]): VersoLimpo[][] {
-    const chunks: VersoLimpo[][] = [];
-    let current: VersoLimpo[] = [];
-    let chars = 0;
-    for (const v of versos) {
-        if (chars + v.texto.length > MAX_CHUNK_CHARS && current.length > 0) {
-            chunks.push(current);
-            current = [];
-            chars = 0;
-        }
-        current.push(v);
-        chars += v.texto.length;
-    }
-    if (current.length > 0) chunks.push(current);
-    return chunks;
 }
 
 export async function POST(request: Request) {
@@ -136,7 +107,7 @@ export async function POST(request: Request) {
     const fullPath = `${pastaCap}/full.mp3`;
     const metaPath = `${pastaCap}/full.json`;
 
-    // Verifica cache
+    // Verifica cache do capítulo completo
     const { data: arquivos } = await supabase.storage.from(BUCKET).list(pastaCap, { limit: 1000 });
     const temFull = arquivos?.some(a => a.name === 'full.mp3');
     const temMeta = arquivos?.some(a => a.name === 'full.json');
@@ -160,7 +131,7 @@ export async function POST(request: Request) {
         }
     }
 
-    // Prepara textos
+    // Prepara textos limpos
     const versosLimpos = verses
         .map(v => ({ verse: Number(v.verse), texto: limparTexto(String(v.text || '')) }))
         .filter(v => v.verse && v.texto);
@@ -169,43 +140,44 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'sem_texto' }, { status: 400 });
     }
 
-    // Agrupa e sintetiza (capítulo inteiro como texto contínuo)
-    const chunks = agruparVersos(versosLimpos);
-    const audioBuffers: ArrayBuffer[] = [];
+    // Sintetiza cada versículo individualmente em lotes paralelos
+    const audioMap = new Map<number, ArrayBuffer>();
 
-    for (const chunk of chunks) {
-        const ssml = construirSSML(chunk.map(v => v.texto));
-        const audio = await sintetizarSSML(ssml);
-        if (!audio) {
-            return NextResponse.json({ ok: false, error: 'erro_sintese' }, { status: 502 });
+    for (let i = 0; i < versosLimpos.length; i += BATCH_SIZE) {
+        const batch = versosLimpos.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(
+            batch.map(async (v) => {
+                const audio = await sintetizarVerso(v.texto);
+                return { verse: v.verse, audio };
+            })
+        );
+        for (const r of results) {
+            if (r.audio) audioMap.set(r.verse, r.audio);
         }
-        audioBuffers.push(audio);
     }
 
-    // Concatena buffers e calcula segmentos de tempo
-    const totalSize = audioBuffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+    // Filtra versículos que foram sintetizados com sucesso, na ordem original
+    const ordenados = versosLimpos
+        .filter(v => audioMap.has(v.verse))
+        .map(v => ({ verse: v.verse, audio: audioMap.get(v.verse)! }));
+
+    if (ordenados.length === 0) {
+        return NextResponse.json({ ok: false, error: 'sem_audio' }, { status: 502 });
+    }
+
+    // Concatena os MP3s em um único buffer e calcula timing preciso
+    const totalSize = ordenados.reduce((sum, r) => sum + r.audio.byteLength, 0);
     const fullBuffer = new Uint8Array(totalSize);
     const segments: { verse: number; start: number; end: number }[] = [];
     let byteOffset = 0;
     let timeOffset = 0;
 
-    for (let ci = 0; ci < chunks.length; ci++) {
-        const buf = audioBuffers[ci];
-        fullBuffer.set(new Uint8Array(buf), byteOffset);
-        byteOffset += buf.byteLength;
-
-        const chunkDuration = (buf.byteLength * 8) / MP3_BITRATE;
-        const chunk = chunks[ci];
-        const totalChunkChars = chunk.reduce((sum, v) => sum + v.texto.length, 0);
-
-        let charsSoFar = 0;
-        for (const v of chunk) {
-            const start = timeOffset + (totalChunkChars > 0 ? (charsSoFar / totalChunkChars) * chunkDuration : 0);
-            charsSoFar += v.texto.length;
-            const end = timeOffset + (totalChunkChars > 0 ? (charsSoFar / totalChunkChars) * chunkDuration : chunkDuration);
-            segments.push({ verse: v.verse, start, end });
-        }
-        timeOffset += chunkDuration;
+    for (const r of ordenados) {
+        fullBuffer.set(new Uint8Array(r.audio), byteOffset);
+        const duration = (r.audio.byteLength * 8) / MP3_BITRATE;
+        segments.push({ verse: r.verse, start: timeOffset, end: timeOffset + duration });
+        timeOffset += duration;
+        byteOffset += r.audio.byteLength;
     }
 
     // Upload full.mp3
@@ -218,7 +190,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'upload_falhou' }, { status: 502 });
     }
 
-    // Upload full.json (metadados de timing)
+    // Upload metadados de timing
     await supabase.storage
         .from(BUCKET)
         .upload(metaPath, JSON.stringify({ segments }), { contentType: 'application/json', upsert: true });
