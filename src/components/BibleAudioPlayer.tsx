@@ -59,6 +59,7 @@ export function BibleAudioPlayer({
     const vozRef = useRef<SpeechSynthesisVoice | null>(null);
     const urlMapRef = useRef<Map<number, string>>(new Map());
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const nextAudioRef = useRef<{ audio: HTMLAudioElement; idx: number } | null>(null);
 
     const versiculosRef = useRef<VersiculoFala[]>(versiculos);
     versiculosRef.current = versiculos;
@@ -96,6 +97,18 @@ export function BibleAudioPlayer({
         return () => window.speechSynthesis.removeEventListener('voiceschanged', carregar);
     }, [temSpeech, escolherVoz]);
 
+    const precarregarProximo = (idx: number) => {
+        const lista = versiculosRef.current;
+        if (idx >= lista.length) { nextAudioRef.current = null; return; }
+        const v = lista[idx];
+        const url = urlMapRef.current.get(v.verse);
+        if (!url) { nextAudioRef.current = null; return; }
+        const a = new Audio(url);
+        a.preload = 'auto';
+        a.playbackRate = rateRef.current;
+        nextAudioRef.current = { audio: a, idx };
+    };
+
     const pararTudo = useCallback(() => {
         pararRef.current = true;
         if (temSpeech) window.speechSynthesis.cancel();
@@ -103,6 +116,11 @@ export function BibleAudioPlayer({
             audioRef.current.pause();
             audioRef.current.onended = null;
             audioRef.current.onerror = null;
+        }
+        if (nextAudioRef.current) {
+            nextAudioRef.current.audio.onended = null;
+            nextAudioRef.current.audio.onerror = null;
+            nextAudioRef.current = null;
         }
         if (onVerseChangeRef.current) onVerseChangeRef.current(null);
     }, [temSpeech]);
@@ -125,13 +143,20 @@ export function BibleAudioPlayer({
     };
 
     const tocarUrl = (url: string, idx: number) => {
-        const audio = audioRef.current || new Audio();
+        let audio: HTMLAudioElement;
+        if (nextAudioRef.current?.idx === idx) {
+            audio = nextAudioRef.current.audio;
+            nextAudioRef.current = null;
+        } else {
+            audio = new Audio(url);
+            audio.preload = 'auto';
+            audio.playbackRate = rateRef.current;
+        }
         audioRef.current = audio;
-        audio.src = url;
-        audio.playbackRate = rateRef.current;
         audio.onended = () => { if (!pararRef.current) proximo(idx + 1); };
         audio.onerror = () => { if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx); };
         audio.play().catch(() => { if (!pararRef.current) falarTTS(versiculosRef.current[idx]?.text || '', idx); });
+        precarregarProximo(idx + 1);
     };
 
     const proximo = (idx: number) => {
@@ -187,6 +212,15 @@ export function BibleAudioPlayer({
                     modoRef.current = 'neural';
                     setFonte(data.fonte || 'Voz neural');
                     usouNeural = true;
+                    // pré-carrega o primeiro versículo enquanto ainda estamos no estado 'carregando'
+                    const v0 = lista[0];
+                    const url0 = m.get(v0.verse);
+                    if (url0) {
+                        const a = new Audio(url0);
+                        a.preload = 'auto';
+                        a.playbackRate = rateRef.current;
+                        nextAudioRef.current = { audio: a, idx: 0 };
+                    }
                 }
             }
         } catch {
@@ -230,7 +264,8 @@ export function BibleAudioPlayer({
         rateRef.current = VELOCIDADES[novoIdx];
         if (estado !== 'tocando') return;
         if (modoRef.current === 'neural' && audioRef.current) {
-            audioRef.current.playbackRate = rateRef.current; // aplica ao vivo
+            audioRef.current.playbackRate = rateRef.current;
+            if (nextAudioRef.current) nextAudioRef.current.audio.playbackRate = rateRef.current;
         } else if (temSpeech) {
             window.speechSynthesis.cancel();
             falarTTS(versiculosRef.current[idxRef.current]?.text || '', idxRef.current);
