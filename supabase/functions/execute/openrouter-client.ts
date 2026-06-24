@@ -8,6 +8,9 @@
  * Compatibilidade: expõe adaptadores que convertem requisição/resposta
  * de/para o formato Gemini (contents/parts/functionCall), para que o
  * código existente do index.ts continue funcionando sem reescrita.
+ *
+ * OCR/visão é roteável para o 9Router via secrets LLM_VISION_BASE_URL e
+ * LLM_VISION_API_KEY (ver getVisionEndpoint); texto continua no OpenRouter.
  */
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
