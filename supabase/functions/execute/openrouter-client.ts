@@ -9,8 +9,9 @@
  * de/para o formato Gemini (contents/parts/functionCall), para que o
  * código existente do index.ts continue funcionando sem reescrita.
  *
- * OCR/visão é roteável para o 9Router via secrets LLM_VISION_BASE_URL e
- * LLM_VISION_API_KEY (ver getVisionEndpoint); texto continua no OpenRouter.
+ * OCR/visão (combo "visao") e a Palavra da Manhã (combo "openclaw") são
+ * roteáveis para o 9Router via secrets LLM_VISION_BASE_URL e LLM_VISION_API_KEY
+ * (ver get9RouterEndpoint); o resto do texto/tools continua no OpenRouter.
  */
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -43,19 +44,18 @@ export const FREE_TOOL_MODELS = [
 ];
 
 // ===== OCR / VISÃO via 9Router (túnel do usuário) =====
-// PRINCIPAL = combo "openclaw" do 9Router. IMPORTANTE: o combo deve estar
-// TRAVADO só com modelos de VISÃO no 9Router — assim ele distribui a carga
-// entre vários modelos de visão e nenhum estoura o limite grátis (evita o
-// problema de fixar um Gemini só). Se o combo falhar/errar, cai nos modelos
-// de visão explícitos (Gemini) como reserva.
-// Ativado pelos secrets LLM_VISION_BASE_URL / LLM_VISION_API_KEY (getVisionEndpoint).
+// PRINCIPAL = combo "visao" do 9Router (criado pelo usuário com SÓ modelos de
+// visão). Distribui a carga entre vários modelos de visão, então nenhum estoura
+// o limite grátis. Se o combo falhar/errar, cai nos modelos de visão explícitos
+// (Gemini) como reserva. Ativado pelos secrets LLM_VISION_BASE_URL /
+// LLM_VISION_API_KEY (get9RouterEndpoint).
 export const VISION_MODELS_9ROUTER = [
-    'openclaw',
+    'visao',
     'gemini/gemini-3.1-flash-lite-preview',
     'gemini/gemini-3-flash-preview',
 ];
 export const VIDEO_MODELS_9ROUTER = [
-    'openclaw',
+    'visao',
     'gemini/gemini-3-flash-preview',
     'gemini/gemini-3.1-flash-lite-preview',
 ];
@@ -77,13 +77,13 @@ function getApiKey(): string {
 }
 
 /**
- * Endpoint para OCR/visão. Se os secrets do 9Router estiverem setados, o OCR vai
- * pelo túnel do usuário (grátis e confiável enquanto o PC/túnel estiver no ar).
- * Senão, cai no OpenRouter padrão (modelos :free) como rede de segurança.
+ * Endpoint do 9Router (túnel do usuário). Usado tanto pelo OCR/visão (combo
+ * "visao") quanto pela Palavra da Manhã (combo "openclaw"). Se os secrets
+ * estiverem setados, vai pelo túnel; senão cai no OpenRouter padrão como reserva.
  *   LLM_VISION_BASE_URL = https://<seu-tunel>/v1/chat/completions
  *   LLM_VISION_API_KEY  = chave do 9Router
  */
-function getVisionEndpoint(): { url: string; apiKey: string; useTunnel: boolean } {
+export function get9RouterEndpoint(): { url: string; apiKey: string; useTunnel: boolean } {
     const url = Deno.env.get('LLM_VISION_BASE_URL');
     const key = Deno.env.get('LLM_VISION_API_KEY');
     if (url && key) return { url, apiKey: key, useTunnel: true };
@@ -209,7 +209,7 @@ export async function chamarOpenRouter(
  */
 export async function gerarTexto(
     prompt: string,
-    opts: { temperature?: number; maxTokens?: number; models?: string[] } = {}
+    opts: { temperature?: number; maxTokens?: number; models?: string[]; baseUrl?: string; apiKey?: string } = {}
 ): Promise<RespostaLLM> {
     return chamarOpenRouter(
         [{ role: 'user', content: prompt }],
@@ -342,7 +342,7 @@ export async function extrairTextoDeImagem(
     mimeType: string,
     prompt: string
 ): Promise<string> {
-    const ep = getVisionEndpoint();
+    const ep = get9RouterEndpoint();
     const models = ep.useTunnel ? VISION_MODELS_9ROUTER : FREE_VISION_MODELS;
     console.log(`🔍 [OCR] Endpoint: ${ep.useTunnel ? '9Router (túnel)' : 'OpenRouter :free (reserva)'} | modelo: ${models[0]}`);
     const resp = await chamarOpenRouter(
@@ -371,7 +371,7 @@ export async function extrairTextoDeVideo(
     prompt: string
 ): Promise<string> {
     const dataUrl = `data:${mimeType};base64,${base64Video}`;
-    const ep = getVisionEndpoint();
+    const ep = get9RouterEndpoint();
     const models = ep.useTunnel ? VIDEO_MODELS_9ROUTER : FREE_VIDEO_MODELS;
 
     // Formatos de content-part a tentar (a API unificada varia por provider)

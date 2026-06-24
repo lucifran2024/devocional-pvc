@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
-import { gerarTexto, chamarCompatGemini } from './openrouter-client.ts';
+import { gerarTexto, chamarCompatGemini, get9RouterEndpoint } from './openrouter-client.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -2434,10 +2434,18 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
 [Fechamento Breve]
 `;
 
-      // 6. Chamar LLM (OpenRouter free com fallbacks)
+      // 6. Chamar LLM. A Palavra usa o combo "openclaw" do 9Router (modelos
+      // melhores que os :free); se o túnel não estiver setado, cai no OpenRouter.
       // Teto de tokens BAIXO: ~320 tokens cobrem folgado o limite de caracteres
       // pedido no prompt (400/600) e impedem o "textão" de 1500+ chars.
-      const llmPalavra = await gerarTexto(prompt, { temperature: 0.85, maxTokens: 320 });
+      const epPalavra = get9RouterEndpoint();
+      const llmPalavra = await gerarTexto(prompt, {
+        temperature: 0.85,
+        maxTokens: 320,
+        models: epPalavra.useTunnel ? ['openclaw', 'gemini/gemini-3-flash-preview', 'ds/deepseek-v4-flash'] : undefined,
+        baseUrl: epPalavra.useTunnel ? epPalavra.url : undefined,
+        apiKey: epPalavra.useTunnel ? epPalavra.apiKey : undefined,
+      });
 
       if (!llmPalavra.ok) throw new Error(`Erro LLM: ${llmPalavra.error}`);
 
