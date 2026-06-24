@@ -160,7 +160,8 @@ async function extractTextFromVideo(videoUrl: string): Promise<string> {
 
 // Chamada individual ao Gemini Vision
 async function callGeminiVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
-    const MODEL_NAME = "gemini-2.0-flash";
+    // gemini-2.0-flash foi descontinuado; 2.5-flash-lite é o atual barato/rápido.
+    const MODEL_NAME = "gemini-2.5-flash-lite";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
 
     const body = {

@@ -10,6 +10,39 @@ import { formatVoiceSection } from './voice-selector.ts';
 import { getArchetype, formatArchetypeSection } from './archetype-selector.ts';
 
 
+/**
+ * Garante que a Palavra da Manhã não fique "muito grande".
+ * O LLM ignora o limite de caracteres pedido no prompt (vinham mensagens de
+ * 1200–1860 chars para um alvo de 600). Aqui aplicamos um teto REAL: cortamos
+ * no fim de frase/parágrafo mais próximo do limite, nunca no meio de uma
+ * palavra ou oração.
+ */
+function limitarTamanhoMensagem(texto: string, maxChars: number): string {
+  const limpo = (texto || '').trim();
+  if (limpo.length <= maxChars) return limpo;
+
+  const corte = limpo.slice(0, maxChars);
+  // Procura o melhor ponto de quebra: parágrafo > fim de frase.
+  const candidatos = [
+    corte.lastIndexOf('\n\n'),
+    corte.lastIndexOf('. '),
+    corte.lastIndexOf('.\n'),
+    corte.lastIndexOf('! '),
+    corte.lastIndexOf('!\n'),
+    corte.lastIndexOf('? '),
+    corte.lastIndexOf('?\n'),
+    corte.lastIndexOf('”'),
+    corte.lastIndexOf('"'),
+  ];
+  const pos = Math.max(...candidatos);
+  // Só usa o ponto de quebra se ele não jogar fora mais da metade do texto.
+  if (pos > maxChars * 0.5) {
+    return limpo.slice(0, pos + 1).trim();
+  }
+  return corte.trim();
+}
+
+
 // 1. Configuração de CORS (RESTRITIVO - apenas origens permitidas)
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -658,16 +691,28 @@ Deno.serve(async (req) => {
 
           // Se houver posts, salvar no banco
           if (postsInstagram.length > 0) {
-            console.log(`💾 [DB] Salvando ${postsInstagram.length} posts do Instagram...`);
+            // Só cacheia posts COM [OCR]: um re-scrape que falhou o OCR
+            // (legenda-only) NÃO pode sobrescrever um [OCR] bom salvo numa run
+            // anterior do mesmo dia (falha "grudenta"). Posts sem OCR seriam
+            // pulados pela política ESTRITO de qualquer forma.
+            const postsParaCache = postsInstagram.filter(
+              (p: any) => typeof p.content === 'string' && p.content.includes('[OCR]')
+            );
 
-            const { error: upsertError } = await supabaseAdmin
-              .from('devocional_externo_posts')
-              .upsert(postsInstagram, { onConflict: 'source, external_id' });
+            if (postsParaCache.length > 0) {
+              console.log(`💾 [DB] Salvando ${postsParaCache.length} posts COM OCR (de ${postsInstagram.length})...`);
 
-            if (upsertError) {
-              console.error("❌ [DB] Erro ao salvar posts:", upsertError);
+              const { error: upsertError } = await supabaseAdmin
+                .from('devocional_externo_posts')
+                .upsert(postsParaCache, { onConflict: 'source, external_id' });
+
+              if (upsertError) {
+                console.error("❌ [DB] Erro ao salvar posts:", upsertError);
+              } else {
+                console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
+              }
             } else {
-              console.log("✅ [DB] Posts salvos/atualizados com sucesso.");
+              console.log(`⚠️ [DB] Nenhum post com OCR para cachear (${postsInstagram.length} só legenda) — cache anterior preservado.`);
             }
           } else if (cachedPosts && cachedPosts.length > 0) {
             console.warn(`⚠️ [APIFY] Refresh ao vivo não retornou posts. Usando ${cachedPosts.length} posts do cache como fallback.`);
@@ -2390,13 +2435,18 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
 `;
 
       // 6. Chamar LLM (OpenRouter free com fallbacks)
-      const llmPalavra = await gerarTexto(prompt, { temperature: 0.85, maxTokens: 2000 });
+      // Teto de tokens BAIXO: ~320 tokens cobrem folgado o limite de caracteres
+      // pedido no prompt (400/600) e impedem o "textão" de 1500+ chars.
+      const llmPalavra = await gerarTexto(prompt, { temperature: 0.85, maxTokens: 320 });
 
       if (!llmPalavra.ok) throw new Error(`Erro LLM: ${llmPalavra.error}`);
 
-      const resultado = llmPalavra.text || "Erro na geração.";
+      // ENFORCEMENT DE TAMANHO: rede de segurança caso o modelo ainda exceda.
+      // Curto -> ~500 chars | Médio -> ~750 chars (corta no fim de frase).
+      const limiteChars = config.formato === 'Curto' ? 500 : 750;
+      const resultado = limitarTamanhoMensagem(llmPalavra.text || "Erro na geração.", limiteChars);
 
-      console.log(`✅ [PALAVRA DA MANHÃ] Geração concluída!`);
+      console.log(`✅ [PALAVRA DA MANHÃ] Geração concluída! (${resultado.length} chars)`);
 
       // 7. Salvar no Cache (SERVER-SIDE SAVE - CRITICAL FIX)
       // Garante persistência mesmo se o cliente falhar

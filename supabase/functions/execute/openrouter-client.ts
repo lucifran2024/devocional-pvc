@@ -39,26 +39,49 @@ export const FREE_TOOL_MODELS = [
     'deepseek/deepseek-v4-flash',
 ];
 
-// Visão (OCR de imagens de posts)
+// ===== OCR / VISÃO =====
+// PRINCIPAL: 9Router (túnel do usuário) com modelo de visão FIXO. NÃO usamos o
+// combo "openclaw": combo sorteia um modelo diferente a cada chamada e pode cair
+// num sem visão -> OCR intermitente. Para o OCR que precisa funcionar TODO dia,
+// um modelo de visão FIXO é o certo (testado: lê PT-BR de imagem perfeitamente).
+// Ativado pelos secrets LLM_VISION_BASE_URL / LLM_VISION_API_KEY (getVisionEndpoint).
+export const VISION_MODELS_9ROUTER = [
+    'gemini/gemini-3.1-flash-lite-preview',
+    'gemini/gemini-3-flash-preview',
+];
+export const VIDEO_MODELS_9ROUTER = [
+    'gemini/gemini-3-flash-preview',
+    'gemini/gemini-3.1-flash-lite-preview',
+];
+
+// Reserva: usado SÓ se os secrets do 9Router não estiverem setados (modelos
+// :free do OpenRouter — grátis, porém instáveis; é só a rede de segurança).
 export const FREE_VISION_MODELS = [
     'google/gemma-4-31b-it:free',
     'nvidia/nemotron-nano-12b-v2-vl:free',
     'google/gemma-4-26b-a4b-it:free',
-    'nex-agi/nex-n2-pro:free',
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
 ];
-
-// Vídeo (extração de reels: texto na tela + narração)
-// nemotron-omni aceita áudio+vídeo; gemma-4 aceita vídeo
 export const FREE_VIDEO_MODELS = [
     'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
     'google/gemma-4-31b-it:free',
-    'google/gemma-4-26b-a4b-it:free',
-    'nvidia/nemotron-nano-12b-v2-vl:free',
 ];
 
 function getApiKey(): string {
     return Deno.env.get('OPENROUTER_API_KEY') || Deno.env.get('OPENROUTER_KEY') || '';
+}
+
+/**
+ * Endpoint para OCR/visão. Se os secrets do 9Router estiverem setados, o OCR vai
+ * pelo túnel do usuário (grátis e confiável enquanto o PC/túnel estiver no ar).
+ * Senão, cai no OpenRouter padrão (modelos :free) como rede de segurança.
+ *   LLM_VISION_BASE_URL = https://<seu-tunel>/v1/chat/completions
+ *   LLM_VISION_API_KEY  = chave do 9Router
+ */
+function getVisionEndpoint(): { url: string; apiKey: string; useTunnel: boolean } {
+    const url = Deno.env.get('LLM_VISION_BASE_URL');
+    const key = Deno.env.get('LLM_VISION_API_KEY');
+    if (url && key) return { url, apiKey: key, useTunnel: true };
+    return { url: OPENROUTER_URL, apiKey: getApiKey(), useTunnel: false };
 }
 
 // Remove blocos de raciocínio que alguns modelos free vazam no texto
@@ -75,6 +98,8 @@ interface ChamadaOpts {
     maxTokens?: number;
     tools?: unknown[];          // formato OpenAI
     timeoutMs?: number;
+    baseUrl?: string;           // endpoint alternativo (ex.: 9Router) — default OpenRouter
+    apiKey?: string;            // chave do endpoint alternativo
 }
 
 interface RespostaLLM {
@@ -93,10 +118,11 @@ export async function chamarOpenRouter(
     messages: unknown[],
     opts: ChamadaOpts = {}
 ): Promise<RespostaLLM> {
-    const apiKey = getApiKey();
+    const apiKey = opts.apiKey || getApiKey();
     if (!apiKey) {
-        return { ok: false, error: 'OPENROUTER_API_KEY não configurada' };
+        return { ok: false, error: 'API key (OpenRouter/9Router) não configurada' };
     }
+    const endpointUrl = opts.baseUrl || OPENROUTER_URL;
 
     const cadeia = opts.models && opts.models.length > 0 ? opts.models : FREE_TEXT_MODELS;
     let ultimoErro = 'sem modelos na cadeia';
@@ -111,12 +137,16 @@ export async function chamarOpenRouter(
             const body: Record<string, unknown> = {
                 model,
                 messages,
+                // 9Router (e outros gateways) streamam por padrão; sem isto a
+                // resposta vem em pedaços SSE e o resp.json() quebra. OpenRouter
+                // já é não-stream por padrão, então é inofensivo lá.
+                stream: false,
             };
             if (opts.temperature !== undefined) body.temperature = opts.temperature;
             if (opts.maxTokens !== undefined) body.max_tokens = opts.maxTokens;
             if (opts.tools && opts.tools.length > 0) body.tools = opts.tools;
 
-            const resp = await fetch(OPENROUTER_URL, {
+            const resp = await fetch(endpointUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
@@ -306,6 +336,9 @@ export async function extrairTextoDeImagem(
     mimeType: string,
     prompt: string
 ): Promise<string> {
+    const ep = getVisionEndpoint();
+    const models = ep.useTunnel ? VISION_MODELS_9ROUTER : FREE_VISION_MODELS;
+    console.log(`🔍 [OCR] Endpoint: ${ep.useTunnel ? '9Router (túnel)' : 'OpenRouter :free (reserva)'} | modelo: ${models[0]}`);
     const resp = await chamarOpenRouter(
         [{
             role: 'user',
@@ -314,7 +347,10 @@ export async function extrairTextoDeImagem(
                 { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Image}` } },
             ],
         }],
-        { models: FREE_VISION_MODELS, maxTokens: 2048 }
+        // 20s por modelo: o primário (gemini) responde em ~3-8s; se algum
+        // modelo travar, falha rápido em vez de comer o limite de ~150s da
+        // Edge Function (causa dos 504).
+        { models, maxTokens: 2048, timeoutMs: 20_000, baseUrl: ep.url, apiKey: ep.apiKey }
     );
     return resp.ok ? (resp.text || '') : '';
 }
@@ -329,6 +365,8 @@ export async function extrairTextoDeVideo(
     prompt: string
 ): Promise<string> {
     const dataUrl = `data:${mimeType};base64,${base64Video}`;
+    const ep = getVisionEndpoint();
+    const models = ep.useTunnel ? VIDEO_MODELS_9ROUTER : FREE_VIDEO_MODELS;
 
     // Formatos de content-part a tentar (a API unificada varia por provider)
     const formatosConteudo = [
@@ -339,7 +377,10 @@ export async function extrairTextoDeVideo(
     for (const content of formatosConteudo) {
         const resp = await chamarOpenRouter(
             [{ role: 'user', content }],
-            { models: FREE_VIDEO_MODELS, maxTokens: 2048, timeoutMs: 120_000 }
+            // 45s por modelo (era 120s): 2 formatos x N modelos x 120s podia
+            // passar de 900s e estourar o limite da Edge Function, matando o
+            // lote inteiro de posts. 45s mantém a soma sob controle.
+            { models, maxTokens: 2048, timeoutMs: 45_000, baseUrl: ep.url, apiKey: ep.apiKey }
         );
         if (resp.ok && resp.text && resp.text.length > 20) {
             return resp.text;
