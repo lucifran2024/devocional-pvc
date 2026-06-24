@@ -39,17 +39,20 @@ export const FREE_TOOL_MODELS = [
     'deepseek/deepseek-v4-flash',
 ];
 
-// ===== OCR / VISÃO =====
-// PRINCIPAL: 9Router (túnel do usuário) com modelo de visão FIXO. NÃO usamos o
-// combo "openclaw": combo sorteia um modelo diferente a cada chamada e pode cair
-// num sem visão -> OCR intermitente. Para o OCR que precisa funcionar TODO dia,
-// um modelo de visão FIXO é o certo (testado: lê PT-BR de imagem perfeitamente).
+// ===== OCR / VISÃO via 9Router (túnel do usuário) =====
+// PRINCIPAL = combo "openclaw" do 9Router. IMPORTANTE: o combo deve estar
+// TRAVADO só com modelos de VISÃO no 9Router — assim ele distribui a carga
+// entre vários modelos de visão e nenhum estoura o limite grátis (evita o
+// problema de fixar um Gemini só). Se o combo falhar/errar, cai nos modelos
+// de visão explícitos (Gemini) como reserva.
 // Ativado pelos secrets LLM_VISION_BASE_URL / LLM_VISION_API_KEY (getVisionEndpoint).
 export const VISION_MODELS_9ROUTER = [
+    'openclaw',
     'gemini/gemini-3.1-flash-lite-preview',
     'gemini/gemini-3-flash-preview',
 ];
 export const VIDEO_MODELS_9ROUTER = [
+    'openclaw',
     'gemini/gemini-3-flash-preview',
     'gemini/gemini-3.1-flash-lite-preview',
 ];
