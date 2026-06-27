@@ -137,6 +137,38 @@ function extrairTemaDoTitulo(texto: string): string {
   return titulo.replace(/[*#📖🌟✨💫🙏❤️]/g, '').trim().substring(0, 50);
 }
 
+// Remove raciocínio/planejamento vazado do modelo que não pode virar devocional:
+// blocos <thinking> (fechados OU sem fechamento), preâmbulos em inglês
+// ("We need to...", "Now ensure...", "Message 2: Thinking:...") e em português
+// ("Okay, entendido! Preparando..."), cercas de código, metadados de sementes e
+// tags de categoria vazadas. Os devocionais são sempre em português.
+function limparTextoGerado(texto: string): string {
+  let t = (texto || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '\n')   // bloco fechado
+    .replace(/<thinking>[\s\S]*$/gi, '\n')                // bloco sem fechamento
+    .replace(/```(?:xml|json|markdown|text)?/gi, '')
+    .replace(/\(\s*Sementes?\s*:[^)]*\)/gi, '')
+    .replace(/\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]\s*/gim, '');
+
+  // Linhas de preâmbulo/raciocínio (PT + inglês) removidas por inteiro.
+  const linhasRaciocinio = [
+    /^\s*(?:okay|ok|certo|claro|perfeito|beleza|entendido|prontinho)\b[^\n]*\b(?:vamos|vou|gerar|gerando|preparando|prepara|entendido|seguindo|criar|criando|produzir)\b[^\n]*$/gim,
+    /^\s*(?:okay|now|first|firstly|then|next|also|finally|we|we['’]ll|i['’]ll|let me|let['’]s|repeat|step \d+)\b[^\n]*$/gim,
+    /^\s*(?:note|plan|thinking|planejamento|racioc[ií]nio)\s*:[^\n]*$/gim,
+  ];
+  for (const re of linhasRaciocinio) t = t.replace(re, '');
+
+  // "Message 2: **Título**" -> "**Título**" (mantém o corpo da mensagem).
+  t = t.replace(/^\s*Message\s*\d+\s*[-—:.)]*\s*/gim, '');
+
+  return t
+    .replace(/^\s*\*\*\s*/gim, '**') // Corrige **  Espaço
+    .replace(/^\s*\*\*\s*$/gim, '')  // Remove linhas só com **
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 // Trava de léxico: força o modelo a reaproveitar o vocabulário dominante do DNA.
 const STOPWORDS_DNA = new Set([
   'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas', 'um', 'uma', 'uns', 'umas',
@@ -1298,10 +1330,15 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
   [Corpo da mensagem com parágrafos bem definidos]
   
   (NÃO use tags como [REFLEXÃO] ou [ORAÇÃO]. Comece direto.)
-  
+
   ---
-  
+
   (Repita para todas as ${quantidade} mensagens.)
+
+  REGRAS DE SAÍDA (CRÍTICAS):
+  - Escreva SOMENTE em português. Nunca em inglês.
+  - Fora da tag <thinking> NÃO escreva nenhum raciocínio, planejamento, lista de regras ou comentário — apenas as mensagens finais prontas para envio.
+  - NÃO rotule as mensagens (nada de "Message 1", "Mensagem 2:", "Thinking:", "We need...").
 </output_format>
 `;
 
@@ -1323,16 +1360,9 @@ ${filtros?.usarPassagemDia ? `Referência Obrigatória: ${passagemRef}` : ''}
         throw new Error(`Erro API LLM: ${llmResp.error}`);
       }
 
-      let resultado = llmResp.text || "Erro ao gerar mensagens.";
-
-      // CLEANER: Remover bloco de pensamento (<thinking>) e metadados de sementes
-      resultado = resultado.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
-      resultado = resultado.replace(/```(?:xml|json|markdown)?/gi, '').trim();
-      resultado = resultado.replace(/\(Sementes:.*?\)/gi, '').trim();
-      // CLEANER: Remover Tags de Cabeçalho Vazadas (ex: [ORAÇÃO], [REFLEXÃO]) - GLOBAL E AGRESSIVO
-      resultado = resultado.replace(/\[(ORAÇÃO|REFLEXÃO|DEVOCIONAL|VERSÍCULO|DECLARAÇÃO|EXORTAÇÃO)\]\s*/gim, '').trim();
-      resultado = resultado.replace(/^\s*\*\*\s*/gim, '**'); // Corrige **  Espaço
-      resultado = resultado.replace(/^\s*\*\*\s*$/gim, ''); // Remove linhas só com **
+      // CLEANER: remove <thinking> (fechado ou não), preâmbulo de raciocínio (EN/PT),
+      // cercas de código, metadados de sementes e tags de categoria vazadas.
+      let resultado = limparTextoGerado(llmResp.text || "Erro ao gerar mensagens.");
 
       // VALIDAÇÃO: Verificar presença de versículos bíblicos nas mensagens
       const mensagensGeradas = resultado.split(/---/).filter((m: string) => m.trim().length > 20);
@@ -1800,7 +1830,7 @@ Gere agora:
         throw new Error(`Erro LLM: ${llmRespEstilo.error}`);
       }
 
-      const resultado = llmRespEstilo.text || "Erro na geração.";
+      const resultado = limparTextoGerado(llmRespEstilo.text || "Erro na geração.");
 
       // FIX 3: Pós-processamento — verificar palavras banidas
       const PALAVRAS_BANIDAS_CHECK = ['norte', 'rota', 'neblina', 'bússola', 'farol', 'cais', 'porto seguro', 'âncora', 'obra-prima', 'confie no processo', 'jornada de fé', 'propósito divino'];

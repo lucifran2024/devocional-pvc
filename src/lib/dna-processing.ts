@@ -99,6 +99,27 @@ const INSTRUCTION_LINE_PATTERNS = [
 const INSTRUCTION_FRAGMENT_PATTERN = /(vamos gerar|seguindo rigorosamente|para cada mensagem|repita para todas|seu planejamento breve|planejamento mental|process_instructions|output_format|gere agora)/i;
 const BIBLE_REFERENCE_PATTERN = /(?:\d\s*)?[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*\s+\d+\s*[:.]\s*\d+(?:\s*[-–]\s*\d+)?/i;
 
+// Vazamento de raciocínio do modelo (chain-of-thought / planejamento) que NÃO pode
+// virar devocional. Os devocionais são SEMPRE em português: texto em inglês ou com
+// marcadores de planejamento é raciocínio que escapou (ex.: "We need to produce 5
+// messages...", "Also need variety of opening...", "Message 2: Thinking: ...").
+const REASONING_PHRASE_PATTERN = /\b(?:we need to|we have to|we must|we['’]?ll|we will|we can|i need to|i['’]?ll|i will|i should|let me|let['’]?s|the user wants|break this down|make sure|now (?:craft|verify|ensure|write|let['’]?s|produce)|each message|opening type|mid-?text|day-?of-?week|anti-?repetition|dna terms|seed \d|step \d|message \d+\s*:|thinking\s*:|distinct dna|\d+-\d+ sentences)\b/i;
+
+// Palavras funcionais inglesas comuns em raciocínio, ausentes de devocionais em PT.
+const ENGLISH_MARKER_PATTERN = /\b(?:the|we|need|needs|must|should|message|messages|each|verse|verses|seed|seeds|opening|ensure|produce|output|distribution|constraint|constraints|lexical|theme|themes|mention|sentence|sentences|user|wants|craft|repeat|obey|following|requirement|requirements|distinct|priority|words?|will|that|this|with)\b/gi;
+
+// Linhas a remover por inteiro quando aparecem como preâmbulo/raciocínio.
+// (Rótulos "Message N:" NÃO entram aqui de propósito — o prefixo é removido por
+// sanitizeMessageFragment preservando o corpo do devocional que vem depois.)
+const REASONING_LINE_PATTERNS = [
+    // Preâmbulo em PT: "Okay, entendido! Preparando 5 novas mensagens..."; "Ok, vamos lá! Gerando..."
+    /^\s*(?:okay|ok|certo|claro|perfeito|beleza|entendido|prontinho)\b[^\n]*\b(?:vamos|vou|gerar|gerando|gera|preparando|prepara|entendido|aqui (?:est|v[aã]o|vai)|seguindo|criar|criando|produzir|produzindo)\b[^\n]*$/gim,
+    // Linha de raciocínio em inglês (começo típico de planejamento; devocional PT nunca começa assim).
+    /^\s*(?:okay|now|first|firstly|then|next|also|finally|we|we['’]ll|i['’]ll|let me|let['’]s|repeat|step \d+)\b[^\n]*$/gim,
+    // Rótulos de raciocínio: "Thinking: ...", "Plan: ...", "Planejamento: ...".
+    /^\s*(?:note|plan|thinking|planejamento|racioc[ií]nio)\s*:[^\n]*$/gim,
+];
+
 function stripAccents(value: string): string {
     return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
@@ -164,8 +185,19 @@ function isExhortationLike(text: string): boolean {
     return /\b(n[aã]o desista|levante|levanta-te|creia|avance|decida hoje|persevere|pare de|entregue|confie)\b/i.test(text);
 }
 
+function countEnglishMarkers(text: string): number {
+    const matches = text.toLowerCase().match(ENGLISH_MARKER_PATTERN);
+    return matches ? matches.length : 0;
+}
+
 function isInstructionalFragment(text: string): boolean {
-    return INSTRUCTION_FRAGMENT_PATTERN.test(text) || /<(?:thinking|task|output_format|filters|process_instructions)>/i.test(text);
+    const plain = stripDecorators(text);
+    return (
+        INSTRUCTION_FRAGMENT_PATTERN.test(text) ||
+        REASONING_PHRASE_PATTERN.test(plain) ||
+        countEnglishMarkers(plain) >= 4 ||
+        /<(?:thinking|task|output_format|filters|process_instructions)>/i.test(text)
+    );
 }
 
 function sanitizeMessageFragment(text: string): string {
@@ -174,11 +206,16 @@ function sanitizeMessageFragment(text: string): string {
         .replace(/\uFEFF/g, '')
         .replace(CATEGORY_TAG_PATTERN, '')
         .replace(/^\s*MENSAGEM\s*\d+\s*[-—:]*\s*/gim, '')
+        .replace(/^\s*Message\s*\d+\s*[-—:.)]*\s*/gim, '')
         .replace(/^\s*\[\d+\/\d+\]\s*(?:DNA|Estilo)\s*$/gim, '')
         .replace(/^\s*[-—]+\s*$/gim, '')
+        .replace(/\(\s*Sementes?\s*:[^)]*\)/gi, '')
         .trim();
 
     INSTRUCTION_LINE_PATTERNS.forEach((pattern) => {
+        sanitized = sanitized.replace(pattern, '');
+    });
+    REASONING_LINE_PATTERNS.forEach((pattern) => {
         sanitized = sanitized.replace(pattern, '');
     });
 
@@ -217,10 +254,15 @@ export function sanitizeGeneratedText(text: string): string {
         .replace(/\r\n/g, '\n')
         .replace(/\uFEFF/g, '')
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '\n')
+        // <thinking> sem fechamento: descarta do marcador até o fim (raciocínio vazado).
+        .replace(/<thinking>[\s\S]*$/gi, '\n')
         .replace(/```(?:xml|json|markdown|text)?/gi, '')
         .replace(CATEGORY_TAG_PATTERN, '');
 
     INSTRUCTION_LINE_PATTERNS.forEach((pattern) => {
+        sanitized = sanitized.replace(pattern, '');
+    });
+    REASONING_LINE_PATTERNS.forEach((pattern) => {
         sanitized = sanitized.replace(pattern, '');
     });
 
@@ -253,10 +295,12 @@ export function splitGeneratedMessages(text: string): string[] {
         }
     }
 
-    return fragments.filter((fragment) => {
-        if (!fragment || fragment.length < 16) return false;
-        return !isInstructionalFragment(fragment);
-    });
+    return fragments
+        .map(sanitizeMessageFragment)
+        .filter((fragment) => {
+            if (!fragment || fragment.length < 16) return false;
+            return !isInstructionalFragment(fragment);
+        });
 }
 
 export function stripMarkdownForTelegram(text: string): string {

@@ -154,4 +154,75 @@ Okay, vamos gerar as novas mensagens seguindo rigorosamente as instruções.
         expect(reasons).toContain('neutral_mode_greeting');
         expect(reasons).toContain('category_versiculo_reference');
     });
+
+    it('descarta raciocínio em inglês (chain-of-thought) e mantém só o devocional em português', () => {
+        const raw = `We need to produce 5 messages: 4 DEVOCIONAL with 73% DNA and 1 VERSICULO. Also need variety of opening: not repeat same opening type more than twice. We'll vary.
+
+**A coragem de recomeçar**
+
+Hoje Deus te chama a recomeçar. Não importa o ontem; a misericórdia é nova a cada manhã. Filipenses 4:13`;
+
+        const processed = processGeneratedContent(raw, {
+            modoId: 'modo_favoritas',
+            filtros: { quantidade: 5 },
+            quantidadeEsperada: 5,
+        });
+
+        expect(processed.messages).toHaveLength(1);
+        expect(processed.messages[0]).toContain('A coragem de recomeçar');
+        expect(processed.messages[0]).toContain('Filipenses 4:13');
+        expect(processed.messages.join('\n')).not.toMatch(/we need|also need|we'll|ensure|variety of opening/i);
+    });
+
+    it('rejeita um fragmento que é puro planejamento em inglês', () => {
+        const leak =
+            'O plano: we must ensure each message includes at least 4 distinct DNA terms and the verse must be present in every output.';
+
+        expect(splitGeneratedMessages(leak)).toHaveLength(0);
+        expect(validateGeneratedMessage(leak, { modoId: 'modo_favoritas', filtros: {} })).toContain(
+            'instruction_leak'
+        );
+    });
+
+    it('remove o preâmbulo de raciocínio em português, preservando o devocional', () => {
+        const raw = `Okay, entendido! Preparando 5 novas mensagens, focando nos subtemas extraídos do DNA, léxico obrigatório e estrutura diversificada.
+
+**Descanse no Senhor**
+
+Mesmo no cansaço, Ele te sustenta. Confie e descanse. Salmos 23:1`;
+
+        const sanitized = sanitizeGeneratedText(raw);
+        expect(sanitized).not.toMatch(/Preparando 5 novas|entendido/i);
+        expect(sanitized).toContain('Descanse no Senhor');
+        expect(sanitized).toContain('Salmos 23:1');
+    });
+
+    it('remove o rótulo vazado "Message N:" e mantém o corpo da mensagem', () => {
+        const messages = splitGeneratedMessages(
+            'Message 2: **Pedro e a fé que caminha**\n\nPedro saiu do barco e caminhou sobre as águas, fixando os olhos em Jesus. Mateus 14:29'
+        );
+
+        expect(messages).toHaveLength(1);
+        expect(messages[0]).toContain('Pedro e a fé que caminha');
+        expect(messages[0]).not.toMatch(/Message\s*2/i);
+    });
+
+    it('descarta bloco <thinking> sem fechamento', () => {
+        const raw = `<thinking>
+Use seed 3, theme about hope, verse Filipenses 4:13, then write the message.`;
+
+        const sanitized = sanitizeGeneratedText(raw);
+        expect(sanitized).not.toMatch(/thinking|seed 3|verse/i);
+        expect(sanitized.trim()).toBe('');
+    });
+
+    it('não marca um devocional legítimo em português como vazamento', () => {
+        const devocional =
+            '**Confie no Senhor**\n\nQuando o medo bate, lembre-se: Deus vai à frente e nunca te abandona. Entregue a Ele cada passo e descanse na promessa de que Ele cuida de você. Isaías 41:10';
+
+        expect(splitGeneratedMessages(devocional)).toHaveLength(1);
+        expect(
+            validateGeneratedMessage(devocional, { modoId: 'modo_favoritas', filtros: {} })
+        ).toEqual([]);
+    });
 });
