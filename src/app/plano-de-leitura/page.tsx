@@ -121,6 +121,7 @@ function VersiculosInterativos({
     // Seleção múltipla para copiar/compartilhar vários versículos de uma vez
     const [selecaoCopia, setSelecaoCopia] = useState<Set<number>>(new Set());
     const [modoCopiaMultipla, setModoCopiaMultipla] = useState(false);
+    const [ultimoTapIdx, setUltimoTapIdx] = useState<number | null>(null);
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
@@ -199,6 +200,7 @@ function VersiculosInterativos({
         if (versiculoSelecionadoIdx != null && versiculoSelecionadoIdx !== idx) {
             setModoCopiaMultipla(true);
             setSelecaoCopia(new Set([versiculoSelecionadoIdx, idx]));
+            setUltimoTapIdx(idx);
             setVersiculoSelecionadoIdx(null);
             setMostrarCores(false);
             setMostrarNota(false);
@@ -288,6 +290,7 @@ function VersiculosInterativos({
 
     // ===== Seleção múltipla (copiar/compartilhar vários de uma vez) =====
     const toggleSelecaoCopia = (idx: number) => {
+        setUltimoTapIdx(idx);
         setSelecaoCopia(prev => {
             const next = new Set(prev);
             if (next.has(idx)) next.delete(idx); else next.add(idx);
@@ -299,6 +302,7 @@ function VersiculosInterativos({
         const inicial = versiculoSelecionadoIdx;
         setModoCopiaMultipla(true);
         setSelecaoCopia(inicial == null ? new Set() : new Set([inicial]));
+        setUltimoTapIdx(inicial);
         setVersiculoSelecionadoIdx(null);
         setMostrarCores(false);
         setMostrarNota(false);
@@ -308,6 +312,7 @@ function VersiculosInterativos({
     const sairModoCopiaMultipla = () => {
         setModoCopiaMultipla(false);
         setSelecaoCopia(new Set());
+        setUltimoTapIdx(null);
     };
 
     // Referência compacta agrupando por capítulo e juntando faixas contíguas.
@@ -455,23 +460,6 @@ function VersiculosInterativos({
                 </div>
             ) : null}
             <div className="space-y-1 relative" ref={containerRef}>
-                {/* Barra de copiar (ao marcar vários) — grudada no topo da leitura, perto do texto */}
-                {modoCopiaMultipla && (
-                    <div className="sticky top-0 z-30 flex justify-center -mt-1 mb-1.5">
-                        <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-full py-1.5 px-2.5 shadow-xl backdrop-blur-xl">
-                            <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
-                            <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
-                                <Copy className="w-3.5 h-3.5" /> Copiar
-                            </button>
-                            <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
-                                <Share2 className="w-3.5 h-3.5" /> Enviar
-                            </button>
-                            <button onClick={sairModoCopiaMultipla} title="Cancelar" className="p-1.5 rounded-full hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                )}
                 {versiculos.map((v, idx) => {
                     const cap = getCapitulo(v);
                     const prevCap = idx > 0 ? getCapitulo(versiculos[idx - 1]) : cap;
@@ -530,6 +518,23 @@ function VersiculosInterativos({
                                     {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
                                 </span>
 
+                                {/* Barra de copiar vários — flutua acima do versículo que você está tocando */}
+                                {modoCopiaMultipla && ultimoTapIdx === idx && (
+                                    <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-2xl p-1.5 px-2 shadow-2xl backdrop-blur-xl">
+                                            <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
+                                            <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                                <Copy className="w-3.5 h-3.5" /> Copiar
+                                            </button>
+                                            <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                                <Share2 className="w-3.5 h-3.5" /> Enviar
+                                            </button>
+                                            <button onClick={sairModoCopiaMultipla} title="Cancelar" className="p-1.5 rounded-xl hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 {/* MINI-TOOLBAR */}
                                 {versiculoSelecionadoIdx === idx && (
                                     <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
@@ -2176,7 +2181,7 @@ ${conteudo}
                                         )}
                                         <h2 className="font-bold text-slate-900 dark:text-white text-base truncate">
                                             {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome
-                                                ? `${capitalizarLivro(livroInfoAtual.nome)} ${livroInfoAtual.capitulo}`
+                                                ? `${capitalizarLivro(livroInfoAtual.nome)} ${capituloFoco ?? livroInfoAtual.capitulo}`
                                                 : isPlanoMode
                                                     ? 'Leitura do Plano'
                                                     : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
@@ -2326,16 +2331,6 @@ ${conteudo}
                                 </button>
                             </div>
                         </div>
-
-                        {/* Etiqueta discreta do capítulo — fixa na tela, acompanha a rolagem */}
-                        {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome && (
-                            <div className="fixed bottom-24 right-3 z-30 pointer-events-none">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-0/60 backdrop-blur-sm border border-amber-500/25 text-[10px] font-bold uppercase tracking-wide text-amber-500/85 shadow-sm">
-                                    <BookOpen className="w-3 h-3" />
-                                    {capitalizarLivro(livroInfoAtual.nome)} {capituloFoco ?? livroInfoAtual.capitulo}
-                                </span>
-                            </div>
-                        )}
 
                     </div>
                 )}
