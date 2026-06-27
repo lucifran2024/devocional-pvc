@@ -7,7 +7,7 @@ import {
     ChevronRight, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
-    ZoomIn, ZoomOut, BookOpen
+    ZoomIn, ZoomOut, BookOpen, ListChecks, Check
 } from 'lucide-react';
 import {
     supabase,
@@ -58,6 +58,12 @@ interface InteracoesMapPlano {
     notas: Record<number, BibliaInteracao>;
 }
 
+// Capitaliza nomes de livros vindos em minúsculo da API (ex.: "deuteronômio" -> "Deuteronômio")
+function capitalizarLivro(nome: string): string {
+    if (!nome) return nome;
+    return nome.split(' ').map(p => (p ? p.charAt(0).toUpperCase() + p.slice(1) : p)).join(' ');
+}
+
 // Componente de versículos interativos para o Plano de Leitura
 // Destaca as palavras-chave do dia (lexico_do_dia) dentro do texto do versículo.
 // Retorna nós React, marcando cada ocorrência com a classe keyword-highlight.
@@ -102,6 +108,9 @@ function VersiculosInterativos({
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
     const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
+    // Seleção múltipla para copiar/compartilhar vários versículos de uma vez
+    const [selecaoCopia, setSelecaoCopia] = useState<Set<number>>(new Set());
+    const [modoCopiaMultipla, setModoCopiaMultipla] = useState(false);
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
@@ -172,6 +181,10 @@ function VersiculosInterativos({
     }, []);
 
     const handleVersiculoClick = (idx: number) => {
+        if (modoCopiaMultipla) {
+            toggleSelecaoCopia(idx);
+            return;
+        }
         if (versiculoAnteriorRef.current === idx) {
             setVersiculoSelecionadoIdx(null);
             setMostrarCores(false);
@@ -253,6 +266,85 @@ function VersiculosInterativos({
         success('Versículo copiado!');
     };
 
+    // ===== Seleção múltipla (copiar/compartilhar vários de uma vez) =====
+    const toggleSelecaoCopia = (idx: number) => {
+        setSelecaoCopia(prev => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx); else next.add(idx);
+            return next;
+        });
+    };
+
+    const entrarModoCopiaMultipla = () => {
+        const inicial = versiculoSelecionadoIdx;
+        setModoCopiaMultipla(true);
+        setSelecaoCopia(inicial == null ? new Set() : new Set([inicial]));
+        setVersiculoSelecionadoIdx(null);
+        setMostrarCores(false);
+        setMostrarNota(false);
+        versiculoAnteriorRef.current = null;
+    };
+
+    const sairModoCopiaMultipla = () => {
+        setModoCopiaMultipla(false);
+        setSelecaoCopia(new Set());
+    };
+
+    // Referência compacta agrupando por capítulo e juntando faixas contíguas.
+    // Ex.: "Gênesis 1:3-5; 2:1,4"
+    const montarReferenciaSelecao = (vs: Versiculo[]): string => {
+        const porCapitulo = new Map<number, number[]>();
+        for (const v of vs) {
+            const c = getCapitulo(v);
+            if (!porCapitulo.has(c)) porCapitulo.set(c, []);
+            porCapitulo.get(c)!.push(v.verse);
+        }
+        const blocos = [...porCapitulo.keys()].sort((a, b) => a - b).map(c => {
+            const versos = [...new Set(porCapitulo.get(c)!)].sort((a, b) => a - b);
+            const faixas: string[] = [];
+            let ini = versos[0];
+            let fim = versos[0];
+            for (let i = 1; i < versos.length; i++) {
+                if (versos[i] === fim + 1) {
+                    fim = versos[i];
+                } else {
+                    faixas.push(ini === fim ? `${ini}` : `${ini}-${fim}`);
+                    ini = fim = versos[i];
+                }
+            }
+            faixas.push(ini === fim ? `${ini}` : `${ini}-${fim}`);
+            return `${c}:${faixas.join(',')}`;
+        });
+        return `${livroNome} ${blocos.join('; ')}`;
+    };
+
+    const montarTextoSelecao = (): string => {
+        const vs = [...selecaoCopia].sort((a, b) => a - b).map(i => versiculos[i]).filter(Boolean);
+        const corpo = vs.map(v => `${v.verse} ${v.text}`).join('\n');
+        return `${montarReferenciaSelecao(vs)}\n\n${corpo}`;
+    };
+
+    const handleCopiarSelecao = async () => {
+        const n = selecaoCopia.size;
+        if (n === 0) return;
+        await navigator.clipboard.writeText(montarTextoSelecao());
+        success(`${n} versículo${n === 1 ? '' : 's'} copiado${n === 1 ? '' : 's'}!`);
+        sairModoCopiaMultipla();
+    };
+
+    const handleCompartilharSelecao = async () => {
+        if (selecaoCopia.size === 0) return;
+        const texto = montarTextoSelecao();
+        const vs = [...selecaoCopia].sort((a, b) => a - b).map(i => versiculos[i]).filter(Boolean);
+        if (navigator.share) {
+            try { await navigator.share({ title: montarReferenciaSelecao(vs), text: texto }); } catch { /* cancelado */ }
+        } else {
+            await navigator.clipboard.writeText(texto);
+            success('Copiado para compartilhar!');
+        }
+        sairModoCopiaMultipla();
+    };
+
     const handleCompartilhar = async () => {
         if (versiculoSelecionadoIdx == null) return;
         const v = versiculos[versiculoSelecionadoIdx];
@@ -293,6 +385,16 @@ function VersiculosInterativos({
             else setEstudoTexto('Erro ao gerar explicação. Tente novamente.');
         } catch { setEstudoTexto('Erro de conexão. Tente novamente.'); }
         finally { setEstudoLoading(false); }
+    };
+
+    const handleRemoverNota = async () => {
+        if (versiculoSelecionadoIdx == null) return;
+        const v = versiculos[versiculoSelecionadoIdx];
+        const cap = getCapitulo(v);
+        await removerInteracaoPorVersiculoETipo('nota', livroAbrev, cap, v.verse);
+        success('Nota removida');
+        setMostrarNota(false);
+        await carregarInteracoes();
     };
 
     const handleSalvarNota = async () => {
@@ -377,7 +479,7 @@ function VersiculosInterativos({
                                 className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                     ${getCorClasse(v)}
                                     ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
-                                    ${versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
+                                    ${selecaoCopia.has(idx) ? 'bg-green-500/15 ring-1 ring-green-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
                             >
                                 <p className="inline leading-[1.85] text-text-primary reading-serif" style={{ fontSize: `${readingFontSize}px` }}>
@@ -385,6 +487,7 @@ function VersiculosInterativos({
                                     {destacarLexico(v.text, lexico)}
                                 </p>
                                 <span className="inline-flex items-center gap-1 ml-1.5">
+                                    {modoCopiaMultipla && selecaoCopia.has(idx) && <Check className="w-3.5 h-3.5 text-green-400 inline" />}
                                     {isFavorito(v) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
                                     {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
                                 </span>
@@ -401,6 +504,9 @@ function VersiculosInterativos({
                                             </button>
                                             <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
                                                 <Copy className="w-5 h-5" />
+                                            </button>
+                                            <button onClick={entrarModoCopiaMultipla} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Selecionar vários para copiar">
+                                                <ListChecks className="w-5 h-5" />
                                             </button>
                                             <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
                                                 <Share2 className="w-5 h-5" />
@@ -429,30 +535,7 @@ function VersiculosInterativos({
                                             </div>
                                         )}
 
-                                        {mostrarNota && (
-                                            <div className="mt-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-3 animate-in fade-in duration-100 min-w-[280px]">
-                                                <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
-                                                    placeholder="Escreva sua anotação..."
-                                                    className="w-full bg-surface-1 border border-border-strong rounded-xl px-4 py-3 text-text-primary text-base placeholder-text-muted focus:outline-none focus:border-amber-500/50 resize-none"
-                                                    rows={3} autoFocus />
-                                                <div className="flex justify-end gap-2 mt-2">
-                                                    {capMap.notas[v.verse] && (
-                                                        <button onClick={async () => {
-                                                            await removerInteracaoPorVersiculoETipo('nota', livroAbrev, cap, v.verse);
-                                                            success('Nota removida');
-                                                            setMostrarNota(false);
-                                                            await carregarInteracoes();
-                                                        }} className="px-4 py-2 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
-                                                            Apagar
-                                                        </button>
-                                                    )}
-                                                    <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
-                                                        className="px-4 py-2 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
-                                                        Salvar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        {/* A anotação agora abre num painel grande (modal) — ver "Modal de Anotação" abaixo */}
                                     </div>
                                 )}
                             </div>
@@ -488,6 +571,68 @@ function VersiculosInterativos({
                             )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Modal de Anotação — painel grande, fácil de escrever */}
+            {mostrarNota && versiculoSelecionadoIdx != null && (() => {
+                const vNota = versiculos[versiculoSelecionadoIdx];
+                if (!vNota) return null;
+                const capNota = getCapitulo(vNota);
+                const notaExistente = getInteracoesDoVersiculo(vNota).notas[vNota.verse];
+                return (
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setMostrarNota(false)}>
+                        <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden border border-border-subtle" onClick={e => e.stopPropagation()}>
+                            <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <StickyNote className="w-5 h-5 text-blue-400 shrink-0" />
+                                    <span className="font-bold text-text-primary text-base truncate">Anotação — {livroNome} {capNota}:{vNota.verse}</span>
+                                </div>
+                                <button onClick={() => setMostrarNota(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary shrink-0"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20">
+                                <p className="text-text-secondary text-sm italic">&ldquo;{vNota.text}&rdquo;</p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4">
+                                <textarea value={textoNota} onChange={e => setTextoNota(e.target.value)}
+                                    placeholder="Escreva sua anotação..."
+                                    className="w-full min-h-[180px] bg-surface-1 border border-border-strong rounded-xl px-4 py-3 text-text-primary text-base placeholder-text-muted focus:outline-none focus:border-amber-500/50 resize-none"
+                                    rows={8} autoFocus />
+                            </div>
+                            <div className="p-4 border-t border-border-subtle flex justify-end gap-2 bg-surface-2/50">
+                                {notaExistente && (
+                                    <button onClick={handleRemoverNota} className="px-4 py-2.5 text-sm rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium">
+                                        Apagar
+                                    </button>
+                                )}
+                                <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
+                                    className="px-5 py-2.5 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
+                                    Salvar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* Barra inferior do modo "copiar vários" */}
+            {modoCopiaMultipla && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-surface-2/95 border border-border-subtle rounded-2xl py-2 px-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150">
+                    <span className="text-sm text-text-secondary px-1 whitespace-nowrap">
+                        {selecaoCopia.size} selecionado{selecaoCopia.size === 1 ? '' : 's'}
+                    </span>
+                    <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold">
+                        <Copy className="w-4 h-4" /> Copiar
+                    </button>
+                    <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold">
+                        <Share2 className="w-4 h-4" /> Enviar
+                    </button>
+                    <button onClick={sairModoCopiaMultipla} title="Cancelar"
+                        className="p-2 rounded-xl hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
             )}
 
@@ -1207,19 +1352,14 @@ function PlanoLeituraContent() {
         const versiculosDaParte = getVersiculosDaParte(parteAtual);
         const primeiroVersiculoDaParte = versiculosDaParte[0];
         const capDaParte = primeiroVersiculoDaParte?.chapter ?? null;
-        const nomeLivroDaParte = primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia;
+        const nomeLivroDaParte = capitalizarLivro(primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia);
         const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
 
         const rodapeAcao = ehUltimaParte
-            ? `🎉 **Você concluiu ${tituloCapitulo}!** Essa era a última parte.\nDigite **CONTINUAR** para finalizar a leitura.`
-            : 'Digite **CONTINUAR** para ler a próxima parte.';
+            ? `🎉 **Você concluiu ${tituloCapitulo}!** Essa era a última parte.\n👇 Toque no botão **Continuar** abaixo para finalizar a leitura.`
+            : '👇 Toque no botão **Continuar** abaixo para ler a próxima parte.';
 
-        return `📖 **${tituloCapitulo}**
-📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
-
----
-
-%%VERSICULOS_INTERATIVOS%%
+        return `%%VERSICULOS_INTERATIVOS%%
 
 ---
 
@@ -1269,7 +1409,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         const numMatch = cmdLower.match(/^[1-4]$/);
         if (numMatch) {
             if (isPlanoMode) {
-                return 'Neste plano, use **CONTINUAR** para seguir a leitura do dia.';
+                return 'Neste plano, toque no botão **Continuar** abaixo para seguir a leitura do dia.';
             }
             const optionId = numMatch[0] as MenuOption;
             setActiveOption(optionId);
@@ -1296,7 +1436,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 
         // Comando não reconhecido
         if (isPlanoMode) {
-            return 'Comando não reconhecido. Use **CONTINUAR** para avançar na leitura.';
+            return 'Toque no botão **Continuar** abaixo para avançar na leitura.';
         }
         return `Não entendi o comando. Digite um número de **1 a 4** ou **MENU** para ver as opções.`;
     };
@@ -1363,7 +1503,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
 ${data.resultado}
 
 ---
-Digite **CONTINUAR** para os próximos versículos.
+👇 Toque no botão **Continuar** abaixo para os próximos versículos.
 Ou **MENU** para voltar.`;
             } else {
                 throw new Error(data.error || 'Erro ao gerar explicação');
@@ -1375,7 +1515,7 @@ Ou **MENU** para voltar.`;
 Não foi possível gerar a explicação no momento. Tente novamente.
 
 ---
-Digite **CONTINUAR** para os próximos versículos.
+👇 Toque no botão **Continuar** abaixo para os próximos versículos.
 Ou **MENU** para voltar.`;
         }
     };
@@ -1952,7 +2092,7 @@ ${conteudo}
                                         )}
                                         <h2 className="font-bold text-slate-900 dark:text-white text-base truncate">
                                             {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome
-                                                ? `${livroInfoAtual.nome} ${livroInfoAtual.capitulo}`
+                                                ? `${capitalizarLivro(livroInfoAtual.nome)} ${livroInfoAtual.capitulo}`
                                                 : isPlanoMode
                                                     ? 'Leitura do Plano'
                                                     : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
