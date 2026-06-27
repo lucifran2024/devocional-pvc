@@ -121,8 +121,6 @@ function VersiculosInterativos({
     // Seleção múltipla para copiar/compartilhar vários versículos de uma vez
     const [selecaoCopia, setSelecaoCopia] = useState<Set<number>>(new Set());
     const [modoCopiaMultipla, setModoCopiaMultipla] = useState(false);
-    // Capítulo atualmente em foco na rolagem (etiqueta discreta que acompanha a leitura)
-    const [capituloFoco, setCapituloFoco] = useState<number | null>(null);
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
@@ -191,35 +189,6 @@ function VersiculosInterativos({
         document.addEventListener('mousedown', handleClickFora);
         return () => document.removeEventListener('mousedown', handleClickFora);
     }, []);
-
-    // Acompanha a rolagem: descobre o capítulo do versículo que está perto do topo da leitura
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-        const alvos = Array.from(container.querySelectorAll<HTMLElement>('[id^="plano-verse-"]'));
-        if (alvos.length === 0) return;
-
-        const tops = new Map<Element, number>();
-        const obs = new IntersectionObserver((entries) => {
-            for (const e of entries) {
-                if (e.isIntersecting) tops.set(e.target, e.boundingClientRect.top);
-                else tops.delete(e.target);
-            }
-            let melhorEl: HTMLElement | null = null;
-            let menorTop = Infinity;
-            tops.forEach((top, el) => {
-                if (top < menorTop) { menorTop = top; melhorEl = el as HTMLElement; }
-            });
-            const m = melhorEl ? (melhorEl as HTMLElement).id.match(/^plano-verse-(\d+)-/) : null;
-            if (m) {
-                const cap = parseInt(m[1], 10);
-                setCapituloFoco(prev => (prev === cap ? prev : cap));
-            }
-        }, { rootMargin: '-90px 0px -75% 0px', threshold: 0 });
-
-        alvos.forEach(a => obs.observe(a));
-        return () => obs.disconnect();
-    }, [versiculos]);
 
     const handleVersiculoClick = (idx: number) => {
         if (modoCopiaMultipla) {
@@ -486,8 +455,8 @@ function VersiculosInterativos({
                 </div>
             ) : null}
             <div className="space-y-1 relative" ref={containerRef}>
-                {/* Topo da leitura: barra de copiar (ao marcar vários) OU etiqueta discreta do capítulo */}
-                {modoCopiaMultipla ? (
+                {/* Barra de copiar (ao marcar vários) — grudada no topo da leitura, perto do texto */}
+                {modoCopiaMultipla && (
                     <div className="sticky top-0 z-30 flex justify-center -mt-1 mb-1.5">
                         <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-full py-1.5 px-2.5 shadow-xl backdrop-blur-xl">
                             <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
@@ -501,13 +470,6 @@ function VersiculosInterativos({
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
-                    </div>
-                ) : (
-                    <div className="sticky top-0 z-10 flex justify-center pointer-events-none -mt-1 mb-1">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-0/85 backdrop-blur-md border border-amber-500/20 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 shadow-sm">
-                            <BookOpen className="w-3 h-3" />
-                            {livroNome} {capituloFoco ?? (versiculos[0] ? getCapitulo(versiculos[0]) : capitulo)}
-                        </span>
                     </div>
                 )}
                 {versiculos.map((v, idx) => {
@@ -874,6 +836,8 @@ function PlanoLeituraContent() {
     const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
     const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
     const [mostrarAjustesLeitura, setMostrarAjustesLeitura] = useState(false);
+    // Capítulo em foco na rolagem (etiqueta discreta fixa que acompanha a leitura)
+    const [capituloFoco, setCapituloFoco] = useState<number | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatStartRef = useRef<HTMLDivElement>(null);
     const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | 'inicio-ultima' | null>(null);
@@ -1054,6 +1018,34 @@ function PlanoLeituraContent() {
             localStorage.setItem(READING_ALIGN_KEY, align);
         }
     };
+
+    // Acompanha a rolagem e descobre o capítulo do versículo perto do topo da tela
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const alvos = Array.from(document.querySelectorAll<HTMLElement>('[id^="plano-verse-"]'));
+        if (alvos.length === 0) { setCapituloFoco(null); return; }
+
+        const tops = new Map<Element, number>();
+        const obs = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (e.isIntersecting) tops.set(e.target, e.boundingClientRect.top);
+                else tops.delete(e.target);
+            }
+            let melhorEl: HTMLElement | null = null;
+            let menorTop = Infinity;
+            tops.forEach((top, el) => {
+                if (top < menorTop) { menorTop = top; melhorEl = el as HTMLElement; }
+            });
+            const m = melhorEl ? (melhorEl as HTMLElement).id.match(/^plano-verse-(\d+)-/) : null;
+            if (m) {
+                const cap = parseInt(m[1], 10);
+                setCapituloFoco(prev => (prev === cap ? prev : cap));
+            }
+        }, { rootMargin: '-100px 0px -70% 0px', threshold: 0 });
+
+        alvos.forEach(a => obs.observe(a));
+        return () => obs.disconnect();
+    }, [versiculosPaginaAtual, messages.length]);
 
     // Formatar data
     const formatarDataExtenso = (dataStr: string) => {
@@ -2334,6 +2326,16 @@ ${conteudo}
                                 </button>
                             </div>
                         </div>
+
+                        {/* Etiqueta discreta do capítulo — fixa na tela, acompanha a rolagem */}
+                        {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome && (
+                            <div className="fixed bottom-24 right-3 z-30 pointer-events-none">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-0/60 backdrop-blur-sm border border-amber-500/25 text-[10px] font-bold uppercase tracking-wide text-amber-500/85 shadow-sm">
+                                    <BookOpen className="w-3 h-3" />
+                                    {capitalizarLivro(livroInfoAtual.nome)} {capituloFoco ?? livroInfoAtual.capitulo}
+                                </span>
+                            </div>
+                        )}
 
                     </div>
                 )}
