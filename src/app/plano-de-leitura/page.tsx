@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
     Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
@@ -843,6 +844,9 @@ function PlanoLeituraContent() {
     const [mostrarAjustesLeitura, setMostrarAjustesLeitura] = useState(false);
     // Capítulo em foco na rolagem (etiqueta discreta fixa que acompanha a leitura)
     const [capituloFoco, setCapituloFoco] = useState<number | null>(null);
+    const [montado, setMontado] = useState(false);
+    const [cabecalhoVisivel, setCabecalhoVisivel] = useState(true);
+    const cabecalhoRef = useRef<HTMLDivElement>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatStartRef = useRef<HTMLDivElement>(null);
     const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | 'inicio-ultima' | null>(null);
@@ -1051,6 +1055,21 @@ function PlanoLeituraContent() {
         alvos.forEach(a => obs.observe(a));
         return () => obs.disconnect();
     }, [versiculosPaginaAtual, messages.length]);
+
+    // Habilita o portal (so no cliente, apos montar)
+    useEffect(() => { setMontado(true); }, []);
+
+    // Observa o cabecalho: quando ele sai da tela ao rolar, mostramos a etiqueta de capitulo
+    useEffect(() => {
+        const el = cabecalhoRef.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(
+            ([entry]) => setCabecalhoVisivel(entry.isIntersecting),
+            { threshold: 0 }
+        );
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, [messages.length]);
 
     // Formatar data
     const formatarDataExtenso = (dataStr: string) => {
@@ -2164,7 +2183,7 @@ ${conteudo}
                     <div className="max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
 
                         {/* Chat Header - compacto e sticky */}
-                        <div className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
+                        <div ref={cabecalhoRef} className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <button
@@ -2271,6 +2290,16 @@ ${conteudo}
                             )}
                         </div>
 
+                        {/* Etiqueta de capitulo via portal (escapa do transform do animate-enter); aparece ao rolar, quando o cabecalho sai da tela */}
+                        {montado && !cabecalhoVisivel && capituloFoco != null && livroInfoAtual.nome && createPortal(
+                            <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-400 shadow-lg">
+                                    <BookOpen className="w-3 h-3" />
+                                    {capitalizarLivro(livroInfoAtual.nome)} {capituloFoco}
+                                </span>
+                            </div>,
+                            document.body
+                        )}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                             <div ref={chatStartRef} />

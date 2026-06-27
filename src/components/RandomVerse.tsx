@@ -25,13 +25,33 @@ const VERSES = [
     { text: 'Vinde a mim, todos os que estais cansados e sobrecarregados, e eu vos aliviarei.', ref: 'Mateus 11:28' },
     { text: 'Mas buscai primeiro o reino de Deus, e a sua justiça, e todas estas cousas vos serão acrescentadas.', ref: 'Mateus 6:33' },
     { text: 'Porque onde estiverem dois ou três reunidos em meu nome, ali estou no meio deles.', ref: 'Mateus 18:20' },
+    { text: 'Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.', ref: 'João 3:16' },
+    { text: 'Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.', ref: 'Salmos 46:1' },
+    { text: 'Não estejais inquietos por coisa alguma; antes, as vossas petições sejam em tudo conhecidas diante de Deus, pela oração e súplica, com ação de graças.', ref: 'Filipenses 4:6' },
+    { text: 'Esforça-te, e tem bom ânimo; não temas, nem te espantes, porque o Senhor teu Deus é contigo por onde quer que andares.', ref: 'Josué 1:9' },
+    { text: 'Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.', ref: 'Salmos 119:105' },
+    { text: 'Confia ao Senhor as tuas obras, e teus pensamentos serão estabelecidos.', ref: 'Provérbios 16:3' },
+    { text: 'Assim que, se alguém está em Cristo, nova criatura é; as coisas velhas já passaram; eis que tudo se fez novo.', ref: '2 Coríntios 5:17' },
+    { text: 'Ora, a fé é o firme fundamento das coisas que se esperam, e a prova das coisas que se não veem.', ref: 'Hebreus 11:1' },
+    { text: 'E, se algum de vós tem falta de sabedoria, peça-a a Deus, que a todos dá liberalmente e o não lança em rosto, e ser-lhe-á dada.', ref: 'Tiago 1:5' },
+    { text: 'O meu socorro vem do Senhor, que fez o céu e a terra.', ref: 'Salmos 121:2' },
+    { text: 'Disse-lhe Jesus: Eu sou o caminho, e a verdade, e a vida; ninguém vem ao Pai senão por mim.', ref: 'João 14:6' },
+    { text: 'E não vos conformeis com este mundo, mas transformai-vos pela renovação do vosso entendimento.', ref: 'Romanos 12:2' },
+    { text: 'Deleita-te também no Senhor, e ele te concederá o que deseja o teu coração.', ref: 'Salmos 37:4' },
+    { text: 'Tu conservarás em paz aquele cuja mente está firme em ti; porque ele confia em ti.', ref: 'Isaías 26:3' },
+    { text: 'As misericórdias do Senhor são a causa de não sermos consumidos; renovam-se cada manhã; grande é a tua fidelidade.', ref: 'Lamentações 3:22-23' },
+    { text: 'O Senhor teu Deus está no meio de ti, poderoso para te salvar; ele se deleitará em ti com alegria.', ref: 'Sofonias 3:17' },
+    { text: 'O Senhor pelejará por vós, e vós vos calareis.', ref: 'Êxodo 14:14' },
+    { text: 'Esforçai-vos, e animai-vos; não temais, porque o Senhor teu Deus é o que vai contigo; não te deixará nem te desamparará.', ref: 'Deuteronômio 31:6' },
+    { text: 'Estas coisas vos tenho dito para que em mim tenhais paz; no mundo tereis aflições, mas tende bom ânimo, eu venci o mundo.', ref: 'João 16:33' },
 ];
 
 function getDailyIndex(): number {
-    // Usa a data como seed para que o versículo do dia seja o mesmo para todos
-    const today = new Date();
-    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    return seed % VERSES.length;
+    // Numero do dia de calendario (incrementa de 1 em 1 por dia) -> rotacao sequencial
+    // que percorre TODOS os versiculos antes de repetir (nao repete por VERSES.length dias).
+    const hoje = new Date();
+    const numeroDoDia = Math.floor(Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()) / 86400000);
+    return ((numeroDoDia % VERSES.length) + VERSES.length) % VERSES.length;
 }
 
 export function RandomVerse() {
