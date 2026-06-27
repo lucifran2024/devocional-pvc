@@ -185,6 +185,16 @@ function VersiculosInterativos({
             toggleSelecaoCopia(idx);
             return;
         }
+        // Tocar em OUTRO versículo (com um já selecionado) entra direto no modo "copiar vários"
+        if (versiculoSelecionadoIdx != null && versiculoSelecionadoIdx !== idx) {
+            setModoCopiaMultipla(true);
+            setSelecaoCopia(new Set([versiculoSelecionadoIdx, idx]));
+            setVersiculoSelecionadoIdx(null);
+            setMostrarCores(false);
+            setMostrarNota(false);
+            versiculoAnteriorRef.current = null;
+            return;
+        }
         if (versiculoAnteriorRef.current === idx) {
             setVersiculoSelecionadoIdx(null);
             setMostrarCores(false);
@@ -617,9 +627,9 @@ function VersiculosInterativos({
 
             {/* Barra inferior do modo "copiar vários" */}
             {modoCopiaMultipla && (
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-surface-2/95 border border-border-subtle rounded-2xl py-2 px-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150">
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-surface-2/95 border border-amber-500/40 rounded-2xl py-2 px-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150">
                     <span className="text-sm text-text-secondary px-1 whitespace-nowrap">
-                        {selecaoCopia.size} selecionado{selecaoCopia.size === 1 ? '' : 's'}
+                        {selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}
                     </span>
                     <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold">
