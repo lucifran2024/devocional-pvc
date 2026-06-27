@@ -1359,7 +1359,12 @@ function PlanoLeituraContent() {
             ? `🎉 **Você concluiu ${tituloCapitulo}!** Essa era a última parte.\n👇 Toque no botão **Continuar** abaixo para finalizar a leitura.`
             : '👇 Toque no botão **Continuar** abaixo para ler a próxima parte.';
 
-        return `%%VERSICULOS_INTERATIVOS%%
+        return `📖 **${tituloCapitulo}**
+📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
+
+---
+
+%%VERSICULOS_INTERATIVOS%%
 
 ---
 
