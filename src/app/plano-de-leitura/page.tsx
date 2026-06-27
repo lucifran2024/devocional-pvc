@@ -7,7 +7,7 @@ import {
     ChevronRight, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
-    ZoomIn, ZoomOut, BookOpen, ListChecks, Check
+    ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight
 } from 'lucide-react';
 import {
     supabase,
@@ -45,6 +45,12 @@ const DEFAULT_READING_FONT_SIZE = 20;
 const MIN_READING_FONT_SIZE = 16;
 const MAX_READING_FONT_SIZE = 30;
 const READING_FONT_SIZE_KEY = 'plano-reading-font-size';
+const DEFAULT_READING_LINE_HEIGHT = 1.85;
+const MIN_READING_LINE_HEIGHT = 1.4;
+const MAX_READING_LINE_HEIGHT = 2.6;
+const READING_LINE_HEIGHT_KEY = 'plano-reading-line-height';
+const READING_ALIGN_KEY = 'plano-reading-align';
+type ReadingAlign = 'left' | 'center' | 'right';
 const NOVO_TESTAMENTO_ANCHOR_ID = 'plano-novo-testamento';
 
 function limitarFonteLeitura(size: number) {
@@ -95,6 +101,8 @@ function VersiculosInterativos({
     capitulo,
     livroId,
     readingFontSize,
+    readingLineHeight,
+    readingAlign,
     lexico,
 }: {
     versiculos: Versiculo[];
@@ -104,6 +112,8 @@ function VersiculosInterativos({
     capitulo: number;
     livroId?: number;
     readingFontSize: number;
+    readingLineHeight: number;
+    readingAlign: ReadingAlign;
     lexico?: string[];
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
@@ -476,13 +486,30 @@ function VersiculosInterativos({
                 </div>
             ) : null}
             <div className="space-y-1 relative" ref={containerRef}>
-                {/* Etiqueta discreta do capítulo — gruda no topo e acompanha a rolagem da leitura */}
-                <div className="sticky top-0 z-10 flex justify-center pointer-events-none -mt-1 mb-1">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-0/85 backdrop-blur-md border border-amber-500/20 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 shadow-sm">
-                        <BookOpen className="w-3 h-3" />
-                        {livroNome} {capituloFoco ?? (versiculos[0] ? getCapitulo(versiculos[0]) : capitulo)}
-                    </span>
-                </div>
+                {/* Topo da leitura: barra de copiar (ao marcar vários) OU etiqueta discreta do capítulo */}
+                {modoCopiaMultipla ? (
+                    <div className="sticky top-0 z-30 flex justify-center -mt-1 mb-1.5">
+                        <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-full py-1.5 px-2.5 shadow-xl backdrop-blur-xl">
+                            <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
+                            <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                <Copy className="w-3.5 h-3.5" /> Copiar
+                            </button>
+                            <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                <Share2 className="w-3.5 h-3.5" /> Enviar
+                            </button>
+                            <button onClick={sairModoCopiaMultipla} title="Cancelar" className="p-1.5 rounded-full hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="sticky top-0 z-10 flex justify-center pointer-events-none -mt-1 mb-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-0/85 backdrop-blur-md border border-amber-500/20 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 shadow-sm">
+                            <BookOpen className="w-3 h-3" />
+                            {livroNome} {capituloFoco ?? (versiculos[0] ? getCapitulo(versiculos[0]) : capitulo)}
+                        </span>
+                    </div>
+                )}
                 {versiculos.map((v, idx) => {
                     const cap = getCapitulo(v);
                     const prevCap = idx > 0 ? getCapitulo(versiculos[idx - 1]) : cap;
@@ -529,8 +556,9 @@ function VersiculosInterativos({
                                     ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
                                     ${selecaoCopia.has(idx) ? 'bg-green-500/15 ring-1 ring-green-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
+                                style={{ textAlign: readingAlign }}
                             >
-                                <p className="inline leading-[1.85] text-text-primary reading-serif" style={{ fontSize: `${readingFontSize}px` }}>
+                                <p className="inline text-text-primary reading-serif" style={{ fontSize: `${readingFontSize}px`, lineHeight: readingLineHeight }}>
                                     <span className="verse-num select-none">{v.verse}</span>
                                     {destacarLexico(v.text, lexico)}
                                 </p>
@@ -663,27 +691,6 @@ function VersiculosInterativos({
                 );
             })()}
 
-            {/* Barra inferior do modo "copiar vários" */}
-            {modoCopiaMultipla && (
-                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-surface-2/95 border border-amber-500/40 rounded-2xl py-2 px-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150">
-                    <span className="text-sm text-text-secondary px-1 whitespace-nowrap">
-                        {selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}
-                    </span>
-                    <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold">
-                        <Copy className="w-4 h-4" /> Copiar
-                    </button>
-                    <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold">
-                        <Share2 className="w-4 h-4" /> Enviar
-                    </button>
-                    <button onClick={sairModoCopiaMultipla} title="Cancelar"
-                        className="p-2 rounded-xl hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-            )}
-
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </>
     );
@@ -747,11 +754,13 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     );
 }
 
-function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, lexico }: {
+function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, readingLineHeight, readingAlign, lexico }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
     livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
     readingFontSize: number;
+    readingLineHeight: number;
+    readingAlign: ReadingAlign;
     lexico?: string[];
 }) {
     const isUser = message.role === 'user';
@@ -779,6 +788,8 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         capitulo={livroInfo!.capitulo}
                         livroId={livroInfo!.livroId}
                         readingFontSize={readingFontSize}
+                        readingLineHeight={readingLineHeight}
+                        readingAlign={readingAlign}
                         lexico={lexico}
                     />
 
@@ -860,6 +871,9 @@ function PlanoLeituraContent() {
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
     const [isLoadingExplicacao, setIsLoadingExplicacao] = useState(false);
     const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE);
+    const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
+    const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
+    const [mostrarAjustesLeitura, setMostrarAjustesLeitura] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const chatStartRef = useRef<HTMLDivElement>(null);
     const pendingScrollRef = useRef<'top' | 'bottom' | 'restore' | 'novo-testamento' | 'inicio-ultima' | null>(null);
@@ -997,6 +1011,14 @@ function PlanoLeituraContent() {
         if (Number.isFinite(saved)) {
             setReadingFontSize(limitarFonteLeitura(saved));
         }
+        const savedLh = Number(localStorage.getItem(READING_LINE_HEIGHT_KEY));
+        if (Number.isFinite(savedLh) && savedLh > 0) {
+            setReadingLineHeight(Math.min(MAX_READING_LINE_HEIGHT, Math.max(MIN_READING_LINE_HEIGHT, savedLh)));
+        }
+        const savedAlign = localStorage.getItem(READING_ALIGN_KEY);
+        if (savedAlign === 'left' || savedAlign === 'center' || savedAlign === 'right') {
+            setReadingAlign(savedAlign);
+        }
     }, []);
 
     const alterarFonteLeitura = (delta: number) => {
@@ -1013,6 +1035,23 @@ function PlanoLeituraContent() {
         setReadingFontSize(DEFAULT_READING_FONT_SIZE);
         if (typeof window !== 'undefined') {
             localStorage.setItem(READING_FONT_SIZE_KEY, String(DEFAULT_READING_FONT_SIZE));
+        }
+    };
+
+    const alterarEspacamento = (delta: number) => {
+        setReadingLineHeight(prev => {
+            const next = Math.min(MAX_READING_LINE_HEIGHT, Math.max(MIN_READING_LINE_HEIGHT, Math.round((prev + delta) * 100) / 100));
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(READING_LINE_HEIGHT_KEY, String(next));
+            }
+            return next;
+        });
+    };
+
+    const definirAlinhamento = (align: ReadingAlign) => {
+        setReadingAlign(align);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(READING_ALIGN_KEY, align);
         }
     };
 
@@ -2185,8 +2224,37 @@ ${conteudo}
                                     >
                                         <ZoomIn className="w-4 h-4" />
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setMostrarAjustesLeitura(v => !v)}
+                                        className={`p-2 rounded-lg transition-colors ${mostrarAjustesLeitura ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300 hover:text-white'}`}
+                                        title="Espaçamento e alinhamento"
+                                    >
+                                        <SlidersHorizontal className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
+
+                            {mostrarAjustesLeitura && (
+                                <div className="flex flex-col gap-2.5 pt-2 border-t border-border-subtle/40 animate-in fade-in slide-in-from-top-1 duration-150">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <button type="button" onClick={() => alterarEspacamento(-0.15)} disabled={readingLineHeight <= MIN_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white disabled:opacity-40 text-lg font-bold leading-none">−</button>
+                                            <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
+                                            <button type="button" onClick={() => alterarEspacamento(0.15)} disabled={readingLineHeight >= MAX_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white disabled:opacity-40 text-lg font-bold leading-none">+</button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-text-secondary">Alinhamento</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <button type="button" onClick={() => definirAlinhamento('left')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'left' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Esquerda"><AlignLeft className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('center')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'center' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Centro"><AlignCenter className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('right')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'right' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Direita"><AlignRight className="w-4 h-4" /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {temNovoTestamento && (
                                 <button
@@ -2219,6 +2287,8 @@ ${conteudo}
                                             versiculosInterativos={temPlaceholder ? versiculosPaginaAtual : undefined}
                                             livroInfo={temPlaceholder ? livroInfoAtual : undefined}
                                             readingFontSize={readingFontSize}
+                                            readingLineHeight={readingLineHeight}
+                                            readingAlign={readingAlign}
                                             lexico={passagem?.lexico_do_dia}
                                         />
                                     </div>
