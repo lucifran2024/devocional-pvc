@@ -509,7 +509,7 @@ function VersiculosInterativos({
                                 `}
                                 style={{ textAlign: readingAlign }}
                             >
-                                <p className="inline text-text-primary reading-serif" style={{ fontSize: `${readingFontSize}px`, lineHeight: readingLineHeight }}>
+                                <p className="inline text-text-primary reading-serif break-words" style={{ fontSize: `${readingFontSize}px`, lineHeight: readingLineHeight }}>
                                     <span className="verse-num select-none">{v.verse}</span>
                                     {destacarLexico(v.text, lexico)}
                                 </p>
@@ -742,7 +742,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                 <div className="animate-enter mb-4">
                     {/* Texto antes dos versículos */}
                     {partes[0] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
                     )}
@@ -763,7 +763,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
                     {/* Texto depois dos versículos */}
                     {partes[1] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
@@ -776,7 +776,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
         return (
             <div className="animate-enter mb-4">
-                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                     <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                 </div>
             </div>
@@ -2301,7 +2301,7 @@ ${conteudo}
                             document.body
                         )}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
-                        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-3">
                             <div ref={chatStartRef} />
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
