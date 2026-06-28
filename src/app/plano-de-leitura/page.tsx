@@ -502,7 +502,7 @@ function VersiculosInterativos({
                             <div
                                 id={`plano-verse-${cap}-${v.verse}`}
                                 onClick={() => handleVersiculoClick(idx)}
-                                className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
+                                className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none break-words
                                     ${getCorClasse(v)}
                                     ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
                                     ${selecaoCopia.has(idx) ? 'bg-green-500/15 ring-1 ring-green-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
@@ -2062,7 +2062,7 @@ ${conteudo}
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 z-10 relative">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 z-10 relative">
 
                 {/* Header Section - compacto no modo plano */}
                 {isPlanoMode ? (
@@ -2301,7 +2301,7 @@ ${conteudo}
                             document.body
                         )}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
-                        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-3">
+                        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-4 space-y-3">
                             <div ref={chatStartRef} />
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
