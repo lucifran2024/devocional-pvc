@@ -2462,6 +2462,10 @@ ${passagemRef ? `- **BASE BÍBLICA OBRIGATÓRIA:** ${passagemRef}\n"${passagemTe
 - O limite inclui título, corpo, versículo de apoio e fechamento.
 - Seja direto e impactante: UMA ideia central, frases curtas, sem parágrafos longos. Qualidade sobre quantidade. NUNCA ultrapasse o limite.
 
+## ABERTURA E DIA DA SEMANA (REGRA RÍGIDA):
+- VARIE a abertura todo dia. NÃO comece com o dia da semana nem com "Hoje é...".
+- NÃO cite o nome do dia (domingo, segunda, terça, quarta, quinta, sexta, sábado) no texto — a data já aparece no topo do card. Comece direto pelo tema/conteúdo, de um jeito diferente do dia anterior. (Use ${config.dia} apenas como contexto interno para escolher o tom, nunca escreva o dia na mensagem.)
+
 ## ANTI-REPETIÇÃO (O QUE NÃO FAZER):
 ${contextoEvitar}
 

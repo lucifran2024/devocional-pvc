@@ -422,6 +422,13 @@ export function validateGeneratedMessage(
         reasons.push('empty_fragment');
     }
 
+    // Rejeita fragmentos que são só um título curto, sem corpo (ex.: sobra de um
+    // vazamento depois que a linha de instrução foi removida).
+    const linhasSignificativas = getMeaningfulLines(sanitized);
+    if (linhasSignificativas.length <= 1 && looksLikeTitle(sanitized) && getWordCount(sanitized) < 6) {
+        reasons.push('apenas_titulo');
+    }
+
     if (isInstructionalFragment(sanitized)) {
         reasons.push('instruction_leak');
     }
@@ -435,9 +442,9 @@ export function validateGeneratedMessage(
         const mentionedDays = extractMentionedDays(sanitized);
         const disallowedDays = mentionedDays.filter((day) => !allowedDays.includes(day));
 
-        if (mentionedDays.length === 0) {
-            reasons.push('missing_allowed_day');
-        }
+        // NÃO exigimos que cada mensagem cite o dia. O prompt pede que NO MÁXIMO 1
+        // mensagem do lote cite o dia; a maioria deve ser neutra (sem dia). Só
+        // rejeitamos quando a mensagem cita um dia DIFERENTE do permitido.
         if (disallowedDays.length > 0) {
             reasons.push(`disallowed_day:${disallowedDays.join(',')}`);
         }

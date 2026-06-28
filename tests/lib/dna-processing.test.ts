@@ -67,7 +67,8 @@ Hoje é Quarta. Respire. Deus sustenta.
         });
 
         expect(reasons).toContain('category_oracao_voice');
-        expect(reasons).toContain('missing_allowed_day');
+        // Não citar o dia NÃO é mais motivo de rejeição (variedade: a maioria é neutra).
+        expect(reasons).not.toContain('missing_allowed_day');
     });
 
     it('processes a batch and keeps only validated messages', () => {
@@ -92,7 +93,7 @@ Okay, vamos gerar as novas mensagens seguindo rigorosamente as instruções.
         expect(processed.messages).toHaveLength(1);
         expect(processed.messages[0]).toContain('Segunda da esperança');
         expect(processed.rejected).toHaveLength(1);
-        expect(processed.rejected[0].reasons).toContain('missing_allowed_day');
+        expect(processed.rejected[0].reasons).toContain('category_oracao_voice');
     });
 
     it('builds dna_geracoes records with extracted metadata', () => {
