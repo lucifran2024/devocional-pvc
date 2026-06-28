@@ -169,6 +169,26 @@ function limparTextoGerado(texto: string): string {
     .trim();
 }
 
+// Detecta quando o modelo vazou raciocinio/planejamento (geralmente em ingles)
+// em vez de devolver a mensagem final. Devocionais sao sempre em portugues.
+function pareceVazamentoRaciocinio(texto: string): boolean {
+  const t = (texto || '').trim();
+  if (!t) return true;
+  if (/\b(we need to|we must|we['’]?ll|we will|we have to|let['’]?s|i need to|i['’]?ll|must follow|must not exceed|must be a single|aim around|single message|max \d+ characters?|in uppercase|format m[ée]dio|category \w+\s*:)\b/i.test(t)) return true;
+  const en = (t.toLowerCase().match(/\b(the|we|need|needs|must|should|verse|title|body|format|category|character|characters|produce|context|style|closing|brief|message|today|then|include|reference|maybe|aim)\b/g) || []).length;
+  return en >= 5;
+}
+
+// Fallback seguro caso a geracao da Palavra da Manha falhe ou vaze raciocinio.
+const FALLBACK_PALAVRA = `BOM DIA, FILHO AMADO
+
+Hoje e um novo dia que o Senhor preparou para voce. Respire fundo, entregue a Ele as suas preocupacoes e caminhe em paz, confiando que Ele cuida de cada detalhe da sua vida.
+
+«Este e o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.»
+Salmos 118:24
+
+Va com a certeza de que o amor de Deus te acompanha hoje.`;
+
 // Trava de léxico: força o modelo a reaproveitar o vocabulário dominante do DNA.
 const STOPWORDS_DNA = new Set([
   'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas', 'um', 'uma', 'uns', 'umas',
@@ -2482,7 +2502,33 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
       // ENFORCEMENT DE TAMANHO: rede de segurança caso o modelo ainda exceda.
       // Curto -> ~500 chars | Médio -> ~750 chars (corta no fim de frase).
       const limiteChars = config.formato === 'Curto' ? 500 : 750;
-      const resultado = limitarTamanhoMensagem(llmPalavra.text || "Erro na geração.", limiteChars);
+
+      // Limpa raciocinio vazado (mesma rede dos modos favoritas/estilo).
+      let textoPalavra = limparTextoGerado(llmPalavra.text || "");
+
+      // Se o modelo vazou planejamento/ingles em vez da mensagem, regenera 1x com instrucao firme.
+      if (pareceVazamentoRaciocinio(textoPalavra)) {
+        console.warn('⚠️ [PALAVRA DA MANHÃ] Vazamento de raciocínio detectado — regenerando...');
+        const retryPalavra = await gerarTexto(
+          prompt + '\n\nRESPONDA SOMENTE com a mensagem final em PORTUGUÊS (título em maiúsculas, corpo, versículo e fechamento). NÃO escreva raciocínio, planejamento, contagem de caracteres, nem nada em inglês.',
+          {
+            temperature: 0.7,
+            maxTokens: 320,
+            models: epPalavra.useTunnel ? ['openclaw', 'gemini/gemini-3-flash-preview', 'ds/deepseek-v4-flash'] : undefined,
+            baseUrl: epPalavra.useTunnel ? epPalavra.url : undefined,
+            apiKey: epPalavra.useTunnel ? epPalavra.apiKey : undefined,
+          }
+        );
+        if (retryPalavra.ok) textoPalavra = limparTextoGerado(retryPalavra.text || "");
+      }
+
+      // Se ainda assim ficou vazio/curto demais ou continua vazando, usa fallback seguro.
+      if (!textoPalavra || textoPalavra.length < 40 || pareceVazamentoRaciocinio(textoPalavra)) {
+        console.warn('⚠️ [PALAVRA DA MANHÃ] Conteúdo inválido — usando fallback seguro.');
+        textoPalavra = FALLBACK_PALAVRA;
+      }
+
+      const resultado = limitarTamanhoMensagem(textoPalavra, limiteChars);
 
       console.log(`✅ [PALAVRA DA MANHÃ] Geração concluída! (${resultado.length} chars)`);
 
