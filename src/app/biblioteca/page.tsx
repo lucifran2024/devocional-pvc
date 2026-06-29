@@ -851,8 +851,9 @@ function BibliotecaPage() {
     const parseReferenciaBiblica = (texto: string): { livro: typeof LIVROS_BIBLIA[0]; capitulo: number; versiculo: number | null } | null => {
         const t = texto.trim();
         if (!t) return null;
-        // Regex: captura "nome cap[:ver]"; nome pode ter "1 ", "2 ", "3 " prefixo e letras/acentos/espaços
-        const match = t.match(/^([1-3]?\s*[A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(\d{1,3})(?:\s*[:.]\s*(\d{1,3}))?\s*$/);
+        // Regex: captura "nome cap[ sep ver]"; nome pode ter "1 ", "2 ", "3 " prefixo e letras/acentos/espaços.
+        // O separador do versículo aceita ":", ".", "-" ou espaço (ex.: "gn 2:10", "gn 2-10", "gn 2 10").
+        const match = t.match(/^([1-3]?\s*[A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+)?)\s+(\d{1,3})(?:[\s:.\-]+(\d{1,3}))?\s*$/);
         if (!match) return null;
         const nomeTexto = match[1].replace(/\s+/g, ' ').trim();
         const capitulo = parseInt(match[2], 10);
