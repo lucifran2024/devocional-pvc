@@ -1280,9 +1280,9 @@ function BibliotecaPage() {
         const termo = termoBusca.trim();
         if (!termo) return;
 
-        // Tentar interpretar como referência bíblica (ex: "João 3:16", "Josué 1-5", "Gn 1", "Salmos 23")
-        // Aceita : ou - como separador de versículo, e ignora acentos
-        const refMatch = termo.match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?:\s*[:\-–]\s*(\d+)(?:\s*[-–]\s*(\d+))?)?$/i);
+        // Tentar interpretar como referência bíblica (ex: "João 3:16", "Gn 1", "Salmos 23")
+        // Aceita ":", "-", "–" ou espaço como separador de versículo, e ignora acentos
+        const refMatch = termo.match(/^(\d?\s*[a-záàâãéèêíïóôõöúçñ]+)\s+(\d+)(?:[\s:\-–]+(\d+)(?:\s*[-–]\s*(\d+))?)?$/i);
         if (refMatch) {
             const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
             const alvo = normalizar(refMatch[1].trim());
@@ -1367,10 +1367,9 @@ function BibliotecaPage() {
                 return nome === alvo || abrev === alvo || nome.startsWith(alvo);
             });
             if (livro) {
-                const timer = setTimeout(() => {
-                    handleBuscar();
-                }, 600);
-                return () => clearTimeout(timer);
+                // Referencia valida (livro + capitulo): NAO navega sozinho no debounce.
+                // Espera o usuario apertar Enter ou tocar em "Buscar" para ir, dando
+                // tempo de completar com o versiculo (ex.: "Genesis 2:10").
             }
             return;
         }
