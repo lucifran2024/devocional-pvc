@@ -156,6 +156,8 @@ function limparTextoGerado(texto: string): string {
     /^\s*(?:okay|ok|certo|claro|perfeito|beleza|entendido|prontinho)\b[^\n]*\b(?:vamos|vou|gerar|gerando|preparando|prepara|entendido|seguindo|criar|criando|produzir)\b[^\n]*$/gim,
     /^\s*(?:okay|now|first|firstly|then|next|also|finally|we|we['’]ll|i['’]ll|let me|let['’]s|repeat|step \d+)\b[^\n]*$/gim,
     /^\s*(?:note|plan|thinking|planejamento|racioc[ií]nio)\s*:[^\n]*$/gim,
+    /^\s*\[[^\]\n]{2,}\]\s*$/gim, // linha que é só um placeholder do template, ex.: [Título...]
+    /^\s*(?:title|body|t[íi]tulo|corpo|closing|fechamento)\s*:[^\n]*$/gim, // rótulos de rascunho
   ];
   for (const re of linhasRaciocinio) t = t.replace(re, '');
 
@@ -175,6 +177,10 @@ function pareceVazamentoRaciocinio(texto: string): boolean {
   const t = (texto || '').trim();
   if (!t) return true;
   if (/\b(we need to|we must|we['’]?ll|we will|we have to|let['’]?s|i need to|i['’]?ll|must follow|must not exceed|must be a single|aim around|single message|max \d+ characters?|in uppercase|format m[ée]dio|category \w+\s*:)\b/i.test(t)) return true;
+  // Eco do template do prompt (placeholders) ou rótulos de rascunho — não é a mensagem final.
+  if (/\[\s*(?:t[íi]tulo|corpo|fechamento|mensagem|body|title)/i.test(t)) return true;
+  if (/vers[íi]culo de apoio|—\s*ref\b/i.test(t)) return true;
+  if (/^\s*(?:title|body|t[íi]tulo|corpo|closing|fechamento)\s*:/im.test(t)) return true;
   const en = (t.toLowerCase().match(/\b(the|we|need|needs|must|should|verse|title|body|format|category|character|characters|produce|context|style|closing|brief|message|today|then|include|reference|maybe|aim)\b/g) || []).length;
   return en >= 5;
 }
@@ -2478,14 +2484,14 @@ Gere UMA ÚNICA mensagem que siga estritamente a configuração acima.
 4. **Se for INÍCIO SEMANA:** Dê força, ânimo e direção.
 5. **Se for FIM SEMANA:** Dê descanso, paz e gratidão.
 
-## FORMATO DE SAÍDA OBRIGATÓRIO:
-[Título Curto e Impactante em CAIXA ALTA]
+## FORMATO DE SAÍDA (responda APENAS com a mensagem final pronta, em português):
+- 1ª linha: um TÍTULO curto e impactante, TODO EM MAIÚSCULAS.
+- (linha em branco)
+- o corpo da mensagem (2 a 4 frases).
+${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : '- (linha em branco) e um versículo de apoio entre « », com a referência (livro capítulo:versículo) na linha de baixo.'}
+- (linha em branco) e uma frase curta de fechamento.
 
-[Corpo da Mensagem]
-
-${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : '> "Versículo de apoio" — Ref'}
-
-[Fechamento Breve]
+NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamento:". NUNCA use colchetes [ ]. NUNCA escreva contagem de caracteres, instruções, planejamento ou qualquer texto em inglês. Escreva somente o conteúdo real, pronto para enviar.
 `;
 
       // 6. Chamar LLM. A Palavra usa o combo "openclaw" do 9Router (modelos
