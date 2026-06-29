@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pvc-v4';
+const CACHE_NAME = 'pvc-v5';
 const STATIC_ASSETS = [
     '/',
     '/login',
