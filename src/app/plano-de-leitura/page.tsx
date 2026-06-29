@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
     Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
-    ChevronRight, RotateCcw, GraduationCap, Search,
+    ChevronRight, ChevronLeft, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
     ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight
@@ -1347,6 +1347,15 @@ function PlanoLeituraContent() {
 
     const temNovoTestamento = Boolean(getParteNovoTestamento());
 
+    const getParteVelhoTestamento = () => {
+        if (!bibleData) return null;
+        const grupos = getCapitulosAgrupados();
+        const idx = grupos.findIndex(grupo => grupo.some(v => !v.livroId || v.livroId < 40));
+        return idx >= 0 ? idx + 1 : null;
+    };
+
+    const temVelhoTestamento = Boolean(getParteVelhoTestamento());
+
     useEffect(() => {
         const action = pendingScrollRef.current;
         if (!action || typeof window === 'undefined') return;
@@ -1928,6 +1937,25 @@ ${conteudo}
         });
     };
 
+    const handleIrParaVelhoTestamento = () => {
+        const parteVelhoTestamento = getParteVelhoTestamento();
+        if (!parteVelhoTestamento || !passagem) return;
+
+        setActiveOption('1');
+        const content = gerarLeituraParte(parteVelhoTestamento);
+        pendingScrollRef.current = 'inicio-ultima';
+        setMessages(prev => {
+            const updated = [...prev];
+            for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant' && updated[i].content.includes('%%VERSICULOS_INTERATIVOS%%')) {
+                    updated[i] = { ...updated[i], content, timestamp: new Date() };
+                    return updated;
+                }
+            }
+            return [...updated, { role: 'assistant', content, timestamp: new Date() }];
+        });
+    };
+
     const handleQuickAction = (action: string) => {
         submitMessage(action);
     };
@@ -2273,20 +2301,38 @@ ${conteudo}
                             )}
 
                             {temNovoTestamento && (
-                                <button
-                                    type="button"
-                                    onClick={handleIrParaNovoTestamento}
-                                    className="group self-start flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
-                                >
-                                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
-                                        <BookOpen className="w-4 h-4 text-amber-400" />
-                                    </span>
-                                    <span className="flex flex-col items-start leading-tight">
-                                        <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Novo Testamento</span>
-                                        <span className="text-[10px] text-amber-500/70 font-medium">Pular direto para a leitura</span>
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all ml-1" />
-                                </button>
+                                <div className="flex flex-wrap items-center gap-2 self-start">
+                                    {temVelhoTestamento && (
+                                        <button
+                                            type="button"
+                                            onClick={handleIrParaVelhoTestamento}
+                                            className="group flex items-center gap-2 pl-2 pr-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
+                                        >
+                                            <ChevronLeft className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
+                                            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                                                <BookOpen className="w-4 h-4 text-amber-400" />
+                                            </span>
+                                            <span className="flex flex-col items-start leading-tight">
+                                                <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Antigo Testamento</span>
+                                                <span className="text-[10px] text-amber-500/70 font-medium">Voltar ao começo</span>
+                                            </span>
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={handleIrParaNovoTestamento}
+                                        className="group flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
+                                    >
+                                        <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                                            <BookOpen className="w-4 h-4 text-amber-400" />
+                                        </span>
+                                        <span className="flex flex-col items-start leading-tight">
+                                            <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Novo Testamento</span>
+                                            <span className="text-[10px] text-amber-500/70 font-medium">Pular direto</span>
+                                        </span>
+                                        <ChevronRight className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+                                    </button>
+                                </div>
                             )}
                         </div>
 
