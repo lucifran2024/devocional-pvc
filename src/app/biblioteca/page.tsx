@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -494,6 +495,18 @@ function BibliotecaPage() {
     // Estado principal
     const [livroAtual, setLivroAtual] = useState(LIVROS_BIBLIA[0]);
     const [capituloAtual, setCapituloAtual] = useState(1);
+    // Etiqueta de capítulo que acompanha a rolagem (igual ao plano de leitura)
+    const [montado, setMontado] = useState(false);
+    const [cabecalhoVisivel, setCabecalhoVisivel] = useState(true);
+    const cabecalhoRef = useRef<HTMLElement>(null);
+    useEffect(() => { setMontado(true); }, []);
+    useEffect(() => {
+        const el = cabecalhoRef.current;
+        if (!el) return;
+        const obs = new IntersectionObserver(([entry]) => setCabecalhoVisivel(entry.isIntersecting), { threshold: 0 });
+        obs.observe(el);
+        return () => obs.disconnect();
+    }, []);
     const [versiculos, setVersiculos] = useState<Versiculo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -1662,7 +1675,7 @@ function BibliotecaPage() {
     return (
         <CosmicBackground className="min-h-screen">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
+            <header ref={cabecalhoRef} className="sticky top-0 z-50 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors">
                         <ArrowLeft className="w-5 h-5" />
@@ -2594,6 +2607,16 @@ function BibliotecaPage() {
 
             {/* Conteúdo Principal */}
             <main className="max-w-4xl mx-auto px-4 py-6">
+                {/* Etiqueta de capítulo via portal — aparece ao rolar (quando o cabeçalho sai da tela) */}
+                {montado && !cabecalhoVisivel && versiculos.length > 0 && createPortal(
+                    <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-400 shadow-lg">
+                            <Book className="w-3 h-3" />
+                            {livroAtual.nome} {capituloAtual}
+                        </span>
+                    </div>,
+                    document.body
+                )}
                 <h1 className="text-2xl md:text-3xl font-black text-text-primary mb-3 text-center tracking-tight">
                     {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
                     <span className="ml-2 text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
