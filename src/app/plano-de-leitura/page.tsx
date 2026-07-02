@@ -2073,7 +2073,7 @@ ${conteudo}
         <CosmicBackground className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
 
             {/* Navbar Placeholder (or Back Button) */}
-            <div className="max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
+            <div className="w-full max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
                 <Link href={planoId ? "/planos" : "/"} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     {planoId ? "Voltar aos Planos" : "Voltar ao Dashboard"}
@@ -2090,7 +2090,10 @@ ${conteudo}
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 z-10 relative">
+            {/* w-full é ESSENCIAL: sem ele, mx-auto num pai flex-col vira fit-content e
+                conteúdo sem quebra (ex.: referência longa com truncate) infla a página
+                inteira além da tela no celular, cortando o fim das linhas. */}
+            <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 z-10 relative">
 
                 {/* Header Section - compacto no modo plano */}
                 {isPlanoMode ? (
@@ -2208,7 +2211,7 @@ ${conteudo}
                     // -------------------------------------------
                     // VISTA CHAT (INTERATIVA) - Sem bolha externa para maximizar leitura
                     // -------------------------------------------
-                    <div className="max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
+                    <div className="w-full max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
 
                         {/* Chat Header - compacto e sticky */}
                         <div ref={cabecalhoRef} className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">

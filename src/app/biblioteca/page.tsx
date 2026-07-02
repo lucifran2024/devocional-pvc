@@ -2606,7 +2606,7 @@ function BibliotecaPage() {
             )}
 
             {/* Conteúdo Principal */}
-            <main className="max-w-4xl mx-auto px-4 py-6">
+            <main className="w-full max-w-4xl mx-auto px-4 py-6">
                 {/* Etiqueta de capítulo via portal — aparece ao rolar (quando o cabeçalho sai da tela) */}
                 {montado && !cabecalhoVisivel && versiculos.length > 0 && createPortal(
                     <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
