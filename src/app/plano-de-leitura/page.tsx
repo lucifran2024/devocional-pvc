@@ -2304,36 +2304,30 @@ ${conteudo}
                             )}
 
                             {temNovoTestamento && (
-                                <div className="flex flex-wrap items-center gap-2 self-start">
+                                <div className="grid grid-cols-2 gap-2 w-full">
                                     {temVelhoTestamento && (
                                         <button
                                             type="button"
                                             onClick={handleIrParaVelhoTestamento}
-                                            className="group flex items-center gap-2 pl-2 pr-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
+                                            className="group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
                                         >
-                                            <ChevronLeft className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
-                                            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
-                                                <BookOpen className="w-4 h-4 text-amber-400" />
-                                            </span>
-                                            <span className="flex flex-col items-start leading-tight">
-                                                <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Antigo Testamento</span>
-                                                <span className="text-[10px] text-amber-500/70 font-medium">Voltar ao começo</span>
+                                            <ChevronLeft className="w-4 h-4 shrink-0 text-amber-500/60 group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
+                                            <span className="flex flex-col items-start leading-tight min-w-0">
+                                                <span className="text-[12px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors whitespace-nowrap">Antigo Testamento</span>
+                                                <span className="text-[10px] text-amber-500/70 font-medium whitespace-nowrap">Voltar ao começo</span>
                                             </span>
                                         </button>
                                     )}
                                     <button
                                         type="button"
                                         onClick={handleIrParaNovoTestamento}
-                                        className="group flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
+                                        className={`group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20 ${temVelhoTestamento ? '' : 'col-span-2'}`}
                                     >
-                                        <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30">
-                                            <BookOpen className="w-4 h-4 text-amber-400" />
+                                        <span className="flex flex-col items-start leading-tight min-w-0">
+                                            <span className="text-[12px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors whitespace-nowrap">Novo Testamento</span>
+                                            <span className="text-[10px] text-amber-500/70 font-medium whitespace-nowrap">Pular direto</span>
                                         </span>
-                                        <span className="flex flex-col items-start leading-tight">
-                                            <span className="text-[13px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors">Novo Testamento</span>
-                                            <span className="text-[10px] text-amber-500/70 font-medium">Pular direto</span>
-                                        </span>
-                                        <ChevronRight className="w-4 h-4 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+                                        <ChevronRight className="w-4 h-4 shrink-0 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
                                     </button>
                                 </div>
                             )}
