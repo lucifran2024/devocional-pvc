@@ -17,11 +17,8 @@ export function CosmicBackground({
             {/* 1. Divine Gradient Background (Base) - SINGLE TONE */}
             <div className="absolute inset-0 bg-transparent z-0 pointer-events-none"></div>
 
-            {/* 2. Stardust Pattern Overlay */}
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] mix-blend-overlay dark:mix-blend-screen z-0 pointer-events-none"></div>
-
-            {/* 3. Noise Texture */}
-            <div className="absolute inset-0 noise-overlay z-0 pointer-events-none"></div>
+            {/* 2. Grain sutil (local, sem dependência externa) */}
+            <div className="absolute inset-0 grain-overlay z-0 pointer-events-none"></div>
 
             {/* 4. Glow Effects (Orbs) - REMOVED FOR CLEAN LOOK */}
             {showOrbs && (

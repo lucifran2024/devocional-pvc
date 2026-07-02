@@ -57,7 +57,7 @@ export function Navigation() {
             {/* Desktop Sidebar */}
             <nav className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[88px] bg-white/95 dark:bg-surface-1/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-border-subtle z-50 items-center py-7">
                 {/* Logo */}
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center text-white text-xs font-black mb-10 shadow-lg shadow-amber-500/30 tracking-wider select-none">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center text-white text-xs font-black mb-10 shadow-lg shadow-amber-500/30 tracking-wider select-none">
                     PVC
                 </div>
                 <ul className="flex flex-col gap-1 w-full px-3">

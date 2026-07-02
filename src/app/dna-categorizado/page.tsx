@@ -33,6 +33,7 @@ import {
 } from '@/lib/dna-processing';
 import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import { BackButton } from '@/components/ui/BackButton';
 
 // ==================== CATEGORIAS ====================
 // Paleta harmônica: tons quentes (âmbar/dourado) + tons frios suaves (slate/zinc)
@@ -42,8 +43,8 @@ const CATEGORIAS: { id: CategoriaDna; nome: string; icon: typeof Book; cor: stri
     { id: 'oracao', nome: 'Oração', icon: Heart, cor: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' },
     { id: 'versiculo', nome: 'Versículo', icon: Book, cor: 'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
     { id: 'reflexao', nome: 'Reflexão', icon: Lightbulb, cor: 'text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/20' },
-    { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/20' },
-    { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border-sky-200 dark:border-sky-500/20' },
+    { id: 'exortacao', nome: 'Exortação', icon: Megaphone, cor: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
+    { id: 'declaracao', nome: 'Declaração', icon: MessageCircle, cor: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
     { id: 'outro', nome: 'Outro', icon: HelpCircle, cor: 'text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-500/10 border-zinc-200 dark:border-zinc-500/20' },
 ];
 
@@ -539,17 +540,15 @@ export default function DnaCategorizadoPage() {
                     <CosmicHeader className="pb-32 md:pb-48">
                         <div className="w-full px-4 sm:px-6 lg:px-8 pt-12 text-center md:text-left">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-5 mb-8">
-                                <Link href="/" className="group p-3 bg-surface-2 hover:bg-surface-2/80 rounded-2xl transition-all border border-border-subtle">
-                                    <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-text-primary" />
-                                </Link>
+                                <BackButton href="/" label="Início" />
                                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-400/20 rounded-full text-amber-700 dark:text-amber-200 text-[10px] font-black uppercase tracking-[0.2em]">
                                     <Layers className="w-3.5 h-3.5" />
                                     DNA Categorizado
                                 </div>
                             </div>
 
-                            <h1 className="text-4xl md:text-7xl font-black tracking-tight text-text-primary mb-4 text-center md:text-left">
-                                DNA <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-200 dark:to-orange-300">Categorizado</span>
+                            <h1 className="reading-serif text-4xl md:text-5xl font-semibold tracking-tight text-text-primary mb-4 text-center md:text-left">
+                                DNA <span className="text-amber-600 dark:text-amber-400">Categorizado</span>
                             </h1>
 
                             {/* === SISTEMA DE ABAS === */}
@@ -613,7 +612,7 @@ export default function DnaCategorizadoPage() {
                                                 onClick={() => setFiltroCategoria('todas')}
                                                 className="text-xs text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200"
                                             >
-                                                ✕ Ver todas
+                                                Ver todas
                                             </button>
                                         )}
                                     </div>
@@ -634,21 +633,21 @@ export default function DnaCategorizadoPage() {
                             {/* === ABA GERAR DNA === */}
                             {activeTab === 'gerar-dna' && (
                                 <>
-                                    <p className="text-text-muted mb-4">Gera mensagens inspiradas no seu DNA usando <code className="text-fuchsia-300">modo_favoritas</code></p>
+                                    <p className="text-text-muted mb-4">Gera mensagens inspiradas no seu DNA espiritual</p>
                                     <div className="flex flex-wrap items-center gap-3">
                                         <button
                                             onClick={handleGerar}
                                             disabled={generating || items.length === 0}
-                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-text-primary font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-amber-950 font-bold rounded-xl hover:bg-amber-400 transition-all disabled:opacity-50"
                                         >
                                             {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                                            {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} Inspirados`}
+                                            {generating ? 'Gerando...' : `Gerar ${filtroQuantidade} Inspirados`}
                                         </button>
 
                                         <select
                                             value={filtroQuantidade}
                                             onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                         >
                                             {QUANTIDADES.map(q => <option key={q} value={q} className="bg-surface-1">{q}</option>)}
                                         </select>
@@ -656,7 +655,7 @@ export default function DnaCategorizadoPage() {
                                         <select
                                             value={filtroCategoriaGerar}
                                             onChange={(e) => setFiltroCategoriaGerar(e.target.value as CategoriaDna | 'todas')}
-                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                         >
                                             <option value="todas" className="bg-surface-1">Todas categorias</option>
                                             {CATEGORIAS.map(c => <option key={c.id} value={c.id} className="bg-surface-1">{c.nome}</option>)}
@@ -664,7 +663,7 @@ export default function DnaCategorizadoPage() {
 
                                         <button
                                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                         >
                                             <Filter className="w-4 h-4" />
                                             Filtros Avançados
@@ -677,7 +676,7 @@ export default function DnaCategorizadoPage() {
                             {/* === ABA GERAR POR ESTILO === */}
                             {activeTab === 'gerar-estilo' && (
                                 <>
-                                    <p className="text-text-muted mb-4">Força a saída em um estilo específico usando <code className="text-indigo-300">modo_estilo</code></p>
+                                    <p className="text-text-muted mb-4">Gera mensagens no estilo da categoria escolhida</p>
 
                                     {/* Seleção de Estilo */}
                                     <div className="mb-4">
@@ -690,7 +689,7 @@ export default function DnaCategorizadoPage() {
                                                         key={cat.id}
                                                         onClick={() => setSelectedStyleCategory(cat.id)}
                                                         className={`p-3 rounded-xl border text-center transition-all ${isSelected
-                                                            ? `${cat.cor} ring-2 ring-offset-2 ring-offset-black ring-indigo-500`
+                                                            ? `${cat.cor} ring-2 ring-amber-500/40 ring-offset-2 ring-offset-surface-0`
                                                             : 'bg-surface-2 border-border-subtle hover:bg-surface-2 hover:border-border-strong'
                                                             }`}
                                                     >
@@ -707,23 +706,23 @@ export default function DnaCategorizadoPage() {
                                         <button
                                             onClick={handleGerarEstilo}
                                             disabled={generating || !selectedStyleCategory}
-                                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-500 text-text-primary font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-amber-950 font-bold rounded-xl hover:bg-amber-400 transition-all disabled:opacity-50"
                                         >
                                             {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                            {generating ? 'Gerando...' : `✨ Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
+                                            {generating ? 'Gerando...' : `Gerar ${filtroQuantidade} em ${selectedStyleCategory || '...'}`}
                                         </button>
 
                                         <select
                                             value={filtroQuantidade}
                                             onChange={(e) => setFiltroQuantidade(Number(e.target.value))}
-                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                            className="px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                         >
                                             {QUANTIDADES.map(q => <option key={q} value={q} className="bg-surface-1">{q}</option>)}
                                         </select>
 
                                         <button
                                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${showAdvancedFilters ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                         >
                                             <Filter className="w-4 h-4" />
                                             Filtros Avançados
@@ -737,7 +736,7 @@ export default function DnaCategorizadoPage() {
                             {(activeTab === 'gerar-dna' || activeTab === 'gerar-estilo') && showAdvancedFilters && (
                                 <div className="mt-4 p-4 bg-surface-2 border border-border-subtle rounded-xl animate-in slide-in-from-top-2">
                                     <h4 className="text-text-primary font-bold mb-4 flex items-center gap-2">
-                                        <Filter className="w-4 h-4 text-violet-400" />
+                                        <Filter className="w-4 h-4 text-amber-500" />
                                         Filtros Avançados de Geração
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -749,7 +748,7 @@ export default function DnaCategorizadoPage() {
                                                 value={filtroTema}
                                                 onChange={(e) => setFiltroTema(e.target.value)}
                                                 placeholder="Ex: Esperança, Fé, Gratidão..."
-                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm placeholder:text-text-muted focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm placeholder:text-text-muted focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                             />
                                         </div>
 
@@ -759,7 +758,7 @@ export default function DnaCategorizadoPage() {
                                             <select
                                                 value={filtroTamanho}
                                                 onChange={(e) => setFiltroTamanho(e.target.value)}
-                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                             >
                                                 <option value="" className="bg-surface-1">Qualquer tamanho</option>
                                                 {TAMANHOS.map(t => <option key={t} value={t} className="bg-surface-1">{t}</option>)}
@@ -772,7 +771,7 @@ export default function DnaCategorizadoPage() {
                                             <select
                                                 value={filtroFormato}
                                                 onChange={(e) => setFiltroFormato(e.target.value)}
-                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                             >
                                                 <option value="" className="bg-surface-1">Qualquer formato</option>
                                                 {FORMATOS_TEXTO.map(f => <option key={f} value={f} className="bg-surface-1">{f}</option>)}
@@ -787,7 +786,7 @@ export default function DnaCategorizadoPage() {
                                             <select
                                                 value={filtroPeriodo}
                                                 onChange={(e) => setFiltroPeriodo(e.target.value)}
-                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                             >
                                                 <option value="" className="bg-surface-1">Qualquer período</option>
                                                 {PERIODOS.map(p => <option key={p} value={p} className="bg-surface-1">{p}</option>)}
@@ -800,7 +799,7 @@ export default function DnaCategorizadoPage() {
                                             <select
                                                 value={filtroMomento}
                                                 onChange={(e) => setFiltroMomento(e.target.value)}
-                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-violet-500 focus:outline-none"
+                                                className="w-full px-3 py-2 bg-surface-2 border border-border-subtle rounded-lg text-text-primary text-sm focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                                             >
                                                 <option value="" className="bg-surface-1">Qualquer momento</option>
                                                 {MOMENTOS.map(m => <option key={m} value={m} className="bg-surface-1">{m}</option>)}
@@ -850,7 +849,7 @@ export default function DnaCategorizadoPage() {
                                                     <button
                                                         key={dia}
                                                         onClick={() => toggleDia(dia)}
-                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-violet-500/20 border-violet-500/30 text-violet-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${active ? 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300' : 'bg-surface-2 border-border-subtle text-text-muted hover:bg-surface-2'}`}
                                                     >
                                                         {active ? <CheckSquare className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                                                         {dia}
@@ -875,7 +874,7 @@ export default function DnaCategorizadoPage() {
                                                     <button
                                                         key={opt.key}
                                                         onClick={() => setContextoEstrategia(opt.key)}
-                                                        className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === opt.key ? 'bg-indigo-500 text-text-primary shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
+                                                        className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md transition-all ${contextoEstrategia === opt.key ? 'bg-amber-500 text-amber-950 shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                                                     >
                                                         {opt.label}
                                                     </button>
@@ -913,7 +912,7 @@ export default function DnaCategorizadoPage() {
                                     {temFiltroAvancadoAtivo && (
                                         <button
                                             onClick={resetAdvancedFilters}
-                                            className="mt-3 text-xs text-violet-400 hover:text-violet-300"
+                                            className="mt-3 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300"
                                         >
                                             Limpar filtros avancados
                                         </button>
@@ -929,11 +928,11 @@ export default function DnaCategorizadoPage() {
                                                 </div>
                                                 <button
                                                     onClick={() => setShowCandidates(!showCandidates)}
-                                                    className="text-xs flex items-center gap-1.5 text-violet-300 hover:text-text-primary transition-colors"
+                                                    className="text-xs flex items-center gap-1.5 text-amber-700 dark:text-amber-300 hover:text-text-primary transition-colors"
                                                 >
                                                     {loadingCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
                                                     {showCandidates ? 'Ocultar' : 'Ver/Editar'}
-                                                    <span className="bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded text-[10px] border border-violet-500/30">
+                                                    <span className="bg-amber-500/15 text-amber-700 dark:text-amber-200 px-1.5 py-0.5 rounded text-[10px] border border-amber-500/30">
                                                         {candidates.filter(c => c.selected).length}/{candidates.length}
                                                     </span>
                                                 </button>
@@ -958,13 +957,13 @@ export default function DnaCategorizadoPage() {
                                                                 className={`
                                                                     p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
                                                                     ${c.selected
-                                                                        ? 'bg-violet-500/10 border-violet-500/30 text-slate-200'
+                                                                        ? 'bg-amber-500/10 border-amber-500/30 text-text-primary'
                                                                         : 'bg-transparent border-border-subtle text-text-muted opacity-60 hover:opacity-100'}
                                                                 `}
                                                             >
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
                                                                     <span className="text-[10px] uppercase font-bold text-text-muted">#{c.id}</span>
-                                                                    {c.selected && <Check className="w-3 h-3 text-violet-400" />}
+                                                                    {c.selected && <Check className="w-3 h-3 text-amber-500" />}
                                                                 </div>
                                                                 <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
                                                             </div>
@@ -980,16 +979,16 @@ export default function DnaCategorizadoPage() {
                                         <div className="mt-5 pt-5 border-t border-border-subtle">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
-                                                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                                                    <Sparkles className="w-4 h-4 text-amber-500" />
                                                     <h4 className="text-sm font-bold text-text-primary">Exemplos de {selectedStyleCategory}</h4>
                                                 </div>
                                                 <button
                                                     onClick={() => setShowStyleCandidates(!showStyleCandidates)}
-                                                    className="text-xs flex items-center gap-1.5 text-indigo-300 hover:text-text-primary transition-colors"
+                                                    className="text-xs flex items-center gap-1.5 text-amber-700 dark:text-amber-300 hover:text-text-primary transition-colors"
                                                 >
                                                     {loadingStyleCandidates ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
                                                     {showStyleCandidates ? 'Ocultar' : 'Ver/Editar'}
-                                                    <span className="bg-indigo-500/20 text-indigo-200 px-1.5 py-0.5 rounded text-[10px] border border-indigo-500/30">
+                                                    <span className="bg-amber-500/15 text-amber-700 dark:text-amber-200 px-1.5 py-0.5 rounded text-[10px] border border-amber-500/30">
                                                         {styleCandidates.filter(c => c.selected).length}/{styleCandidates.length}
                                                     </span>
                                                 </button>
@@ -1014,13 +1013,13 @@ export default function DnaCategorizadoPage() {
                                                                 className={`
                                                                     p-2.5 rounded-lg border cursor-pointer text-left transition-all relative group
                                                                     ${c.selected
-                                                                        ? 'bg-indigo-500/10 border-indigo-500/30 text-slate-200'
+                                                                        ? 'bg-amber-500/10 border-amber-500/30 text-text-primary'
                                                                         : 'bg-transparent border-border-subtle text-text-muted opacity-60 hover:opacity-100'}
                                                                 `}
                                                             >
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
                                                                     <span className="text-[10px] uppercase font-bold text-text-muted">#{c.id}</span>
-                                                                    {c.selected && <Check className="w-3 h-3 text-indigo-400" />}
+                                                                    {c.selected && <Check className="w-3 h-3 text-amber-500" />}
                                                                 </div>
                                                                 <p className="text-[11px] line-clamp-2 leading-relaxed opacity-90">{c.texto}</p>
                                                             </div>
@@ -1061,14 +1060,14 @@ export default function DnaCategorizadoPage() {
                                                 onChange={(e) => setNovoTexto(e.target.value)}
                                                 placeholder="Cole ou digite a mensagem aqui..."
                                                 rows={5}
-                                                className="w-full px-4 py-3 bg-surface-2 border border-border-subtle rounded-xl text-text-primary placeholder:text-text-muted focus:border-violet-500 focus:outline-none resize-none"
+                                                className="w-full px-4 py-3 bg-surface-2 border border-border-subtle rounded-xl text-text-primary placeholder:text-text-muted focus:border-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
                                             />
                                         </div>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={handleAdd}
                                                 disabled={adding || !novoTexto.trim()}
-                                                className="flex items-center gap-2 px-4 py-2 bg-violet-500 text-text-primary font-bold rounded-lg hover:bg-violet-600 disabled:opacity-50"
+                                                className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-amber-950 font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50"
                                             >
                                                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                                                 {adding ? 'Adicionando...' : 'Adicionar'}
@@ -1093,7 +1092,7 @@ export default function DnaCategorizadoPage() {
                     {showResult && generatedResult && (
                         <div className="bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-500/10 dark:via-amber-400/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg">✨ Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
+                                <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg">Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
                                 <button onClick={() => setShowResult(false)} className="p-2 hover:bg-surface-2 rounded-lg">
                                     <X className="w-5 h-5 text-text-muted" />
                                 </button>
@@ -1262,7 +1261,7 @@ export default function DnaCategorizadoPage() {
                                                 <button
                                                     onClick={handleSaveEdit}
                                                     disabled={saving || !editTexto.trim()}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-black font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50 text-sm"
+                                                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-amber-950 font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50 text-sm"
                                                 >
                                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                                     {saving ? 'Salvando...' : 'Salvar'}

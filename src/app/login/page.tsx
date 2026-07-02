@@ -71,10 +71,10 @@ export default function LoginPage() {
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-4">
+                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-4">
                         <BookOpen className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-2xl font-black text-text-primary tracking-tight">Devocional PVC</h1>
+                    <h1 className="reading-serif text-[1.7rem] font-semibold text-text-primary tracking-tight">Devocional PVC</h1>
                     <p className="text-xs text-text-muted mt-1 tracking-widest uppercase">Sua jornada espiritual diária</p>
                 </div>
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
                                 key={m}
                                 onClick={() => { setModo(m); setErro(null); setAviso(null); }}
                                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${modo === m
-                                    ? 'bg-amber-500 text-black shadow-md'
+                                    ? 'bg-amber-500 text-amber-950 shadow-md'
                                     : 'text-text-muted hover:text-text-primary'
                                     }`}
                             >
@@ -106,7 +106,7 @@ export default function LoginPage() {
                                 placeholder="Seu email"
                                 required
                                 autoComplete="email"
-                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-2 border border-border-subtle text-text-primary placeholder-slate-500 text-sm focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition"
+                                className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-2 border border-border-subtle text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition"
                             />
                         </div>
 
@@ -120,7 +120,7 @@ export default function LoginPage() {
                                 required
                                 minLength={6}
                                 autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
-                                className="w-full pl-10 pr-11 py-3 rounded-xl bg-surface-2 border border-border-subtle text-text-primary placeholder-slate-500 text-sm focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition"
+                                className="w-full pl-10 pr-11 py-3 rounded-xl bg-surface-2 border border-border-subtle text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20 transition"
                             />
                             <button
                                 type="button"
@@ -146,7 +146,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={enviando || !email || senha.length < 6}
-                            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
                         >
                             {enviando && <Loader2 className="w-4 h-4 animate-spin" />}
                             {modo === 'entrar' ? 'Entrar' : 'Criar minha conta'}

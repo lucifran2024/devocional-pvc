@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
-    Book, Sparkles, Calendar, ArrowLeft, Send, Loader2,
+    Book, Calendar, ArrowLeft, Loader2,
     ChevronRight, ChevronLeft, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
@@ -21,8 +21,8 @@ import {
     type BibliaInteracao
 } from '@/lib/supabase';
 import { getPassagemDoDia, getTeseCentral, type PassagemSecao6 } from '@/lib/secao6';
-import { CosmicHeader } from '@/components/ui/CosmicHeader';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import { BackButton } from '@/components/ui/BackButton';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import ReactMarkdown from 'react-markdown';
@@ -480,7 +480,7 @@ function VersiculosInterativos({
                                 <div className="flex items-center gap-3 py-4 mt-3 mb-1">
                                     <div className="flex-1 h-px bg-amber-500/25"></div>
                                     <span
-                                        className="font-black text-amber-500 dark:text-amber-400 tracking-[0.2em] uppercase"
+                                        className="reading-serif font-semibold text-amber-700 dark:text-amber-400 tracking-wide"
                                         style={{ fontSize: `${Math.max(14, readingFontSize - 5)}px` }}
                                     >
                                         {livroNome} {cap}
@@ -492,7 +492,7 @@ function VersiculosInterativos({
                             {pericope && (
                                 <div className="mt-5 mb-2.5 first:mt-0">
                                     <h4
-                                        className="font-bold text-amber-600 dark:text-amber-300 tracking-tight border-l-[3px] border-amber-500/50 pl-3"
+                                        className="reading-serif font-semibold text-amber-700 dark:text-amber-300 tracking-tight border-l-[3px] border-amber-500/50 pl-3"
                                         style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
                                     >
                                         {pericope.title}
@@ -505,7 +505,7 @@ function VersiculosInterativos({
                                 className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none break-words
                                     ${getCorClasse(v)}
                                     ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
-                                    ${selecaoCopia.has(idx) ? 'bg-green-500/15 ring-1 ring-green-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
+                                    ${selecaoCopia.has(idx) ? 'bg-amber-500/15 ring-1 ring-amber-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
                                 style={{ textAlign: readingAlign }}
                             >
@@ -514,9 +514,9 @@ function VersiculosInterativos({
                                     {destacarLexico(v.text, lexico)}
                                 </p>
                                 <span className="inline-flex items-center gap-1 ml-1.5">
-                                    {modoCopiaMultipla && selecaoCopia.has(idx) && <Check className="w-3.5 h-3.5 text-green-400 inline" />}
+                                    {modoCopiaMultipla && selecaoCopia.has(idx) && <Check className="w-3.5 h-3.5 text-amber-500 inline" />}
                                     {isFavorito(v) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
-                                    {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
+                                    {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-amber-500 inline" />}
                                 </span>
 
                                 {/* Barra de copiar vários — flutua acima do versículo que você está tocando */}
@@ -524,10 +524,10 @@ function VersiculosInterativos({
                                     <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
                                         <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-2xl p-1.5 px-2 shadow-2xl backdrop-blur-xl">
                                             <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
-                                            <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                            <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
                                                 <Copy className="w-3.5 h-3.5" /> Copiar
                                             </button>
-                                            <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
+                                            <button onClick={handleCompartilharSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
                                                 <Share2 className="w-3.5 h-3.5" /> Enviar
                                             </button>
                                             <button onClick={sairModoCopiaMultipla} title="Cancelar" className="p-1.5 rounded-xl hover:bg-surface-2 text-text-muted hover:text-red-400 transition-colors">
@@ -540,25 +540,25 @@ function VersiculosInterativos({
                                 {versiculoSelecionadoIdx === idx && (
                                     <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
                                         <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
-                                            <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
+                                            <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Destacar">
                                                 <Palette className="w-5 h-5" />
                                             </button>
                                             <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${isFavorito(v) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
                                                 <Heart className={`w-5 h-5 ${isFavorito(v) ? 'fill-red-400' : ''}`} />
                                             </button>
-                                            <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
+                                            <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Copiar">
                                                 <Copy className="w-5 h-5" />
                                             </button>
-                                            <button onClick={entrarModoCopiaMultipla} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors" title="Selecionar vários para copiar">
+                                            <button onClick={entrarModoCopiaMultipla} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Selecionar vários para copiar">
                                                 <ListChecks className="w-5 h-5" />
                                             </button>
-                                            <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
+                                            <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Compartilhar">
                                                 <Share2 className="w-5 h-5" />
                                             </button>
-                                            <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
+                                            <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Estudar">
                                                 <Lightbulb className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
+                                            <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v) ? 'text-amber-500' : 'text-text-secondary hover:text-amber-600 dark:hover:text-amber-400'}`} title="Nota">
                                                 <StickyNote className="w-5 h-5" />
                                             </button>
                                         </div>
@@ -567,7 +567,7 @@ function VersiculosInterativos({
                                             <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
                                                 {CORES_DESTAQUE_PLANO.map(cor => (
                                                     <button key={cor.id} onClick={() => handleDestacar(cor.id)}
-                                                        className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${capMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
+                                                        className={`w-9 h-9 rounded-full border-2 transition-all hover:border-amber-400 ${cor.bg} ${cor.border} ${capMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-amber-500 dark:ring-white scale-110' : ''}`}
                                                         title={cor.nome} />
                                                 ))}
                                                 {capMap.destaques[v.verse] && (
@@ -590,18 +590,18 @@ function VersiculosInterativos({
 
             {/* Modal de Estudo IA */}
             {estudoAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setEstudoAberto(false)}>
                     <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-border-subtle">
                         <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                             <div className="flex items-center gap-2">
-                                <Lightbulb className="w-5 h-5 text-amber-400" />
+                                <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                 <span className="font-bold text-text-primary text-base">Estudo — {livroNome} {estudoVersiculo ? getCapitulo(estudoVersiculo) : capitulo}:{estudoVersiculo?.verse}</span>
                             </div>
                             <button onClick={() => setEstudoAberto(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"><X className="w-5 h-5" /></button>
                         </div>
                         {estudoVersiculo && (
                             <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
-                                <p className="text-amber-200 text-base italic">&ldquo;{estudoVersiculo.text}&rdquo;</p>
+                                <p className="text-amber-800 dark:text-amber-200 text-base italic">&ldquo;{estudoVersiculo.text}&rdquo;</p>
                             </div>
                         )}
                         <div className="flex-1 overflow-y-auto p-4">
@@ -629,12 +629,12 @@ function VersiculosInterativos({
                         <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden border border-border-subtle" onClick={e => e.stopPropagation()}>
                             <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <StickyNote className="w-5 h-5 text-blue-400 shrink-0" />
+                                    <StickyNote className="w-5 h-5 text-amber-500 dark:text-amber-400 shrink-0" />
                                     <span className="font-bold text-text-primary text-base truncate">Anotação — {livroNome} {capNota}:{vNota.verse}</span>
                                 </div>
                                 <button onClick={() => setMostrarNota(false)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary shrink-0"><X className="w-5 h-5" /></button>
                             </div>
-                            <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20">
+                            <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20">
                                 <p className="text-text-secondary text-sm italic">&ldquo;{vNota.text}&rdquo;</p>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4">
@@ -650,7 +650,7 @@ function VersiculosInterativos({
                                     </button>
                                 )}
                                 <button onClick={handleSalvarNota} disabled={!textoNota.trim()}
-                                    className="px-5 py-2.5 text-sm rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-50">
+                                    className="px-5 py-2.5 text-sm rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-50">
                                     Salvar
                                 </button>
                             </div>
@@ -701,21 +701,21 @@ function PremiumOptionCard({ option, onClick, disabled }: {
         <button
             onClick={onClick}
             disabled={disabled}
-            className="group relative w-full text-left p-6 rounded-2xl glass-card hover:bg-white/[0.02] disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
+            className="group relative w-full text-left p-6 rounded-2xl glass-card disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Icon className="w-24 h-24 -mr-8 -mt-8 text-text-primary rotate-12" />
             </div>
 
             <div className="flex items-center justify-between z-10">
-                <div className="p-3 rounded-xl bg-surface-2 border border-border-subtle text-[#FCD34D] group-hover:scale-110 transition-transform duration-300">
+                <div className="p-3 rounded-xl bg-surface-2 border border-border-subtle text-amber-600 dark:text-amber-300 transition-colors duration-300">
                     <Icon className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-bold tracking-widest text-text-muted uppercase">OPÇÃO {option.id}</span>
+                
             </div>
 
             <div className="z-10">
-                <h3 className="font-bold text-text-primary text-lg mb-1 group-hover:text-[#FCD34D] transition-colors">{option.label}</h3>
+                <h3 className="reading-serif font-semibold text-text-primary text-lg mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">{option.label}</h3>
                 <p className="text-sm text-text-muted group-hover:text-text-secondary leading-relaxed">{option.desc}</p>
             </div>
         </button>
@@ -742,7 +742,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                 <div className="animate-enter mb-4">
                     {/* Texto antes dos versículos */}
                     {partes[0] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
                     )}
@@ -763,7 +763,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
                     {/* Texto depois dos versículos */}
                     {partes[1] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
@@ -776,7 +776,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
         return (
             <div className="animate-enter mb-4">
-                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-300 prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                     <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                 </div>
             </div>
@@ -786,7 +786,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
     // Mensagens do usuário mantêm o estilo de bolha (compactas)
     return (
         <div className="flex justify-end animate-enter mb-3">
-            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-gradient-to-br from-amber-600 to-amber-700 text-text-primary rounded-br-none shadow-lg shadow-amber-900/20">
+            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-amber-600 text-amber-50 rounded-br-none shadow-lg shadow-amber-900/20">
                 <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
@@ -1237,12 +1237,9 @@ function PlanoLeituraContent() {
         if (!raw) return 1;
 
         try {
+            // A chave já identifica plano+dia, então o progresso não expira à
+            // meia-noite — quem parou na parte 3 ontem continua da parte 3.
             const parsed = JSON.parse(raw) as { data?: string; parte?: number };
-            if (parsed?.data !== dataHoje) {
-                localStorage.removeItem(progressKey);
-                return 1;
-            }
-
             const parte = Number(parsed?.parte ?? 1);
             if (!Number.isFinite(parte) || parte < 1) return 1;
 
@@ -1458,8 +1455,8 @@ function PlanoLeituraContent() {
         }
 
         const linhaPersistencia = isPlanoMode
-            ? '\n\n📌 *Seu progresso fica salvo até o fim do dia.*'
-            : '\n\n📌 *Seu progresso fica salvo até você trocar de passagem.*';
+            ? '\n\n*Seu progresso fica salvo até o fim do dia.*'
+            : '\n\n*Seu progresso fica salvo até você trocar de passagem.*';
 
         const versiculosDaParte = getVersiculosDaParte(parteAtual);
         const primeiroVersiculoDaParte = versiculosDaParte[0];
@@ -1468,11 +1465,11 @@ function PlanoLeituraContent() {
         const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
 
         const rodapeAcao = ehUltimaParte
-            ? `🎉 **Você concluiu ${tituloCapitulo}!** Essa era a última parte.\n👇 Toque no botão **Continuar** abaixo para finalizar a leitura.`
-            : '👇 Toque no botão **Continuar** abaixo para ler a próxima parte.';
+            ? `**Você concluiu ${tituloCapitulo}.** Essa era a última parte.\nToque em **Concluir leitura** abaixo para finalizar.`
+            : 'Toque em **Continuar** abaixo para ler a próxima parte.';
 
-        return `📖 **${tituloCapitulo}**
-📍 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
+        return `**${tituloCapitulo}**
+*Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
 
 ---
 
@@ -1480,7 +1477,7 @@ function PlanoLeituraContent() {
 
 ---
 
-%%EXPLICACAO_SLOT%%✅ **Você acabou de ler a Parte ${parteAtual} de ${totalPartes}** — ${tituloCapitulo}
+%%EXPLICACAO_SLOT%%**Você acabou de ler a Parte ${parteAtual} de ${totalPartes}** — ${tituloCapitulo}
 
 ${rodapeAcao}${linhaPersistencia}`;
     };
@@ -1489,7 +1486,7 @@ ${rodapeAcao}${linhaPersistencia}`;
     const gerarRespostaMenuInicial = (): string => {
         if (!passagem) return 'Preparando ambiente de estudo...';
 
-        return `Olá! Sou seu Mentor Bíblico. 🌌
+        return `Que bom ter você aqui.
 
 Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 
@@ -1497,12 +1494,12 @@ Como você deseja mergulhar na passagem de hoje (**${passagem.referencia}**)?
 
 Escolha uma das opções abaixo:
 
-1. 📖 **Ler Passagem** — Texto bíblico puro
-2. 🔍 **Entender a Passagem** — Contexto e explicação simples
-3. 🙏 **Meditar e Viver** — Perguntas e desafio para hoje
-4. ⚡ **Fixar em 1 Minuto** — Resumo e teste rápido
+1. **Ler Passagem** — Texto bíblico puro
+2. **Entender a Passagem** — Contexto e explicação simples
+3. **Meditar e Viver** — Perguntas e desafio para hoje
+4. **Fixar em 1 Minuto** — Resumo e teste rápido
 
-Estou pronto para guiá-lo nesta jornada espiritual.`;
+Escolha o caminho e comece quando quiser.`;
     };
 
     // Processar comando do usuário
@@ -1546,7 +1543,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
             if (isPlanoMode || activeOption === '1') {
                 // Disparar explicação sob demanda (embute na mensagem da Parte)
                 handleExplicar();
-                return '🔍 Gerando explicação... Aguarde um momento.';
+                return 'Gerando explicação... aguarde um momento.';
             }
             return 'O comando **EXPLICAR** só funciona na opção 1 (Ler Passagem).';
         }
@@ -1555,7 +1552,7 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
         if (isPlanoMode) {
             return 'Toque no botão **Continuar** abaixo para avançar na leitura.';
         }
-        return `Não entendi o comando. Digite um número de **1 a 4** ou **MENU** para ver as opções.`;
+        return `Não entendi. Use os botões abaixo para navegar.`;
     };
 
     // Gerar resposta para cada opção
@@ -1612,28 +1609,26 @@ Estou pronto para guiá-lo nesta jornada espiritual.`;
             }
 
             if (data.ok && data.resultado) {
-                return `🔍 **EXPLICAÇÃO GERADA POR IA**
-📍 *Parte ${page} de ${passagem.referencia}*
+                return `**Entenda a passagem**
+*Parte ${page} de ${passagem.referencia}*
 
 ---
 
 ${data.resultado}
 
 ---
-👇 Toque no botão **Continuar** abaixo para os próximos versículos.
-Ou **MENU** para voltar.`;
+Toque em **Continuar** abaixo para os próximos versículos.`;
             } else {
                 throw new Error(data.error || 'Erro ao gerar explicação');
             }
         } catch (error) {
             console.error('Erro ao gerar explicação:', error);
-            return `❌ **Erro ao gerar explicação**
+            return `**Não foi possível gerar a explicação**
 
 Não foi possível gerar a explicação no momento. Tente novamente.
 
 ---
-👇 Toque no botão **Continuar** abaixo para os próximos versículos.
-Ou **MENU** para voltar.`;
+Toque em **Continuar** abaixo para os próximos versículos.`;
         }
     };
 
@@ -1666,7 +1661,7 @@ Ou **MENU** para voltar.`;
             throw new Error(data.error || 'Erro ao gerar explicação');
         } catch (error) {
             console.error('Erro ao gerar explicação (conteúdo):', error);
-            return '❌ Não foi possível gerar a explicação no momento.';
+            return 'Não foi possível gerar a explicação no momento.';
         }
     };
 
@@ -1707,15 +1702,15 @@ Ou **MENU** para voltar.`;
 
     const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
         if (!passagem) return 'Passagem não carregada.';
-        if (!bibleData) return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
+        if (!bibleData) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
 
         try {
             const resultado = await buscarEstudo(tipoEstudo);
-            if (!resultado) return '⏳ Aguarde o carregamento dos versículos e tente novamente.';
-            return `${resultado}\n\n---\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
+            if (!resultado) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
+            return resultado;
         } catch (error) {
             console.error('Erro ao gerar estudo IA:', error);
-            return `❌ **Erro ao gerar estudo**\n\nNão foi possível gerar o conteúdo no momento. Tente novamente.\n\n---\nDigite **MENU** para voltar.`;
+            return `**Não foi possível gerar o estudo**\n\nVerifique sua conexão e tente novamente.`;
         }
     };
 
@@ -1745,7 +1740,12 @@ Ou **MENU** para voltar.`;
         if (!passagem) return 'Passagem não carregada.';
 
         const page = currentPageRef.current;  // Use ref for immediate value
-        console.log('🔄 processarContinuar - activeOption:', activeOption, 'currentPage (ref):', page);
+
+        // Sem os versículos carregados, o total de partes seria 1 e o dia
+        // poderia ser concluído por engano — espera o carregamento.
+        if ((isPlanoMode || activeOption === '1') && !bibleData) {
+            return 'A leitura ainda está carregando. Tente novamente em instantes.';
+        }
 
         // OPÇÃO 1: LEITURA GUIADA (Paginação Dinâmica)
         if (activeOption === '1' || isPlanoMode) {
@@ -1789,25 +1789,18 @@ Ou **MENU** para voltar.`;
                 }
 
                 const proximoDiaMsg = planoId
-                    ? `\n\n📋 **[Ver Todos os Dias](/plano-detalhes?plano_id=${planoId})**\n\n👉 **[Clique aqui para o Próximo Dia](/plano-de-leitura?plano_id=${planoId}&dia=${diaExibido + 1})**`
+                    ? `\n\n**[Ver todos os dias](/plano-detalhes?plano_id=${planoId})**\n\n**[Ir para o próximo dia →](/plano-de-leitura?plano_id=${planoId}&dia=${diaExibido + 1})**`
                     : '';
 
-                return `✅ **LEITURA CONCLUÍDA!**
- 
- ---
- 
- 📖 **Você completou a leitura de ${passagem.referencia}!**
- 
- 💎 **Resumo:** Medite sobre o que leu e deixe a Palavra transformar seu coração.
- 
- 🙏 **Sugestão de Oração:**
- 
- *"Senhor, obrigado por Tua Palavra. Que ela habite ricamente em mim e guie meus passos hoje. Em nome de Jesus. Amém."*
- 
- ---
- ${proximoDiaMsg}
- 
- Digite **MENU** para voltar e explorar outras opções.`;
+                return `**Leitura concluída**
+
+---
+
+Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu e deixe a Palavra transformar o seu coração.
+
+**Sugestão de oração:**
+
+*"Senhor, obrigado por Tua Palavra. Que ela habite ricamente em mim e guie meus passos hoje. Em nome de Jesus. Amém."*${proximoDiaMsg}`;
             }
 
             // Avança para próxima página
@@ -1816,7 +1809,7 @@ Ou **MENU** para voltar.`;
         }
 
         // Para outras opções (2-4 = IA), não tem paginação
-        return `O conteúdo da opção atual já foi gerado por IA.\n\nDigite outro **NÚMERO** para explorar outra opção ou **MENU** para voltar.`;
+        return `Este estudo já está completo. Volte ao menu para explorar outra opção.`;
     };
 
     // Gerar explicação sob demanda (botão Explicar) - embute na última mensagem da Parte
@@ -1827,8 +1820,8 @@ Ou **MENU** para voltar.`;
             const conteudo = await gerarExplicacaoConteudo();
             const page = currentPageRef.current;
 
-            const explicacaoFormatada = `🔍 **EXPLICAÇÃO GERADA POR IA**
-📍 *Parte ${page} de ${passagem?.referencia}*
+            const explicacaoFormatada = `**Entenda a passagem**
+*Parte ${page} de ${passagem?.referencia}*
 
 ${conteudo}
 
@@ -1860,7 +1853,7 @@ ${conteudo}
                     if (updated[i].role === 'assistant' && updated[i].content.includes('%%EXPLICACAO_SLOT%%')) {
                         updated[i] = {
                             ...updated[i],
-                            content: updated[i].content.replace('%%EXPLICACAO_SLOT%%', '❌ *Não foi possível gerar a explicação.*\n\n---\n\n')
+                            content: updated[i].content.replace('%%EXPLICACAO_SLOT%%', '*Não foi possível gerar a explicação.*\n\n---\n\n')
                         };
                         break;
                     }
@@ -1870,6 +1863,28 @@ ${conteudo}
         } finally {
             setIsLoadingExplicacao(false);
         }
+    };
+
+    // Última parte da leitura? Muda o rótulo do botão fixo para "Concluir leitura"
+    const naUltimaParte = (isPlanoMode || activeOption === '1') && !!bibleData && currentPage >= getTotalPartesLeitura();
+
+    // Inicia uma opção do menu (usada pelo CTA do hero e pelos cards)
+    const iniciarOpcao = (optionId: MenuOption) => {
+        if (!passagem || isProcessing) return;
+        const option = MENU_OPTIONS.find(o => o.id === optionId);
+        if (!option) return;
+        setActiveOption(optionId);
+        const parteSalva = optionId === '1' ? lerProgressoLeituraDiariaLocal() : 1;
+        setMessages([{ role: 'user', content: `Quero ver: ${option.label}`, timestamp: new Date() }]);
+        setIsProcessing(true);
+        (async () => {
+            const resp = await gerarRespostaOpcao(optionId);
+            pendingScrollRef.current = optionId === '1'
+                ? (parteSalva > 1 ? 'restore' : 'top')
+                : 'bottom';
+            setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
+            setIsProcessing(false);
+        })();
     };
 
     // Enviar mensagem (Lógica central)
@@ -2058,8 +2073,8 @@ ${conteudo}
                         Voltar aos Planos
                     </Link>
                     <div className="glass-panel rounded-3xl p-8 border border-amber-500/20">
-                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">Plano sem leitura cadastrada</h1>
-                        <p className="text-slate-300 leading-relaxed">
+                        <h1 className="reading-serif text-2xl md:text-3xl font-semibold text-text-primary mb-3">Plano sem leitura cadastrada</h1>
+                        <p className="text-text-secondary leading-relaxed">
                             Este plano ainda não possui conteúdo do dia para abrir.
                             Assim que os dias forem cadastrados, ele passa a funcionar normalmente.
                         </p>
@@ -2074,20 +2089,13 @@ ${conteudo}
 
             {/* Navbar Placeholder (or Back Button) */}
             <div className="w-full max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
-                <Link href={planoId ? "/planos" : "/"} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    {planoId ? "Voltar aos Planos" : "Voltar ao Dashboard"}
-                </Link>
+                <BackButton href={planoId ? "/planos" : "/"} label={planoId ? "Planos" : "Início"} />
                 {planoId && (
                     <Link href={`/plano-detalhes?plano_id=${planoId}`} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
                         <Calendar className="w-4 h-4" />
                         Ver Todos os Dias
                     </Link>
                 )}
-                <div className="flex gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs text-slate-400 font-mono tracking-widest">ONLINE</span>
-                </div>
             </div>
 
             {/* w-full é ESSENCIAL: sem ele, mx-auto num pai flex-col vira fit-content e
@@ -2098,10 +2106,10 @@ ${conteudo}
                 {/* Header Section - compacto no modo plano */}
                 {isPlanoMode ? (
                     <div className="text-center mb-6 animate-enter">
-                        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">
+                        <h1 className="reading-serif text-2xl md:text-3xl font-semibold text-text-primary mb-1 tracking-tight">
                             {inscricaoAtiva?.plano?.titulo || 'Plano de Leitura'}
                         </h1>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-text-secondary text-sm">
                             {inscricaoAtiva
                                 ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias}`
                                 : "Mergulhe nas Escrituras"}
@@ -2109,17 +2117,14 @@ ${conteudo}
                     </div>
                 ) : (
                     <div className="text-center mb-16 animate-enter">
-                        <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold tracking-[0.2em] mb-4">
-                            MODO MENTOR
-                        </span>
-                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                        <h1 className="reading-serif text-4xl md:text-6xl font-semibold text-text-primary mb-4 tracking-tight">
                             {inscricaoAtiva?.plano ? (
                                 inscricaoAtiva.plano.titulo
                             ) : (
                                 <>Plano de <span className="text-gradient-gold">Leitura</span></>
                             )}
                         </h1>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                        <p className="text-text-secondary text-lg max-w-2xl mx-auto">
                             {inscricaoAtiva
                                 ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias} • ${inscricaoAtiva.plano.descricao}`
                                 : "Mergulhe nas Escrituras com profundidade, contexto e aplicação prática."
@@ -2139,33 +2144,37 @@ ${conteudo}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none"></div>
 
                             <div className="flex-1 text-center md:text-left z-10">
-                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                    {inscricaoAtiva ? `LEITURA DO DIA ${diaExibido}` : `PASSAGEM DE HOJE (${formatarDataExtenso(dataHoje)})`}
+                                <h2 className="text-sm font-medium text-text-muted tracking-wide mb-2">
+                                    {inscricaoAtiva ? `Leitura do dia ${diaExibido}` : `Passagem de hoje · ${formatarDataExtenso(dataHoje)}`}
                                 </h2>
 
                                 {loading ? (
-                                    <div className="h-12 w-64 bg-white/5 rounded animate-pulse"></div>
+                                    <div className="h-12 w-64 skeleton-shimmer"></div>
                                 ) : passagem ? (
                                     <div className="space-y-2">
-                                        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tight">{passagem.referencia}</h3>
+                                        <h3 className="reading-serif text-4xl md:text-5xl font-semibold text-text-primary tracking-tight">{passagem.referencia}</h3>
                                         <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3">
-                                            <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
-                                                Arquétipo: <span className="text-amber-400 font-bold">{passagem.arquetipo_maestro}</span>
+                                            <span className="px-3 py-1 rounded-lg bg-surface-2 border border-border-subtle text-xs text-text-secondary">
+                                                Arquétipo: <span className="text-amber-600 dark:text-amber-400 font-bold">{passagem.arquetipo_maestro}</span>
                                             </span>
-                                            <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
+                                            <span className="px-3 py-1 rounded-lg bg-surface-2 border border-border-subtle text-xs text-text-secondary">
                                                 Tema: {passagem.insights_pre_minerados[0]?.tese.substring(0, 40)}...
                                             </span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="text-red-400 bg-red-500/10 px-4 py-2 rounded-lg border border-red-500/20 inline-block">
-                                        Passagem não encontrada para hoje. Verifique o Storage.
+                                        A leitura de hoje ainda não está disponível. Verifique sua conexão e tente novamente em instantes.
                                     </div>
                                 )}
                             </div>
 
                             <div className="z-10">
-                                <button className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 shadow-amber-500/20 text-lg">
+                                <button
+                                    onClick={() => iniciarOpcao('1')}
+                                    disabled={loading || !passagem}
+                                    className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 shadow-amber-500/20 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     <Book className="w-5 h-5" />
                                     Começar Leitura
                                 </button>
@@ -2179,30 +2188,7 @@ ${conteudo}
                                     key={option.id}
                                     option={option}
                                     disabled={loading || !passagem}
-                                    onClick={() => {
-                                        if (passagem) {
-                                            setActiveOption(option.id as MenuOption);
-                                            // Adiciona mensagem inicial do usuário (simulada) e resposta do sistema
-                                            const opcaoTexto = option.label;
-                                            const parteSalva = option.id === '1' ? lerProgressoLeituraDiariaLocal() : 1;
-                                            setMessages([
-                                                { role: 'user', content: `Quero ver: ${opcaoTexto}`, timestamp: new Date() },
-                                                // A resposta virá via useEffect ou chamada direta?
-                                                // Na lógica original, chamávamos gerarRespostaOpcao
-                                            ]);
-
-                                            // Pequeno delay para efeito "pensando"
-                                            setIsProcessing(true);
-                                            setTimeout(async () => {
-                                                const resp = await gerarRespostaOpcao(option.id as MenuOption);
-                                                pendingScrollRef.current = option.id === '1'
-                                                    ? (parteSalva > 1 ? 'restore' : 'top')
-                                                    : 'bottom';
-                                                setMessages(prev => [...prev, { role: 'assistant', content: resp, timestamp: new Date() }]);
-                                                setIsProcessing(false);
-                                            }, 600);
-                                        }
-                                    }}
+                                    onClick={() => iniciarOpcao(option.id as MenuOption)}
                                 />
                             ))}
                         </div>
@@ -2215,13 +2201,23 @@ ${conteudo}
 
                         {/* Chat Header - compacto e sticky */}
                         <div ref={cabecalhoRef} className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
+                            {/* Barra fina de progresso da leitura */}
+                            {(isPlanoMode || activeOption === '1') && getTotalPartesLeitura() > 1 && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border-subtle/60 overflow-hidden">
+                                    <div
+                                        className="h-full bg-amber-500 transition-all duration-300"
+                                        style={{ width: `${Math.min(100, Math.round((currentPage / getTotalPartesLeitura()) * 100))}%` }}
+                                    />
+                                </div>
+                            )}
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <button
                                         onClick={() => setActiveOption(null)}
-                                        className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
+                                        aria-label="Voltar ao menu"
+                                        className="p-2.5 -ml-1 hover:bg-surface-2 rounded-full transition-colors text-text-muted hover:text-text-primary"
                                     >
-                                        <ArrowLeft className="w-4 h-4" />
+                                        <ArrowLeft className="w-5 h-5" />
                                     </button>
                                     <div className="min-w-0">
                                         {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome && (
@@ -2229,14 +2225,14 @@ ${conteudo}
                                                 Você está lendo agora
                                             </p>
                                         )}
-                                        <h2 className="font-bold text-slate-900 dark:text-white text-base truncate">
+                                        <h2 className="font-bold text-text-primary text-base truncate">
                                             {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome
                                                 ? `${capitalizarLivro(livroInfoAtual.nome)} ${capituloFoco ?? livroInfoAtual.capitulo}`
                                                 : isPlanoMode
                                                     ? 'Leitura do Plano'
                                                     : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
                                         </h2>
-                                        <p className="text-[11px] text-amber-400/80 truncate font-semibold">
+                                        <p className="text-[11px] text-amber-700 dark:text-amber-400/80 truncate font-semibold">
                                             {(isPlanoMode || activeOption === '1') && getTotalPartesLeitura() > 1
                                                 ? `Parte ${currentPage} de ${getTotalPartesLeitura()} · ${passagem?.referencia}`
                                                 : passagem?.referencia}
@@ -2248,7 +2244,7 @@ ${conteudo}
                                     <button
                                         type="button"
                                         onClick={() => alterarFonteLeitura(-2)}
-                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-300 hover:text-white disabled:opacity-40"
+                                        className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-text-secondary hover:text-text-primary disabled:opacity-40"
                                         title="Diminuir fonte"
                                         disabled={readingFontSize <= MIN_READING_FONT_SIZE}
                                     >
@@ -2265,7 +2261,7 @@ ${conteudo}
                                     <button
                                         type="button"
                                         onClick={() => alterarFonteLeitura(2)}
-                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-300 hover:text-white disabled:opacity-40"
+                                        className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-text-secondary hover:text-text-primary disabled:opacity-40"
                                         title="Aumentar fonte"
                                         disabled={readingFontSize >= MAX_READING_FONT_SIZE}
                                     >
@@ -2274,7 +2270,7 @@ ${conteudo}
                                     <button
                                         type="button"
                                         onClick={() => setMostrarAjustesLeitura(v => !v)}
-                                        className={`p-2 rounded-lg transition-colors ${mostrarAjustesLeitura ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300 hover:text-white'}`}
+                                        className={`p-2 rounded-lg transition-colors ${mostrarAjustesLeitura ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary hover:text-text-primary'}`}
                                         title="Espaçamento e alinhamento"
                                     >
                                         <SlidersHorizontal className="w-4 h-4" />
@@ -2287,17 +2283,17 @@ ${conteudo}
                                     <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
                                         <div className="flex items-center gap-1.5">
-                                            <button type="button" onClick={() => alterarEspacamento(-0.15)} disabled={readingLineHeight <= MIN_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white disabled:opacity-40 text-lg font-bold leading-none">−</button>
+                                            <button type="button" onClick={() => alterarEspacamento(-0.15)} disabled={readingLineHeight <= MIN_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none">−</button>
                                             <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
-                                            <button type="button" onClick={() => alterarEspacamento(0.15)} disabled={readingLineHeight >= MAX_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white disabled:opacity-40 text-lg font-bold leading-none">+</button>
+                                            <button type="button" onClick={() => alterarEspacamento(0.15)} disabled={readingLineHeight >= MAX_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none">+</button>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs font-semibold text-text-secondary">Alinhamento</span>
                                         <div className="flex items-center gap-1.5">
-                                            <button type="button" onClick={() => definirAlinhamento('left')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'left' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Esquerda"><AlignLeft className="w-4 h-4" /></button>
-                                            <button type="button" onClick={() => definirAlinhamento('center')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'center' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Centro"><AlignCenter className="w-4 h-4" /></button>
-                                            <button type="button" onClick={() => definirAlinhamento('right')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'right' ? 'bg-amber-500/20 text-amber-400' : 'hover:bg-white/10 text-slate-300'}`} title="Direita"><AlignRight className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('left')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'left' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Esquerda"><AlignLeft className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('center')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'center' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Centro"><AlignCenter className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('right')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'right' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Direita"><AlignRight className="w-4 h-4" /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -2309,25 +2305,25 @@ ${conteudo}
                                         <button
                                             type="button"
                                             onClick={handleIrParaVelhoTestamento}
-                                            className="group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
+                                            className="group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-500/20 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
                                         >
-                                            <ChevronLeft className="w-4 h-4 shrink-0 text-amber-500/60 group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
+                                            <ChevronLeft className="w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-500/60 group-hover:text-amber-500 dark:group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
                                             <span className="flex flex-col items-start leading-tight min-w-0">
-                                                <span className="text-[12px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors whitespace-nowrap">Antigo Testamento</span>
-                                                <span className="text-[10px] text-amber-500/70 font-medium whitespace-nowrap">Voltar ao começo</span>
+                                                <span className="text-[12px] font-bold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 transition-colors whitespace-nowrap">Antigo Testamento</span>
+                                                <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium whitespace-nowrap">Voltar ao começo</span>
                                             </span>
                                         </button>
                                     )}
                                     <button
                                         type="button"
                                         onClick={handleIrParaNovoTestamento}
-                                        className={`group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:from-amber-500/25 hover:to-orange-500/15 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20 ${temVelhoTestamento ? '' : 'col-span-2'}`}
+                                        className={`group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-500/20 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20 ${temVelhoTestamento ? '' : 'col-span-2'}`}
                                     >
                                         <span className="flex flex-col items-start leading-tight min-w-0">
-                                            <span className="text-[12px] font-bold text-amber-300 group-hover:text-amber-200 transition-colors whitespace-nowrap">Novo Testamento</span>
-                                            <span className="text-[10px] text-amber-500/70 font-medium whitespace-nowrap">Pular direto</span>
+                                            <span className="text-[12px] font-bold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 transition-colors whitespace-nowrap">Novo Testamento</span>
+                                            <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium whitespace-nowrap">Pular direto</span>
                                         </span>
-                                        <ChevronRight className="w-4 h-4 shrink-0 text-amber-500/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+                                        <ChevronRight className="w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-500/60 group-hover:text-amber-500 dark:group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
                                     </button>
                                 </div>
                             )}
@@ -2336,7 +2332,7 @@ ${conteudo}
                         {/* Etiqueta de capitulo via portal (escapa do transform do animate-enter); aparece ao rolar, quando o cabecalho sai da tela */}
                         {montado && !cabecalhoVisivel && capituloFoco != null && livroInfoAtual.nome && createPortal(
                             <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-400 shadow-lg">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
                                     <BookOpen className="w-3 h-3" />
                                     {capitalizarLivro(livroInfoAtual.nome)} {capituloFoco}
                                 </span>
@@ -2344,7 +2340,7 @@ ${conteudo}
                             document.body
                         )}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
-                        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-4 space-y-3">
+                        <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-4 space-y-3">
                             <div ref={chatStartRef} />
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
@@ -2366,9 +2362,9 @@ ${conteudo}
 
                             {isProcessing && (
                                 <div className="flex justify-start animate-pulse">
-                                    <div className="px-4 py-2 rounded-xl flex items-center gap-2 bg-white/5">
-                                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-                                        <span className="text-sm text-slate-400">Carregando...</span>
+                                    <div className="px-4 py-2 rounded-xl flex items-center gap-2 bg-surface-2">
+                                        <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                                        <span className="text-sm text-text-muted">Carregando...</span>
                                     </div>
                                 </div>
                             )}
@@ -2381,26 +2377,26 @@ ${conteudo}
                                 <button
                                     type="button"
                                     onClick={() => submitMessage('Continuar')}
-                                    className="flex-1 btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2"
+                                    className="flex-1 btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
                                     disabled={isProcessing || isLoadingExplicacao}
                                 >
-                                    <ArrowRight className="w-5 h-5" />
-                                    Continuar
+                                    {naUltimaParte ? <Check className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+                                    {naUltimaParte ? 'Concluir leitura' : 'Continuar'}
                                 </button>
 
-                                <button
+                                {(isPlanoMode || activeOption === '1') && <button
                                     type="button"
                                     onClick={handleExplicar}
-                                    className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                    className="flex-1 bg-surface-2 border border-border-subtle hover:bg-surface-2/70 hover:border-amber-500/30 text-text-primary py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                                     disabled={isProcessing || isLoadingExplicacao}
                                 >
                                     {isLoadingExplicacao ? (
                                         <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
                                     ) : (
-                                        <Sparkles className="w-5 h-5 text-amber-400" />
+                                        <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                     )}
                                     {isLoadingExplicacao ? 'Gerando...' : 'Explicar'}
-                                </button>
+                                </button>}
                             </div>
                         </div>
 

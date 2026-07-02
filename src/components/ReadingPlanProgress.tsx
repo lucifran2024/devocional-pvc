@@ -108,10 +108,10 @@ export default function ReadingPlanProgress({
     // Marcos de progresso
     const milestones = useMemo(() => {
         const marks = [
-            { threshold: 25, label: 'Início', icon: Zap, color: 'text-cyan-400' },
-            { threshold: 50, label: 'Metade', icon: Star, color: 'text-blue-400' },
-            { threshold: 75, label: 'Reta Final', icon: TrendingUp, color: 'text-purple-400' },
-            { threshold: 100, label: 'Concluído!', icon: Award, color: 'text-amber-400' },
+            { threshold: 25, label: 'Início', icon: Zap, color: 'text-amber-600 dark:text-amber-400' },
+            { threshold: 50, label: 'Metade', icon: Star, color: 'text-amber-600 dark:text-amber-400' },
+            { threshold: 75, label: 'Reta Final', icon: TrendingUp, color: 'text-amber-600 dark:text-amber-400' },
+            { threshold: 100, label: 'Concluído!', icon: Award, color: 'text-amber-600 dark:text-amber-400' },
         ];
         return marks.map(m => ({
             ...m,
@@ -131,18 +131,18 @@ export default function ReadingPlanProgress({
                     label="Dias Lidos"
                 />
                 <StatCard
-                    icon={<Flame className="w-4 h-4 text-orange-400" />}
+                    icon={<Flame className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
                     value={String(sequenciaAtual)}
                     label="Sequência"
                     highlight={sequenciaAtual >= 3}
                 />
                 <StatCard
-                    icon={<TrendingUp className="w-4 h-4 text-purple-400" />}
+                    icon={<TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
                     value={String(maiorSequencia)}
                     label="Recorde"
                 />
                 <StatCard
-                    icon={<Calendar className="w-4 h-4 text-blue-400" />}
+                    icon={<Calendar className="w-4 h-4 text-text-muted" />}
                     value={String(diasRestantes)}
                     label="Restantes"
                 />
@@ -159,7 +159,7 @@ export default function ReadingPlanProgress({
                     <div className="absolute top-1/2 left-0 right-0 h-1 bg-surface-2 rounded-full -translate-y-1/2" />
                     {/* Linha preenchida */}
                     <div
-                        className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-amber-500 rounded-full -translate-y-1/2 transition-all duration-1000"
+                        className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full -translate-y-1/2 transition-all duration-1000"
                         style={{ width: `${Math.min(100, percentual)}%` }}
                     />
                     {milestones.map((m, i) => {
@@ -244,7 +244,7 @@ export default function ReadingPlanProgress({
                                             `}
                                             title={
                                                 isConcluido
-                                                    ? `Dia ${dia} — Concluído ✓`
+                                                    ? `Dia ${dia} — Concluído`
                                                     : isAtual
                                                         ? `Dia ${dia} — Atual`
                                                         : `Dia ${dia}`
@@ -285,8 +285,8 @@ export default function ReadingPlanProgress({
                 <div className="glass-panel rounded-2xl p-5 border border-border-subtle">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                                <Clock className="w-5 h-5 text-blue-400" />
+                            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-text-primary">Previsão de Conclusão</p>

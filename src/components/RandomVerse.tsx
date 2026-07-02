@@ -99,8 +99,8 @@ export function RandomVerse() {
                                 onClick={handleCopy}
                                 className={`p-1.5 rounded-lg transition-all ${
                                     copied
-                                        ? 'text-green-500 bg-green-500/10'
-                                        : 'text-text-muted hover:text-amber-500 hover:bg-amber-500/10'
+                                        ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                                        : 'text-text-muted hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10'
                                 }`}
                                 title="Copiar versículo"
                             >
@@ -118,7 +118,7 @@ export function RandomVerse() {
                     </div>
 
                     {/* Versículo */}
-                    <blockquote className="text-base md:text-lg font-medium text-text-primary leading-relaxed mb-3 italic">
+                    <blockquote className="reading-serif text-lg md:text-xl font-medium text-text-primary leading-relaxed mb-3 italic">
                         &ldquo;{verse.text}&rdquo;
                     </blockquote>
 

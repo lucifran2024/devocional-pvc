@@ -91,7 +91,7 @@ interface LivroBiblia { nome: string; abrev: string; capitulos: number; }
 const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: string; livros: LivroBiblia[] }[] = [
     // ===== ANTIGO TESTAMENTO =====
     {
-        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400', livros: [
+        nome: 'Pentateuco (Lei)', emoji: '📜', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Gênesis', abrev: 'gn', capitulos: 50 },
             { nome: 'Êxodo', abrev: 'ex', capitulos: 40 },
             { nome: 'Levítico', abrev: 'lv', capitulos: 27 },
@@ -100,7 +100,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Históricos', emoji: '⚔️', cor: 'text-blue-600 dark:text-blue-400', corBarra: 'bg-blue-400', livros: [
+        nome: 'Históricos', emoji: '⚔️', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Josué', abrev: 'js', capitulos: 24 },
             { nome: 'Juízes', abrev: 'jz', capitulos: 21 },
             { nome: 'Rute', abrev: 'rt', capitulos: 4 },
@@ -116,7 +116,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-purple-600 dark:text-purple-400', corBarra: 'bg-purple-400', livros: [
+        nome: 'Poéticos / Sabedoria', emoji: '🎵', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Jó', abrev: 'jó', capitulos: 42 },
             { nome: 'Salmos', abrev: 'sl', capitulos: 150 },
             { nome: 'Provérbios', abrev: 'pv', capitulos: 31 },
@@ -125,7 +125,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-red-600 dark:text-red-400', corBarra: 'bg-red-400', livros: [
+        nome: 'Profetas Maiores', emoji: '🔥', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Isaías', abrev: 'is', capitulos: 66 },
             { nome: 'Jeremias', abrev: 'jr', capitulos: 52 },
             { nome: 'Lamentações', abrev: 'lm', capitulos: 5 },
@@ -134,7 +134,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profetas Menores', emoji: '📣', cor: 'text-orange-600 dark:text-orange-400', corBarra: 'bg-orange-400', livros: [
+        nome: 'Profetas Menores', emoji: '📣', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Oséias', abrev: 'os', capitulos: 14 },
             { nome: 'Joel', abrev: 'jl', capitulos: 3 },
             { nome: 'Amós', abrev: 'am', capitulos: 9 },
@@ -151,7 +151,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
     },
     // ===== NOVO TESTAMENTO =====
     {
-        nome: 'Evangelhos', emoji: '✝️', cor: 'text-emerald-600 dark:text-emerald-400', corBarra: 'bg-emerald-400', livros: [
+        nome: 'Evangelhos', emoji: '✝️', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Mateus', abrev: 'mt', capitulos: 28 },
             { nome: 'Marcos', abrev: 'mc', capitulos: 16 },
             { nome: 'Lucas', abrev: 'lc', capitulos: 24 },
@@ -159,12 +159,12 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'História da Igreja', emoji: '🌍', cor: 'text-cyan-600 dark:text-cyan-400', corBarra: 'bg-cyan-400', livros: [
+        nome: 'História da Igreja', emoji: '🌍', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Atos', abrev: 'at', capitulos: 28 },
         ]
     },
     {
-        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-sky-600 dark:text-sky-400', corBarra: 'bg-sky-400', livros: [
+        nome: 'Cartas de Paulo', emoji: '✉️', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Romanos', abrev: 'rm', capitulos: 16 },
             { nome: '1 Coríntios', abrev: '1co', capitulos: 16 },
             { nome: '2 Coríntios', abrev: '2co', capitulos: 13 },
@@ -181,7 +181,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-teal-600 dark:text-teal-400', corBarra: 'bg-teal-400', livros: [
+        nome: 'Cartas Gerais', emoji: '📨', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Hebreus', abrev: 'hb', capitulos: 13 },
             { nome: 'Tiago', abrev: 'tg', capitulos: 5 },
             { nome: '1 Pedro', abrev: '1pe', capitulos: 5 },
@@ -193,7 +193,7 @@ const CATEGORIAS_BIBLIA: { nome: string; emoji: string; cor: string; corBarra: s
         ]
     },
     {
-        nome: 'Profecia', emoji: '👑', cor: 'text-yellow-600 dark:text-yellow-400', corBarra: 'bg-yellow-400', livros: [
+        nome: 'Profecia', emoji: '👑', cor: 'text-amber-600 dark:text-amber-400', corBarra: 'bg-amber-400/80', livros: [
             { nome: 'Apocalipse', abrev: 'ap', capitulos: 22 },
         ]
     },
@@ -498,7 +498,7 @@ function BibliotecaPage() {
     // Etiqueta de capítulo que acompanha a rolagem (igual ao plano de leitura)
     const [montado, setMontado] = useState(false);
     const [cabecalhoVisivel, setCabecalhoVisivel] = useState(true);
-    const cabecalhoRef = useRef<HTMLElement>(null);
+    const cabecalhoRef = useRef<HTMLHeadingElement>(null);
     useEffect(() => { setMontado(true); }, []);
     useEffect(() => {
         const el = cabecalhoRef.current;
@@ -533,7 +533,8 @@ function BibliotecaPage() {
         const el = document.getElementById(`verse-${audioVerse}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, [audioVerse]);
-    const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+    // Se o versículo está colado no topo (atrás dos headers sticky), a toolbar abre abaixo dele
+    const [toolbarAbaixo, setToolbarAbaixo] = useState(false);
     const [mostrarCores, setMostrarCores] = useState(false);
     const [mostrarNota, setMostrarNota] = useState(false);
     const [textoNota, setTextoNota] = useState('');
@@ -789,12 +790,31 @@ function BibliotecaPage() {
     // ==========================================
     // NAVEGAÇÃO
     // ==========================================
+    // Leitura contínua: ao fim de um livro, segue para o próximo (e vice-versa)
+    const livroIndex = LIVROS_BIBLIA.findIndex(l => l.abrev === livroAtual.abrev);
+    const proximoDestino = capituloAtual < livroAtual.capitulos
+        ? { livro: livroAtual, cap: capituloAtual + 1 }
+        : LIVROS_BIBLIA[livroIndex + 1]
+            ? { livro: LIVROS_BIBLIA[livroIndex + 1], cap: 1 }
+            : null;
+    const anteriorDestino = capituloAtual > 1
+        ? { livro: livroAtual, cap: capituloAtual - 1 }
+        : LIVROS_BIBLIA[livroIndex - 1]
+            ? { livro: LIVROS_BIBLIA[livroIndex - 1], cap: LIVROS_BIBLIA[livroIndex - 1].capitulos }
+            : null;
+
     const irParaProximo = () => {
-        if (capituloAtual < livroAtual.capitulos) setCapituloAtual(c => c + 1);
+        if (!proximoDestino) return;
+        setLivroAtual(proximoDestino.livro);
+        setCapituloAtual(proximoDestino.cap);
+        window.scrollTo(0, 0);
     };
 
     const irParaAnterior = () => {
-        if (capituloAtual > 1) setCapituloAtual(c => c - 1);
+        if (!anteriorDestino) return;
+        setLivroAtual(anteriorDestino.livro);
+        setCapituloAtual(anteriorDestino.cap);
+        window.scrollTo(0, 0);
     };
 
     const navegarPara = (abrev: string, cap: number, verse?: number) => {
@@ -803,6 +823,7 @@ function BibliotecaPage() {
             setLivroAtual(livro);
             setCapituloAtual(cap);
             if (verse) setScrollToVerse(verse);
+            else window.scrollTo(0, 0);
         }
     };
 
@@ -975,7 +996,6 @@ function BibliotecaPage() {
         }
 
         const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-        const containerRect = versiculosRef.current?.getBoundingClientRect();
 
         // Se clicou no mesmo versículo que estava aberto, closes
         if (versiculoAnteriorRef.current === verse) {
@@ -991,10 +1011,8 @@ function BibliotecaPage() {
         setMostrarCores(false);
         setMostrarNota(false);
 
-        // Posicionar toolbar acima do versículo
-        const top = rect.top - (containerRect?.top || 0) - 60;
-        const left = Math.min(rect.width / 2, 200);
-        setToolbarPos({ top, left });
+        // Abaixo dos headers sticky (~130px)? Abre a toolbar embaixo do versículo
+        setToolbarAbaixo(rect.top < 190);
 
         // Se tem nota existente, carregar texto
         const notaExistente = interacoesMap.notas[verse];
@@ -1675,48 +1693,49 @@ function BibliotecaPage() {
     return (
         <CosmicBackground className="min-h-screen">
             {/* Header */}
-            <header ref={cabecalhoRef} className="sticky top-0 z-50 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
+            <header className="sticky top-0 z-50 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors">
+                    <Link href="/" aria-label="Voltar ao início" className="flex items-center gap-1.5 pl-2 pr-3 py-2 -ml-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors">
                         <ArrowLeft className="w-5 h-5" />
+                        <span className="hidden sm:inline text-sm font-medium">Voltar</span>
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        <Book className="w-5 h-5 text-amber-400" />
-                        <span className="text-sm font-bold text-text-primary">Bíblia Sagrada</span>
+                        <Book className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        <span className="reading-serif text-[15px] font-semibold text-text-primary">Bíblia Sagrada</span>
                         {/* Indicador de conectividade */}
                         {!isOnline ? (
-                            <span className="flex items-center gap-1 text-[10px] text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[10px] text-orange-600 dark:text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded-full">
                                 <WifiOff className="w-3 h-3" /> offline
                             </span>
                         ) : cameFromCache ? (
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded-full">
                                 <Database className="w-3 h-3" /> cache
                             </span>
                         ) : null}
                         {/* Indicador de sync pendente */}
                         {syncing ? (
-                            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full animate-pulse">
+                            <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full">
                                 <Loader2 className="w-3 h-3 animate-spin" /> sync...
                             </span>
                         ) : pendingCount > 0 ? (
-                            <span className="flex items-center gap-1 text-[10px] text-sky-400 bg-sky-500/15 px-1.5 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full">
                                 {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
                             </span>
                         ) : null}
                     </div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={() => setBuscaAberta(!buscaAberta)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Buscar">
+                        <button onClick={() => setBuscaAberta(!buscaAberta)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Buscar">
                             <Search className="w-5 h-5" />
                         </button>
-                        <button onClick={() => setBookmarksAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Bookmarks">
+                        <button onClick={() => setBookmarksAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Bookmarks">
                             <BookmarkCheck className="w-5 h-5" />
                         </button>
-                        <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Offline">
+                        <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Offline">
                             <Download className="w-5 h-5" />
                         </button>
-                        <button onClick={() => abrirPainel('favoritos')} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-400 transition-colors" title="Salvos">
+                        <button onClick={() => abrirPainel('favoritos')} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Salvos">
                             <BookmarkIcon className="w-5 h-5" />
                         </button>
                     </div>
@@ -1742,7 +1761,7 @@ function BibliotecaPage() {
                                     </button>
                                 )}
                             </div>
-                            <button onClick={handleBuscar} disabled={buscaLoading} className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
+                            <button onClick={handleBuscar} disabled={buscaLoading} className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
                                 {buscaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
                             </button>
                         </div>
@@ -1751,7 +1770,7 @@ function BibliotecaPage() {
                         {livrosEncontrados.length > 0 && (
                             <div className="mt-2">
                                 <span className="text-xs text-text-muted font-medium px-2">Livros</span>
-                                <div className="mt-1 space-y-1 bg-slate-100 dark:bg-black/40 rounded-xl p-2 border border-slate-200 dark:border-transparent">
+                                <div className="mt-1 space-y-1 bg-slate-100 dark:bg-surface-2/60 rounded-xl p-2 border border-slate-200 dark:border-transparent">
                                     {livrosEncontrados.map(livro => (
                                         <button
                                             key={livro.abrev}
@@ -1760,7 +1779,7 @@ function BibliotecaPage() {
                                                 setBuscaAberta(false);
                                                 limparBusca();
                                             }}
-                                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 transition-colors flex items-center justify-between"
+                                            className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-200/70 dark:hover:bg-white/5 transition-colors flex items-center justify-between"
                                         >
                                             <span className="text-text-primary text-sm font-semibold">{livro.nome}</span>
                                             <span className="text-xs text-text-muted">{livro.capitulos} cap.</span>
@@ -1779,7 +1798,7 @@ function BibliotecaPage() {
                                     </span>
                                     <span className="text-xs text-text-muted">{versaoBiblia.nome}</span>
                                 </div>
-                                <div className="max-h-72 overflow-y-auto space-y-1 bg-slate-100 dark:bg-black/40 rounded-xl p-2 border border-slate-200 dark:border-transparent">
+                                <div className="max-h-72 overflow-y-auto space-y-1 bg-slate-100 dark:bg-surface-2/60 rounded-xl p-2 border border-slate-200 dark:border-transparent">
                                     {resultadosBusca.map((r, i) => {
                                         const livro = getLivroByBookId(r.book);
                                         return (
@@ -1793,10 +1812,10 @@ function BibliotecaPage() {
                                                         setTermoBusca('');
                                                     }
                                                 }}
-                                                className="w-full text-left p-2.5 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 transition-colors group"
+                                                className="w-full text-left p-2.5 rounded-lg hover:bg-slate-200/70 dark:hover:bg-white/5 transition-colors group"
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-amber-400 text-xs font-bold whitespace-nowrap">{livro?.nome || `Livro ${r.book}`} {r.chapter}:{r.verse}</span>
+                                                    <span className="text-amber-600 dark:text-amber-400 text-xs font-bold whitespace-nowrap">{livro?.nome || `Livro ${r.book}`} {r.chapter}:{r.verse}</span>
                                                     <ChevronRight className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </div>
                                                 <div
@@ -1818,7 +1837,7 @@ function BibliotecaPage() {
                                 <p className="text-xs text-text-muted mt-1">Tente outros termos ou busque por referência (ex: Gn 1, Sl 23)</p>
                                 <button
                                     onClick={() => { setBuscaAberta(false); setOfflineManagerAberto(true); }}
-                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
                                 >
                                     <Download className="w-3.5 h-3.5" />
                                     Baixe a Bíblia para busca completa (sem acentos e offline)
@@ -1849,8 +1868,8 @@ function BibliotecaPage() {
                             className="glass-panel px-3 py-2.5 rounded-xl hover:bg-surface-2 transition-colors flex items-center gap-1.5"
                             title="Versão da Bíblia"
                         >
-                            <Languages className="w-4 h-4 text-amber-400" />
-                            <span className="text-xs font-bold text-amber-400">{versaoBiblia.nome}</span>
+                            <Languages className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{versaoBiblia.nome}</span>
                             <ChevronDown className="w-3 h-3 text-text-muted" />
                         </button>
 
@@ -1869,7 +1888,7 @@ function BibliotecaPage() {
                                                 : 'hover:bg-surface-1 border border-transparent'
                                                 }`}
                                         >
-                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-400' : 'text-text-primary'}`}>
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
                                                 {v.nome}
                                             </span>
                                             <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
@@ -1888,7 +1907,7 @@ function BibliotecaPage() {
                             title="Tamanho da fonte"
                         >
                             <span className="text-[11px] font-bold text-text-primary leading-none">A</span>
-                            <span className="text-[15px] font-bold text-amber-400 leading-none">A</span>
+                            <span className="text-[15px] font-bold text-amber-600 dark:text-amber-400 leading-none">A</span>
                         </button>
 
                         {mostrarFontes && (
@@ -1920,10 +1939,10 @@ function BibliotecaPage() {
                     </div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
+                        <button onClick={irParaAnterior} disabled={!anteriorDestino} title={anteriorDestino ? `${anteriorDestino.livro.nome} ${anteriorDestino.cap}` : undefined} aria-label="Capítulo anterior" className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
                             <ChevronLeft className="w-5 h-5 text-text-primary" />
                         </button>
-                        <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
+                        <button onClick={irParaProximo} disabled={!proximoDestino} title={proximoDestino ? `${proximoDestino.livro.nome} ${proximoDestino.cap}` : undefined} aria-label="Próximo capítulo" className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
                             <ChevronRight className="w-5 h-5 text-text-primary" />
                         </button>
                     </div>
@@ -2097,7 +2116,7 @@ function BibliotecaPage() {
                                         return (
                                             <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
                                                 className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold tabular-nums transition-all border active:scale-[0.95] ${isAtual
-                                                    ? 'bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/30'
+                                                    ? 'bg-amber-500 text-amber-950 border-amber-400 shadow-md shadow-amber-500/30'
                                                     : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 text-slate-800 dark:text-text-primary hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/40'
                                                     }`}>
                                                 {cap}
@@ -2109,7 +2128,7 @@ function BibliotecaPage() {
                             {faseSelecao === 'versiculos' && (
                                 <div className="p-4">
                                     {/* Botão abrir capítulo inteiro */}
-                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]">
+                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-amber-950 font-bold text-sm hover:bg-amber-400 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]">
                                         Abrir capítulo inteiro
                                     </button>
 
@@ -2254,7 +2273,7 @@ function BibliotecaPage() {
                                 </select>
                                 <button
                                     onClick={exportarSalvos}
-                                    className="p-1.5 rounded-lg border border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-500/40 transition-colors"
+                                    className="p-1.5 rounded-lg border border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-500/40 transition-colors"
                                     title="Copiar todos os itens filtrados"
                                 >
                                     <Copy className="w-3.5 h-3.5" />
@@ -2321,7 +2340,7 @@ function BibliotecaPage() {
                                         <button
                                             onClick={criarNovaNotaPainel}
                                             disabled={!novaNotaRef.trim() || !novaNotaTexto.trim() || novaNotaSalvando}
-                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors flex items-center gap-1.5"
+                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors flex items-center gap-1.5"
                                         >
                                             {novaNotaSalvando && <Loader2 className="w-3 h-3 animate-spin" />}
                                             Criar Nota
@@ -2382,26 +2401,26 @@ function BibliotecaPage() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className={`text-slate-800 dark:text-text-primary ${fontConfig.salvos} mt-1.5 leading-[1.8] font-serif`}>{item.texto_versiculo}</div>
+                                                    <div className={`text-slate-800 dark:text-text-primary ${fontConfig.salvos} mt-1.5 leading-[1.8] reading-serif`}>{item.texto_versiculo}</div>
                                                 </button>
                                                 <div className="flex items-center gap-0.5 shrink-0">
                                                     <button
                                                         onClick={() => copiarItemPainel(item)}
-                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-emerald-50 dark:hover:bg-emerald-500/15 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-amber-50 dark:hover:bg-amber-500/15 hover:text-amber-600 dark:hover:text-amber-400 transition-all"
                                                         title={item.nota ? 'Copiar versículo + nota' : 'Copiar versículo'}
                                                     >
                                                         <Copy className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => compartilharItemPainel(item)}
-                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-sky-50 dark:hover:bg-sky-500/15 hover:text-sky-600 dark:hover:text-sky-400 transition-all"
+                                                        className="p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-amber-50 dark:hover:bg-amber-500/15 hover:text-amber-600 dark:hover:text-amber-400 transition-all"
                                                         title="Compartilhar"
                                                     >
                                                         <Share2 className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => painelNotaEditId === item.id ? setPainelNotaEditId(null) : iniciarEdicaoNotaPainel(item)}
-                                                        className={`p-2 rounded-lg transition-all ${painelNotaEditId === item.id ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-500' : item.nota ? 'text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'text-slate-300 dark:text-text-muted hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500 dark:hover:text-blue-400'}`}
+                                                        className={`p-2 rounded-lg transition-all ${painelNotaEditId === item.id ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' : item.nota ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10' : 'text-slate-300 dark:text-text-muted hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400'}`}
                                                         title={item.nota ? 'Editar nota' : 'Adicionar nota'}
                                                     >
                                                         <StickyNote className="w-4 h-4" />
@@ -2416,7 +2435,7 @@ function BibliotecaPage() {
                                             {item.nota && painelNotaEditId !== item.id && (
                                                 <div
                                                     onClick={() => iniciarEdicaoNotaPainel(item)}
-                                                    className="text-slate-500 dark:text-text-muted text-sm mt-2 italic bg-slate-100 dark:bg-surface-1 rounded-lg px-3 py-2 border border-slate-200 dark:border-border-subtle cursor-pointer hover:border-blue-300 dark:hover:border-blue-500/30 transition-colors"
+                                                    className="text-slate-500 dark:text-text-muted text-sm mt-2 italic bg-slate-100 dark:bg-surface-1 rounded-lg px-3 py-2 border border-slate-200 dark:border-border-subtle cursor-pointer hover:border-amber-300 dark:hover:border-amber-500/30 transition-colors"
                                                 >
                                                     {item.nota}
                                                 </div>
@@ -2429,7 +2448,7 @@ function BibliotecaPage() {
                                                         value={painelNotaTexto}
                                                         onChange={e => setPainelNotaTexto(e.target.value)}
                                                         placeholder="Escreva sua anotação..."
-                                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-xl px-3 py-2.5 text-slate-800 dark:text-text-primary text-sm placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-blue-400 dark:focus:border-blue-500/50 resize-none"
+                                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-xl px-3 py-2.5 text-slate-800 dark:text-text-primary text-sm placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50 resize-none"
                                                         rows={3}
                                                         autoFocus
                                                     />
@@ -2443,7 +2462,7 @@ function BibliotecaPage() {
                                                         <button
                                                             onClick={() => salvarNotaPainel(item)}
                                                             disabled={!painelNotaTexto.trim()}
-                                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-black font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors"
+                                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors"
                                                         >
                                                             Salvar
                                                         </button>
@@ -2465,7 +2484,7 @@ function BibliotecaPage() {
 
             {/* --- NOTA FULLSCREEN --- */}
             {notaFullscreen && notaFullscreenVerso && (
-                <div className="fixed inset-0 z-[120] flex flex-col bg-white dark:bg-black/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
+                <div className="fixed inset-0 z-[120] flex flex-col bg-white dark:bg-surface-0/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 shrink-0">
                         <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm font-medium">
@@ -2473,7 +2492,7 @@ function BibliotecaPage() {
                             <span className="hidden sm:inline">Fechar</span>
                         </button>
                         <div className="flex items-center gap-2">
-                            <StickyNote className="w-4 h-4 text-blue-400" />
+                            <StickyNote className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                             <span className="font-bold text-text-primary text-sm truncate max-w-[120px] sm:max-w-[180px]">
                                 {livroAtual.nome} {capituloAtual}:{notaFullscreenVerso}
                             </span>
@@ -2482,7 +2501,7 @@ function BibliotecaPage() {
                             <button
                                 onClick={salvarNotaFullscreen}
                                 disabled={!textoNota.trim()}
-                                className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-amber-950 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                 title="Salvar anotação"
                             >
                                 Salvar
@@ -2503,7 +2522,7 @@ function BibliotecaPage() {
 
                     {/* Versículo em destaque */}
                     <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border-b border-amber-200 dark:border-amber-500/20 shrink-0">
-                        <p className="text-amber-900 dark:text-amber-200 text-sm italic font-serif line-clamp-3">
+                        <p className="text-amber-900 dark:text-amber-200 text-sm italic reading-serif line-clamp-3">
                             <sup className="text-xs font-bold mr-1 opacity-60">{notaFullscreenVerso}</sup>
                             {getVersiculoObj(notaFullscreenVerso)?.text}
                         </p>
@@ -2515,7 +2534,7 @@ function BibliotecaPage() {
                             value={textoNota}
                             onChange={e => setTextoNota(e.target.value)}
                             placeholder="Escreva sua anotação, reflexão, oração, insight..."
-                            className="flex-1 min-h-[120px] w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-2xl px-5 py-4 text-slate-900 dark:text-text-primary text-base leading-relaxed placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-blue-400 dark:focus:border-blue-500/50 resize-none"
+                            className="flex-1 min-h-[120px] w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-2xl px-5 py-4 text-slate-900 dark:text-text-primary text-base leading-relaxed placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50 resize-none"
                             autoFocus
                         />
                     </div>
@@ -2525,7 +2544,7 @@ function BibliotecaPage() {
                         <button
                             onClick={salvarNotaFullscreen}
                             disabled={!textoNota.trim()}
-                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 active:scale-[0.98]"
                         >
                             {textoNota.trim() ? 'Salvar Anotação' : 'Digite sua anotação para salvar'}
                         </button>
@@ -2536,10 +2555,10 @@ function BibliotecaPage() {
             {/* --- BARRA FLUTUANTE MULTI-SELEÇÃO --- */}
             {modoMultiSelecao && (
                 <div className="fixed left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] md:left-1/2 md:right-auto md:bottom-4 md:-translate-x-1/2 z-[80] animate-in slide-in-from-bottom-4 duration-200">
-                    <div className="bg-white/98 dark:bg-surface-1/98 border border-emerald-400/40 dark:border-emerald-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl overflow-x-auto">
+                    <div className="bg-white/98 dark:bg-surface-1/98 border border-amber-400/40 dark:border-amber-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl overflow-x-auto">
                         <div className="flex items-center gap-1.5 min-w-max">
                             {/* Contador */}
-                            <div className="px-3 py-2 text-emerald-400 font-bold text-sm min-w-[60px] text-center">
+                            <div className="px-3 py-2 text-amber-600 dark:text-amber-400 font-bold text-sm min-w-[60px] text-center">
                                 {versiculosSelecionados.size} sel.
                             </div>
 
@@ -2549,7 +2568,7 @@ function BibliotecaPage() {
                             <button
                                 onClick={() => setMostrarCores(!mostrarCores)}
                                 disabled={versiculosSelecionados.size === 0}
-                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-400 transition-colors disabled:opacity-30"
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors disabled:opacity-30"
                                 title="Destacar"
                             >
                                 <Palette className="w-5 h-5" />
@@ -2565,7 +2584,7 @@ function BibliotecaPage() {
                             <button
                                 onClick={handleMultiCopiar}
                                 disabled={versiculosSelecionados.size === 0}
-                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-green-400 transition-colors disabled:opacity-30"
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors disabled:opacity-30"
                                 title="Copiar"
                             >
                                 <Copy className="w-5 h-5" />
@@ -2573,7 +2592,7 @@ function BibliotecaPage() {
                             <button
                                 onClick={handleMultiCompartilhar}
                                 disabled={versiculosSelecionados.size === 0}
-                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-blue-400 transition-colors disabled:opacity-30"
+                                className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors disabled:opacity-30"
                                 title="Compartilhar"
                             >
                                 <Share2 className="w-5 h-5" />
@@ -2610,16 +2629,16 @@ function BibliotecaPage() {
                 {/* Etiqueta de capítulo via portal — aparece ao rolar (quando o cabeçalho sai da tela) */}
                 {montado && !cabecalhoVisivel && versiculos.length > 0 && createPortal(
                     <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-2/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-400 shadow-lg">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
                             <Book className="w-3 h-3" />
                             {livroAtual.nome} {capituloAtual}
                         </span>
                     </div>,
                     document.body
                 )}
-                <h1 className="text-2xl md:text-3xl font-black text-text-primary mb-3 text-center tracking-tight">
-                    {livroAtual.nome} <span className="text-amber-400">{capituloAtual}</span>
-                    <span className="ml-2 text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
+                <h1 ref={cabecalhoRef} className="reading-serif text-3xl md:text-4xl font-semibold text-text-primary mb-3 text-center tracking-tight">
+                    {livroAtual.nome} <span className="text-amber-600 dark:text-amber-400">{capituloAtual}</span>
+                    <span className="ml-2 font-sans text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
                 </h1>
 
                 {/* Player de áudio opcional — voz do dispositivo (Web Speech API) */}
@@ -2635,9 +2654,18 @@ function BibliotecaPage() {
                 </div>
 
                 {loading && (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
-                        <p className="text-text-muted animate-pulse">Carregando escrituras...</p>
+                    <div className="glass-panel rounded-2xl p-5 md:p-8 space-y-4">
+                        <div className="skeleton-shimmer h-6 w-2/3" />
+                        <div className="skeleton-shimmer h-4 w-full" />
+                        <div className="skeleton-shimmer h-4 w-11/12" />
+                        <div className="skeleton-shimmer h-4 w-full" />
+                        <div className="skeleton-shimmer h-4 w-4/5" />
+                        <div className="skeleton-shimmer h-4 w-full" />
+                        <div className="skeleton-shimmer h-4 w-10/12" />
+                        <div className="skeleton-shimmer h-4 w-full" />
+                        <div className="skeleton-shimmer h-4 w-3/4" />
+                        <div className="skeleton-shimmer h-4 w-11/12" />
+                        <div className="skeleton-shimmer h-4 w-2/3" />
                     </div>
                 )}
 
@@ -2646,7 +2674,7 @@ function BibliotecaPage() {
                         <WifiOff className="w-12 h-12 text-orange-400 mx-auto mb-4" />
                         <p className="text-orange-700 dark:text-orange-200 font-bold text-lg mb-2">Sem conexão</p>
                         <p className="text-text-muted text-sm mb-6">{error}</p>
-                        <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold">Tentar Novamente</button>
+                        <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold">Tentar Novamente</button>
                     </div>
                 )}
 
@@ -2660,7 +2688,7 @@ function BibliotecaPage() {
                                     {/* Título de seção */}
                                     {getTituloSecao(v.verse) && (
                                         <div className="pt-6 pb-3 first:pt-0">
-                                            <h2 className={`${fontConfig.titulo} font-black text-amber-700 dark:text-amber-400/90 font-sans tracking-tight border-b border-amber-300 dark:border-amber-500/20 pb-2`}>
+                                            <h2 className={`${fontConfig.titulo} font-semibold text-amber-700 dark:text-amber-400/90 tracking-tight border-b border-amber-300/60 dark:border-amber-500/20 pb-2`}>
                                                 {getTituloSecao(v.verse)}
                                             </h2>
                                         </div>
@@ -2671,7 +2699,7 @@ function BibliotecaPage() {
                                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                             ${getCorClasse(v.verse)}
                                             ${audioVerse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
-                                            ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-emerald-500/15 ring-1 ring-emerald-500/40' : ''}
+                                            ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-amber-500/15 ring-1 ring-amber-500/40' : ''}
                                             ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : ''}
                                             ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-surface-1' : ''}
                                             ${modoMultiSelecao && !versiculosSelecionados.has(v.verse) ? 'hover:bg-surface-1' : ''}
@@ -2681,7 +2709,7 @@ function BibliotecaPage() {
                                             {modoMultiSelecao && (
                                                 <span className="inline-block mr-1.5 align-middle">
                                                     {versiculosSelecionados.has(v.verse)
-                                                        ? <CheckSquare className="w-4 h-4 text-emerald-400 inline" />
+                                                        ? <CheckSquare className="w-4 h-4 text-amber-500 inline" />
                                                         : <Square className="w-4 h-4 text-text-muted inline" />
                                                     }
                                                 </span>
@@ -2693,15 +2721,15 @@ function BibliotecaPage() {
                                         {/* Indicadores visuais */}
                                         <span className="inline-flex items-center gap-1 ml-1.5">
                                             {isFavorito(v.verse) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
-                                            {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-blue-400 inline" />}
+                                            {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-amber-500 inline" />}
                                         </span>
 
                                         {/* MINI-TOOLBAR */}
                                         {versiculoSelecionado === v.verse && (
-                                            <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
+                                            <div ref={toolbarRef} className={`absolute ${toolbarAbaixo ? 'top-full mt-2' : '-top-16'} left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150`} onClick={e => e.stopPropagation()}>
                                                 <div className="flex items-center gap-1 bg-white/95 dark:bg-surface-2/95 border border-slate-200 dark:border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
                                                     {/* Cores */}
-                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-400 transition-colors" title="Destacar">
+                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Destacar">
                                                         <Palette className="w-5 h-5" />
                                                     </button>
                                                     {/* Favoritar */}
@@ -2709,23 +2737,23 @@ function BibliotecaPage() {
                                                         <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
                                                     </button>
                                                     {/* Copiar */}
-                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-green-400 transition-colors" title="Copiar">
+                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Copiar">
                                                         <Copy className="w-5 h-5" />
                                                     </button>
                                                     {/* Compartilhar */}
-                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-blue-400 transition-colors" title="Compartilhar">
+                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Compartilhar">
                                                         <Share2 className="w-5 h-5" />
                                                     </button>
                                                     {/* Estudar */}
-                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-400 transition-colors" title="Estudar">
+                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Estudar">
                                                         <Lightbulb className="w-5 h-5" />
                                                     </button>
                                                     {/* Nota (abre fullscreen) */}
-                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${temNota(v.verse) ? 'text-blue-400' : 'text-text-secondary hover:text-blue-400'}`} title="Nota">
+                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${temNota(v.verse) ? 'text-amber-500' : 'text-text-secondary hover:text-amber-600 dark:hover:text-amber-400'}`} title="Nota">
                                                         <StickyNote className="w-5 h-5" />
                                                     </button>
                                                     {/* Multi-seleção */}
-                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-emerald-400 transition-colors" title="Selecionar vários">
+                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Selecionar vários">
                                                         <CheckSquare className="w-5 h-5" />
                                                     </button>
                                                 </div>
@@ -2735,7 +2763,7 @@ function BibliotecaPage() {
                                                     <div className="mt-1.5 flex items-center gap-1.5 bg-white/95 dark:bg-surface-2/95 border border-slate-200 dark:border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100 shadow-lg dark:shadow-none">
                                                         {CORES_DESTAQUE.map(cor => (
                                                             <button key={cor.id} onClick={() => handleDestacar(cor.id)}
-                                                                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-white scale-110' : ''}`}
+                                                                className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-slate-700 dark:ring-white scale-110' : ''}`}
                                                                 title={cor.nome} />
                                                         ))}
                                                         {interacoesMap.destaques[v.verse] && (
@@ -2756,15 +2784,19 @@ function BibliotecaPage() {
                     </div>
                 )}
 
-                {/* Navegação Inferior */}
+                {/* Navegação Inferior — leitura contínua entre livros */}
                 <div className="flex justify-between items-center mt-8 gap-4">
-                    <button onClick={irParaAnterior} disabled={capituloAtual <= 1} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group">
-                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform text-text-primary" />
-                        <span className="font-medium text-sm text-text-primary">Anterior</span>
+                    <button onClick={irParaAnterior} disabled={!anteriorDestino} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group max-w-[48%]">
+                        <ChevronLeft className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform text-text-primary" />
+                        <span className="font-medium text-sm text-text-primary truncate">
+                            {anteriorDestino ? `${anteriorDestino.livro.nome} ${anteriorDestino.cap}` : 'Anterior'}
+                        </span>
                     </button>
-                    <button onClick={irParaProximo} disabled={capituloAtual >= livroAtual.capitulos} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group">
-                        <span className="font-medium text-sm text-text-primary">Próximo</span>
-                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-text-primary" />
+                    <button onClick={irParaProximo} disabled={!proximoDestino} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group max-w-[48%]">
+                        <span className="font-medium text-sm text-text-primary truncate">
+                            {proximoDestino ? `${proximoDestino.livro.nome} ${proximoDestino.cap}` : 'Próximo'}
+                        </span>
+                        <ChevronRight className="w-5 h-5 shrink-0 group-hover:translate-x-1 transition-transform text-text-primary" />
                     </button>
                 </div>
             </main>
@@ -2774,10 +2806,10 @@ function BibliotecaPage() {
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[70dvh] sm:h-auto sm:max-h-[75vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
                         {/* Header */}
-                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-indigo-50/50 to-blue-50/50 dark:from-surface-2 dark:to-surface-2">
+                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/60 to-amber-50/30 dark:from-surface-2 dark:to-surface-2">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-indigo-500/15 dark:bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center">
-                                    <BookmarkCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                <div className="w-8 h-8 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-400/30 flex items-center justify-center">
+                                    <BookmarkCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="font-bold text-slate-900 dark:text-text-primary leading-none">Meus Bookmarks</span>
@@ -2794,8 +2826,8 @@ function BibliotecaPage() {
                         {/* Botão criar bookmark */}
                         <div className="px-4 pt-3 pb-2">
                             {criandoBookmark ? (
-                                <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 animate-in fade-in duration-150">
-                                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mb-2">
+                                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 animate-in fade-in duration-150">
+                                    <p className="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-2">
                                         Salvar: {livroAtual.nome} {capituloAtual}
                                         {versiculoSelecionado ? `:${versiculoSelecionado}` : ''}
                                     </p>
@@ -2805,19 +2837,19 @@ function BibliotecaPage() {
                                         onChange={e => setNovoBookmarkNome(e.target.value)}
                                         onKeyDown={e => { if (e.key === 'Enter') salvarBookmark(); }}
                                         placeholder={`Nome (padrão: ${livroAtual.nome} ${capituloAtual})`}
-                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-indigo-400 dark:focus:border-indigo-500/50 mb-2"
+                                        className="w-full bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder-text-muted focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50 mb-2"
                                         autoFocus
                                     />
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => { setCriandoBookmark(false); setNovoBookmarkNome(''); }} className="px-3 py-1.5 text-xs rounded-lg text-slate-500 dark:text-text-muted hover:bg-slate-100 dark:hover:bg-surface-2 font-medium">Cancelar</button>
-                                        <button onClick={salvarBookmark} className="px-3 py-1.5 text-xs rounded-lg bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-colors">Salvar</button>
+                                        <button onClick={salvarBookmark} className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-colors">Salvar</button>
                                     </div>
                                 </div>
                             ) : (
                                 <button
                                     onClick={() => setCriandoBookmark(true)}
                                     disabled={bookmarkAtualExiste}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
                                 >
                                     <Plus className="w-4 h-4" />
                                     {bookmarkAtualExiste ? 'Já marcado neste capítulo' : 'Marcar posição atual'}
@@ -2839,7 +2871,7 @@ function BibliotecaPage() {
                                         <div key={bm.id} className="group flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors border border-slate-100 dark:border-transparent">
                                             <button onClick={() => navegarParaBookmark(bm)} className="flex-1 text-left min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-indigo-600 dark:text-indigo-400 text-sm font-bold">{bm.livro_nome} {bm.capitulo}{bm.versiculo ? `:${bm.versiculo}` : ''}</span>
+                                                    <span className="text-amber-600 dark:text-amber-400 text-sm font-bold">{bm.livro_nome} {bm.capitulo}{bm.versiculo ? `:${bm.versiculo}` : ''}</span>
                                                 </div>
                                                 <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5 truncate">{bm.nome}</p>
                                                 {bm.created_at && (

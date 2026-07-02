@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Heart, Star, Layers, LogOut
+  Calendar, Book, Heart, Star, Layers, LogOut, Flame
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -89,7 +89,7 @@ export default function DashboardPage() {
       <section className="relative w-full pt-32 pb-20 px-6 overflow-hidden">
         {/* Decorative Elements - Blue glow removed as requested */}
         {/* <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div> */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/05 blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
@@ -107,13 +107,12 @@ export default function DashboardPage() {
             <div
               title="Dias seguidos abrindo o app"
               className="flex items-center gap-2 px-3 py-1.5 rounded-full
-                bg-gradient-to-r from-amber-50 to-orange-50
-                dark:from-amber-500/15 dark:to-orange-500/10
+                bg-amber-50 dark:bg-amber-500/15
                 border border-amber-300/60 dark:border-amber-500/25
                 shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20
                 backdrop-blur-md"
             >
-              <span className="text-base leading-none">🔥</span>
+              <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400 fill-amber-500/25" />
               {isLoaded ? (
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-400 tracking-wide">
                   {streak} {streak === 1 ? 'dia' : 'dias'}
@@ -127,11 +126,11 @@ export default function DashboardPage() {
           {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
           <div className="w-full relative z-20">
             <div className="flex flex-col items-center mb-2">
-              <h2 className="text-amber-700 dark:text-accent-primary/80 font-bold tracking-[0.3em] text-xs md:text-sm uppercase mb-1 drop-shadow-sm dark:drop-shadow-none">
+              <h2 className="reading-serif text-2xl md:text-3xl font-semibold text-text-primary mb-1">
                 Palavra da Manhã
               </h2>
               {/* Data da Leitura */}
-              <div className="text-[10px] text-slate-600 dark:text-text-muted font-bold uppercase tracking-widest bg-white/80 dark:bg-surface-2 px-3 py-1 rounded-full border border-slate-300 dark:border-border-subtle shadow-sm">
+              <div className="text-xs text-slate-600 dark:text-text-muted font-medium tracking-wide">
                 {payload?.passagem_do_dia || "Leitura Sagrada"}
               </div>
             </div>
@@ -159,10 +158,10 @@ export default function DashboardPage() {
               title="Plano de Leitura"
               desc="Estudo bíblico interativo, comentado e profundo."
               icon={Book}
-              accentColor="text-emerald-600 dark:text-emerald-400"
-              iconBg="bg-emerald-500/10 border-emerald-500/20"
-              badgeColor="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-300"
-              badge="MÓDULO"
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Diário"
             />
           </div>
 
@@ -176,7 +175,7 @@ export default function DashboardPage() {
               accentColor="text-amber-600 dark:text-amber-400"
               iconBg="bg-amber-500/10 border-amber-500/20"
               badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="66 LIVROS"
+              badge="66 livros"
             />
           </div>
 
@@ -188,10 +187,10 @@ export default function DashboardPage() {
                 title="Devocional Externo"
                 desc="Leia devocionais de sites cristãos renomados, direto da fonte."
                 icon={Heart}
-                accentColor="text-rose-600 dark:text-rose-400"
-                iconBg="bg-rose-500/10 border-rose-500/20"
-                badgeColor="bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300"
-                badge="ORIGINAL"
+                accentColor="text-slate-500 dark:text-text-secondary"
+                iconBg="bg-slate-500/10 border-slate-500/20 dark:bg-white/5 dark:border-white/10"
+                badgeColor="bg-slate-500/10 border-slate-500/20 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-text-secondary"
+                badge="Fontes"
               />
             </div>
           )}
@@ -204,10 +203,10 @@ export default function DashboardPage() {
                 title="DNA Categorizado"
                 desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
                 icon={Layers}
-                accentColor="text-violet-600 dark:text-violet-400"
-                iconBg="bg-violet-500/10 border-violet-500/20"
-                badgeColor="bg-violet-500/10 border-violet-500/20 text-violet-700 dark:text-violet-300"
-                badge="NOVO"
+                accentColor="text-slate-500 dark:text-text-secondary"
+                iconBg="bg-slate-500/10 border-slate-500/20 dark:bg-white/5 dark:border-white/10"
+                badgeColor="bg-slate-500/10 border-slate-500/20 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-text-secondary"
+                badge="Novo"
               />
             </div>
           )}
@@ -216,8 +215,8 @@ export default function DashboardPage() {
       </section>
 
       {/* Footer Minimalista */}
-      <footer className="w-full text-center py-8 text-slate-600 text-xs border-t border-white/5">
-        <p className="tracking-widest uppercase">PVC Devocional • 2026</p>
+      <footer className="w-full text-center py-8 text-slate-500 dark:text-text-muted text-xs border-t border-slate-200/70 dark:border-border-subtle">
+        <p className="tracking-widest uppercase">PVC Devocional • {new Date().getFullYear()}</p>
       </footer>
 
     </CosmicBackground>

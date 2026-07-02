@@ -52,7 +52,8 @@
   /* Amber 400 */
   --accent-dark: #b45309;
   /* Amber 700 */
-  --accent-text: #ffffff;
+  --accent-text: #451a03;
+  /* Amber 950 — texto escuro sobre âmbar (consistente com botões) */
 
   /* Glass Effects (Acrylic) */
   --glass-bg: rgba(255, 255, 255, 0.7);
@@ -283,8 +284,8 @@ h6 {
 }
 
 .dark .stellar-card {
-  background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(28, 24, 19, 0.6);
+  border-color: var(--glass-border);
 }
 
 .stellar-card:hover {
@@ -293,7 +294,7 @@ h6 {
 }
 
 .dark .stellar-card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
 }
 
 /* Animations */
@@ -338,6 +339,17 @@ h6 {
   );
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
+}
+
+/* Grain sutil local (substitui textura externa) */
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.025;
+}
+
+.dark .grain-overlay {
+  opacity: 0.04;
 }
 
 /* Slow pulse for orbs */

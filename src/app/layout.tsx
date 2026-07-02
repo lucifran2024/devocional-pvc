@@ -29,7 +29,7 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: "Devocional PVC | Sua Jornada Espiritual Diária",
-  description: "Devocionais diários personalizados com profundidade teológica e inteligência artificial. Transforme sua leitura bíblica em uma experiência espiritual única.",
+  description: "Devocionais diários com profundidade teológica. Transforme sua leitura bíblica em uma experiência espiritual única.",
   keywords: ["devocional", "bíblia", "leitura diária", "espiritualidade", "PVC"],
   authors: [{ name: "Devocional PVC" }],
   manifest: "/manifest.json",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Devocional PVC | Sua Jornada Espiritual Diária",
-    description: "Devocionais diários personalizados com profundidade teológica e inteligência artificial.",
+    description: "Devocionais diários com profundidade teológica.",
     type: "website",
     locale: "pt_BR",
   },

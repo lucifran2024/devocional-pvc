@@ -7,6 +7,7 @@ import {
     Church, Cross, Newspaper, AlertCircle, Trash, Copy, Save, CheckSquare
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
+import { BackButton } from '@/components/ui/BackButton';
 import { supabase, getDataHoje } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 
@@ -19,16 +20,16 @@ const FONTES = [
         nome: 'Voltemos ao Evangelho',
         desc: 'Conteúdo reformado e centrado em Cristo.',
         icon: Cross,
-        color: 'text-emerald-400',
-        bgColor: 'bg-emerald-500/10',
-        borderColor: 'border-emerald-500/20'
+        color: 'text-amber-600 dark:text-amber-400',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20'
     },
     {
         id: 'bible_gateway',
         nome: 'Bible Gateway',
         desc: 'Versículo do dia com tradução ARC.',
         icon: BookOpen,
-        color: 'text-amber-400',
+        color: 'text-amber-600 dark:text-amber-400',
         bgColor: 'bg-amber-500/10',
         borderColor: 'border-amber-500/20'
     },
@@ -37,18 +38,18 @@ const FONTES = [
         nome: 'Instagram (Evangelho)',
         desc: 'Posts recentes do @evangelhoparatodos__',
         icon: Newspaper,
-        color: 'text-pink-400',
-        bgColor: 'bg-pink-500/10',
-        borderColor: 'border-pink-500/20'
+        color: 'text-amber-600 dark:text-amber-400',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20'
     },
     {
         id: 'tribo_juda',
         nome: 'Tribo de Judá',
         desc: 'Inspiração via @tribodejuda20',
         icon: Globe,
-        color: 'text-purple-400',
-        bgColor: 'bg-purple-500/10',
-        borderColor: 'border-purple-500/20'
+        color: 'text-amber-600 dark:text-amber-400',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/20'
     }
 ];
 
@@ -149,11 +150,11 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
     };
 
     return (
-        <div className="glass-panel p-6 rounded-2xl border-border-subtle hover:border-pink-500/30 transition-all flex flex-col gap-4">
+        <div className="glass-panel p-6 rounded-2xl border-border-subtle hover:border-amber-500/30 transition-all flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-2 py-1 rounded-md">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">
                         INSTAGRAM
                     </span>
                     <span className="text-xs text-text-muted">
@@ -174,7 +175,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                 {ocrText && (
                     <div className="bg-surface-2 p-4 rounded-xl border border-border-subtle">
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-[10px] font-bold text-pink-400/70 uppercase tracking-widest">Mensagem na Imagem</span>
+                            <span className="text-[10px] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest">Mensagem na Imagem</span>
                             <button
                                 onClick={() => handleCopy(ocrText, 'ocr')}
                                 className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 bg-surface-2 px-2 py-1 rounded hover:bg-surface-1 transition-colors"
@@ -220,7 +221,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
             <div className="pt-4 border-t border-border-subtle flex flex-wrap gap-2 mt-auto">
                 <button
                     onClick={() => handleCopy(post.content, 'geral')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado === 'geral' ? 'bg-green-500 text-white' : 'bg-surface-2 hover:bg-surface-2/80 text-text-primary'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${copiado === 'geral' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-surface-2 hover:bg-surface-2/80 text-text-primary'}`}
                 >
                     {copiado === 'geral' ? <CheckSquare className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     {copiado === 'geral' ? 'Tudo Copiado!' : 'Copiar Tudo'}
@@ -229,7 +230,7 @@ const InstagramFeedCard = ({ post }: { post: InstagramPost }) => {
                 <button
                     onClick={handleSaveToDNA}
                     disabled={salvando}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-pink-500/10 text-pink-400 hover:bg-pink-500 hover:text-white transition-all disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-amber-950 transition-all disabled:opacity-50"
                 >
                     {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {salvando ? 'Salvando...' : 'Salvar DNA'}
@@ -258,7 +259,7 @@ const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
             {/* Header */}
             <div className="flex justify-between items-start gap-4">
                 <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md mb-2 inline-block">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md mb-2 inline-block">
                         {post.fonte}
                     </span>
                     <h3 className="text-lg font-bold text-text-primary leading-tight">
@@ -282,7 +283,7 @@ const DevocionalCard = ({ post }: { post: DevocionalPost }) => {
                     onClick={handleCopy}
                     className={`
                         flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
-                        ${copiado ? 'bg-green-500 text-white' : 'bg-surface-2 text-text-primary hover:bg-amber-500 hover:text-black'}
+                        ${copiado ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-surface-2 text-text-primary hover:bg-amber-500 hover:text-amber-950'}
                     `}
                 >
                     {copiado ? 'Copiado!' : 'Copiar para Postar'}
@@ -388,20 +389,18 @@ export default function DevocionalExternoPage() {
             {/* Header */}
             <header className="sticky top-0 z-50 w-full px-6 py-4 bg-surface-0/80 backdrop-blur-xl border-b border-border-subtle">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <Link href="/" className="group p-3 bg-surface-2 hover:bg-amber-500/10 border border-border-subtle rounded-2xl transition-all">
-                        <ArrowLeft className="w-5 h-5 text-text-muted group-hover:text-amber-500" />
-                    </Link>
+                    <BackButton href="/" label="Início" />
 
                     <div className="flex bg-surface-2 p-1 rounded-xl">
                         <button
                             onClick={() => setTab('fontes')}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'fontes' ? 'bg-amber-500 text-black shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'fontes' ? 'bg-amber-500 text-amber-950 shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                         >
                             Fontes
                         </button>
                         <button
                             onClick={() => { setTab('mundo'); if (devocionais.length === 0) buscarDevocionaisMundo('trending'); }}
-                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'mundo' ? 'bg-amber-500 text-black shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === 'mundo' ? 'bg-amber-500 text-amber-950 shadow-lg' : 'text-text-muted hover:text-text-primary'}`}
                         >
                             Mundo (RSS)
                         </button>
@@ -417,7 +416,7 @@ export default function DevocionalExternoPage() {
                 {tab === 'fontes' && (
                     <>
                         <section className="text-center space-y-4 animate-enter">
-                            <h1 className="text-4xl md:text-5xl font-black text-text-primary tracking-tight">
+                            <h1 className="reading-serif text-4xl md:text-5xl font-semibold text-text-primary tracking-tight">
                                 Devocionais do Mundo
                             </h1>
                             <p className="text-text-muted text-lg max-w-xl mx-auto">
@@ -491,7 +490,7 @@ export default function DevocionalExternoPage() {
                     <>
                         {/* Feed Único de Fontes Seguras */}
                         <div className="flex justify-center mb-8">
-                            <span className="px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-widest border border-emerald-500/20">
+                            <span className="px-4 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-bold tracking-wide border border-amber-500/20">
                                 Feed Oficial Seguro
                             </span>
                         </div>

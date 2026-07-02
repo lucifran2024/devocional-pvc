@@ -21,8 +21,8 @@ export function DashboardCard({
     title,
     desc,
     icon: Icon,
-    accentColor = "text-indigo-400",
-    iconBg = "bg-indigo-500/10 border-indigo-500/20",
+    accentColor = "text-amber-600 dark:text-amber-400",
+    iconBg = "bg-amber-500/10 border-amber-500/20",
     badgeColor = "bg-surface-2 border-border-subtle text-text-muted",
     disabled = false,
     badge,
@@ -34,20 +34,15 @@ export function DashboardCard({
             flex flex-col items-start justify-between
             border transition-all duration-300
             ${featured
-                ? 'p-7 lg:p-8 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/30 hover:border-amber-500/60 hover:shadow-lg hover:shadow-amber-500/10'
+                ? 'p-7 lg:p-8 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/30 hover:border-amber-500/60 hover:shadow-lg hover:shadow-amber-500/10'
                 : 'p-6 lg:p-7 bg-white dark:bg-surface-1/60 border-slate-200 dark:border-white/6 hover:border-slate-300 dark:hover:border-white/12 hover:shadow-md dark:hover:shadow-black/30'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             backdrop-blur-sm
         `}>
-            {/* Decorative background icon */}
-            <div className="absolute -bottom-4 -right-4 opacity-0 group-hover:opacity-[0.06] dark:group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
-                <Icon className="w-36 h-36 rotate-12" />
-            </div>
-
             {/* Subtle top border accent */}
             <div className={`absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-3xl
-                ${featured ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-transparent via-current to-transparent'}
+                ${featured ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-transparent via-current to-transparent'}
                 ${accentColor}
             `} />
 
@@ -57,13 +52,12 @@ export function DashboardCard({
                     <div className={`
                         p-3.5 rounded-2xl border
                         ${accentColor} ${iconBg}
-                        group-hover:scale-110 group-hover:rotate-[-3deg]
-                        transition-all duration-300 shadow-sm
+                        transition-colors duration-300 shadow-sm
                     `}>
                         <Icon className="w-6 h-6" />
                     </div>
                     {badge && (
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border ${badgeColor}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide border ${badgeColor}`}>
                             {badge}
                         </span>
                     )}
@@ -71,7 +65,7 @@ export function DashboardCard({
 
                 {/* Text */}
                 <div>
-                    <h3 className={`text-xl font-bold mb-1.5 tracking-tight transition-colors duration-200
+                    <h3 className={`reading-serif text-[1.35rem] font-semibold mb-1.5 tracking-tight transition-colors duration-200
                         ${featured ? 'text-amber-700 dark:text-amber-300 group-hover:text-amber-600 dark:group-hover:text-amber-200' : 'text-slate-800 dark:text-text-primary group-hover:text-slate-900 dark:group-hover:text-white'}
                     `}>
                         {title}
