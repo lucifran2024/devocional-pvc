@@ -46,7 +46,7 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
     try {
         // Baixar a imagem e converter para base64
-        const imgResp = await fetch(imageUrl);
+        const imgResp = await fetch(imageUrl, { signal: AbortSignal.timeout(DOWNLOAD_IMAGE_TIMEOUT_MS) });
         if (!imgResp.ok) return "";
 
         const imgBlob = await imgResp.blob();
@@ -104,7 +104,37 @@ INSTRUÇÕES:
 5. Mantenha parágrafos naturais`;
 
 // Limite de tamanho para envio inline ao Gemini (base64 aumenta ~33%)
-const MAX_VIDEO_BYTES = 19 * 1024 * 1024;
+// 12MB: reels maiores estouram o orçamento de CPU/tempo da Edge Function —
+// caem no OCR da thumbnail, que nesses posts costuma ter o texto completo.
+const MAX_VIDEO_BYTES = 12 * 1024 * 1024;
+
+// =====================================================
+// ORÇAMENTOS DE TEMPO
+// A Edge Function morre em ~150s (WORKER_RESOURCE_LIMIT). Cada etapa tem
+// um teto para a invocação NUNCA passar de ~120s no pior caso.
+// =====================================================
+const APIFY_START_TIMEOUT_MS = 15_000;
+const APIFY_POLL_BUDGET_MS = 65_000;
+const APIFY_POLL_INTERVAL_MS = 5_000;
+const DOWNLOAD_IMAGE_TIMEOUT_MS = 15_000;
+const DOWNLOAD_VIDEO_TIMEOUT_MS = 30_000;
+const OCR_IMAGE_BUDGET_MS = 35_000;
+const OCR_VIDEO_BUDGET_MS = 40_000;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T, label: string): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<T>((resolve) => {
+        timer = setTimeout(() => {
+            console.warn(`⏱️ [BUDGET] ${label} passou de ${Math.round(ms / 1000)}s — seguindo com fallback`);
+            resolve(fallback);
+        }, ms);
+    });
+    try {
+        return await Promise.race([promise, timeout]);
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
+}
 
 function bytesToBase64(bytes: Uint8Array): string {
     const CHUNK_SIZE = 8192;
@@ -127,7 +157,7 @@ async function extractTextFromVideo(videoUrl: string): Promise<string> {
     if (!videoUrl) return "";
 
     try {
-        const vidResp = await fetch(videoUrl);
+        const vidResp = await fetch(videoUrl, { signal: AbortSignal.timeout(DOWNLOAD_VIDEO_TIMEOUT_MS) });
         if (!vidResp.ok) return "";
 
         const buffer = await vidResp.arrayBuffer();
@@ -191,6 +221,104 @@ async function callGeminiVision(apiKey: string, base64Image: string, mimeType: s
     return text ? text.trim() : "";
 }
 
+// Actor: apify/instagram-scraper
+const APIFY_ACTOR_ID = "apify~instagram-scraper";
+const APIFY_BASE = "https://api.apify.com/v2";
+
+/**
+ * Busca os posts na Apify SEM segurar a conexão até o actor terminar.
+ * O run-sync antigo esperava o actor inteiro (2-4 min em dias ruins) e a
+ * Edge Function morria no limite de ~150s (erro 546) — dias sem Telegram.
+ *
+ * Fluxo:
+ * 1. Dispara um run novo (assíncrono — roda nos servidores da Apify).
+ * 2. Aguarda até APIFY_POLL_BUDGET_MS pelo término.
+ * 3. Se não terminar a tempo, colhe o dataset do ÚLTIMO run bem-sucedido.
+ *    O run disparado continua rodando lá — a próxima execução do cron
+ *    (são 3 por dia) colhe o resultado dele por este mesmo fallback.
+ */
+async function buscarPostsApify(token: string, input: unknown, username: string): Promise<any[]> {
+    // Filtra posts do perfil certo — o fallback "último run" é por actor e
+    // pode conter posts do outro perfil consultado.
+    const doPerfil = (items: any[]): any[] => {
+        if (!Array.isArray(items)) return [];
+        const filtrados = items.filter((it: any) =>
+            !it?.ownerUsername || String(it.ownerUsername).toLowerCase() === username.toLowerCase()
+        );
+        return filtrados;
+    };
+
+    // 1. Disparar run novo
+    let runId: string | null = null;
+    try {
+        const startResp = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${token}&timeout=240`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+            signal: AbortSignal.timeout(APIFY_START_TIMEOUT_MS),
+        });
+        if (startResp.ok) {
+            const startData = await startResp.json();
+            runId = startData?.data?.id || null;
+            console.log(`🚀 [APIFY] Run iniciado para @${username}: ${runId}`);
+        } else {
+            console.error(`❌ [APIFY] Falha ao iniciar run (${startResp.status}):`, await startResp.text());
+        }
+    } catch (e) {
+        console.error("❌ [APIFY] Erro ao iniciar run:", e);
+    }
+
+    // 2. Esperar o run terminar dentro do orçamento
+    if (runId) {
+        const deadline = Date.now() + APIFY_POLL_BUDGET_MS;
+        while (Date.now() < deadline) {
+            await new Promise((r) => setTimeout(r, APIFY_POLL_INTERVAL_MS));
+            try {
+                const st = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`, {
+                    signal: AbortSignal.timeout(10_000),
+                });
+                if (!st.ok) continue;
+                const stData = await st.json();
+                const status = stData?.data?.status;
+                if (status === "SUCCEEDED") {
+                    const dsId = stData?.data?.defaultDatasetId;
+                    const itemsResp = await fetch(`${APIFY_BASE}/datasets/${dsId}/items?token=${token}`, {
+                        signal: AbortSignal.timeout(20_000),
+                    });
+                    if (itemsResp.ok) {
+                        const items = doPerfil(await itemsResp.json());
+                        console.log(`✅ [APIFY] Run ${runId} concluído: ${items.length} posts de @${username}`);
+                        return items;
+                    }
+                    break;
+                }
+                if (["FAILED", "ABORTED", "TIMED-OUT"].includes(status)) {
+                    console.warn(`⚠️ [APIFY] Run ${runId} terminou como ${status}`);
+                    break;
+                }
+            } catch { /* transitório — tenta de novo até o deadline */ }
+        }
+        console.warn(`⏱️ [APIFY] Run ${runId} não terminou no orçamento — colhendo último run bem-sucedido`);
+    }
+
+    // 3. Fallback: último run bem-sucedido do actor
+    try {
+        const lastResp = await fetch(
+            `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs/last/dataset/items?token=${token}&status=SUCCEEDED`,
+            { signal: AbortSignal.timeout(20_000) }
+        );
+        if (lastResp.ok) {
+            const items = doPerfil(await lastResp.json());
+            console.log(`♻️ [APIFY] Último run bem-sucedido: ${items.length} posts de @${username}`);
+            return items;
+        }
+        console.error(`❌ [APIFY] Falha ao buscar último run (${lastResp.status})`);
+    } catch (e) {
+        console.error("❌ [APIFY] Erro no fallback do último run:", e);
+    }
+    return [];
+}
+
 export async function consultarInstagram(username: string): Promise<any[]> {
     console.log(`📸 [APIFY] Consultando Instagram: @${username}`);
 
@@ -200,41 +328,23 @@ export async function consultarInstagram(username: string): Promise<any[]> {
         return [];
     }
 
-    // Actor: apify/instagram-scraper
-    const ACTOR_ID = "apify~instagram-scraper";
-    const url = `https://api.apify.com/v2/acts/${ACTOR_ID}/run-sync-get-dataset-items?token=${APIFY_TOKEN}`;
-
     const input = {
         "directUrls": [`https://www.instagram.com/${username}/`],
-        "resultsLimit": 6,
+        "resultsLimit": 4,
         "resultsType": "posts",
         "searchType": "hashtag",
         "search": username
     };
 
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(input)
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error(`❌ [APIFY] Erro na API (${response.status}):`, errText);
-            return [];
-        }
-
-        const data = await response.json();
+        const data = await buscarPostsApify(APIFY_TOKEN, input, username);
 
         if (!data || data.length === 0) {
             console.warn(`[APIFY] Nenhum post encontrado para @${username}`);
             return [];
         }
 
-        const postsPromises = data.map(async (post: any) => {
+        const postsPromises = data.slice(0, 4).map(async (post: any) => {
             const caption = post.caption || post.description || "";
             const imageUrl = post.displayUrl || post.url || "";
             const videoUrl = post.videoUrl || "";
@@ -247,17 +357,19 @@ export async function consultarInstagram(username: string): Promise<any[]> {
 
             // Reels: extrai o conteúdo exato do vídeo (texto na tela + narração).
             // A legenda NÃO substitui a extração — é só metadado.
+            // Cada etapa tem orçamento de tempo: um reel lento não pode matar
+            // a invocação inteira (era uma das causas do erro 546).
             if (isVideo && videoUrl) {
                 await new Promise(r => setTimeout(r, Math.random() * 500));
                 console.log(`🎬 [VIDEO] Processando reel de ${externalId}...`);
-                ocrText = await extractTextFromVideo(videoUrl);
+                ocrText = await withTimeout(extractTextFromVideo(videoUrl), OCR_VIDEO_BUDGET_MS, "", `vídeo ${externalId}`);
             }
 
             // Fallback (ou post de imagem): OCR da imagem/thumbnail
             if (!ocrText && imageUrl) {
                 await new Promise(r => setTimeout(r, Math.random() * 500));
                 console.log(`🔍 [OCR] Processando imagem de ${externalId}...`);
-                ocrText = await extractTextFromImage(imageUrl);
+                ocrText = await withTimeout(extractTextFromImage(imageUrl), OCR_IMAGE_BUDGET_MS, "", `imagem ${externalId}`);
             }
 
             let fullContent = "";

@@ -128,6 +128,30 @@ function ehDevocionalDoDia(textoOCR: string): boolean {
     );
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type SupabaseFunctionsClient = { functions: { invoke: (name: string, opts: { body: Record<string, unknown> }) => Promise<{ data: any; error: { message: string } | null }> } };
+
+/**
+ * Busca uma fonte externa com refresh ao vivo; se a Edge Function falhar
+ * (ex.: estouro de tempo 546), tenta de novo só com o cache do dia — barato
+ * e aproveita posts salvos por uma execução anterior do cron.
+ */
+async function invocarFonteExterna(
+    supabase: SupabaseFunctionsClient,
+    dataHoje: string,
+    fonte: string
+): Promise<{ data: any; error: { message: string } | null }> {
+    const aoVivo = await supabase.functions.invoke('execute', {
+        body: { modo_id: 'devocional_externo', data: dataHoje, fonte_rss: fonte, force_live_refresh: true }
+    });
+    if (!aoVivo.error) return aoVivo;
+
+    console.warn(`Fonte ${fonte}: refresh ao vivo falhou (${aoVivo.error.message}). Tentando cache do dia...`);
+    return await supabase.functions.invoke('execute', {
+        body: { modo_id: 'devocional_externo', data: dataHoje, fonte_rss: fonte }
+    });
+}
+
 async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_id?: number }> {
     try {
         const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -189,14 +213,7 @@ export async function GET(request: Request) {
         // =============================================
         try {
             console.log('Buscando evangelhoparatodos...');
-            const { data: funcData, error: funcError } = await supabase.functions.invoke('execute', {
-                body: {
-                    modo_id: 'devocional_externo',
-                    data: dataHoje,
-                    fonte_rss: 'instagram',
-                    force_live_refresh: true
-                }
-            });
+            const { data: funcData, error: funcError } = await invocarFonteExterna(supabase, dataHoje, 'instagram');
 
             if (funcError) {
                 console.error('Erro ao buscar evangelhoparatodos:', funcError.message);
@@ -297,14 +314,7 @@ export async function GET(request: Request) {
         // =============================================
         try {
             console.log('Buscando Tribo de Judá...');
-            const { data: triboData, error: triboError } = await supabase.functions.invoke('execute', {
-                body: {
-                    modo_id: 'devocional_externo',
-                    data: dataHoje,
-                    fonte_rss: 'tribo_juda',
-                    force_live_refresh: true
-                }
-            });
+            const { data: triboData, error: triboError } = await invocarFonteExterna(supabase, dataHoje, 'tribo_juda');
 
             if (triboError) {
                 console.error('Erro ao buscar Tribo de Judá:', triboError.message);
