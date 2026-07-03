@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { enviarPushParaTodos } from '@/lib/push-server';
+
+// POST = envia uma notificação de teste para todos os dispositivos inscritos.
+// Útil para validar o push logo depois de tocar "Ativar" no app.
+export async function POST() {
+    const resultado = await enviarPushParaTodos({
+        title: '🔔 Teste do Devocional PVC',
+        body: 'Se você está vendo isso, as notificações estão funcionando!',
+        url: '/',
+    });
+    return NextResponse.json({ ok: true, ...resultado });
+}
 
 // Endpoint de diagnostico - mostra status das subscriptions
 export async function GET() {
