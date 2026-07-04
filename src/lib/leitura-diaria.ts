@@ -14,6 +14,42 @@ export interface ProgressoLeituraAnual {
     datasLidas: string[];
 }
 
+// Total de dias do plano = número de datas no SECAO6.TXT (Storage), que é a
+// fonte real do plano de leitura (o payload_do_dia é só fallback e fica atrás).
+// O arquivo é pequeno (~12KB) e o plano é fixo, então cacheia por sessão.
+let _totalDiasCache: number | null = null;
+
+export async function getTotalDiasPlano(): Promise<number> {
+    if (_totalDiasCache !== null) return _totalDiasCache;
+    try {
+        const { data, error } = await supabase.storage
+            .from('pvc')
+            .download('secao6/SECAO6.TXT');
+        if (error || !data) throw error || new Error('sem_arquivo');
+
+        let texto: string;
+        try {
+            texto = await data.text();
+        } catch {
+            texto = new TextDecoder('windows-1252').decode(await data.arrayBuffer());
+        }
+        const matches = texto.match(/^\d{4}-\d{2}-\d{2}\s*\|/gm);
+        const total = matches ? matches.length : 0;
+        if (total > 0) {
+            _totalDiasCache = total;
+            return total;
+        }
+    } catch (e) {
+        console.error('Erro ao contar dias do plano (SECAO6):', e);
+    }
+
+    // Fallback: total de leituras no banco
+    const { count } = await supabase
+        .from('payload_do_dia')
+        .select('data', { count: 'exact', head: true });
+    return count ?? 0;
+}
+
 export async function marcarLeituraDiaria(data: string): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
@@ -56,19 +92,16 @@ export async function getProgressoLeituraAnual(): Promise<ProgressoLeituraAnual>
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return vazio;
 
-    const [lidasRes, totalRes] = await Promise.all([
+    const [lidasRes, total] = await Promise.all([
         supabase
             .from('leitura_diaria_lida')
             .select('data')
             .eq('user_id', user.id),
-        supabase
-            .from('payload_do_dia')
-            .select('data', { count: 'exact', head: true }),
+        getTotalDiasPlano(),
     ]);
 
     const datasLidas = (lidasRes.data || []).map((r: { data: string }) => r.data);
     const lidos = datasLidas.length;
-    const total = totalRes.count ?? 0;
     const pct = total > 0 ? Math.round((lidos / total) * 100) : 0;
 
     return { lidos, total, pct, datasLidas };
