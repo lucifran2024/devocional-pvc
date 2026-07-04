@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Star, LogOut, Flame
+  Calendar, Book, Star, LogOut, Flame, NotebookPen, Youtube, Mic
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -185,6 +185,48 @@ export default function DashboardPage() {
             continuam acessíveis por URL direta (/devocional-externo e
             /dna-categorizado) e os crons/DNA no backend seguem intactos.
           */}
+
+          {/* Card: Anotações */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/anotacoes"
+              title="Anotações"
+              desc="Seus versículos marcados e seu caderno pessoal, num só lugar."
+              icon={NotebookPen}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Notas"
+            />
+          </div>
+
+          {/* Card: Transcrever do YouTube */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/transcrever-youtube"
+              title="Transcrever do YouTube"
+              desc="Cole o link de uma pregação e receba o texto da legenda."
+              icon={Youtube}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Vídeo"
+            />
+          </div>
+
+          {/* Card: Gravar e Transcrever culto */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/transcrever-culto"
+              title="Gravar e Transcrever"
+              desc="Grave a pregação ao vivo e organize com suas notas."
+              icon={Mic}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Áudio"
+            />
+          </div>
 
         </div>
       </section>
