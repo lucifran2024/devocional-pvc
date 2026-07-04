@@ -19,15 +19,33 @@ function normalizarUrl(url: string): string | null {
     return null;
 }
 
-export async function POST(request: Request) {
-    if (!GEMINI_KEY) {
-        return NextResponse.json({
-            ok: false,
-            error: 'sem_chave_gemini',
-            message: 'A transcrição do YouTube precisa da chave do Gemini configurada na Vercel (GEMINI_API_KEY). As outras funções já operam normalmente.',
-        }, { status: 503 });
+// Fallback: a chave do Gemini vive nos secrets do Supabase (edge functions).
+// Se ela não estiver na Vercel, delegamos para a edge function transcrever-youtube.
+async function viaEdgeFunction(url: string) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !anonKey) {
+        return NextResponse.json({ ok: false, error: 'supabase_nao_configurado' }, { status: 503 });
     }
+    try {
+        const resp = await fetch(`${supabaseUrl}/functions/v1/transcrever-youtube`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${anonKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+            signal: AbortSignal.timeout(230000),
+        });
+        const data = await resp.json().catch(() => ({ ok: false, error: 'resposta_invalida' }));
+        return NextResponse.json(data, { status: resp.status });
+    } catch (e) {
+        const abortou = e instanceof Error && e.name === 'TimeoutError';
+        return NextResponse.json(
+            { ok: false, error: abortou ? 'tempo_esgotado' : 'falha', message: abortou ? 'O vídeo é longo demais e passou do tempo. Tente um mais curto.' : String(e) },
+            { status: abortou ? 504 : 500 }
+        );
+    }
+}
 
+export async function POST(request: Request) {
     let urlBruta = '';
     try {
         const body = await request.json();
@@ -39,6 +57,11 @@ export async function POST(request: Request) {
     const url = normalizarUrl(urlBruta);
     if (!url) {
         return NextResponse.json({ ok: false, error: 'link_invalido' }, { status: 400 });
+    }
+
+    // Sem a chave na Vercel → usa a edge function do Supabase (que tem a chave)
+    if (!GEMINI_KEY) {
+        return viaEdgeFunction(url);
     }
 
     const prompt = `Transcreva integralmente, em português, tudo o que é falado neste vídeo (pregação/mensagem).
