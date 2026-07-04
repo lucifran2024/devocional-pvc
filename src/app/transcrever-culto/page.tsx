@@ -64,7 +64,11 @@ export default function TranscreverCultoPage() {
             streamRef.current = stream;
             const { mime, ext } = escolherMime();
             extRef.current = ext;
-            const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+            // 48 kbps: qualidade suficiente para voz e mantém o arquivo leve
+            // (1h ≈ 21 MB), cabendo no limite do bucket em cultos longos.
+            const opcoes: MediaRecorderOptions = { audioBitsPerSecond: 48000 };
+            if (mime) opcoes.mimeType = mime;
+            const rec = new MediaRecorder(stream, opcoes);
             chunksRef.current = [];
             rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
             rec.onstop = processar;
