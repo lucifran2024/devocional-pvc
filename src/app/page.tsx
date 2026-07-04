@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Heart, Star, Layers, LogOut, Flame
+  Calendar, Book, Star, LogOut, Flame
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const dataHoje = getDataHoje();
   const { streak, isLoaded } = useDailyStreak();
-  const { isAdmin, signOut } = useAuth();
+  const { signOut } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -179,37 +179,12 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Card 4: Devocional Externo (versão completa — admin) */}
-          {isAdmin && (
-            <div className="stagger-item">
-              <DashboardCard
-                href="/devocional-externo"
-                title="Devocional Externo"
-                desc="Leia devocionais de sites cristãos renomados, direto da fonte."
-                icon={Heart}
-                accentColor="text-slate-500 dark:text-text-secondary"
-                iconBg="bg-slate-500/10 border-slate-500/20 dark:bg-white/5 dark:border-white/10"
-                badgeColor="bg-slate-500/10 border-slate-500/20 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-text-secondary"
-                badge="Fontes"
-              />
-            </div>
-          )}
-
-          {/* Card 6: DNA Categorizado (versão completa — admin) */}
-          {isAdmin && (
-            <div className="stagger-item">
-              <DashboardCard
-                href="/dna-categorizado"
-                title="DNA Categorizado"
-                desc="Gere mensagens baseadas no seu DNA espiritual organizado por categoria."
-                icon={Layers}
-                accentColor="text-slate-500 dark:text-text-secondary"
-                iconBg="bg-slate-500/10 border-slate-500/20 dark:bg-white/5 dark:border-white/10"
-                badgeColor="bg-slate-500/10 border-slate-500/20 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-text-secondary"
-                badge="Novo"
-              />
-            </div>
-          )}
+          {/*
+            Cards de "Devocional Externo" e "DNA Categorizado" removidos da
+            tela principal a pedido — eram só atalhos (admin). As páginas
+            continuam acessíveis por URL direta (/devocional-externo e
+            /dna-categorizado) e os crons/DNA no backend seguem intactos.
+          */}
 
         </div>
       </section>
