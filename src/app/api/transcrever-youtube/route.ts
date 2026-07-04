@@ -21,7 +21,11 @@ function normalizarUrl(url: string): string | null {
 
 export async function POST(request: Request) {
     if (!GEMINI_KEY) {
-        return NextResponse.json({ ok: false, error: 'sem_chave_gemini' }, { status: 503 });
+        return NextResponse.json({
+            ok: false,
+            error: 'sem_chave_gemini',
+            message: 'A transcrição do YouTube precisa da chave do Gemini configurada na Vercel (GEMINI_API_KEY). As outras funções já operam normalmente.',
+        }, { status: 503 });
     }
 
     let urlBruta = '';
