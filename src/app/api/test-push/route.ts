@@ -1,16 +1,36 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enviarPushParaTodos } from '@/lib/push-server';
+import { getDailyVerse } from '@/lib/daily-verse';
+
+function getDataHoje(): string {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+}
 
 // POST = envia uma notificação de teste para todos os dispositivos inscritos.
-// Útil para validar o push logo depois de tocar "Ativar" no app.
-export async function POST() {
-    const resultado = await enviarPushParaTodos({
-        title: '🔔 Teste do Devocional PVC',
-        body: 'Se você está vendo isso, as notificações estão funcionando!',
-        url: '/',
-    });
-    return NextResponse.json({ ok: true, ...resultado });
+// Body opcional { tipo }: 'versiculo' | 'palavra' mostram o formato real;
+// qualquer outro valor manda a mensagem genérica de teste.
+export async function POST(request: Request) {
+    let tipo = 'teste';
+    try {
+        const body = await request.json();
+        if (body?.tipo) tipo = String(body.tipo);
+    } catch {
+        /* sem body = teste genérico */
+    }
+
+    let payload;
+    if (tipo === 'versiculo') {
+        const verse = getDailyVerse(getDataHoje());
+        payload = { title: `📖 Versículo do Dia · ${verse.ref}`, body: `“${verse.text}”`, url: '/' };
+    } else if (tipo === 'palavra') {
+        payload = { title: '🌅 Palavra da Manhã', body: 'Sua palavra de hoje está pronta. Toque para ler.', url: '/' };
+    } else {
+        payload = { title: '🔔 Teste do Devocional PVC', body: 'Se você está vendo isso, as notificações estão funcionando!', url: '/' };
+    }
+
+    const resultado = await enviarPushParaTodos(payload);
+    return NextResponse.json({ ok: true, tipo, ...resultado });
 }
 
 // Endpoint de diagnostico - mostra status das subscriptions
