@@ -32,6 +32,7 @@ import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
+import { marcarLeituraDiaria, desmarcarLeituraDiaria, getProgressoLeituraAnual, type ProgressoLeituraAnual } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
@@ -935,6 +936,10 @@ function PlanoLeituraContent() {
     const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
     const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
     const [mostrarAjustesLeitura, setMostrarAjustesLeitura] = useState(false);
+    // Progresso anual da leitura diária (só no modo diário)
+    const [progressoAnual, setProgressoAnual] = useState<ProgressoLeituraAnual | null>(null);
+    const [leuHoje, setLeuHoje] = useState(false);
+    const [marcandoLeitura, setMarcandoLeitura] = useState(false);
     // Capítulo em foco na rolagem (etiqueta discreta fixa que acompanha a leitura)
     const [capituloFoco, setCapituloFoco] = useState<number | null>(null);
     const [montado, setMontado] = useState(false);
@@ -1027,6 +1032,40 @@ function PlanoLeituraContent() {
         }
         loadPassagem();
     }, [dataHoje, planoId, diaQuery]);
+
+    // Progresso anual da leitura diária (só no modo diário / leitura pessoal).
+    // "Lido" é registrado pela DATA DA PASSAGEM exibida (não a data real de
+    // hoje), para contar corretamente sobre o ciclo de leituras cadastradas.
+    useEffect(() => {
+        if (isPlanoMode) return;
+        let ativo = true;
+        (async () => {
+            const prog = await getProgressoLeituraAnual();
+            if (!ativo) return;
+            setProgressoAnual(prog);
+            setLeuHoje(passagem?.data ? prog.datasLidas.includes(passagem.data) : false);
+        })();
+        return () => { ativo = false; };
+    }, [isPlanoMode, passagem?.data]);
+
+    const handleToggleLido = async () => {
+        const alvo = passagem?.data;
+        if (marcandoLeitura || !alvo) return;
+        setMarcandoLeitura(true);
+        const novoEstado = !leuHoje;
+        setLeuHoje(novoEstado); // otimista
+        const ok = novoEstado
+            ? await marcarLeituraDiaria(alvo)
+            : await desmarcarLeituraDiaria(alvo);
+        if (ok) {
+            const prog = await getProgressoLeituraAnual();
+            setProgressoAnual(prog);
+            setLeuHoje(prog.datasLidas.includes(alvo));
+        } else {
+            setLeuHoje(!novoEstado); // reverte em caso de falha
+        }
+        setMarcandoLeitura(false);
+    };
 
     useEffect(() => {
         if (!isPlanoMode) {
@@ -2464,6 +2503,42 @@ ${conteudo}
                             )}
                             <div ref={chatEndRef} />
                         </div>
+
+                        {/* Progresso anual da leitura diária + marcar como lido (só leitura pessoal) */}
+                        {!isPlanoMode && activeOption === '1' && progressoAnual && (
+                            <div className="px-4 pt-3 max-w-3xl mx-auto w-full">
+                                <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/[0.05] p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">
+                                            Sua leitura no ano
+                                        </span>
+                                        <span className="text-xs font-bold text-amber-700 dark:text-amber-300 tabular-nums">
+                                            {progressoAnual.lidos} de {progressoAnual.total} · {progressoAnual.pct}%
+                                        </span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-surface-2 overflow-hidden mb-3">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
+                                            style={{ width: `${Math.max(2, progressoAnual.pct)}%` }}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleLido}
+                                        disabled={marcandoLeitura}
+                                        className={`w-full py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all disabled:opacity-60 ${leuHoje
+                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                            : 'bg-amber-500 text-amber-950 hover:bg-amber-400'
+                                            }`}
+                                    >
+                                        {marcandoLeitura
+                                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                                            : <Check className="w-4 h-4" />}
+                                        {leuHoje ? 'Lido · toque para desmarcar' : 'Marcar como lido'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Input Area - botão fixo no fundo */}
                         <div className="sticky bottom-0 px-4 py-3 bg-surface-0/80 backdrop-blur-md border-t border-border-subtle/30">
