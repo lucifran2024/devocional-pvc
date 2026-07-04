@@ -8,7 +8,8 @@ import {
     ChevronRight, ChevronLeft, RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
-    ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight
+    ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight,
+    Info, ChevronDown
 } from 'lucide-react';
 import {
     supabase,
@@ -30,6 +31,7 @@ import { useSearchParams } from 'next/navigation'; // Added imports
 import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
+import { getIntroducaoLivro } from '@/lib/bible-introducoes';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
@@ -722,7 +724,88 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     );
 }
 
-function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, readingLineHeight, readingAlign, lexico }: {
+// ===========================================
+// CONTEXTO DA PARTE (sem IA) — introdução do livro + seções do capítulo.
+// Aparece ao carregar cada parte (capítulo) da leitura pessoal.
+// ===========================================
+function ContextoDaParte({ livroId, capitulo, livroNome }: {
+    livroId?: number;
+    capitulo: number;
+    livroNome: string;
+}) {
+    const [aberto, setAberto] = useState(false);
+
+    if (!livroId) return null;
+    const intro = getIntroducaoLivro(livroId);
+    const secoes = getPericopes(livroId, capitulo);
+    if (!intro && secoes.length === 0) return null;
+
+    const nome = livroNome
+        ? livroNome.charAt(0).toUpperCase() + livroNome.slice(1).toLowerCase()
+        : '';
+
+    return (
+        <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/[0.05] overflow-hidden">
+            {/* Cabeçalho: livro + tema (clicável abre a introdução) */}
+            <button
+                type="button"
+                onClick={() => intro && setAberto((v) => !v)}
+                className={`w-full flex items-center gap-2.5 px-4 py-3 text-left ${intro ? 'hover:bg-amber-500/[0.08] transition-colors' : 'cursor-default'}`}
+            >
+                <span className="shrink-0 p-1.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                    <Info className="w-4 h-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">
+                        Contexto da leitura
+                    </span>
+                    <span className="block text-sm font-semibold text-text-primary truncate">
+                        {nome} {capitulo}
+                        {intro && <span className="text-text-muted font-normal"> · {intro.tema}</span>}
+                    </span>
+                </span>
+                {intro && (
+                    <ChevronDown className={`w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-400/60 transition-transform ${aberto ? 'rotate-180' : ''}`} />
+                )}
+            </button>
+
+            {/* Introdução do livro (expansível) */}
+            {intro && aberto && (
+                <div className="px-4 pb-3 -mt-0.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
+                        <span><span className="font-semibold text-text-secondary">Categoria:</span> {intro.categoria}</span>
+                        <span><span className="font-semibold text-text-secondary">Autor:</span> {intro.autor}</span>
+                        <span><span className="font-semibold text-text-secondary">Época:</span> {intro.epoca}</span>
+                    </div>
+                    <p className="reading-serif text-sm leading-relaxed text-text-secondary">
+                        {intro.resumo}
+                    </p>
+                </div>
+            )}
+
+            {/* Seções deste capítulo (quando houver) */}
+            {secoes.length > 0 && (
+                <div className={`px-4 py-3 border-t border-amber-500/15 ${intro ? '' : 'border-t-0'}`}>
+                    <p className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold mb-1.5">
+                        Neste capítulo
+                    </p>
+                    <ul className="flex flex-wrap gap-1.5">
+                        {secoes.map((s, i) => (
+                            <li
+                                key={i}
+                                className="text-xs px-2.5 py-1 rounded-full bg-surface-1 dark:bg-surface-2 border border-border-subtle text-text-secondary"
+                            >
+                                {s.title}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, readingLineHeight, readingAlign, lexico, mostrarContexto }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
     livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
@@ -730,6 +813,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
     readingLineHeight: number;
     readingAlign: ReadingAlign;
     lexico?: string[];
+    mostrarContexto?: boolean;
 }) {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
@@ -745,6 +829,15 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
+                    )}
+
+                    {/* Contexto da parte (sem IA) — só na leitura pessoal */}
+                    {mostrarContexto && (
+                        <ContextoDaParte
+                            livroId={livroInfo!.livroId}
+                            capitulo={livroInfo!.capitulo}
+                            livroNome={livroInfo!.nome}
+                        />
                     )}
 
                     {/* Versículos interativos - sem container extra */}
@@ -2355,6 +2448,7 @@ ${conteudo}
                                             readingLineHeight={readingLineHeight}
                                             readingAlign={readingAlign}
                                             lexico={passagem?.lexico_do_dia}
+                                            mostrarContexto={!isPlanoMode}
                                         />
                                     </div>
                                 );
