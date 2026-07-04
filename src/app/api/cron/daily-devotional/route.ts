@@ -139,14 +139,18 @@ type SupabaseFunctionsClient = { functions: { invoke: (name: string, opts: { bod
 async function invocarFonteExterna(
     supabase: SupabaseFunctionsClient,
     dataHoje: string,
-    fonte: string
+    fonte: string,
+    permitirAoVivo: boolean = true
 ): Promise<{ data: any; error: { message: string } | null }> {
-    const aoVivo = await supabase.functions.invoke('execute', {
-        body: { modo_id: 'devocional_externo', data: dataHoje, fonte_rss: fonte, force_live_refresh: true }
-    });
-    if (!aoVivo.error) return aoVivo;
-
-    console.warn(`Fonte ${fonte}: refresh ao vivo falhou (${aoVivo.error.message}). Tentando cache do dia...`);
+    if (permitirAoVivo) {
+        const aoVivo = await supabase.functions.invoke('execute', {
+            body: { modo_id: 'devocional_externo', data: dataHoje, fonte_rss: fonte, force_live_refresh: true }
+        });
+        if (!aoVivo.error) return aoVivo;
+        console.warn(`Fonte ${fonte}: refresh ao vivo falhou (${aoVivo.error.message}). Tentando cache do dia...`);
+    } else {
+        console.warn(`Fonte ${fonte}: orçamento de tempo apertado — usando só o cache do dia.`);
+    }
     return await supabase.functions.invoke('execute', {
         body: { modo_id: 'devocional_externo', data: dataHoje, fonte_rss: fonte }
     });
@@ -208,8 +212,86 @@ export async function GET(request: Request) {
             .limit(3000);
         const idsEnviados = new Set((enviados || []).map(e => e.external_id));
 
+        // Orçamento de tempo: a função morre nos 300s da Vercel. As buscas de
+        // Instagram podem levar ~150s cada; sem controle, a 2ª fonte estoura o
+        // relógio e o run morre no meio (dia 04/07 nada saiu por isso).
+        const inicioRun = Date.now();
+        const segundosDecorridos = () => (Date.now() - inicioRun) / 1000;
+
         // =============================================
-        // PARTE 1: EVANGELHOPARATODOS (1 mensagem)
+        // PARTE 1: BÍBLIA GATEWAY (1 versículo)
+        // Roda PRIMEIRO por ser rápido (~2s): mesmo que as fontes de
+        // Instagram estourem o tempo, o versículo do dia sempre sai.
+        // =============================================
+        try {
+            const bgExternalId = `bible_gateway_${dataHoje}`;
+
+            // Só busca se não foi enviado hoje
+            if (!idsEnviados.has(bgExternalId)) {
+                console.log('Buscando Bíblia Gateway...');
+                const { data: bgData, error: bgError } = await supabase.functions.invoke('execute', {
+                    body: {
+                        modo_id: 'devocional_externo',
+                        data: dataHoje,
+                        fonte_rss: 'bible_gateway'
+                    }
+                });
+
+                if (bgError) {
+                    console.error('Erro ao buscar Bible Gateway:', bgError.message);
+                } else if (bgData?.resultado) {
+                    // Resultado vem como string: "FONTE: BIBLE_GATEWAY\nTÍTULO: ...\n\n{conteudo}"
+                    let textoBG = typeof bgData.resultado === 'string' ? bgData.resultado : '';
+
+                    // Limpar formatação da Edge Function
+                    textoBG = textoBG
+                        .replace(/^FONTE:\s*BIBLE_GATEWAY\s*/i, '')
+                        .replace(/^TÍTULO:\s*/im, '')
+                        .replace(/<[^>]+>/g, '') // Remove HTML tags
+                        .trim();
+
+                    if (textoBG.length > 10) {
+                        const msgBG = `Versículo do Dia\n${dataFormatada}\n\n${textoBG}`;
+                        const enviouBG = await enviarTelegram(msgBG);
+
+                        if (enviouBG.ok) {
+                            await supabase.from('telegram_enviados').insert({
+                                external_id: bgExternalId,
+                                data_envio: dataHoje,
+                                enviado_em: new Date().toISOString()
+                            });
+
+                            await supabase.from('dna_categorizado').insert({
+                                texto_msg: textoBG,
+                                categoria: 'versiculo',
+                                tags: ['bible_gateway', 'versiculo_do_dia']
+                            }).then(({ error }) => {
+                                if (error) console.error('Erro ao salvar DNA (BG):', error.message);
+                                else console.log('DNA alimentado (Bible Gateway)');
+                            });
+
+                            resultado.bible_gateway = `enviado(msg_${enviouBG.message_id})`;
+                            console.log('Bible Gateway: versículo enviado');
+                        }
+                    } else {
+                        console.log('Bible Gateway: conteúdo muito curto, ignorando');
+                        resultado.bible_gateway = 'conteudo_vazio';
+                    }
+                }
+            } else {
+                console.log('Bible Gateway: já enviado hoje');
+                resultado.bible_gateway = 'ja_enviado';
+            }
+        } catch (bgErr) {
+            const m = bgErr instanceof Error ? bgErr.message : String(bgErr);
+            console.error('Erro Bible Gateway:', m);
+            resultado.bible_gateway = 'erro: ' + m;
+        }
+
+        await new Promise(r => setTimeout(r, 1500));
+
+        // =============================================
+        // PARTE 2: EVANGELHOPARATODOS (1 mensagem)
         // =============================================
         try {
             console.log('Buscando evangelhoparatodos...');
@@ -314,7 +396,10 @@ export async function GET(request: Request) {
         // =============================================
         try {
             console.log('Buscando Tribo de Judá...');
-            const { data: triboData, error: triboError } = await invocarFonteExterna(supabase, dataHoje, 'tribo_juda');
+            // Se a 1ª fonte comeu muito relógio, não arrisca outro live de ~150s:
+            // busca só o cache (rápido) — a próxima execução do cron traz o resto.
+            const podeAoVivo = segundosDecorridos() < 150;
+            const { data: triboData, error: triboError } = await invocarFonteExterna(supabase, dataHoje, 'tribo_juda', podeAoVivo);
 
             if (triboError) {
                 console.error('Erro ao buscar Tribo de Judá:', triboError.message);
@@ -395,74 +480,6 @@ export async function GET(request: Request) {
             const m = triboErr instanceof Error ? triboErr.message : String(triboErr);
             console.error('Erro Tribo de Judá:', m);
             resultado.tribo_juda = 'erro: ' + m;
-        }
-
-        // =============================================
-        // PARTE 3: BÍBLIA GATEWAY (1 versículo)
-        // =============================================
-        try {
-            const bgExternalId = `bible_gateway_${dataHoje}`;
-
-            // Só busca se não foi enviado hoje
-            if (!idsEnviados.has(bgExternalId)) {
-                console.log('Buscando Bíblia Gateway...');
-                const { data: bgData, error: bgError } = await supabase.functions.invoke('execute', {
-                    body: {
-                        modo_id: 'devocional_externo',
-                        data: dataHoje,
-                        fonte_rss: 'bible_gateway'
-                    }
-                });
-
-                if (bgError) {
-                    console.error('Erro ao buscar Bible Gateway:', bgError.message);
-                } else if (bgData?.resultado) {
-                    // Resultado vem como string: "FONTE: BIBLE_GATEWAY\nTÍTULO: ...\n\n{conteudo}"
-                    let textoBG = typeof bgData.resultado === 'string' ? bgData.resultado : '';
-
-                    // Limpar formatação da Edge Function
-                    textoBG = textoBG
-                        .replace(/^FONTE:\s*BIBLE_GATEWAY\s*/i, '')
-                        .replace(/^TÍTULO:\s*/im, '')
-                        .replace(/<[^>]+>/g, '') // Remove HTML tags
-                        .trim();
-
-                    if (textoBG.length > 10) {
-                        const msgBG = `Versículo do Dia\n${dataFormatada}\n\n${textoBG}`;
-                        const enviouBG = await enviarTelegram(msgBG);
-
-                        if (enviouBG.ok) {
-                            await supabase.from('telegram_enviados').insert({
-                                external_id: bgExternalId,
-                                data_envio: dataHoje,
-                                enviado_em: new Date().toISOString()
-                            });
-
-                            await supabase.from('dna_categorizado').insert({
-                                texto_msg: textoBG,
-                                categoria: 'versiculo',
-                                tags: ['bible_gateway', 'versiculo_do_dia']
-                            }).then(({ error }) => {
-                                if (error) console.error('Erro ao salvar DNA (BG):', error.message);
-                                else console.log('DNA alimentado (Bible Gateway)');
-                            });
-
-                            resultado.bible_gateway = `enviado(msg_${enviouBG.message_id})`;
-                            console.log('Bible Gateway: versículo enviado');
-                        }
-                    } else {
-                        console.log('Bible Gateway: conteúdo muito curto, ignorando');
-                        resultado.bible_gateway = 'conteudo_vazio';
-                    }
-                }
-            } else {
-                console.log('Bible Gateway: já enviado hoje');
-                resultado.bible_gateway = 'ja_enviado';
-            }
-        } catch (bgErr) {
-            const m = bgErr instanceof Error ? bgErr.message : String(bgErr);
-            console.error('Erro Bible Gateway:', m);
-            resultado.bible_gateway = 'erro: ' + m;
         }
 
         return NextResponse.json({
