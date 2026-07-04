@@ -84,7 +84,11 @@ Regras:
                             { file_data: { file_uri: url } },
                         ],
                     }],
-                    generationConfig: { temperature: 0.2 },
+                    generationConfig: {
+                        temperature: 0.2,
+                        mediaResolution: 'MEDIA_RESOLUTION_LOW',
+                        maxOutputTokens: 65536,
+                    },
                 }),
                 signal: AbortSignal.timeout(290000),
             }

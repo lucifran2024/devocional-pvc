@@ -57,7 +57,14 @@ Deno.serve(async (req) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: PROMPT }, { file_data: { file_uri: url } }] }],
-                    generationConfig: { temperature: 0.2 },
+                    // resolução baixa: p/ transcrever só importa o áudio; corta
+                    // muito os tokens de vídeo (permite pregações mais longas).
+                    // maxOutputTokens alto p/ não truncar transcrição longa.
+                    generationConfig: {
+                        temperature: 0.2,
+                        mediaResolution: 'MEDIA_RESOLUTION_LOW',
+                        maxOutputTokens: 65536,
+                    },
                 }),
             }
         );
