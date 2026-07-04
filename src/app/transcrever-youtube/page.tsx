@@ -74,7 +74,7 @@ export default function TranscreverYoutubePage() {
                         <Youtube className="w-6 h-6" />
                     </div>
                     <h1 className="reading-serif text-3xl md:text-4xl font-semibold text-text-primary">Transcrever do YouTube</h1>
-                    <p className="text-text-muted text-sm">Cole o link de um vídeo e receba o texto da legenda.</p>
+                    <p className="text-text-muted text-sm">Cole o link de uma pregação e receba a transcrição. Vídeos longos podem demorar alguns minutos.</p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -88,7 +88,7 @@ export default function TranscreverYoutubePage() {
                     <button onClick={transcrever} disabled={!url.trim() || carregando}
                         className="px-6 py-3 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-50 flex items-center justify-center gap-2">
                         {carregando ? <Loader2 className="w-5 h-5 animate-spin" /> : <Youtube className="w-5 h-5" />}
-                        {carregando ? 'Transcrevendo...' : 'Transcrever'}
+                        {carregando ? 'Transcrevendo…' : 'Transcrever'}
                     </button>
                 </div>
 

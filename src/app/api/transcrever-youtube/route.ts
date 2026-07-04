@@ -1,124 +1,115 @@
 import { NextResponse } from 'next/server';
 
 // ============================================
-// TRANSCRIÇÃO DE VÍDEO DO YOUTUBE (via legendas)
-// Busca as legendas do vídeo (manuais ou automáticas) e devolve o texto
-// corrido. Não baixa áudio — usa as legendas que o próprio YouTube gera.
+// TRANSCRIÇÃO DE VÍDEO DO YOUTUBE via Gemini.
+// O YouTube bloqueou o acesso direto às legendas (timedtext dá 404), então
+// usamos o Gemini, que processa a URL do vídeo público diretamente e
+// transcreve o áudio. Vídeos muito longos podem estourar o tempo/limite.
 // ============================================
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-function extrairVideoId(url: string): string | null {
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/,
-        /^([\w-]{11})$/,
-    ];
-    for (const p of patterns) {
-        const m = url.match(p);
-        if (m) return m[1];
-    }
+const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY;
+const MODEL = 'gemini-2.5-flash';
+
+function normalizarUrl(url: string): string | null {
+    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
+    if (m) return `https://www.youtube.com/watch?v=${m[1]}`;
+    if (/^[\w-]{11}$/.test(url.trim())) return `https://www.youtube.com/watch?v=${url.trim()}`;
     return null;
 }
 
-interface CaptionTrack {
-    baseUrl: string;
-    languageCode: string;
-    kind?: string;
-    name?: { simpleText?: string };
-}
-
-function decodeEntities(s: string): string {
-    return s
-        .replace(/&amp;#39;/g, "'")
-        .replace(/&#39;/g, "'")
-        .replace(/&amp;quot;/g, '"')
-        .replace(/&quot;/g, '"')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&#160;/g, ' ')
-        .replace(/\n/g, ' ');
-}
-
 export async function POST(request: Request) {
-    let url = '';
+    if (!GEMINI_KEY) {
+        return NextResponse.json({ ok: false, error: 'sem_chave_gemini' }, { status: 503 });
+    }
+
+    let urlBruta = '';
     try {
         const body = await request.json();
-        url = String(body?.url || '').trim();
+        urlBruta = String(body?.url || '').trim();
     } catch {
         return NextResponse.json({ ok: false, error: 'json_invalido' }, { status: 400 });
     }
 
-    const videoId = extrairVideoId(url);
-    if (!videoId) {
+    const url = normalizarUrl(urlBruta);
+    if (!url) {
         return NextResponse.json({ ok: false, error: 'link_invalido' }, { status: 400 });
     }
 
-    const headersBrowser = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
-    };
+    const prompt = `Transcreva integralmente, em português, tudo o que é falado neste vídeo (pregação/mensagem).
+Regras:
+- Retorne APENAS o texto falado, na ordem em que ocorre.
+- Organize em parágrafos naturais para facilitar a leitura.
+- Não resuma, não comente, não descreva a cena — apenas transcreva a fala.
+- Se houver versículos citados, mantenha-os no texto.`;
 
     try {
-        // 1. Baixa a página do vídeo e extrai a lista de legendas
-        const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=pt`, {
-            headers: headersBrowser,
-            signal: AbortSignal.timeout(20000),
-        });
-        const html = await pageResp.text();
+        const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { file_data: { file_uri: url } },
+                        ],
+                    }],
+                    generationConfig: { temperature: 0.2 },
+                }),
+                signal: AbortSignal.timeout(290000),
+            }
+        );
 
-        const titleMatch = html.match(/<title>([^<]*)<\/title>/);
-        const titulo = titleMatch ? decodeEntities(titleMatch[1]).replace(/ - YouTube$/, '').trim() : 'Vídeo do YouTube';
+        if (!resp.ok) {
+            const errText = await resp.text().catch(() => '');
+            console.error(`Gemini YouTube ${resp.status}:`, errText.slice(0, 400));
+            const amigavel = resp.status === 400
+                ? 'Não consegui acessar este vídeo (pode ser privado, restrito ou muito longo).'
+                : 'Falha ao transcrever. Tente novamente em instantes.';
+            return NextResponse.json({ ok: false, error: 'falha_gemini', status: resp.status, message: amigavel }, { status: 502 });
+        }
 
-        const tracksMatch = html.match(/"captionTracks":(\[[\s\S]*?\])/);
-        if (!tracksMatch) {
+        const data = await resp.json();
+        const texto: string = (data.candidates?.[0]?.content?.parts || [])
+            .map((p: { text?: string }) => p.text || '')
+            .join('')
+            .trim();
+
+        if (!texto) {
             return NextResponse.json(
-                { ok: false, error: 'sem_legenda', message: 'Este vídeo não tem legendas disponíveis.' },
+                { ok: false, error: 'sem_texto', message: 'Não consegui extrair a fala deste vídeo.' },
                 { status: 422 }
             );
         }
 
-        let tracks: CaptionTrack[];
+        // Título: usa o oEmbed público do YouTube (leve, não bloqueado)
+        let titulo = 'Vídeo do YouTube';
         try {
-            tracks = JSON.parse(tracksMatch[1].replace(/\\u0026/g, '&'));
-        } catch {
-            return NextResponse.json({ ok: false, error: 'parse_legenda' }, { status: 502 });
-        }
+            const oe = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, {
+                signal: AbortSignal.timeout(8000),
+            });
+            if (oe.ok) {
+                const oeData = await oe.json();
+                if (oeData.title) titulo = String(oeData.title);
+            }
+        } catch { /* título é opcional */ }
 
-        if (!tracks.length) {
-            return NextResponse.json(
-                { ok: false, error: 'sem_legenda', message: 'Este vídeo não tem legendas disponíveis.' },
-                { status: 422 }
-            );
-        }
-
-        // 2. Prefere pt; senão a primeira disponível
-        const track =
-            tracks.find((t) => t.languageCode === 'pt' && t.kind !== 'asr') ||
-            tracks.find((t) => t.languageCode === 'pt') ||
-            tracks.find((t) => t.languageCode?.startsWith('pt')) ||
-            tracks[0];
-
-        // 3. Baixa a legenda (XML timedtext)
-        const capResp = await fetch(track.baseUrl, { headers: headersBrowser, signal: AbortSignal.timeout(20000) });
-        const xml = await capResp.text();
-
-        const linhas = [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)].map((m) => decodeEntities(m[1]).trim()).filter(Boolean);
-
-        if (linhas.length === 0) {
-            return NextResponse.json({ ok: false, error: 'legenda_vazia' }, { status: 422 });
-        }
-
-        // Junta em parágrafos legíveis (agrupa ~25 trechos por bloco)
-        const texto = linhas.join(' ').replace(/\s+/g, ' ').trim();
-        const idioma = track.languageCode + (track.kind === 'asr' ? ' (automática)' : '');
-
-        return NextResponse.json({ ok: true, titulo, texto, idioma, videoId });
+        return NextResponse.json({ ok: true, titulo, texto, idioma: 'transcrição (Gemini)' });
     } catch (e) {
+        const abortou = e instanceof Error && e.name === 'TimeoutError';
         console.error('Erro ao transcrever YouTube:', e);
         return NextResponse.json(
-            { ok: false, error: 'falha', message: e instanceof Error ? e.message : String(e) },
-            { status: 500 }
+            {
+                ok: false,
+                error: abortou ? 'tempo_esgotado' : 'falha',
+                message: abortou
+                    ? 'O vídeo é longo demais e passou do tempo. Tente um vídeo mais curto.'
+                    : (e instanceof Error ? e.message : String(e)),
+            },
+            { status: abortou ? 504 : 500 }
         );
     }
 }
