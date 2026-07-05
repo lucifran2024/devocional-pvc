@@ -6,7 +6,7 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { BackButton } from '@/components/ui/BackButton';
 import {
     getTranscricoes, salvarTranscricao, removerTranscricao, atualizarNotasTranscricao,
-    uploadAudioCulto, type Transcricao,
+    atualizarTituloTranscricao, uploadAudioCulto, type Transcricao,
 } from '@/lib/transcricoes';
 
 type Etapa = 'idle' | 'gravando' | 'processando' | 'pronto';
@@ -28,10 +28,12 @@ export default function TranscreverCultoPage() {
     const [etapa, setEtapa] = useState<Etapa>('idle');
     const [tempo, setTempo] = useState(0);
     const [erro, setErro] = useState<string | null>(null);
+    const [aviso, setAviso] = useState<string | null>(null);
     const [texto, setTexto] = useState('');
     const [titulo, setTitulo] = useState('');
     const [notas, setNotas] = useState('');
     const [salvo, setSalvo] = useState(false);
+    const [salvando, setSalvando] = useState(false);
     const [historico, setHistorico] = useState<Transcricao[]>([]);
 
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -39,6 +41,10 @@ export default function TranscreverCultoPage() {
     const streamRef = useRef<MediaStream | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const extRef = useRef('webm');
+    const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+    const processandoRef = useRef(false); // evita processar o mesmo áudio 2x
+    const etapaRef = useRef<Etapa>('idle');
+    useEffect(() => { etapaRef.current = etapa; }, [etapa]);
 
     const carregar = useCallback(async () => {
         setHistorico(await getTranscricoes('culto'));
@@ -48,15 +54,45 @@ export default function TranscreverCultoPage() {
         carregar();
     }, [carregar]);
 
+    // ==========================================
+    // WAKE LOCK: mantém a tela acesa durante a gravação.
+    // O navegador SOLTA o wake lock quando a aba fica oculta —
+    // ao voltar, readquirimos se ainda estiver gravando.
+    // ==========================================
+    const pedirWakeLock = useCallback(async () => {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLockRef.current = await navigator.wakeLock.request('screen');
+            }
+        } catch { /* sem suporte ou negado — segue sem */ }
+    }, []);
+
+    const soltarWakeLock = useCallback(() => {
+        wakeLockRef.current?.release().catch(() => { });
+        wakeLockRef.current = null;
+    }, []);
+
+    useEffect(() => {
+        const aoVoltarVisivel = () => {
+            if (document.visibilityState === 'visible' && etapaRef.current === 'gravando') {
+                pedirWakeLock();
+            }
+        };
+        document.addEventListener('visibilitychange', aoVoltarVisivel);
+        return () => document.removeEventListener('visibilitychange', aoVoltarVisivel);
+    }, [pedirWakeLock]);
+
     useEffect(() => () => {
         if (timerRef.current) clearInterval(timerRef.current);
         streamRef.current?.getTracks().forEach((t) => t.stop());
+        wakeLockRef.current?.release().catch(() => { });
     }, []);
 
     const formatarTempo = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
     const iniciar = async () => {
         setErro(null);
+        setAviso(null);
         setTexto('');
         setSalvo(false);
         try {
@@ -70,13 +106,33 @@ export default function TranscreverCultoPage() {
             if (mime) opcoes.mimeType = mime;
             const rec = new MediaRecorder(stream, opcoes);
             chunksRef.current = [];
+            processandoRef.current = false;
             rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
             rec.onstop = processar;
-            rec.start();
+            // Se o sistema matar a gravação (tela bloqueada, outro app pegou o
+            // microfone...), NÃO perde nada: transcreve o que já foi captado.
+            rec.onerror = () => {
+                setAviso('A gravação foi interrompida pelo sistema — transcrevendo o que já foi gravado.');
+                parar();
+            };
+            // O sistema pode encerrar a track do microfone (ex: ligação recebida)
+            stream.getAudioTracks().forEach((track) => {
+                track.onended = () => {
+                    if (etapaRef.current === 'gravando') {
+                        setAviso('O microfone foi encerrado pelo sistema — transcrevendo o que já foi gravado.');
+                        parar();
+                    }
+                };
+            });
+            // timeslice 5s: os pedaços já ficam guardados durante a gravação;
+            // se algo morrer no meio, o áudio até ali está salvo em memória.
+            rec.start(5000);
             recorderRef.current = rec;
             setTempo(0);
             setEtapa('gravando');
             timerRef.current = setInterval(() => setTempo((t) => t + 1), 1000);
+            // Mantém a tela acesa enquanto grava
+            pedirWakeLock();
         } catch {
             setErro('Não consegui acessar o microfone. Permita o acesso e tente de novo.');
         }
@@ -84,14 +140,29 @@ export default function TranscreverCultoPage() {
 
     const parar = () => {
         if (timerRef.current) clearInterval(timerRef.current);
-        recorderRef.current?.stop();
+        soltarWakeLock();
+        try {
+            if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+                recorderRef.current.stop(); // dispara onstop → processar
+            } else if (!processandoRef.current && chunksRef.current.length > 0) {
+                // Recorder já morto (ex: sistema matou) mas há áudio captado
+                processar();
+            }
+        } catch { /* stop em recorder inativo */ }
         streamRef.current?.getTracks().forEach((t) => t.stop());
     };
 
     const processar = async () => {
+        if (processandoRef.current) return; // onstop + onended podem disparar juntos
+        processandoRef.current = true;
         setEtapa('processando');
         try {
             const blob = new Blob(chunksRef.current, { type: recorderRef.current?.mimeType || `audio/${extRef.current}` });
+            if (blob.size === 0) {
+                setErro('Nenhum áudio foi captado. Tente novamente.');
+                setEtapa('idle');
+                return;
+            }
             const path = await uploadAudioCulto(blob, extRef.current);
             if (!path) { setErro('Falha ao enviar o áudio. Tente novamente.'); setEtapa('idle'); return; }
 
@@ -115,11 +186,17 @@ export default function TranscreverCultoPage() {
     };
 
     const salvar = async () => {
-        if (!texto.trim()) return;
-        await salvarTranscricao({ tipo: 'culto', titulo: titulo.trim() || 'Culto', texto, notas });
-        setSalvo(true);
-        setTitulo('');
-        setNotas('');
+        // Trava dupla: ignora toques repetidos enquanto o insert está em
+        // andamento (era isso que criava transcrições duplicadas).
+        if (!texto.trim() || salvando || salvo) return;
+        setSalvando(true);
+        const ok = await salvarTranscricao({ tipo: 'culto', titulo: titulo.trim() || 'Culto', texto, notas });
+        setSalvando(false);
+        if (!ok) {
+            setErro('Falha ao salvar. Verifique a conexão e tente de novo.');
+            return;
+        }
+        setSalvo(true); // título e notas ficam visíveis — sem "sumir" nada
         carregar();
     };
 
@@ -131,6 +208,12 @@ export default function TranscreverCultoPage() {
     const salvarNota = async (id: string, nova: string) => {
         setHistorico((prev) => prev.map((t) => (t.id === id ? { ...t, notas: nova } : t)));
         await atualizarNotasTranscricao(id, nova);
+    };
+
+    const salvarTitulo = async (id: string, novo: string) => {
+        const limpo = novo.trim() || 'Culto';
+        setHistorico((prev) => prev.map((t) => (t.id === id ? { ...t, titulo: limpo } : t)));
+        await atualizarTituloTranscricao(id, limpo);
     };
 
     return (
@@ -157,6 +240,9 @@ export default function TranscreverCultoPage() {
                             <button onClick={parar} className="px-8 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-400 flex items-center gap-2">
                                 <Square className="w-5 h-5 fill-current" /> Parar e transcrever
                             </button>
+                            <p className="text-[11px] text-text-muted text-center max-w-xs leading-relaxed">
+                                A tela fica acesa durante a gravação. Mantenha o app aberto — trocar de app ou bloquear o celular pode interromper o microfone.
+                            </p>
                         </>
                     ) : etapa === 'processando' ? (
                         <div className="flex flex-col items-center gap-3 py-4">
@@ -176,6 +262,12 @@ export default function TranscreverCultoPage() {
                     </div>
                 )}
 
+                {aviso && !erro && (
+                    <div className="flex items-start gap-2 p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-300 text-sm">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{aviso}</span>
+                    </div>
+                )}
+
                 {/* Resultado */}
                 {etapa === 'pronto' && (
                     <div className="rounded-2xl border border-amber-500/25 bg-surface-1 p-5 space-y-3">
@@ -191,9 +283,10 @@ export default function TranscreverCultoPage() {
                             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={4} placeholder="Anotações, pontos principais, aplicações..."
                                 className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-text-primary text-sm leading-relaxed resize-y focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20" />
                         </div>
-                        <button onClick={salvar} disabled={salvo || !texto.trim()}
+                        <button onClick={salvar} disabled={salvo || salvando || !texto.trim()}
                             className="w-full py-3 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-50 flex items-center justify-center gap-2">
-                            {salvo ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />} {salvo ? 'Salvo!' : 'Salvar'}
+                            {salvando ? <Loader2 className="w-5 h-5 animate-spin" /> : salvo ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                            {salvando ? 'Salvando...' : salvo ? 'Salvo!' : 'Salvar'}
                         </button>
                     </div>
                 )}
@@ -213,6 +306,11 @@ export default function TranscreverCultoPage() {
                                     </button>
                                 </summary>
                                 <div className="mt-3 space-y-3">
+                                    <div>
+                                        <label className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">Título</label>
+                                        <input defaultValue={t.titulo || ''} onBlur={(e) => salvarTitulo(t.id, e.target.value)} placeholder="Ex: Culto de domingo"
+                                            className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-text-primary text-sm font-semibold focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20" />
+                                    </div>
                                     <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">{t.texto}</p>
                                     <div>
                                         <label className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">Notas</label>

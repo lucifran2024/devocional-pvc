@@ -65,6 +65,15 @@ export async function salvarTranscricao(t: {
     return data as Transcricao;
 }
 
+export async function atualizarTituloTranscricao(id: string, titulo: string): Promise<boolean> {
+    const { error } = await supabase.from('transcricoes').update({ titulo: titulo.trim() || null }).eq('id', id);
+    if (error) {
+        console.error('Erro ao atualizar título:', error.message);
+        return false;
+    }
+    return true;
+}
+
 export async function atualizarNotasTranscricao(id: string, notas: string): Promise<boolean> {
     const { error } = await supabase.from('transcricoes').update({ notas }).eq('id', id);
     if (error) {
