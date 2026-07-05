@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Copy, Sun, Check, Loader2, Feather, BookOpen, Heart, PlayCircle, PauseCircle, WifiOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Sun, Check, Loader2, Feather, BookOpen, Heart, WifiOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
 
@@ -34,10 +34,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const [copied, setCopied] = useState(false);
     const [generating, setGenerating] = useState(false);
     const [amei, setAmei] = useState(false); // Estado local do feedback
-    const [isPlaying, setIsPlaying] = useState(false); // Áudio TTS
-    const [audioLoading, setAudioLoading] = useState(false); // Preparando voz neural
     const [modoOffline, setModoOffline] = useState(false); // Exibindo cache local sem rede
-    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     async function loadData() {
         setLoading(true);
@@ -108,15 +105,6 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage/window na montagem (hydration-safe)
         loadData();
-        return () => {
-            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.src = '';
-            }
-        };
     }, []);
 
     const handleCopy = () => {
@@ -140,72 +128,6 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
             // Se falhar (raro), deveríamos reverter? 
             // Para UX, melhor manter como "feito" visualmente para não frustrar
         }
-    };
-
-    const pararAudio = () => {
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current.currentTime = 0;
-        }
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-        setIsPlaying(false);
-        setAudioLoading(false);
-    };
-
-    // Voz do navegador (fallback quando o Azure não responde ou está offline)
-    const falarComNavegador = (texto: string) => {
-        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-        const utterance = new SpeechSynthesisUtterance(texto);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 1.0;
-        utterance.onend = () => setIsPlaying(false);
-        utterance.onerror = () => setIsPlaying(false);
-        window.speechSynthesis.speak(utterance);
-        setIsPlaying(true);
-    };
-
-    const handlePlayAudio = async () => {
-        if (!data) return;
-
-        if (isPlaying || audioLoading) {
-            pararAudio();
-            return;
-        }
-
-        // Limpa o markdown básico para leitura
-        const textToRead = data.mensagem.replace(/[*#_]/g, '');
-
-        // 1) Voz neural (Azure) com cache no Storage — mesma voz da Bíblia
-        if (typeof navigator === 'undefined' || navigator.onLine) {
-            setAudioLoading(true);
-            try {
-                const resp = await fetch('/api/palavra-audio', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: data.data, texto: textToRead }),
-                });
-                if (resp.ok) {
-                    const json = await resp.json();
-                    if (json.ok && json.url) {
-                        if (!audioRef.current) audioRef.current = new Audio();
-                        const audio = audioRef.current;
-                        audio.src = json.url;
-                        audio.onended = () => setIsPlaying(false);
-                        audio.onerror = () => setIsPlaying(false);
-                        await audio.play();
-                        setAudioLoading(false);
-                        setIsPlaying(true);
-                        return;
-                    }
-                }
-            } catch { /* cai para a voz do navegador */ }
-            setAudioLoading(false);
-        }
-
-        // 2) Fallback: voz do dispositivo
-        falarComNavegador(textToRead);
     };
 
     if (loading && !data) {
@@ -275,19 +197,6 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                         >
                             <Heart className={`w-3 h-3 ${amei ? 'fill-current' : ''}`} />
                             {amei ? 'Amém!' : 'Amém'}
-                        </button>
-
-                        <button
-                            onClick={handlePlayAudio}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border border-border-subtle ${(isPlaying || audioLoading)
-                                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30'
-                                : 'bg-surface-2 text-text-secondary hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-500/30'
-                                }`}
-                        >
-                            {audioLoading
-                                ? <Loader2 className="w-3 h-3 animate-spin" />
-                                : isPlaying ? <PauseCircle className="w-3 h-3" /> : <PlayCircle className="w-3 h-3" />}
-                            {audioLoading ? 'Preparando' : isPlaying ? 'Parar' : 'Ouvir'}
                         </button>
 
                         <button
