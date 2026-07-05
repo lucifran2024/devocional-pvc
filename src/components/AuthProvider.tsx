@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { BookOpen } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 <div className="min-h-screen flex items-center justify-center bg-surface-0">
                     <div className="flex flex-col items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center animate-pulse">
-                            <span className="text-amber-400 font-black text-sm">PVC</span>
+                            <BookOpen className="w-5 h-5 text-amber-400" />
                         </div>
                         <span className="text-xs text-text-muted tracking-widest uppercase">Carregando…</span>
                     </div>

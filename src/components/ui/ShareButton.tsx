@@ -9,7 +9,7 @@ interface ShareButtonProps {
     url?: string;
 }
 
-export function ShareButton({ text, title = 'Devocional PVC', url }: ShareButtonProps) {
+export function ShareButton({ text, title = 'Bíblia', url }: ShareButtonProps) {
     const [copied, setCopied] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
 

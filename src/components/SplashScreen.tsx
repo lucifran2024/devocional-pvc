@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { BookOpen } from 'lucide-react';
 
 export function SplashScreen() {
     const [isVisible, setIsVisible] = useState(true);
@@ -39,7 +40,7 @@ export function SplashScreen() {
                 {/* Animated logo */}
                 <div className="relative">
                     <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-amber-500/30 animate-pulse">
-                        <span className="text-white text-3xl font-black tracking-wider">PVC</span>
+                        <BookOpen className="w-9 h-9 text-white" strokeWidth={2.2} />
                     </div>
                     
                     {/* Glow effect */}
@@ -48,7 +49,7 @@ export function SplashScreen() {
 
                 {/* App name */}
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-white mb-2">Devocional PVC</h1>
+                    <h1 className="reading-serif text-3xl font-semibold text-white mb-2">Bíblia</h1>
                     <p className="text-sm text-slate-400">Sua jornada espiritual diária</p>
                 </div>
 

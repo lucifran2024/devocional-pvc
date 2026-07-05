@@ -12,7 +12,7 @@ export function RandomVerse() {
     const verse = VERSES[verseIndex];
 
     const handleCopy = useCallback(() => {
-        const texto = `📖 *VERSÍCULO DO DIA*\n\n"${verse.text}"\n— ${verse.ref}\n\n📲 _Devocional PVC_`;
+        const texto = `📖 *VERSÍCULO DO DIA*\n\n"${verse.text}"\n— ${verse.ref}\n\n📲 _Bíblia_`;
         navigator.clipboard.writeText(texto);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

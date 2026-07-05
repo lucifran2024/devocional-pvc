@@ -71,7 +71,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         if (!data) return;
 
         // Formata para compartilhar
-        const textoShare = `🌅 *PALAVRA DA MANHÃ*\n${data.dia_semana} • ${new Date().toLocaleDateString('pt-BR')}\n\n${data.mensagem}\n\n📲 _Devocional PVC_`;
+        const textoShare = `🌅 *PALAVRA DA MANHÃ*\n${data.dia_semana} • ${new Date().toLocaleDateString('pt-BR')}\n\n${data.mensagem}\n\n📲 _Bíblia_`;
 
         navigator.clipboard.writeText(textoShare);
         setCopied(true);

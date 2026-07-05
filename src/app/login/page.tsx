@@ -74,7 +74,7 @@ export default function LoginPage() {
                     <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-4">
                         <BookOpen className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="reading-serif text-[1.7rem] font-semibold text-text-primary tracking-tight">Devocional PVC</h1>
+                    <h1 className="reading-serif text-[1.7rem] font-semibold text-text-primary tracking-tight">Bíblia</h1>
                     <p className="text-xs text-text-muted mt-1 tracking-widest uppercase">Sua jornada espiritual diária</p>
                 </div>
 

@@ -28,10 +28,10 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Devocional PVC | Sua Jornada Espiritual Diária",
+  title: "Bíblia | Sua Jornada Espiritual Diária",
   description: "Devocionais diários com profundidade teológica. Transforme sua leitura bíblica em uma experiência espiritual única.",
-  keywords: ["devocional", "bíblia", "leitura diária", "espiritualidade", "PVC"],
-  authors: [{ name: "Devocional PVC" }],
+  keywords: ["devocional", "bíblia", "leitura diária", "espiritualidade"],
+  authors: [{ name: "Bíblia" }],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -43,10 +43,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "PVC Devocional",
+    title: "Bíblia",
   },
   openGraph: {
-    title: "Devocional PVC | Sua Jornada Espiritual Diária",
+    title: "Bíblia | Sua Jornada Espiritual Diária",
     description: "Devocionais diários com profundidade teológica.",
     type: "website",
     locale: "pt_BR",

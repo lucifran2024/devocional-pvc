@@ -1596,9 +1596,20 @@ function PlanoLeituraContent() {
         const nomeLivroDaParte = capitalizarLivro(primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia);
         const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
 
+        // Frases devocionais que variam conforme a parte — evita a sensação
+        // robótica de ler sempre a mesma instrução ao fim de cada trecho.
+        const FRASES_ENTRE_PARTES = [
+            'Respire um instante e guarde no coração o que essa leitura falou com você.',
+            'Antes de seguir, volte ao versículo que mais tocou você e leia-o de novo, devagar.',
+            'Um momento de silêncio diante da Palavra também é oração.',
+            'Siga no seu ritmo — a Palavra não tem pressa, ela tem propósito.',
+            'O que Deus destacou para você nesse trecho? Leve isso para a próxima parte.',
+        ];
+        const fraseDaParte = FRASES_ENTRE_PARTES[(parteAtual - 1) % FRASES_ENTRE_PARTES.length];
+
         const rodapeAcao = ehUltimaParte
-            ? `**Você concluiu ${tituloCapitulo}.** Essa era a última parte.\nToque em **Concluir leitura** abaixo para finalizar.`
-            : 'Toque em **Continuar** abaixo para ler a próxima parte.';
+            ? `Você chegou ao fim de **${tituloCapitulo}** — a leitura de hoje está completa.\nQue essa Palavra permaneça com você ao longo do dia.\n\nToque em **Concluir leitura** para encerrar.`
+            : `${fraseDaParte}\n\nQuando estiver pronto, toque em **Continuar**.`;
 
         return `**${tituloCapitulo}**
 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
@@ -1609,7 +1620,7 @@ function PlanoLeituraContent() {
 
 ---
 
-%%EXPLICACAO_SLOT%%**Você acabou de ler a Parte ${parteAtual} de ${totalPartes}** — ${tituloCapitulo}
+%%EXPLICACAO_SLOT%%**Parte ${parteAtual} de ${totalPartes} concluída** · ${tituloCapitulo}
 
 ${rodapeAcao}${linhaPersistencia}`;
     };

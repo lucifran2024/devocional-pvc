@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     } else if (tipo === 'palavra') {
         payload = { title: '🌅 Palavra da Manhã', body: 'Sua palavra de hoje está pronta. Toque para ler.', url: '/' };
     } else {
-        payload = { title: '🔔 Teste do Devocional PVC', body: 'Se você está vendo isso, as notificações estão funcionando!', url: '/' };
+        payload = { title: '🔔 Teste de notificação', body: 'Se você está vendo isso, as notificações estão funcionando!', url: '/' };
     }
 
     const resultado = await enviarPushParaTodos(payload);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pvc-v7';
+const CACHE_NAME = 'pvc-v8';
 const STATIC_ASSETS = [
     '/',
     '/login',
@@ -141,7 +141,7 @@ self.addEventListener('fetch', (event) => {
 // Push Notification handler
 self.addEventListener('push', (event) => {
     const data = event.data?.json() || {};
-    const title = data.title || 'Devocional PVC';
+    const title = data.title || 'Bíblia';
     const options = {
         body: data.body || 'Sua mensagem diária está pronta!',
         icon: '/icon-192.png',

@@ -1,6 +1,6 @@
 {
-  "name": "Devocional PVC",
-  "short_name": "PVC",
+  "name": "Bíblia",
+  "short_name": "Bíblia",
   "description": "Sua jornada espiritual diária — palavra do dia, Bíblia e planos de leitura",
   "start_url": "/",
   "display": "standalone",
@@ -49,23 +49,10 @@
       ]
     },
     {
-      "name": "Devocional Externo",
-      "short_name": "Devocional",
-      "description": "Leia devocionais de sites cristãos renomados",
-      "url": "/devocional-externo",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "DNA Categorizado",
-      "short_name": "DNA",
-      "description": "Gere mensagens baseadas no seu DNA espiritual",
-      "url": "/dna-categorizado",
+      "name": "Anotações",
+      "short_name": "Anotações",
+      "description": "Notas da Bíblia e caderno pessoal",
+      "url": "/anotacoes",
       "icons": [
         {
           "src": "/icon-192.png",

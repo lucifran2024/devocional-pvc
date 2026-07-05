@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Star, LogOut, Flame, NotebookPen, Youtube, Mic
+  Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -11,7 +11,6 @@ import { DashboardCard } from '@/components/ui/DashboardCard';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { RandomVerse } from '@/components/RandomVerse';
 import { DashboardSkeleton } from '@/components/ui/DashboardSkeleton';
 import { useAuth } from '@/components/AuthProvider';
@@ -26,7 +25,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const dataHoje = getDataHoje();
-  const { streak, isLoaded } = useDailyStreak();
   const { signOut } = useAuth();
 
   useEffect(() => {
@@ -100,27 +98,6 @@ export default function DashboardPage() {
             <span className="text-xs font-bold text-slate-700 dark:text-text-secondary uppercase tracking-widest">
               {formatarDataExtenso(dataHoje)}
             </span>
-          </div>
-
-          {/* Streak Badge */}
-          <div className="absolute top-0 right-0 flex gap-4">
-            <div
-              title="Dias seguidos abrindo o app"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full
-                bg-amber-50 dark:bg-amber-500/15
-                border border-amber-300/60 dark:border-amber-500/25
-                shadow-sm shadow-amber-200/50 dark:shadow-amber-900/20
-                backdrop-blur-md"
-            >
-              <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400 fill-amber-500/25" />
-              {isLoaded ? (
-                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 tracking-wide">
-                  {streak} {streak === 1 ? 'dia' : 'dias'}
-                </span>
-              ) : (
-                <span className="text-xs text-amber-600/50 dark:text-amber-500/40">...</span>
-              )}
-            </div>
           </div>
 
           {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
@@ -233,7 +210,7 @@ export default function DashboardPage() {
 
       {/* Footer Minimalista */}
       <footer className="w-full text-center py-8 text-slate-500 dark:text-text-muted text-xs border-t border-slate-200/70 dark:border-border-subtle">
-        <p className="tracking-widest uppercase">PVC Devocional • {new Date().getFullYear()}</p>
+        <p className="tracking-widest uppercase">Bíblia • {new Date().getFullYear()}</p>
       </footer>
 
     </CosmicBackground>
