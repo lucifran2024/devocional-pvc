@@ -2161,6 +2161,31 @@ ${versiculosTexto}
 3. O teste rápido deve ser respondível só com o que está na passagem
 4. Máximo 230 palavras
 5. NÃO invente conteúdo que não está nos versículos
+`,
+
+        // VERSÍCULOS-CHAVE — saída JSON pura para o destaque automático
+        // na tela Ler Passagem (o app pinta esses versículos ao abrir).
+        versiculos_chave: `
+# VERSÍCULOS-CHAVE DA PASSAGEM
+
+Você é um professor de Bíblia experiente. Da passagem abaixo, escolha os versículos que carregam o CORAÇÃO do texto — a promessa central, a verdade principal sobre Deus, o mandamento decisivo ou o versículo mais memorável.
+
+## PASSAGEM: ${referenciaPassagem}
+
+### VERSÍCULOS (formato capítulo:versículo. texto):
+${versiculosTexto}
+
+## TAREFA
+Escolha de 2 a 5 versículos-chave (nunca mais que 5, nunca menos que 2).
+
+## RESPONDA APENAS COM JSON PURO — sem \`\`\`, sem comentário, sem texto antes ou depois:
+{"chave":[{"c":3,"v":16,"tipo":"promessa"},{"c":3,"v":17,"tipo":"verdade"}]}
+
+## REGRAS:
+1. "c" = número do capítulo e "v" = número do versículo, EXATAMENTE como aparecem na lista fornecida
+2. "tipo" deve ser um destes: "promessa", "mandamento", "verdade", "oracao", "alerta"
+3. Escolha SOMENTE versículos que existem na lista fornecida
+4. Priorize os versículos que alguém sublinharia na Bíblia física
 `
       };
 
@@ -2168,7 +2193,11 @@ ${versiculosTexto}
 
       console.log(`📝 Prompt selecionado: ${tipoEstudo} (${promptFinal.length} chars)`);
 
-      const llmEstudo = await gerarTexto(promptFinal, { temperature: 0.75, maxTokens: 3072 });
+      // versiculos_chave: saída JSON curta e determinística → temperatura baixa
+      const llmOpts = tipoEstudo === 'versiculos_chave'
+        ? { temperature: 0.2, maxTokens: 400 }
+        : { temperature: 0.75, maxTokens: 3072 };
+      const llmEstudo = await gerarTexto(promptFinal, llmOpts);
 
       if (!llmEstudo.ok) {
         console.error(`❌ Erro LLM:`, llmEstudo.error);

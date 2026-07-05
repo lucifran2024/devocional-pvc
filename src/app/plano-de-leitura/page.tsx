@@ -9,7 +9,7 @@ import {
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
     ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight,
-    Info, ChevronDown
+    Info, ChevronDown, Sparkles
 } from 'lucide-react';
 import {
     supabase,
@@ -108,6 +108,7 @@ function VersiculosInterativos({
     readingLineHeight,
     readingAlign,
     lexico,
+    versiculosChave,
 }: {
     versiculos: Versiculo[];
     referencia: string;
@@ -119,6 +120,7 @@ function VersiculosInterativos({
     readingLineHeight: number;
     readingAlign: ReadingAlign;
     lexico?: string[];
+    versiculosChave?: Map<string, string>;
 }) {
     // Índice no array de versículos (único mesmo com capítulos repetidos)
     const [versiculoSelecionadoIdx, setVersiculoSelecionadoIdx] = useState<number | null>(null);
@@ -463,12 +465,21 @@ function VersiculosInterativos({
                     />
                 </div>
             ) : null}
+            {/* Legenda dos destaques inteligentes (só quando a IA marcou algo desta parte) */}
+            {versiculosChave && versiculos.some(v => versiculosChave.has(`${getCapitulo(v)}:${v.verse}`)) && (
+                <div className="flex items-center gap-1.5 mb-2 text-[11px] font-semibold text-amber-700/90 dark:text-amber-400/80">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Versículos-chave da passagem destacados
+                </div>
+            )}
             <div className="space-y-1 relative" ref={containerRef}>
                 {versiculos.map((v, idx) => {
                     const cap = getCapitulo(v);
                     const prevCap = idx > 0 ? getCapitulo(versiculos[idx - 1]) : cap;
                     const mostrarHeaderCapitulo = idx === 0 || cap !== prevCap;
                     const capMap = getInteracoesDoVersiculo(v);
+                    // Destaque inteligente: só quando o usuário não pintou o versículo
+                    const tipoChave = !capMap.destaques[v.verse] ? versiculosChave?.get(`${cap}:${v.verse}`) : undefined;
                     const primeiroVersiculoNovoTestamento = Boolean(v.livroId && v.livroId >= 40)
                         && !versiculos.slice(0, idx).some(vv => vv.livroId && vv.livroId >= 40);
 
@@ -507,6 +518,7 @@ function VersiculosInterativos({
                                 onClick={() => handleVersiculoClick(idx)}
                                 className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none break-words
                                     ${getCorClasse(v)}
+                                    ${tipoChave ? 'bg-amber-400/10 border-l-2 border-amber-400/70' : ''}
                                     ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
                                     ${selecaoCopia.has(idx) ? 'bg-amber-500/15 ring-1 ring-amber-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
                                 `}
@@ -520,6 +532,11 @@ function VersiculosInterativos({
                                     {modoCopiaMultipla && selecaoCopia.has(idx) && <Check className="w-3.5 h-3.5 text-amber-500 inline" />}
                                     {isFavorito(v) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
                                     {temNota(v) && <StickyNote className="w-3.5 h-3.5 text-amber-500 inline" />}
+                                    {tipoChave && (
+                                        <span title={`Versículo-chave: ${tipoChave}`}>
+                                            <Sparkles className="w-3.5 h-3.5 text-amber-500 inline" />
+                                        </span>
+                                    )}
                                 </span>
 
                                 {/* Barra de copiar vários — flutua acima do versículo que você está tocando */}
@@ -806,7 +823,7 @@ function ContextoDaParte({ livroId, capitulo, livroNome }: {
     );
 }
 
-function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, readingLineHeight, readingAlign, lexico, mostrarContexto }: {
+function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize, readingLineHeight, readingAlign, lexico, mostrarContexto, versiculosChave }: {
     message: ChatMessage;
     versiculosInterativos?: Versiculo[];
     livroInfo?: { abrev: string; nome: string; capitulo: number; livroId?: number };
@@ -815,6 +832,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
     readingAlign: ReadingAlign;
     lexico?: string[];
     mostrarContexto?: boolean;
+    versiculosChave?: Map<string, string>;
 }) {
     const isUser = message.role === 'user';
     const temVersiculosInterativos = message.content.includes('%%VERSICULOS_INTERATIVOS%%') && versiculosInterativos && versiculosInterativos.length > 0 && livroInfo;
@@ -853,6 +871,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         readingLineHeight={readingLineHeight}
                         readingAlign={readingAlign}
                         lexico={lexico}
+                        versiculosChave={versiculosChave}
                     />
 
                     {/* Texto depois dos versículos */}
@@ -1857,6 +1876,74 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
         }
     };
 
+    // ==========================================
+    // DESTAQUES INTELIGENTES: a IA escolhe os versículos-chave da passagem
+    // e o Ler Passagem pinta esses versículos ao abrir. Cache em 2 níveis:
+    // sessionStorage (aparelho) + estudo_cache no servidor (todo mundo).
+    // ==========================================
+    const [versiculosChave, setVersiculosChave] = useState<Map<string, string>>(new Map());
+    const chaveDisparadoRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!passagem?.referencia || !bibleData) return;
+        if (chaveDisparadoRef.current === passagem.referencia) return;
+        chaveDisparadoRef.current = passagem.referencia;
+        setVersiculosChave(new Map());
+
+        // Converte a resposta JSON da IA em Map "cap:verso" → tipo
+        const parseChaves = (raw: string): Map<string, string> => {
+            const map = new Map<string, string>();
+            try {
+                const limpo = raw.replace(/```json|```/g, '').trim();
+                const ini = limpo.indexOf('{');
+                const fim = limpo.lastIndexOf('}');
+                if (ini < 0 || fim <= ini) return map;
+                const obj = JSON.parse(limpo.slice(ini, fim + 1));
+                if (Array.isArray(obj?.chave)) {
+                    for (const item of obj.chave.slice(0, 6)) {
+                        const c = Number(item?.c), v = Number(item?.v);
+                        if (c > 0 && v > 0) map.set(`${c}:${v}`, String(item?.tipo || 'chave'));
+                    }
+                }
+            } catch { /* resposta fora do formato — leitura segue sem destaques */ }
+            return map;
+        };
+
+        let cancelado = false;
+        (async () => {
+            try {
+                const cacheKey = `estudo:${passagem.referencia}:versiculos_chave`;
+                let raw = typeof window !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+
+                if (!raw) {
+                    const capFallback = livroInfoAtual.capitulo || 1;
+                    const versiculosTexto = bibleData.versiculos
+                        .map(v => `${v.chapter ?? capFallback}:${v.verse}. ${(v.text || '').replace(/<[^>]*>/g, '')}`)
+                        .join('\n');
+                    if (!versiculosTexto) return;
+
+                    const { data } = await supabase.functions.invoke('execute', {
+                        body: {
+                            modo_id: 'estudo_biblico',
+                            data: new Date().toISOString().split('T')[0],
+                            referencia: passagem.referencia,
+                            versiculos: versiculosTexto,
+                            tipo_estudo: 'versiculos_chave'
+                        }
+                    });
+                    if (data?.ok && data.resultado) {
+                        raw = data.resultado as string;
+                        try { sessionStorage.setItem(cacheKey, raw); } catch { /* quota */ }
+                    }
+                }
+
+                if (!cancelado && raw) setVersiculosChave(parseChaves(raw));
+            } catch { /* silencioso — sem destaques automáticos desta vez */ }
+        })();
+        return () => { cancelado = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [passagem?.referencia, bibleData]);
+
     // PREFETCH: quando a passagem e os versículos estão prontos, aquece as 3
     // opções em background (sequencial, sem travar a UI). A 1ª também popula o
     // cache do servidor — então a opção que o usuário clicar já volta pronta.
@@ -2499,6 +2586,7 @@ ${conteudo}
                                             readingAlign={readingAlign}
                                             lexico={passagem?.lexico_do_dia}
                                             mostrarContexto={!isPlanoMode}
+                                            versiculosChave={versiculosChave}
                                         />
                                     </div>
                                 );
