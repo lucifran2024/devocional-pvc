@@ -1,9 +1,13 @@
-const CACHE_NAME = 'pvc-v8';
+const CACHE_NAME = 'pvc-v9';
 const STATIC_ASSETS = [
     '/',
     '/login',
     '/biblioteca',
     '/plano-de-leitura',
+    '/planos',
+    '/anotacoes',
+    '/oracao',
+    '/memorizacao',
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
@@ -25,10 +29,12 @@ function fetchComTimeout(request, ms) {
 }
 
 // Install: Cache static assets + offline fallback
+// allSettled: se UMA rota falhar (ex: rede caiu no meio), as demais
+// ainda entram no cache — addAll falharia o precache inteiro.
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
+            return Promise.allSettled(STATIC_ASSETS.map((url) => cache.add(url)));
         })
     );
     self.skipWaiting();

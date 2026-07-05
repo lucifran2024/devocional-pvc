@@ -47,6 +47,41 @@
 
 ## Features implementadas
 
+### 2026-07-05 — Pacote de 6 melhorias (features 10-15)
+
+**Feature 10: Diário de Oração (/oracao)**
+- Status: VALIDADA (build limpo, rotas 200 em produção)
+- Arquivos criados: src/app/oracao/page.tsx, src/lib/oracao.ts, supabase/migrations/20260705_oracao_memorizacao.sql
+- Arquivo editado: src/app/page.tsx (card no dashboard)
+- Descricao: Pedidos de oração com abas Orando/Respondidos, contador de dias orando, testemunho de resposta ("Como Deus respondeu"), desfazer, tabela pedidos_oracao com RLS por usuário. Migração aplicada no Supabase remoto.
+
+**Feature 11: Memorização de Versículos (/memorizacao)**
+- Status: VALIDADA (build limpo, rotas 200 em produção)
+- Arquivos criados: src/app/memorizacao/page.tsx, src/lib/memorizacao.ts (mesma migração acima)
+- Arquivo editado: src/app/page.tsx (card no dashboard)
+- Descricao: Revisão espaçada (níveis 0-5, intervalos 1/3/7/14/30/90 dias). Adiciona versículos a partir dos favoritos. Modo praticar em flashcard: palavras ocultadas progressivamente por nível, autoavaliação Acertei/Errei, placar da sessão. Tabela versiculos_memorizacao com RLS por usuário.
+
+**Feature 12: Áudio neural na Palavra da Manhã**
+- Status: VALIDADA
+- Arquivo criado: src/app/api/palavra-audio/route.ts
+- Arquivo editado: src/components/PalavraManha.tsx
+- Descricao: Botão "Ouvir" agora usa a voz neural do Azure (mesma da Bíblia, FranciscaNeural), com cache por data+hash do texto no bucket bible-audio (pasta palavra/). Fallback automático para a voz do navegador se offline/sem chave. Estado "Preparando" durante a síntese.
+
+**Feature 13: Comparar traduções lado a lado (Bíblia)**
+- Status: VALIDADA
+- Arquivo editado: src/app/biblioteca/page.tsx
+- Descricao: Seção "Comparar com (2ª versão)" no seletor de versões. O texto da segunda tradução aparece em itálico sob cada versículo, com badge da versão. Usa o mesmo cache offline (IndexedDB) da versão principal. Preferência persistida em localStorage; desativa sozinha se a principal virar igual à comparada.
+
+**Feature 14: Mais cores de destaque (Bíblia)**
+- Status: VALIDADA
+- Arquivo editado: src/app/biblioteca/page.tsx
+- Descricao: +2 cores de destaque (roxo e laranja), com filtro por cor do painel de salvos gerado a partir da lista de cores (sem hardcode).
+
+**Feature 15: Modo offline aprimorado**
+- Status: VALIDADA
+- Arquivos editados: public/sw.js (pvc-v9), src/components/PalavraManha.tsx, src/app/page.tsx
+- Descricao: (a) Palavra da Manhã salva a última mensagem no localStorage e a exibe offline com aviso quando é de outro dia; (b) dashboard usa o último payload salvo quando a rede falha; (c) service worker pré-cacheia /planos, /anotacoes, /oracao e /memorizacao; (d) precache com allSettled — uma rota falhando não derruba o cache inteiro.
+
 ### 2026-05-28 — Primeiras features implementadas
 
 **Feature 1: Widget de Versiculo do Dia (Dashboard)**

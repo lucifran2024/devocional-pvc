@@ -1,12 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Copy, Sun, Check, Loader2, Feather, BookOpen, Heart, PlayCircle, PauseCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Copy, Sun, Check, Loader2, Feather, BookOpen, Heart, PlayCircle, PauseCircle, WifiOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
 
 interface PalavraManhaProps {
     passagemDia?: string;
+}
+
+// Cache local da última mensagem carregada — garante Palavra da Manhã offline
+const PALAVRA_LOCAL_KEY = 'palavra-manha-local';
+
+function salvarPalavraLocal(registro: PalavraManhaCache) {
+    try {
+        localStorage.setItem(PALAVRA_LOCAL_KEY, JSON.stringify(registro));
+    } catch { /* storage cheio/indisponível */ }
+}
+
+function lerPalavraLocal(): PalavraManhaCache | null {
+    try {
+        const raw = localStorage.getItem(PALAVRA_LOCAL_KEY);
+        return raw ? (JSON.parse(raw) as PalavraManhaCache) : null;
+    } catch {
+        return null;
+    }
 }
 
 export function PalavraManha({ passagemDia }: PalavraManhaProps) {
@@ -17,17 +35,33 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const [generating, setGenerating] = useState(false);
     const [amei, setAmei] = useState(false); // Estado local do feedback
     const [isPlaying, setIsPlaying] = useState(false); // Áudio TTS
+    const [audioLoading, setAudioLoading] = useState(false); // Preparando voz neural
+    const [modoOffline, setModoOffline] = useState(false); // Exibindo cache local sem rede
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     async function loadData() {
         setLoading(true);
         const hoje = getDataHoje();
 
+        // Offline: usa direto a última mensagem salva no aparelho
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            const local = lerPalavraLocal();
+            if (local) {
+                setData(local);
+                setModoOffline(local.data !== hoje);
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
-            // 1. Tenta cache local
+            // 1. Tenta cache do banco
             const cache = await getPalavraManha(hoje);
 
             if (cache) {
                 setData(cache);
+                salvarPalavraLocal(cache);
+                setModoOffline(false);
                 setLoading(false);
             } else {
                 // 2. Se não tem cache, gera
@@ -36,7 +70,13 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
             }
         } catch (err) {
             console.error(err);
-            setError('Falha ao carregar Palavra da Manhã.');
+            const local = lerPalavraLocal();
+            if (local) {
+                setData(local);
+                setModoOffline(local.data !== hoje);
+            } else {
+                setError('Falha ao carregar Palavra da Manhã.');
+            }
             setLoading(false);
         }
     }
@@ -48,9 +88,17 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         const { data: novo, error: err } = await gerarPalavraManha(hoje);
 
         if (err || !novo) {
-            setError('Erro ao gerar mensagem. Tente recarregar.');
+            const local = lerPalavraLocal();
+            if (local) {
+                setData(local);
+                setModoOffline(local.data !== hoje);
+            } else {
+                setError('Erro ao gerar mensagem. Tente recarregar.');
+            }
         } else {
             setData(novo);
+            salvarPalavraLocal(novo);
+            setModoOffline(false);
         }
 
         setLoading(false);
@@ -63,6 +111,10 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         return () => {
             if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
+            }
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.src = '';
             }
         };
     }, []);
@@ -90,28 +142,70 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         }
     };
 
-    const handlePlayAudio = () => {
-        if (!data) return;
-        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-        if (isPlaying) {
+    const pararAudio = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            setIsPlaying(false);
+        }
+        setIsPlaying(false);
+        setAudioLoading(false);
+    };
+
+    // Voz do navegador (fallback quando o Azure não responde ou está offline)
+    const falarComNavegador = (texto: string) => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+        const utterance = new SpeechSynthesisUtterance(texto);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => setIsPlaying(false);
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(true);
+    };
+
+    const handlePlayAudio = async () => {
+        if (!data) return;
+
+        if (isPlaying || audioLoading) {
+            pararAudio();
             return;
         }
 
         // Limpa o markdown básico para leitura
         const textToRead = data.mensagem.replace(/[*#_]/g, '');
 
-        const utterance = new SpeechSynthesisUtterance(textToRead);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 1.0;
+        // 1) Voz neural (Azure) com cache no Storage — mesma voz da Bíblia
+        if (typeof navigator === 'undefined' || navigator.onLine) {
+            setAudioLoading(true);
+            try {
+                const resp = await fetch('/api/palavra-audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: data.data, texto: textToRead }),
+                });
+                if (resp.ok) {
+                    const json = await resp.json();
+                    if (json.ok && json.url) {
+                        if (!audioRef.current) audioRef.current = new Audio();
+                        const audio = audioRef.current;
+                        audio.src = json.url;
+                        audio.onended = () => setIsPlaying(false);
+                        audio.onerror = () => setIsPlaying(false);
+                        await audio.play();
+                        setAudioLoading(false);
+                        setIsPlaying(true);
+                        return;
+                    }
+                }
+            } catch { /* cai para a voz do navegador */ }
+            setAudioLoading(false);
+        }
 
-        utterance.onend = () => setIsPlaying(false);
-        utterance.onerror = () => setIsPlaying(false);
-
-        window.speechSynthesis.speak(utterance);
-        setIsPlaying(true);
+        // 2) Fallback: voz do dispositivo
+        falarComNavegador(textToRead);
     };
 
     if (loading && !data) {
@@ -143,6 +237,13 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
             <div className="absolute inset-0 bg-accent-primary/5 rounded-3xl blur-2xl -z-10 opacity-50"></div>
 
             <div className="glass-panel bg-white/60 dark:bg-surface-1/40 p-6 md:p-8 border border-white/50 dark:border-border-subtle relative overflow-hidden shadow-sm dark:shadow-none">
+                {/* Aviso: exibindo mensagem salva (sem conexão) */}
+                {modoOffline && (
+                    <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/25 text-orange-700 dark:text-orange-300 text-xs font-semibold">
+                        <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                        Sem conexão — mostrando a última mensagem salva ({data.dia_semana}).
+                    </div>
+                )}
                 {/* Header do Card */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
@@ -178,13 +279,15 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
                         <button
                             onClick={handlePlayAudio}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border border-border-subtle ${isPlaying
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border border-border-subtle ${(isPlaying || audioLoading)
                                 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30'
                                 : 'bg-surface-2 text-text-secondary hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 hover:border-amber-500/30'
                                 }`}
                         >
-                            {isPlaying ? <PauseCircle className="w-3 h-3" /> : <PlayCircle className="w-3 h-3" />}
-                            {isPlaying ? 'Parar' : 'Ouvir'}
+                            {audioLoading
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : isPlaying ? <PauseCircle className="w-3 h-3" /> : <PlayCircle className="w-3 h-3" />}
+                            {audioLoading ? 'Preparando' : isPlaying ? 'Parar' : 'Ouvir'}
                         </button>
 
                         <button

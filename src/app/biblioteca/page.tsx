@@ -9,7 +9,7 @@ import {
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
     CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download,
-    BookmarkCheck
+    BookmarkCheck, Columns2
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -220,7 +220,19 @@ const CORES_DESTAQUE: { id: string; nome: string; bg: string; border: string }[]
     { id: 'blue', nome: 'Azul', bg: 'bg-blue-500/20', border: 'border-blue-500/40' },
     { id: 'green', nome: 'Verde', bg: 'bg-green-500/20', border: 'border-green-500/40' },
     { id: 'pink', nome: 'Rosa', bg: 'bg-pink-500/20', border: 'border-pink-500/40' },
+    { id: 'purple', nome: 'Roxo', bg: 'bg-purple-500/20', border: 'border-purple-500/40' },
+    { id: 'orange', nome: 'Laranja', bg: 'bg-orange-500/20', border: 'border-orange-500/40' },
 ];
+
+// Mapas de cor usados no painel de salvos (bolinha + borda esquerda)
+const COR_DOT: Record<string, string> = {
+    yellow: 'bg-yellow-400', blue: 'bg-blue-400', green: 'bg-green-400',
+    pink: 'bg-pink-400', purple: 'bg-purple-400', orange: 'bg-orange-400',
+};
+const COR_BORDA: Record<string, string> = {
+    yellow: '#facc15', blue: '#60a5fa', green: '#4ade80',
+    pink: '#f472b6', purple: '#c084fc', orange: '#fb923c',
+};
 
 // Versões da Bíblia disponíveis (API bolls.life)
 const VERSOES_BIBLIA = [
@@ -598,6 +610,10 @@ function BibliotecaPage() {
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
     const [mostrarFontes, setMostrarFontes] = useState(false);
 
+    // Comparação de traduções (2ª versão exibida abaixo de cada versículo)
+    const [versaoComparada, setVersaoComparada] = useState<typeof VERSOES_BIBLIA[0] | null>(null);
+    const [versiculosComparados, setVersiculosComparados] = useState<Versiculo[]>([]);
+
     // Painel de salvos
     const [painelAberto, setPainelAberto] = useState(abrirSalvos);
     const [painelAba, setPainelAba] = useState<'favoritos' | 'destaques'>('favoritos');
@@ -636,6 +652,18 @@ function BibliotecaPage() {
         setVersaoBiblia(versao);
         setMostrarVersoes(false);
         localStorage.setItem('biblia-versao', versao.codigo);
+        // Se a principal virou a mesma da comparação, desliga a comparação
+        if (versaoComparada?.codigo === versao.codigo) {
+            setVersaoComparada(null);
+            localStorage.removeItem('biblia-versao-comparada');
+        }
+    };
+
+    const trocarVersaoComparada = (versao: typeof VERSOES_BIBLIA[0] | null) => {
+        setVersaoComparada(versao);
+        setMostrarVersoes(false);
+        if (versao) localStorage.setItem('biblia-versao-comparada', versao.codigo);
+        else localStorage.removeItem('biblia-versao-comparada');
     };
 
     // ==========================================
@@ -653,6 +681,11 @@ function BibliotecaPage() {
             if (savedVersao) {
                 const v = VERSOES_BIBLIA.find(ver => ver.codigo === savedVersao);
                 if (v) setVersaoBiblia(v);
+            }
+            const savedComparada = localStorage.getItem('biblia-versao-comparada');
+            if (savedComparada && savedComparada !== savedVersao) {
+                const v = VERSOES_BIBLIA.find(ver => ver.codigo === savedComparada);
+                if (v) setVersaoComparada(v);
             }
 
             // Status de conectividade
@@ -759,6 +792,49 @@ function BibliotecaPage() {
         setVersiculosSelecionados(new Set());
         setMostrarCores(false);
     }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia, carregarInteracoes]);
+
+    // Carregar a versão de comparação (cache local primeiro, igual à principal)
+    useEffect(() => {
+        if (!inicializado) return;
+        let cancelado = false;
+
+        async function carregarComparacao() {
+            if (!versaoComparada) {
+                setVersiculosComparados([]);
+                return;
+            }
+            const codigo = versaoComparada.codigo;
+            const bookId = LIVRO_PARA_ID[livroAtual.abrev] || 1;
+
+            try {
+                const cached = await getCachedChapter(codigo, bookId, capituloAtual);
+                if (cached && cached.length > 0) {
+                    if (!cancelado) setVersiculosComparados(cached);
+                    return;
+                }
+            } catch { /* IndexedDB indisponível, segue para API */ }
+
+            try {
+                const dataApi = await fetchBibliaComFallback(bookId, capituloAtual, codigo);
+                const limpos = dataApi.map(v => ({
+                    verse: v.verse,
+                    text: (v.text || '').replace(/<[^>]*>/g, ''),
+                }));
+                if (!cancelado) setVersiculosComparados(limpos);
+                if (limpos.length > 0) cacheChapter(codigo, bookId, capituloAtual, limpos).catch(() => { });
+            } catch {
+                if (!cancelado) setVersiculosComparados([]);
+            }
+        }
+
+        carregarComparacao();
+        return () => { cancelado = true; };
+    }, [livroAtual, capituloAtual, inicializado, versaoComparada]);
+
+    const textoComparado = (verse: number): string | null => {
+        if (!versaoComparada) return null;
+        return versiculosComparados.find(x => x.verse === verse)?.text || null;
+    };
 
     // Scroll para versículo específico quando carregado
     useEffect(() => {
@@ -1868,7 +1944,9 @@ function BibliotecaPage() {
                             title="Versão da Bíblia"
                         >
                             <Languages className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">{versaoBiblia.nome}</span>
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                {versaoBiblia.nome}{versaoComparada ? ` + ${versaoComparada.nome}` : ''}
+                            </span>
                             <ChevronDown className="w-3 h-3 text-text-muted" />
                         </button>
 
@@ -1877,7 +1955,7 @@ function BibliotecaPage() {
                                 <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
                                     <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
                                 </div>
-                                <div className="max-h-64 overflow-y-auto p-1.5">
+                                <div className="max-h-52 overflow-y-auto p-1.5">
                                     {VERSOES_BIBLIA.map(v => (
                                         <button
                                             key={v.codigo}
@@ -1888,6 +1966,42 @@ function BibliotecaPage() {
                                                 }`}
                                         >
                                             <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
+                                                {v.nome}
+                                            </span>
+                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Comparar com uma 2ª versão */}
+                                <div className="p-2 border-t border-slate-200 dark:border-border-subtle">
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1 flex items-center gap-1">
+                                        <Columns2 className="w-3 h-3" /> Comparar com (2ª versão)
+                                    </p>
+                                </div>
+                                <div className="max-h-40 overflow-y-auto p-1.5">
+                                    <button
+                                        onClick={() => trocarVersaoComparada(null)}
+                                        className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${!versaoComparada
+                                            ? 'bg-amber-500/20 border border-amber-500/30'
+                                            : 'hover:bg-surface-1 border border-transparent'
+                                            }`}
+                                    >
+                                        <span className={`text-sm font-bold ${!versaoComparada ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
+                                            Desativada
+                                        </span>
+                                        <span className="text-xs text-text-muted truncate">Mostrar só uma versão</span>
+                                    </button>
+                                    {VERSOES_BIBLIA.filter(v => v.codigo !== versaoBiblia.codigo).map(v => (
+                                        <button
+                                            key={v.codigo}
+                                            onClick={() => trocarVersaoComparada(v)}
+                                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${versaoComparada?.codigo === v.codigo
+                                                ? 'bg-amber-500/20 border border-amber-500/30'
+                                                : 'hover:bg-surface-1 border border-transparent'
+                                                }`}
+                                        >
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoComparada?.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
                                                 {v.nome}
                                             </span>
                                             <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
@@ -2291,7 +2405,7 @@ function BibliotecaPage() {
                                 >
                                     Todas
                                 </button>
-                                {([['yellow', 'bg-yellow-400'], ['blue', 'bg-blue-400'], ['green', 'bg-green-400'], ['pink', 'bg-pink-400']] as const).map(([cor, classe]) => (
+                                {CORES_DESTAQUE.map(({ id: cor }) => [cor, COR_DOT[cor]] as const).map(([cor, classe]) => (
                                     <button
                                         key={cor}
                                         onClick={() => setPainelCorFiltro(painelCorFiltro === cor ? null : cor)}
@@ -2339,10 +2453,10 @@ function BibliotecaPage() {
                                             <div className="space-y-2.5">
                                                 {grupo.items.map(item => {
                                                     const corDestaque = item.tipo === 'destaque' && item.cor
-                                                        ? ({ yellow: 'bg-yellow-400', blue: 'bg-blue-400', green: 'bg-green-400', pink: 'bg-pink-400' } as Record<string, string>)[item.cor]
+                                                        ? COR_DOT[item.cor]
                                                         : null;
                                                     const corBorda = item.tipo === 'destaque' && item.cor
-                                                        ? ({ yellow: '#facc15', blue: '#60a5fa', green: '#4ade80', pink: '#f472b6' } as Record<string, string>)[item.cor]
+                                                        ? COR_BORDA[item.cor]
                                                         : null;
                                                     return (
                                         <div key={item.id} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-2 hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors group border border-slate-100 dark:border-transparent" style={corBorda ? { borderLeft: `3px solid ${corBorda}` } : undefined}>
@@ -2596,7 +2710,9 @@ function BibliotecaPage() {
                 )}
                 <h1 ref={cabecalhoRef} className="reading-serif text-3xl md:text-4xl font-semibold text-text-primary mb-3 text-center tracking-tight">
                     {livroAtual.nome} <span className="text-amber-600 dark:text-amber-400">{capituloAtual}</span>
-                    <span className="ml-2 font-sans text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">{versaoBiblia.nome}</span>
+                    <span className="ml-2 font-sans text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">
+                        {versaoBiblia.nome}{versaoComparada ? ` + ${versaoComparada.nome}` : ''}
+                    </span>
                 </h1>
 
                 {/* Player de áudio opcional — voz do dispositivo (Web Speech API) */}
@@ -2681,6 +2797,16 @@ function BibliotecaPage() {
                                             {isFavorito(v.verse) && <Heart className="w-3.5 h-3.5 text-red-400 fill-red-400 inline" />}
                                             {temNota(v.verse) && <StickyNote className="w-3.5 h-3.5 text-amber-500 inline" />}
                                         </span>
+
+                                        {/* Comparação: mesmo versículo na 2ª versão */}
+                                        {versaoComparada && textoComparado(v.verse) && (
+                                            <p className="mt-1.5 pl-3 border-l-2 border-amber-400/40 dark:border-amber-500/25 text-slate-500 dark:text-text-muted text-[0.82em] leading-[1.7] italic">
+                                                <span className="not-italic font-sans text-[10px] font-bold uppercase tracking-wider mr-1.5 text-amber-600/90 dark:text-amber-400/90">
+                                                    {versaoComparada.nome}
+                                                </span>
+                                                {textoComparado(v.verse)}
+                                            </p>
+                                        )}
 
                                         {/* MINI-TOOLBAR */}
                                         {versiculoSelecionado === v.verse && (

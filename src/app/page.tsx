@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
-  Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic
+  Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic,
+  HeartHandshake, Brain
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -43,9 +44,18 @@ export default function DashboardPage() {
 
         if (res.error) throw new Error(res.error);
         setPayload(res.data);
+        // Guarda o último payload para o dashboard abrir offline
+        try { localStorage.setItem('payload-dia-local', JSON.stringify(res.data)); } catch { /* ignore */ }
       } catch (e) {
         console.error(e);
-        setError(e instanceof Error ? e.message : 'Erro desconhecido.');
+        // Offline/erro: usa o último payload salvo no aparelho
+        try {
+          const local = localStorage.getItem('payload-dia-local');
+          if (local) setPayload(JSON.parse(local));
+          else setError(e instanceof Error ? e.message : 'Erro desconhecido.');
+        } catch {
+          setError(e instanceof Error ? e.message : 'Erro desconhecido.');
+        }
       } finally {
         setLoading(false);
       }
@@ -162,6 +172,34 @@ export default function DashboardPage() {
             continuam acessíveis por URL direta (/devocional-externo e
             /dna-categorizado) e os crons/DNA no backend seguem intactos.
           */}
+
+          {/* Card: Diário de Oração */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/oracao"
+              title="Diário de Oração"
+              desc="Registre pedidos e celebre cada resposta de Deus."
+              icon={HeartHandshake}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Oração"
+            />
+          </div>
+
+          {/* Card: Memorização */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/memorizacao"
+              title="Memorização"
+              desc="Decore versículos com revisão espaçada, no seu ritmo."
+              icon={Brain}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Treino"
+            />
+          </div>
 
           {/* Card: Anotações */}
           <div className="stagger-item">
