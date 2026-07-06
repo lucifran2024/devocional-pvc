@@ -944,7 +944,8 @@ function PlanoLeituraContent() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);  // Track reading progress
     const currentPageRef = useRef(1);  // Ref for immediate access
-    const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[] } | null>(null);
+    const [bibleData, setBibleData] = useState<{ textoFormatado: string; versiculos: Versiculo[]; capitulosCarregados: number[]; capitulosFaltantes?: string[] } | null>(null);
+    const [reloadTextoTick, setReloadTextoTick] = useState(0); // recarrega capítulos que falharam
     const [versiculosPaginaAtual, setVersiculosPaginaAtual] = useState<Versiculo[]>([]);
     const [livroInfoAtual, setLivroInfoAtual] = useState<{ abrev: string; nome: string; capitulo: number; livroId?: number }>({ abrev: '', nome: '', capitulo: 0 });
     const [inscricaoAtiva, setInscricaoAtiva] = useState<(InscricaoPlano & { plano: Plano }) | null>(null);
@@ -1129,7 +1130,7 @@ function PlanoLeituraContent() {
             }
         }
         loadBibleText();
-    }, [passagem?.referencia]);
+    }, [passagem?.referencia, reloadTextoTick]);
 
 
     // Re-sync versículos quando bibleData carrega (corrige race condition)
@@ -2584,6 +2585,29 @@ ${conteudo}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
                         <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-4 space-y-3">
                             <div ref={chatStartRef} />
+
+                            {/* Aviso: capítulos que falharam ao carregar (rede fraca) —
+                                sem isso a leitura encolhia em silêncio e o dia "completava" cedo */}
+                            {bibleData && bibleData.capitulosFaltantes && bibleData.capitulosFaltantes.length > 0 && (
+                                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-sm">
+                                    <Info className="w-4 h-4 shrink-0 mt-0.5 text-orange-500" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-orange-700 dark:text-orange-300 font-semibold">
+                                            Faltou carregar: {bibleData.capitulosFaltantes.join(', ')}
+                                        </p>
+                                        <p className="text-orange-600/80 dark:text-orange-300/70 text-xs mt-0.5">
+                                            A leitura de hoje está incompleta — verifique a conexão e recarregue.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReloadTextoTick(t => t + 1)}
+                                        className="shrink-0 px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-700 dark:text-orange-300 text-xs font-bold transition-colors"
+                                    >
+                                        Recarregar
+                                    </button>
+                                </div>
+                            )}
                             {messages.map((msg, idx) => {
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
                                 const ehUltima = idx === messages.length - 1 && msg.role === 'assistant';

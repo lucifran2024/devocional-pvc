@@ -2,6 +2,8 @@
 // BIBLE API HELPER - Busca texto bíblico da API bolls.life
 // ===========================================
 
+import { getCachedChapter, cacheChapter } from '@/lib/bible-db';
+
 export interface Versiculo {
     verse: number;
     text: string;
@@ -259,16 +261,36 @@ async function buscarCapituloFallback(livroId: number, capitulo: number): Promis
 }
 
 /**
- * Busca um capítulo completo da API (com fallback automático)
- * Tenta bolls.life primeiro, se falhar usa bible-api.com
+ * Busca um capítulo completo: cache local (IndexedDB) primeiro, depois
+ * bolls.life com RETRY, depois bible-api.com. Antes, um timeout de 5s
+ * descartava o capítulo em silêncio — na Leitura do Dia isso encolhia a
+ * leitura (o João do fim sumia e o dia "completava" na parte errada).
  */
 export async function buscarCapitulo(livroId: number, capitulo: number): Promise<Versiculo[]> {
-    // Tenta API primária (bolls.life)
-    const resultado = await buscarCapituloBolls(livroId, capitulo);
-    if (resultado.length > 0) return resultado;
+    // 0. Cache local: instantâneo, funciona offline e imune a queda de API
+    if (typeof window !== 'undefined') {
+        try {
+            const cached = await getCachedChapter('NTLH', livroId, capitulo);
+            if (cached && cached.length > 0) return cached;
+        } catch { /* IndexedDB indisponível — segue para a rede */ }
+    }
 
-    // Fallback para bible-api.com
-    return await buscarCapituloFallback(livroId, capitulo);
+    // 1. API primária com 2 tentativas (rede móvel oscila; 1 timeout não pode derrubar o capítulo)
+    let resultado: Versiculo[] = [];
+    for (let tentativa = 1; tentativa <= 2 && resultado.length === 0; tentativa++) {
+        resultado = await buscarCapituloBolls(livroId, capitulo);
+    }
+
+    // 2. Fallback para bible-api.com
+    if (resultado.length === 0) {
+        resultado = await buscarCapituloFallback(livroId, capitulo);
+    }
+
+    // Guarda no cache local para as próximas leituras (e para offline)
+    if (resultado.length > 0 && typeof window !== 'undefined') {
+        cacheChapter('NTLH', livroId, capitulo, resultado).catch(() => { });
+    }
+    return resultado;
 }
 
 /**
@@ -280,25 +302,30 @@ export async function buscarPassagem(referencia: string): Promise<{
     textoFormatado: string;
     versiculos: Versiculo[];
     capitulosCarregados: number[];
+    capitulosFaltantes: string[];
 } | null> {
     // Suporte a referências multi-livro (ex: "Jeremias 51-52; Lamentações 1" ou "Gênesis 1-5, Mateus 1-2")
     const partes = referencia.split(/[,;]/).map(p => p.trim()).filter(Boolean);
 
     let todosVersiculos: Versiculo[] = [];
     const capitulosCarregados: number[] = [];
+    // Capítulos que falharam mesmo com retry — a página avisa em vez de
+    // fingir que a leitura terminou mais cedo.
+    const capitulosFaltantes: string[] = [];
 
     for (const parte of partes) {
         const parsed = parseReferencia(parte);
         if (!parsed) {
             console.warn('⚠️ [BIBLE-API] Não foi possível parsear parte:', parte);
+            capitulosFaltantes.push(parte);
             continue;
         }
 
         const { livroId, capituloInicio, capituloFim, versiculoInicio, versiculoFim } = parsed;
 
-        // Busca todos os capítulos em paralelo (máximo 5 por parte)
+        // Busca todos os capítulos em paralelo (máximo 10 por parte)
         const capitulos: number[] = [];
-        for (let c = capituloInicio; c <= Math.min(capituloFim, capituloInicio + 4); c++) {
+        for (let c = capituloInicio; c <= Math.min(capituloFim, capituloInicio + 9); c++) {
             capitulos.push(c);
         }
 
@@ -311,6 +338,8 @@ export async function buscarPassagem(referencia: string): Promise<{
                 capitulosCarregados.push(capitulos[idx]);
                 const versiculosComCap = versiculos.map(v => ({ ...v, chapter: capitulos[idx], livroId, livro: parsed.livro }));
                 todosVersiculos = todosVersiculos.concat(versiculosComCap);
+            } else {
+                capitulosFaltantes.push(`${ID_PARA_NOME_PT[livroId] || parsed.livro} ${capitulos[idx]}`);
             }
         });
 
@@ -336,7 +365,11 @@ export async function buscarPassagem(referencia: string): Promise<{
         .map(v => `**${v.verse}.** ${v.text}`)
         .join('\n');
 
-    return { textoFormatado, versiculos: todosVersiculos, capitulosCarregados };
+    if (capitulosFaltantes.length > 0) {
+        console.warn('⚠️ [BIBLE-API] Capítulos que falharam ao carregar:', capitulosFaltantes.join(', '));
+    }
+
+    return { textoFormatado, versiculos: todosVersiculos, capitulosCarregados, capitulosFaltantes };
 }
 
 /**
