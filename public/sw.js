@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pvc-v9';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'pvc-v10';
+const PAGINAS = [
     '/',
     '/login',
     '/biblioteca',
@@ -8,6 +8,9 @@ const STATIC_ASSETS = [
     '/anotacoes',
     '/oracao',
     '/memorizacao',
+];
+const STATIC_ASSETS = [
+    ...PAGINAS,
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
@@ -31,12 +34,31 @@ function fetchComTimeout(request, ms) {
 // Install: Cache static assets + offline fallback
 // allSettled: se UMA rota falhar (ex: rede caiu no meio), as demais
 // ainda entram no cache — addAll falharia o precache inteiro.
+//
+// CRÍTICO: só o HTML não basta para abrir offline — sem os bundles
+// JS/CSS a página fica branca. Por isso, depois de cachear as páginas,
+// lemos o HTML de cada uma e cacheamos todos os /_next/static/
+// referenciados (chunks, css, fontes). Assim o app abre offline
+// mesmo logo após um deploy novo.
+async function precache() {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.allSettled(STATIC_ASSETS.map((url) => cache.add(url)));
+
+    const assets = new Set();
+    for (const url of PAGINAS) {
+        try {
+            const resp = await cache.match(url);
+            if (!resp) continue;
+            const html = await resp.text();
+            const refs = html.match(/\/_next\/static\/[^"'\s\\<>]+/g) || [];
+            for (const ref of refs) assets.add(ref);
+        } catch { /* página fora do cache — segue */ }
+    }
+    await Promise.allSettled([...assets].map((url) => cache.add(url)));
+}
+
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return Promise.allSettled(STATIC_ASSETS.map((url) => cache.add(url)));
-        })
-    );
+    event.waitUntil(precache());
     self.skipWaiting();
 });
 
