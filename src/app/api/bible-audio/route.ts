@@ -46,6 +46,19 @@ interface VersoLimpo {
     texto: string;
 }
 
+// Hash curto do conjunto de versículos pedido. Entra no caminho do cache:
+// o Ler Passagem manda só a parte do dia (às vezes de 2 capítulos) e o
+// cache por capítulo inteiro devolvia áudio/tempos de OUTRO conjunto —
+// a marcação do versículo em reprodução se perdia.
+function hashVersos(verses: VersiculoEntrada[]): string {
+    const key = verses.map(v => v.verse).join(',');
+    let h = 5381;
+    for (let i = 0; i < key.length; i++) {
+        h = ((h << 5) + h + key.charCodeAt(i)) >>> 0;
+    }
+    return h.toString(36);
+}
+
 function escaparXml(t: string): string {
     return t
         .replace(/&/g, '&amp;')
@@ -138,7 +151,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-    const pastaCap = `${VOZ}/${CACHE_VERSION}/${livroId}/${capitulo}`;
+    const pastaCap = `${VOZ}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}`;
     const fullPath = `${pastaCap}/full.mp3`;
     const metaPath = `${pastaCap}/full.json`;
 

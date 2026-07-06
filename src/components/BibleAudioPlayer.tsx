@@ -56,11 +56,11 @@ export function BibleAudioPlayer({
     const lastSegIdxRef = useRef(-1);
 
     const versiculosRef = useRef<VersiculoFala[]>(versiculos);
-    versiculosRef.current = versiculos;
     const onVerseChangeRef = useRef(onVerseChange);
-    onVerseChangeRef.current = onVerseChange;
     const capituloRef = useRef(capitulo);
-    capituloRef.current = capitulo;
+    useEffect(() => { versiculosRef.current = versiculos; }, [versiculos]);
+    useEffect(() => { onVerseChangeRef.current = onVerseChange; }, [onVerseChange]);
+    useEffect(() => { capituloRef.current = capitulo; }, [capitulo]);
 
     const temSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -162,6 +162,7 @@ export function BibleAudioPlayer({
     const atualizarVerse = (segIdx: number, lista: VersiculoFala[]) => {
         lastSegIdxRef.current = segIdx;
         const seg = segmentsRef.current[segIdx];
+        if (seg.listIdx < 0) return; // segmento sem versículo correspondente na lista
         idxRef.current = seg.listIdx;
         setPosicao(seg.listIdx);
         const v = lista[seg.listIdx];
@@ -194,12 +195,21 @@ export function BibleAudioPlayer({
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.ok && data.fullUrl && Array.isArray(data.segments)) {
-                    segmentsRef.current = data.segments.map((s: { verse: number; start: number; end: number }) => ({
-                        verse: Number(s.verse),
-                        start: Number(s.start),
-                        end: Number(s.end),
-                        listIdx: lista.findIndex(v => v.verse === Number(s.verse)),
-                    }));
+                    // Casamento SEQUENCIAL segmento → lista: os segmentos chegam na
+                    // mesma ordem dos versículos enviados. Buscar só por número
+                    // (findIndex) errava quando a parte cruza capítulos e o mesmo
+                    // número aparece duas vezes (ex: Gn 4:26 e Gn 5:26).
+                    let ponteiro = 0;
+                    segmentsRef.current = data.segments.map((s: { verse: number; start: number; end: number }) => {
+                        const vNum = Number(s.verse);
+                        let idx = -1;
+                        for (let i = ponteiro; i < lista.length; i++) {
+                            if (lista[i].verse === vNum) { idx = i; break; }
+                        }
+                        if (idx === -1) idx = lista.findIndex(v => v.verse === vNum);
+                        if (idx >= 0) ponteiro = idx + 1;
+                        return { verse: vNum, start: Number(s.start), end: Number(s.end), listIdx: idx };
+                    });
 
                     const audio = audioRef.current!;
                     audio.src = data.fullUrl;

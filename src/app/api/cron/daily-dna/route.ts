@@ -5,11 +5,11 @@ import {
     getMessageDedupKey,
     inferCategoriaParaGeracao,
     processGeneratedContent,
-    splitTelegramText,
 } from '@/lib/dna-processing';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// Telegram removido deste cron (2026-07-06): as gerações de DNA continuam
+// sendo salvas para alimentar o app, mas só a Palavra da Manhã (daily-push
+// às 07:00) vai ao Telegram.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,8 +33,6 @@ interface ExecuteGenerationResult {
 
 function ensureEnv() {
     const missing: string[] = [];
-    if (!TELEGRAM_BOT_TOKEN) missing.push('TELEGRAM_BOT_TOKEN');
-    if (!TELEGRAM_CHAT_ID) missing.push('TELEGRAM_CHAT_ID');
     if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL');
     if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseAnonKey) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
@@ -70,51 +68,6 @@ function getDataHoje(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 }
 
-function delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_ids: number[] }> {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        console.error('Telegram não configurado.');
-        return { ok: false, message_ids: [] };
-    }
-
-    const partes = splitTelegramText(texto);
-    const message_ids: number[] = [];
-    let envioCompleto = true;
-
-    for (const parte of partes) {
-        try {
-            const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: parte,
-                }),
-            });
-
-            const data = await resp.json();
-            if (!data.ok) {
-                console.error('Telegram error:', data.description);
-                envioCompleto = false;
-            } else {
-                const mid = data.result?.message_id;
-                message_ids.push(mid);
-                console.log(`DNA enviado: message_id=${mid}`);
-            }
-        } catch (error) {
-            console.error('Erro ao enviar Telegram:', error);
-            envioCompleto = false;
-        }
-
-        await delay(1000);
-    }
-
-    return { ok: envioCompleto, message_ids };
-}
-
 async function gerarConteudo(
     modoId: string,
     data: string,
@@ -145,64 +98,6 @@ async function gerarConteudo(
         console.error('Erro ao chamar Edge Function:', error);
         return null;
     }
-}
-
-async function selecionarMelhorMensagemIA(
-    mensagens: string[],
-    tipo: string
-): Promise<string> {
-    if (mensagens.length <= 1) return mensagens[0] || '';
-
-    try {
-        const listaFormatada = mensagens
-            .map((msg, i) => `--- MENSAGEM ${i + 1} ---\n${msg}`)
-            .join('\n\n');
-
-        const prompt = `Voce e um curador de conteudo cristao. Abaixo estao ${mensagens.length} mensagens do tipo "${tipo}".
-
-Escolha a MELHOR mensagem considerando:
-1. Impacto espiritual - toca o coracao
-2. Originalidade - nao e generica ou cliche
-3. Naturalidade - nao parece gerada por IA
-4. Clareza - a mensagem e facil de entender
-5. Profundidade - tem substancia teologica
-
-Responda APENAS com o numero da melhor mensagem. Exemplo: 3
-
-${listaFormatada}`;
-
-        const resp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${supabaseAnonKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                modo_id: 'chat_pastoral',
-                data: getDataHoje(),
-                pergunta: prompt,
-            }),
-        });
-
-        if (resp.ok) {
-            const json = await resp.json();
-            const resultado = (json.resultado || '').trim();
-            const match = resultado.match(/(\d+)/);
-            if (match) {
-                const idx = parseInt(match[1], 10) - 1;
-                if (idx >= 0 && idx < mensagens.length) {
-                    console.log(`[${tipo}] IA selecionou mensagem #${idx + 1} de ${mensagens.length}`);
-                    return mensagens[idx];
-                }
-            }
-        }
-    } catch (error) {
-        console.error(`[${tipo}] Erro na selecao por IA, usando fallback:`, error);
-    }
-
-    // Fallback: retorna a primeira
-    console.log(`[${tipo}] Fallback: usando primeira mensagem`);
-    return mensagens[0];
 }
 
 async function gerarMensagensValidadas(
@@ -285,11 +180,8 @@ export async function GET(request: Request) {
         ensureEnv();
         const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
         const dataHoje = getDataHoje();
-        const mensagensEnviadas: string[] = [];
 
-        // ===== DNA GERACAO (favoritas): gera -> salva -> ENVIA imediatamente =====
-        // Envia assim que pronto (antes de gerar o estilo) para garantir a
-        // entrega no Telegram mesmo se a funcao estourar o tempo depois.
+        // ===== DNA GERACAO (favoritas): gera -> salva (sem Telegram) =====
         const filtrosFavoritas = getFiltrosDoDia(dataHoje, 'favoritas');
         console.log('Filtros Favoritas:', JSON.stringify(filtrosFavoritas));
         const favoritas = await gerarMensagensValidadas('modo_favoritas', dataHoje, filtrosFavoritas);
@@ -304,20 +196,13 @@ export async function GET(request: Request) {
 
             const { error } = await supabase.from('dna_geracoes').insert(records);
             if (error) {
-                // Falha ao salvar nao impede a entrega ao Telegram
                 console.error(`Erro ao salvar favoritas (${batchId}): ${error.message}`);
             } else {
                 console.log(`Favoritas: ${records.length} msgs salvas (batch: ${batchId})`);
             }
-
-            const melhorFavorita = await selecionarMelhorMensagemIA(favoritas.messages, 'DNA Geração');
-            const msgDna = `DNA Geração\n\n${melhorFavorita}`;
-            const enviou = await enviarTelegram(msgDna);
-            if (enviou.ok) mensagensEnviadas.push('DNA Geração');
-            await delay(2000);
         }
 
-        // ===== DNA ESTILO: gera -> salva -> envia =====
+        // ===== DNA ESTILO: gera -> salva (sem Telegram) =====
         const filtrosEstilo = getFiltrosDoDia(dataHoje, 'estilo');
         console.log('Filtros Estilo:', JSON.stringify(filtrosEstilo));
         const estilo = await gerarMensagensValidadas('modo_estilo', dataHoje, filtrosEstilo);
@@ -336,21 +221,14 @@ export async function GET(request: Request) {
             } else {
                 console.log(`Estilo: ${records.length} msgs salvas (batch: ${batchId})`);
             }
-
-            const melhorEstilo = await selecionarMelhorMensagemIA(estilo.messages, 'DNA Estilo');
-            const msgEstilo = `DNA Estilo (${String(filtrosEstilo.estilo || '-')})\n\n${melhorEstilo}`;
-            const enviou = await enviarTelegram(msgEstilo);
-            if (enviou.ok) mensagensEnviadas.push('DNA Estilo');
-            await delay(2000);
         }
 
         return NextResponse.json({
             ok: true,
             data: dataHoje,
+            telegram: 'desativado_neste_cron',
             filtros_favoritas: filtrosFavoritas,
             filtros_estilo: filtrosEstilo,
-            mensagens_enviadas: mensagensEnviadas,
-            total: mensagensEnviadas.length,
             favoritas_validas: favoritas.messages.length,
             favoritas_rejeitadas: favoritas.rejectedCount,
             favoritas_faltantes: favoritas.shortfall,

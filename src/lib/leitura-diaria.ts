@@ -65,6 +65,97 @@ export async function marcarLeituraDiaria(data: string): Promise<boolean> {
     return true;
 }
 
+// ===========================================
+// MARCAÇÃO POR PARTE
+// partes_lidas NULL = dia marcado inteiro (legado / botão antigo).
+// O dia conta como lido quando todas as partes foram marcadas.
+// ===========================================
+
+export interface LeituraDia {
+    existe: boolean;
+    partesLidas: number[] | null;
+    totalPartes: number | null;
+}
+
+export async function getLeituraDia(data: string): Promise<LeituraDia> {
+    const vazio: LeituraDia = { existe: false, partesLidas: null, totalPartes: null };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return vazio;
+
+    const { data: row, error } = await supabase
+        .from('leitura_diaria_lida')
+        .select('partes_lidas, total_partes')
+        .eq('user_id', user.id)
+        .eq('data', data)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Erro ao buscar leitura do dia:', error.message);
+        return vazio;
+    }
+    if (!row) return vazio;
+    return {
+        existe: true,
+        partesLidas: (row.partes_lidas as number[] | null) ?? null,
+        totalPartes: (row.total_partes as number | null) ?? null,
+    };
+}
+
+export async function marcarParteLida(data: string, parte: number, totalPartes: number): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const atual = await getLeituraDia(data);
+    // Registro legado (dia inteiro): considera todas as partes já lidas
+    const base = atual.existe && atual.partesLidas === null
+        ? Array.from({ length: totalPartes }, (_, i) => i + 1)
+        : (atual.partesLidas || []);
+    const partes = [...new Set([...base, parte])].sort((a, b) => a - b);
+
+    const { error } = await supabase
+        .from('leitura_diaria_lida')
+        .upsert(
+            { user_id: user.id, data, partes_lidas: partes, total_partes: totalPartes },
+            { onConflict: 'user_id,data' }
+        );
+
+    if (error) {
+        console.error('Erro ao marcar parte lida:', error.message);
+        return false;
+    }
+    return true;
+}
+
+export async function desmarcarParteLida(data: string, parte: number, totalPartes: number): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const atual = await getLeituraDia(data);
+    if (!atual.existe) return true;
+
+    const base = atual.partesLidas === null
+        ? Array.from({ length: totalPartes }, (_, i) => i + 1)
+        : atual.partesLidas;
+    const partes = base.filter(p => p !== parte);
+
+    if (partes.length === 0) {
+        return desmarcarLeituraDiaria(data);
+    }
+
+    const { error } = await supabase
+        .from('leitura_diaria_lida')
+        .upsert(
+            { user_id: user.id, data, partes_lidas: partes, total_partes: totalPartes },
+            { onConflict: 'user_id,data' }
+        );
+
+    if (error) {
+        console.error('Erro ao desmarcar parte:', error.message);
+        return false;
+    }
+    return true;
+}
+
 export async function desmarcarLeituraDiaria(data: string): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
@@ -95,12 +186,16 @@ export async function getProgressoLeituraAnual(): Promise<ProgressoLeituraAnual>
     const [lidasRes, total] = await Promise.all([
         supabase
             .from('leitura_diaria_lida')
-            .select('data')
+            .select('data, partes_lidas, total_partes')
             .eq('user_id', user.id),
         getTotalDiasPlano(),
     ]);
 
-    const datasLidas = (lidasRes.data || []).map((r: { data: string }) => r.data);
+    // Dia completo = registro legado (sem partes) OU todas as partes lidas
+    const datasLidas = (lidasRes.data || [])
+        .filter((r: { partes_lidas: number[] | null; total_partes: number | null }) =>
+            r.partes_lidas === null || r.partes_lidas.length >= (r.total_partes || 1))
+        .map((r: { data: string }) => r.data);
     const lidos = datasLidas.length;
     const pct = total > 0 ? Math.round((lidos / total) * 100) : 0;
 
