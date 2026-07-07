@@ -2746,9 +2746,24 @@ function BibliotecaPage() {
                 {error && !loading && (
                     <div className="glass-panel rounded-xl p-8 text-center max-w-md mx-auto border border-orange-500/30 bg-orange-500/10">
                         <WifiOff className="w-12 h-12 text-orange-400 mx-auto mb-4" />
-                        <p className="text-orange-700 dark:text-orange-200 font-bold text-lg mb-2">Sem conexão</p>
-                        <p className="text-text-muted text-sm mb-6">{error}</p>
-                        <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold">Tentar Novamente</button>
+                        <p className="text-orange-700 dark:text-orange-200 font-bold text-lg mb-2">
+                            {!isOnline ? 'Este capítulo não está baixado' : 'Sem conexão'}
+                        </p>
+                        <p className="text-text-muted text-sm mb-6">
+                            {!isOnline
+                                ? 'Você está offline e este capítulo ainda não foi salvo no aparelho. Baixe a Bíblia para ler sem internet.'
+                                : error}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                            <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold">
+                                Tentar Novamente
+                            </button>
+                            {!isOnline && (
+                                <button onClick={() => setOfflineManagerAberto(true)} className="px-6 py-3 rounded-xl bg-surface-2 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold flex items-center justify-center gap-2">
+                                    <Download className="w-4 h-4" /> Baixar Bíblia
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
