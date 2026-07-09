@@ -158,6 +158,9 @@ function limparTextoGerado(texto: string): string {
     /^\s*(?:note|plan|thinking|planejamento|racioc[ií]nio)\s*:[^\n]*$/gim,
     /^\s*\[[^\]\n]{2,}\]\s*$/gim, // linha que é só um placeholder do template, ex.: [Título...]
     /^\s*(?:title|body|t[íi]tulo|corpo|closing|fechamento)\s*:[^\n]*$/gim, // rótulos de rascunho
+    /^\s*sentence\s*\d+\s*[:.)\-–][^\n]*$/gim, // esqueleto vazado: "Sentence 1: Introduce passage."
+    /^\s*(?:blank line|line break|new line|empty line|paragraph)\b[^\n]*$/gim, // "Blank line." / "Paragraph"
+    /^\s*(?:introduce|introduces|explain|explains|describe|describes|summari[sz]e|conclude|mention|include|outline|draft|opening line|closing line)\b[^\n]*$/gim, // instruções de formato em inglês
   ];
   for (const re of linhasRaciocinio) t = t.replace(re, '');
 
@@ -181,19 +184,129 @@ function pareceVazamentoRaciocinio(texto: string): boolean {
   if (/\[\s*(?:t[íi]tulo|corpo|fechamento|mensagem|body|title)/i.test(t)) return true;
   if (/vers[íi]culo de apoio|—\s*ref\b/i.test(t)) return true;
   if (/^\s*(?:title|body|t[íi]tulo|corpo|closing|fechamento)\s*:/im.test(t)) return true;
-  const en = (t.toLowerCase().match(/\b(the|we|need|needs|must|should|verse|title|body|format|category|character|characters|produce|context|style|closing|brief|message|today|then|include|reference|maybe|aim)\b/g) || []).length;
-  return en >= 5;
+  // Esqueleto/outline vazado (o modelo descreve o formato em vez de escrevê-lo).
+  if (/^\s*sentence\s*\d+\s*[:.]/im.test(t)) return true;
+  if (/\b(blank line|introduce (?:the )?passage|explain (?:the )?meaning|opening line|closing line|first sentence|second sentence|third sentence)\b/i.test(t)) return true;
+  const en = (t.toLowerCase().match(/\b(the|we|need|needs|must|should|verse|title|body|format|category|character|characters|produce|context|style|closing|brief|message|today|then|include|reference|maybe|aim|sentence|introduce|explain|meaning|passage|line|blank|paragraph|describe|summary|summari[sz]e|outline|draft|structure|opening)\b/g) || []).length;
+  return en >= 4;
 }
 
-// Fallback seguro caso a geracao da Palavra da Manha falhe ou vaze raciocinio.
-const FALLBACK_PALAVRA = `BOM DIA, FILHO AMADO
+// Fallbacks seguros caso a geracao da Palavra da Manha falhe ou vaze raciocinio.
+// São VÁRIOS e rotacionam por dia — antes era um texto único, então quando a
+// geração falhava vários dias seguidos o app mostrava sempre a mesma mensagem.
+const FALLBACKS_PALAVRA = [
+  `NOVO DIA, NOVA GRAÇA
 
-Hoje e um novo dia que o Senhor preparou para voce. Respire fundo, entregue a Ele as suas preocupacoes e caminhe em paz, confiando que Ele cuida de cada detalhe da sua vida.
+O Senhor preparou este dia para você. Respire fundo, entregue a Ele as suas preocupações e caminhe em paz, confiando que Ele cuida de cada detalhe da sua vida.
 
-«Este e o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.»
+«Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.»
 Salmos 118:24
 
-Va com a certeza de que o amor de Deus te acompanha hoje.`;
+Vá com a certeza de que o amor de Deus te acompanha hoje.`,
+
+  `AS MISERICÓRDIAS SE RENOVAM
+
+O que passou, passou. Hoje a bondade de Deus recomeça sobre você — não pelo que fez, mas por quem Ele é. Levante os olhos e receba um novo começo.
+
+«As misericórdias do Senhor são a causa de não sermos consumidos; renovam-se cada manhã.»
+Lamentações 3:22-23
+
+Comece este dia sabendo que a graça já chegou antes de você.`,
+
+  `NÃO TEMA, EU TE SUSTENTO
+
+Antes que a ansiedade fale mais alto, ouça a voz que te firma. Você não caminha sozinho: a mão que sustenta o universo segura também a sua.
+
+«Não temas, porque eu sou contigo; eu te fortaleço, te ajudo e te sustento com a minha destra fiel.»
+Isaías 41:10
+
+Siga hoje apoiado n'Aquele que nunca solta a tua mão.`,
+
+  `TROQUE A PREOCUPAÇÃO PELA PAZ
+
+Há uma troca oferecida a você hoje: entregar o peso e receber a paz. Ore, agradeça, e deixe que Deus guarde o teu coração.
+
+«Não estejais inquietos por coisa alguma; e a paz de Deus guardará os vossos corações.»
+Filipenses 4:6-7
+
+Entregue o dia nas mãos d'Ele e caminhe leve.`,
+
+  `DEUS É O TEU REFÚGIO
+
+Mesmo que tudo pareça instável, existe um lugar firme. Deus é abrigo e força — perto, presente e pronto para te socorrer agora.
+
+«Deus é o nosso refúgio e fortaleza, socorro bem presente na angústia.»
+Salmos 46:1
+
+Descanse hoje na certeza de que Ele está contigo.`,
+];
+
+// Escolhe um fallback de forma determinística por data (rotaciona ao longo dos dias).
+function escolherFallbackPalavra(data: string): string {
+  const d = new Date(data);
+  const chave = Number.isNaN(d.getTime())
+    ? 0
+    : d.getUTCFullYear() * 372 + d.getUTCMonth() * 31 + d.getUTCDate();
+  return FALLBACKS_PALAVRA[Math.abs(chave) % FALLBACKS_PALAVRA.length];
+}
+
+// ── Extração de versículo (para anti-repetição de 365 dias) ──────────────────
+// Livros da Bíblia em PT (normalizados: minúsculo, sem acento) para validar
+// referências extraídas e evitar falsos positivos como "capítulo 3:16".
+const LIVROS_BIBLIA_SET = new Set([
+  'genesis','exodo','levitico','numeros','deuteronomio','josue','juizes','rute',
+  '1 samuel','2 samuel','1 reis','2 reis','1 cronicas','2 cronicas','esdras','neemias','ester',
+  'jo','salmo','salmos','proverbios','eclesiastes','cantico','canticos','cantares',
+  'isaias','jeremias','lamentacoes','ezequiel','daniel','oseias','joel','amos','obadias','jonas',
+  'miqueias','naum','habacuque','sofonias','ageu','zacarias','malaquias',
+  'mateus','marcos','lucas','joao','atos','romanos','1 corintios','2 corintios','galatas',
+  'efesios','filipenses','colossenses','1 tessalonicenses','2 tessalonicenses','1 timoteo','2 timoteo',
+  'tito','filemom','hebreus','tiago','1 pedro','2 pedro','1 joao','2 joao','3 joao','judas','apocalipse',
+]);
+
+function normalizarRefTexto(s: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Extrai a referência bíblica de um texto (ex.: "Salmos 118:24", "1 Coríntios 13:4").
+// Prefere a ÚLTIMA referência válida (normalmente o versículo de apoio no fim).
+function extrairVersiculoRef(texto: string): { ref: string; norm: string } | null {
+  if (!texto) return null;
+  const re = /([1-3]|I{1,3})?\s*([A-Za-zÀ-ÿ]{2,})(?:\s+([A-Za-zÀ-ÿ]{2,}))?\.?\s+(\d{1,3})\s*[:.]\s*(\d{1,3})(?:\s*-\s*\d{1,3})?/g;
+  let m: RegExpExecArray | null;
+  const achados: { ref: string; norm: string }[] = [];
+  while ((m = re.exec(texto)) !== null) {
+    const numPref = (m[1] || '').replace(/I{3}/i, '3').replace(/I{2}/i, '2').replace(/I/i, '1').trim();
+    const w1 = m[2];
+    const w2 = m[3] || '';
+    const cap = m[4];
+    const ver = m[5];
+    const cand2 = normalizarRefTexto((numPref ? numPref + ' ' : '') + w1 + (w2 ? ' ' + w2 : ''));
+    const cand1 = normalizarRefTexto((numPref ? numPref + ' ' : '') + w1);
+    let bookNorm = '';
+    let bookDisp = '';
+    const candW2 = w2 ? normalizarRefTexto(w2) : '';
+    if (w2 && LIVROS_BIBLIA_SET.has(cand2)) {
+      bookNorm = cand2;
+      bookDisp = (numPref ? numPref + ' ' : '') + w1 + ' ' + w2;
+    } else if (LIVROS_BIBLIA_SET.has(cand1)) {
+      bookNorm = cand1;
+      bookDisp = (numPref ? numPref + ' ' : '') + w1;
+    } else if (candW2 && LIVROS_BIBLIA_SET.has(candW2)) {
+      // Palavra comum antes do livro (ex.: "diz João 3:16"): o 2º token é o livro.
+      bookNorm = candW2;
+      bookDisp = w2;
+    }
+    if (!bookNorm) continue;
+    achados.push({ ref: `${bookDisp} ${cap}:${ver}`, norm: `${bookNorm} ${cap}:${ver}` });
+  }
+  return achados.length ? achados[achados.length - 1] : null;
+}
 
 // Trava de léxico: força o modelo a reaproveitar o vocabulário dominante do DNA.
 const STOPWORDS_DNA = new Set([
@@ -2462,6 +2575,22 @@ Gere as 10 mensagens agora:
 
       const contextoEvitar = historicoRecente?.map(h => `(Evite repetir este tema/estilo): ${h.mensagem.substring(0, 50)}...`).join('\n') || "Nenhum histórico recente.";
 
+      // 3b. Buscar versículos já usados nos últimos 365 dias (anti-repetição de verso).
+      const dataLimiteVers = new Date(data);
+      dataLimiteVers.setUTCDate(dataLimiteVers.getUTCDate() - 365);
+      const dataLimiteStr = dataLimiteVers.toISOString().slice(0, 10);
+      const { data: versUsadosRows } = await supabase
+        .from("palavra_manha_versiculos")
+        .select("versiculo_ref, ref_norm")
+        .gte("data", dataLimiteStr)
+        .order("data", { ascending: false });
+
+      const versUsadosSet = new Set((versUsadosRows || []).map((v: any) => v.ref_norm));
+      const versUsadosLista = [...new Set((versUsadosRows || []).map((v: any) => v.versiculo_ref))];
+      const secaoVersEvitar = versUsadosLista.length
+        ? `\n## VERSÍCULOS JÁ USADOS (NÃO REPETIR — últimos 365 dias):\nNÃO use nenhum destes versículos como base ou apoio hoje. Escolha um DIFERENTE:\n${versUsadosLista.join(', ')}\n`
+        : '';
+
       // 4. Buscar Favoritas (DNA BASE)
       const { data: favoritas } = await supabase
         .from("dna_categorizado")
@@ -2503,7 +2632,7 @@ ${passagemRef ? `- **BASE BÍBLICA OBRIGATÓRIA:** ${passagemRef}\n"${passagemTe
 
 ## ANTI-REPETIÇÃO (O QUE NÃO FAZER):
 ${contextoEvitar}
-
+${secaoVersEvitar}
 ## INSTRUÇÕES DE GERAÇÃO:
 Gere UMA ÚNICA mensagem que siga estritamente a configuração acima.
 
@@ -2523,19 +2652,33 @@ ${config.categoria === 'VERSICULO' || config.extra === 'Passagem do Dia' ? '' : 
 NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamento:". NUNCA use colchetes [ ]. NUNCA escreva contagem de caracteres, instruções, planejamento ou qualquer texto em inglês. Escreva somente o conteúdo real, pronto para enviar.
 `;
 
-      // 6. Chamar LLM. A Palavra usa o combo "openclaw" do 9Router (modelos
-      // melhores que os :free); se o túnel não estiver setado, cai no OpenRouter.
-      // Teto de tokens BAIXO: ~320 tokens cobrem folgado o limite de caracteres
-      // pedido no prompt (400/600) e impedem o "textão" de 1500+ chars.
+      // 6. Chamar LLM. Palavra da Manhã é tarefa CRIATIVA em PT — usa modelos
+      // INSTRUCT (não-raciocínio). Modelos de raciocínio (ex.: gpt-oss-120b,
+      // nemotron-reasoning) vazavam o rascunho ("Sentence 1: Introduce passage...")
+      // em vez do texto final. Se o túnel do 9Router estiver setado, ainda o
+      // usamos, mas com um modelo não-raciocínio à frente do combo "openclaw".
       const epPalavra = get9RouterEndpoint();
-      const llmPalavra = await gerarTexto(prompt, {
-        temperature: 0.85,
-        maxTokens: 320,
-        models: epPalavra.useTunnel ? ['openclaw', 'gemini/gemini-3-flash-preview', 'ds/deepseek-v4-flash'] : undefined,
+      const MODELOS_PALAVRA_OR = [
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'google/gemma-4-31b-it:free',
+        'deepseek/deepseek-v4-flash',
+      ];
+      const modelosPalavra = epPalavra.useTunnel
+        ? ['gemini/gemini-3-flash-preview', 'openclaw', 'ds/deepseek-v4-flash']
+        : MODELOS_PALAVRA_OR;
+
+      // Teto de tokens: modelos instruct são concisos; 500 dá folga p/ o limite
+      // de caracteres (400/600) sem virar "textão" (o corte por chars ainda existe).
+      const gerarPalavra = (promptTxt: string, temp: number) => gerarTexto(promptTxt, {
+        temperature: temp,
+        maxTokens: 500,
+        models: modelosPalavra,
         baseUrl: epPalavra.useTunnel ? epPalavra.url : undefined,
         apiKey: epPalavra.useTunnel ? epPalavra.apiKey : undefined,
       });
 
+      const llmPalavra = await gerarPalavra(prompt, 0.85);
       if (!llmPalavra.ok) throw new Error(`Erro LLM: ${llmPalavra.error}`);
 
       // ENFORCEMENT DE TAMANHO: rede de segurança caso o modelo ainda exceda.
@@ -2545,26 +2688,38 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
       // Limpa raciocinio vazado (mesma rede dos modos favoritas/estilo).
       let textoPalavra = limparTextoGerado(llmPalavra.text || "");
 
-      // Se o modelo vazou planejamento/ingles em vez da mensagem, regenera 1x com instrucao firme.
+      // Se o modelo vazou planejamento/esqueleto em vez da mensagem, regenera 1x.
       if (pareceVazamentoRaciocinio(textoPalavra)) {
         console.warn('⚠️ [PALAVRA DA MANHÃ] Vazamento de raciocínio detectado — regenerando...');
-        const retryPalavra = await gerarTexto(
-          prompt + '\n\nRESPONDA SOMENTE com a mensagem final em PORTUGUÊS (título em maiúsculas, corpo, versículo e fechamento). NÃO escreva raciocínio, planejamento, contagem de caracteres, nem nada em inglês.',
-          {
-            temperature: 0.7,
-            maxTokens: 320,
-            models: epPalavra.useTunnel ? ['openclaw', 'gemini/gemini-3-flash-preview', 'ds/deepseek-v4-flash'] : undefined,
-            baseUrl: epPalavra.useTunnel ? epPalavra.url : undefined,
-            apiKey: epPalavra.useTunnel ? epPalavra.apiKey : undefined,
-          }
+        const retryPalavra = await gerarPalavra(
+          prompt + '\n\nRESPONDA SOMENTE com a mensagem final em PORTUGUÊS (título em maiúsculas, corpo, versículo e fechamento). NÃO escreva raciocínio, esqueleto, "Sentence 1/2/3", planejamento, contagem de caracteres, nem nada em inglês.',
+          0.7,
         );
         if (retryPalavra.ok) textoPalavra = limparTextoGerado(retryPalavra.text || "");
       }
 
-      // Se ainda assim ficou vazio/curto demais ou continua vazando, usa fallback seguro.
+      // ANTI-REPETIÇÃO DE VERSÍCULO (garantia forte): se o versículo usado já
+      // apareceu nos últimos 365 dias, regenera 1x pedindo explicitamente outro.
+      if (textoPalavra && textoPalavra.length >= 40 && !pareceVazamentoRaciocinio(textoPalavra) && !passagemRef) {
+        const refTmp = extrairVersiculoRef(textoPalavra);
+        if (refTmp && versUsadosSet.has(refTmp.norm)) {
+          console.warn(`⚠️ [PALAVRA DA MANHÃ] Versículo repetido (${refTmp.ref}) — regenerando com outro...`);
+          const retryVers = await gerarPalavra(
+            prompt + `\n\nATENÇÃO: NÃO use o versículo "${refTmp.ref}" nem nenhum já listado como usado nos últimos 365 dias. Escolha um versículo DIFERENTE. Responda só com a mensagem final em português.`,
+            0.8,
+          );
+          if (retryVers.ok) {
+            const limpo = limparTextoGerado(retryVers.text || "");
+            if (limpo && limpo.length >= 40 && !pareceVazamentoRaciocinio(limpo)) textoPalavra = limpo;
+          }
+        }
+      }
+
+      // Se ainda assim ficou vazio/curto demais ou continua vazando, usa fallback
+      // seguro ROTATIVO (não repete o mesmo texto vários dias seguidos).
       if (!textoPalavra || textoPalavra.length < 40 || pareceVazamentoRaciocinio(textoPalavra)) {
-        console.warn('⚠️ [PALAVRA DA MANHÃ] Conteúdo inválido — usando fallback seguro.');
-        textoPalavra = FALLBACK_PALAVRA;
+        console.warn('⚠️ [PALAVRA DA MANHÃ] Conteúdo inválido — usando fallback seguro rotativo.');
+        textoPalavra = escolherFallbackPalavra(data);
       }
 
       const resultado = limitarTamanhoMensagem(textoPalavra, limiteChars);
@@ -2597,12 +2752,34 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
         console.log('✅ [SERVER SAVE] Salvo com ID:', savedRecord.id);
       }
 
+      // 8. Registrar o versículo usado hoje (anti-repetição de 365 dias).
+      const refFinal = passagemRef ? extrairVersiculoRef(passagemRef) : extrairVersiculoRef(resultado);
+      if (refFinal) {
+        const { error: versErr } = await supabase
+          .from('palavra_manha_versiculos')
+          .upsert(
+            {
+              data: data,
+              versiculo_ref: refFinal.ref,
+              ref_norm: refFinal.norm,
+              categoria: config.categoria,
+              mensagem_id: savedRecord?.id ?? null,
+            },
+            { onConflict: 'data' },
+          );
+        if (versErr) console.error('❌ [VERSÍCULO] Erro ao registrar:', versErr.message);
+        else console.log(`📌 [VERSÍCULO] Registrado: ${refFinal.ref}`);
+      } else {
+        console.log('ℹ️ [VERSÍCULO] Nenhuma referência detectada na mensagem de hoje.');
+      }
+
       return new Response(
         JSON.stringify({
           ok: true,
           resultado: resultado,
           config: config,
           passagem_usada: passagemRef,
+          versiculo_registrado: refFinal?.ref || null,
           // Retornamos o registro completo (o frontend vai usar isso agora)
           registro: savedRecord || { ...cachedData, id: 0 },
           debug_save_error: saveError // Expondo erro para debug
