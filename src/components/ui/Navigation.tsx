@@ -1,12 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Suspense } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Home, BookOpen, Bookmark, Calendar, LogOut } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
+// useSearchParams exige um limite de Suspense quando usado em componente do
+// layout raiz (senão o build reclama de "missing-suspense-with-csr-bailout").
 export function Navigation() {
+    return (
+        <Suspense fallback={null}>
+            <NavigationInner />
+        </Suspense>
+    );
+}
+
+function NavigationInner() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { user, signOut } = useAuth();
 
     // Sem navegação na tela de login (ou antes de logar)
@@ -19,14 +31,29 @@ export function Navigation() {
         { name: 'Leitura', href: '/plano-de-leitura?ler=1', icon: Calendar },
     ];
 
+    // "Bíblia" (/biblioteca) e "Salvos" (/biblioteca?salvos=1) compartilham a
+    // mesma rota — só o parâmetro ?salvos=1 os diferencia. Como usePathname()
+    // ignora a query, comparar só o caminho acende os dois juntos. Por isso o
+    // destaque também leva o ?salvos em conta.
+    const isSalvos = searchParams.get('salvos') === '1';
+    const isItemActive = (href: string): boolean => {
+        const [path, query] = href.split('?');
+        if (path === '/biblioteca') {
+            const querySalvos = new URLSearchParams(query || '').get('salvos') === '1';
+            const naBiblioteca = pathname === '/biblioteca' || !!pathname?.startsWith('/biblioteca/');
+            return naBiblioteca && querySalvos === isSalvos;
+        }
+        if (path === '/') return pathname === '/';
+        return pathname === path || !!pathname?.startsWith(path);
+    };
+
     return (
         <>
             {/* Mobile Bottom Bar */}
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-border-subtle md:hidden shadow-[0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]">
                 <ul className="flex items-stretch justify-around px-2 pt-1.5 pb-3">
                     {navItems.map((item) => {
-                        const hrefPath = item.href.split('?')[0];
-                        const isActive = pathname === hrefPath || (hrefPath !== '/' && pathname?.startsWith(hrefPath));
+                        const isActive = isItemActive(item.href);
                         return (
                             <li key={item.name} className="flex-1">
                                 <Link
@@ -62,8 +89,7 @@ export function Navigation() {
                 </div>
                 <ul className="flex flex-col gap-1 w-full px-3">
                     {navItems.map((item) => {
-                        const hrefPath = item.href.split('?')[0];
-                        const isActive = pathname === hrefPath || (hrefPath !== '/' && pathname?.startsWith(hrefPath));
+                        const isActive = isItemActive(item.href);
                         return (
                             <li key={item.name} className="w-full">
                                 <Link

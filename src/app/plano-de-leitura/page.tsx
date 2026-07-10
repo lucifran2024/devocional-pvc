@@ -1099,6 +1099,28 @@ function PlanoLeituraContent() {
         setMarcandoLeitura(false);
     };
 
+    // Marca a parte recém-lida da leitura pessoal como concluída e atualiza o
+    // card "Sua leitura no ano" na hora. Chamada ao avançar/concluir a leitura
+    // (não só pelo botão manual), para que o progresso anual evolua sozinho.
+    // Roda em segundo plano para não travar o avanço da leitura (inclusive
+    // offline) e é idempotente — só adiciona a parte, nunca desmarca.
+    const marcarParteAutomaticamente = async (parte: number, totalPartes: number) => {
+        const alvo = passagem?.data;
+        if (!alvo) return;
+        const parteAlvo = Math.min(Math.max(parte, 1), totalPartes);
+        if (parteEstaLida(parteAlvo)) return; // já registrada — evita escrita redundante
+        try {
+            const ok = await marcarParteLida(alvo, parteAlvo, totalPartes);
+            if (!ok) return;
+            const [prog, dia] = await Promise.all([getProgressoLeituraAnual(), getLeituraDia(alvo)]);
+            setProgressoAnual(prog);
+            setLeituraDia(dia);
+            setLeuHoje(prog.datasLidas.includes(alvo));
+        } catch (e) {
+            console.error('Erro ao marcar parte lida automaticamente:', e);
+        }
+    };
+
     useEffect(() => {
         if (!isPlanoMode) {
             setLeituraDiaConcluida(false);
@@ -1993,6 +2015,15 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
         // OPÇÃO 1: LEITURA GUIADA (Paginação Dinâmica)
         if (activeOption === '1' || isPlanoMode) {
             const totalPartes = getTotalPartesLeitura();
+
+            // Leitura pessoal ("Ler Passagem"): marca a parte recém-lida ao
+            // avançar E ao concluir, para que "Sua leitura no ano" evolua sozinho
+            // conforme o usuário lê — sem depender de tocar em cada parte. Ao
+            // concluir a última parte, isso completa o dia no progresso anual.
+            // (No modo plano a conclusão do dia tem lógica própria, abaixo.)
+            if (!isPlanoMode && activeOption === '1') {
+                void marcarParteAutomaticamente(page, totalPartes);
+            }
 
             console.log('📖 Opção 1 - Página atual:', page, 'Total partes:', totalPartes);
 
