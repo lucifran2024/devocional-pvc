@@ -557,7 +557,6 @@ export default function AnotacoesPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-text-secondary whitespace-pre-wrap mt-1.5 leading-relaxed max-h-64 overflow-y-auto">{a.texto}</p>
                                             </div>
                                             <div className="flex items-center gap-0.5 shrink-0">
                                                 <button onClick={() => copiarLivre(a)} className={botaoAcao} title="Copiar">
@@ -574,6 +573,11 @@ export default function AnotacoesPage() {
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {/* Texto em largura total do card — antes ficava espremido ao lado
+                                            da coluna de botões, e transcrição salva virava um corredor
+                                            estreito no celular (feedback do dono, 16/07/2026). */}
+                                        <p className="text-sm text-text-secondary whitespace-pre-wrap mt-1.5 leading-relaxed max-h-64 overflow-y-auto">{a.texto}</p>
 
                                         {linksVideo.length > 0 && (
                                             <div className="mt-4 pt-3 border-t border-amber-200/70 dark:border-amber-500/15 space-y-3">
