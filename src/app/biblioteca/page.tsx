@@ -2179,13 +2179,14 @@ function BibliotecaPage() {
                                                         </span>
                                                     </div>
 
-                                                    {/* Livros da categoria */}
-                                                    <div className="grid grid-cols-2 gap-2">
+                                                    {/* Livros da categoria — 1 coluna no celular: card largo, alto e
+                                                        com nome inteiro (dono pediu cards maiores, 16/07/2026) */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                         {categoria.livros.map(livro => {
                                                             const isAtual = livro.abrev === livroAtual.abrev;
                                                             return (
                                                                 <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                                    className={`relative group overflow-hidden w-full flex items-center gap-2.5 pl-2 pr-2.5 py-2 min-h-[60px] rounded-2xl text-left transition-all duration-200 border active:scale-[0.97]
+                                                                    className={`relative group overflow-hidden w-full flex items-center gap-3 pl-3 pr-3 py-2.5 min-h-[72px] rounded-2xl text-left transition-all duration-200 border active:scale-[0.97]
                                                                         ${isAtual
                                                                             ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 shadow-sm shadow-amber-500/10'
                                                                             : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 hover:border-slate-300 dark:hover:border-white/15 hover:shadow-sm'
@@ -2195,7 +2196,7 @@ function BibliotecaPage() {
                                                                     <span className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-80 dark:opacity-50 group-hover:opacity-100 dark:group-hover:opacity-90'} transition-opacity`} />
 
                                                                     {/* Monograma com abreviação do livro */}
-                                                                    <span className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-xl text-[13px] font-black uppercase tracking-tight transition-colors
+                                                                    <span className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-xl text-[15px] font-black uppercase tracking-tight transition-colors
                                                                         ${isAtual
                                                                             ? 'bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/40 text-amber-600 dark:text-amber-300'
                                                                             : `bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20 ${categoria.cor}`
@@ -2205,10 +2206,10 @@ function BibliotecaPage() {
 
                                                                     {/* Nome + capítulos */}
                                                                     <span className="flex flex-col min-w-0 flex-1">
-                                                                        <span className={`font-semibold text-[13.5px] leading-snug tracking-tight truncate ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
+                                                                        <span className={`font-semibold text-[16px] leading-snug tracking-tight truncate ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
                                                                             {livro.nome}
                                                                         </span>
-                                                                        <span className={`text-[11px] font-medium tabular-nums truncate ${isAtual ? 'text-amber-600/80 dark:text-amber-300/70' : 'text-slate-400 dark:text-text-muted'}`}>
+                                                                        <span className={`text-[12px] font-medium tabular-nums truncate ${isAtual ? 'text-amber-600/80 dark:text-amber-300/70' : 'text-slate-400 dark:text-text-muted'}`}>
                                                                             {livro.capitulos} {livro.capitulos === 1 ? 'capítulo' : 'capítulos'}
                                                                         </span>
                                                                     </span>
