@@ -7,6 +7,17 @@ export interface LinkVideoSocial {
 
 const URL_REGEX = /https?:\/\/[^\s<>"']+/gi;
 
+// Links colados sem "https://" (ex.: "www.instagram.com/reel/..." digitado à
+// mão) também contam — só dos domínios que sabemos transcrever.
+const URL_SEM_PROTOCOLO_REGEX =
+    /(?:^|[\s(])((?:www\.)?(?:instagram\.com|instagr\.am|(?:vm\.|vt\.|www\.)?tiktok\.com)\/[^\s<>"']+)/gi;
+
+// Caminhos do Instagram que podem conter vídeo: reel clássico, post (/p/ pode
+// ser vídeo), IGTV antigo e o link de compartilhar do app (/share/..., que o
+// backend desembrulha seguindo o redirecionamento antes de transcrever).
+const INSTAGRAM_PATH_REGEX = /^\/(reel|reels|tv|p)\//i;
+const INSTAGRAM_SHARE_REGEX = /^\/share(\/|$)/i;
+
 function limparPontuacaoFinal(url: string): string {
     return url.replace(/[),.;!?\]}]+$/g, '');
 }
@@ -22,7 +33,10 @@ export function identificarLinkVideoSocial(urlBruta: string): LinkVideoSocial | 
         const url = new URL(urlLimpa);
         const host = url.hostname.toLowerCase();
 
-        if (hostPertenceA(host, 'instagram.com') && /^\/(reel|reels)\//i.test(url.pathname)) {
+        if (
+            (hostPertenceA(host, 'instagram.com') || hostPertenceA(host, 'instagr.am')) &&
+            (INSTAGRAM_PATH_REGEX.test(url.pathname) || INSTAGRAM_SHARE_REGEX.test(url.pathname))
+        ) {
             return { url: url.toString(), plataforma: 'instagram' };
         }
 
@@ -37,7 +51,13 @@ export function identificarLinkVideoSocial(urlBruta: string): LinkVideoSocial | 
 }
 
 export function extrairLinksVideoSocial(texto: string): LinkVideoSocial[] {
-    const candidatas = texto.match(URL_REGEX) || [];
+    const candidatas: string[] = texto.match(URL_REGEX) || [];
+
+    // Segunda passada: links sem protocolo. Prefixa https:// pra normalizar.
+    for (const m of texto.matchAll(URL_SEM_PROTOCOLO_REGEX)) {
+        candidatas.push(`https://${m[1]}`);
+    }
+
     const links: LinkVideoSocial[] = [];
     const urlsEncontradas = new Set<string>();
 

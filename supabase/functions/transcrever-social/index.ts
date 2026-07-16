@@ -39,7 +39,13 @@ function normalizarLink(urlBruta: string): { url: string; plataforma: Plataforma
         const url = new URL(urlBruta.trim());
         const host = url.hostname.toLowerCase();
 
-        if (hostPertenceA(host, 'instagram.com') && /^\/(reel|reels)\//i.test(url.pathname)) {
+        // Mesmos formatos aceitos pelo app (src/lib/social-video.ts): reel,
+        // /reels/, /p/ (post pode ser vídeo), /tv/ (IGTV) e /share/... (link
+        // de compartilhar do app — desembrulhado em resolverInstagram).
+        if (
+            (hostPertenceA(host, 'instagram.com') || hostPertenceA(host, 'instagr.am')) &&
+            (/^\/(reel|reels|tv|p)\//i.test(url.pathname) || /^\/share(\/|$)/i.test(url.pathname))
+        ) {
             return { url: url.toString(), plataforma: 'instagram' };
         }
         if (hostPertenceA(host, 'tiktok.com')) {
@@ -104,11 +110,25 @@ async function resolverInstagram(urlOriginal: string): Promise<MidiaResolvida> {
     const token = Deno.env.get('APIFY_API_TOKEN');
     if (!token) throw new Error('instagram_nao_configurado');
 
+    // Link de compartilhar do app (/share/...) é um redirecionador — segue o
+    // redirect pra chegar no /reel/ ou /p/ real, igual ao vm.tiktok.com.
+    let urlPost = urlOriginal;
+    try {
+        if (/^\/share(\/|$)/i.test(new URL(urlOriginal).pathname)) {
+            const resolvida = await fetch(urlOriginal, {
+                headers: { 'User-Agent': USER_AGENT },
+                redirect: 'follow',
+                signal: AbortSignal.timeout(20_000),
+            });
+            if (resolvida.url) urlPost = resolvida.url;
+        }
+    } catch { /* segue com a URL original; o Apify ainda pode resolver */ }
+
     const iniciar = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR}/runs?token=${encodeURIComponent(token)}&timeout=180`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            directUrls: [urlOriginal],
+            directUrls: [urlPost],
             resultsLimit: 1,
             resultsType: 'posts',
             addParentData: false,
