@@ -126,3 +126,15 @@ _Ultimo update: 2026-05-31 (features 8 e 9 — splash screen + atalhos de tela, 
 - Build `npm run build`: PASSOU
 - `themeColor` movido para `viewport` em `src/app/layout.tsx`
 - Features 7, 8 e 9 confirmadas no codigo e na build
+
+---
+
+### 2026-07-16 — Transcrição de Instagram/TikTok dentro do Caderno
+
+- **Status:** VALIDADA e incluída no commit de publicação de 2026-07-16.
+- **Experiência:** uma anotação que contenha link de Reel do Instagram ou vídeo do TikTok ganha o botão **Transcrever vídeo**. O texto aparece na própria anotação com opções **Copiar texto** e **Salvar nesta anotação**; abrir o vídeo é opcional.
+- **Privacidade/armazenamento:** o vídeo é usado temporariamente para transcrição e removido do Gemini ao final. O app só preserva o link e, quando o usuário confirma, o texto transcrito.
+- **Backend:** nova Edge Function `transcrever-social`, autenticada, resolve a mídia pública (Apify no Instagram; TikWM no TikTok), usa Gemini Files API e devolve a fala integral. Links privados, removidos ou inacessíveis retornam mensagem amigável.
+- **Deploy:** workflows preparados para publicar a nova Edge Function junto com o frontend.
+- **Validação:** 4 testes de detecção de links, TypeScript, ESLint, build de produção e fluxo visual mobile (detectar link → transcrever → copiar → salvar) sem erros de console.
+- **Dashboard:** o card **Memorização** foi retirado da página inicial a pedido de Lucifran; a rota `/memorizacao`, a lógica e os dados foram preservados.

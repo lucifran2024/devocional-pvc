@@ -25,6 +25,9 @@
 - [x] Marcador de leitura (bookmark) ✅ VALIDADA 2026-05-30
 - [x] Notas pessoais por versiculo ✅ VALIDADA 2026-05-29 (já existia no codigo)
 
+### Anotações / Caderno
+- [x] Salvar link de Reel/TikTok e transcrever sem abrir o vídeo ✅ VALIDADA 2026-07-16
+
 ### Plano de Leitura
 - [x] Progresso visual do plano ✅ CRIADA 2026-05-30
 - [ ] Notificacao de leitura diaria

@@ -1,19 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { StickyNote, Plus, Trash2, Loader2, Pencil, X, Check, Copy, Share2, NotebookPen } from 'lucide-react';
+import {
+    StickyNote, Plus, Trash2, Loader2, Pencil, X, Check, Copy, Share2,
+    NotebookPen, Link2, FileText, ExternalLink, Sparkles,
+} from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { BackButton } from '@/components/ui/BackButton';
 import {
-    getAllInteracoesPorTipo, atualizarNotaBiblia, removerInteracaoBiblia,
+    supabase, getAllInteracoesPorTipo, atualizarNotaBiblia, removerInteracaoBiblia,
     type BibliaInteracao,
 } from '@/lib/supabase';
 import {
     getAnotacoesLivres, criarAnotacaoLivre, atualizarAnotacaoLivre, removerAnotacaoLivre,
     type AnotacaoLivre,
 } from '@/lib/anotacoes';
+import { extrairLinkVideoSocial, type PlataformaVideoSocial } from '@/lib/social-video';
 
 type Aba = 'biblia' | 'caderno';
+
+interface ResultadoVideoSocial {
+    notaId: string;
+    titulo: string;
+    texto: string;
+    url: string;
+    plataforma: PlataformaVideoSocial;
+    completa: boolean;
+}
 
 function formatarDataRelativa(iso: string): string {
     const d = new Date(iso);
@@ -54,6 +67,10 @@ export default function AnotacoesPage() {
     const [tituloEdit, setTituloEdit] = useState('');
     const [textoEdit, setTextoEdit] = useState('');
     const [salvando, setSalvando] = useState(false);
+    const [transcrevendoId, setTranscrevendoId] = useState<string | null>(null);
+    const [resultadoVideo, setResultadoVideo] = useState<ResultadoVideoSocial | null>(null);
+    const [erroVideo, setErroVideo] = useState<{ notaId: string; mensagem: string } | null>(null);
+    const [salvandoTranscricao, setSalvandoTranscricao] = useState(false);
 
     const avisar = (msg: string) => {
         setFeedback(msg);
@@ -146,6 +163,84 @@ export default function AnotacoesPage() {
         setLivres(prev => prev.filter(a => a.id !== id));
         await removerAnotacaoLivre(id);
         avisar('Anotação removida');
+    };
+
+    const transcreverVideo = async (a: AnotacaoLivre) => {
+        const link = extrairLinkVideoSocial(a.texto);
+        if (!link || transcrevendoId) return;
+
+        setTranscrevendoId(a.id);
+        setErroVideo(null);
+        setResultadoVideo(null);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                setErroVideo({ notaId: a.id, mensagem: 'Sua sessão expirou. Entre novamente no app.' });
+                return;
+            }
+
+            const resp = await fetch('/api/transcrever-social', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: link.url }),
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.ok) {
+                setErroVideo({
+                    notaId: a.id,
+                    mensagem: data.message || 'Não consegui transcrever este vídeo. Tente novamente.',
+                });
+                return;
+            }
+
+            setResultadoVideo({
+                notaId: a.id,
+                titulo: String(data.titulo || `Vídeo do ${link.plataforma === 'instagram' ? 'Instagram' : 'TikTok'}`),
+                texto: String(data.texto || ''),
+                url: link.url,
+                plataforma: link.plataforma,
+                completa: data.completa !== false,
+            });
+        } catch {
+            setErroVideo({ notaId: a.id, mensagem: 'Erro de conexão. Tente novamente.' });
+        } finally {
+            setTranscrevendoId(null);
+        }
+    };
+
+    const copiarTranscricao = async () => {
+        if (!resultadoVideo) return;
+        try {
+            await navigator.clipboard.writeText(resultadoVideo.texto);
+            avisar('Transcrição copiada!');
+        } catch {
+            avisar('Não foi possível copiar');
+        }
+    };
+
+    const salvarTranscricaoNaAnotacao = async (a: AnotacaoLivre) => {
+        if (!resultadoVideo || resultadoVideo.notaId !== a.id || salvandoTranscricao) return;
+        setSalvandoTranscricao(true);
+
+        const origem = resultadoVideo.plataforma === 'instagram' ? 'Instagram' : 'TikTok';
+        const textoAtualizado = `${a.texto.trim()}\n\n---\n\nTranscrição do vídeo (${origem})\n\n${resultadoVideo.texto.trim()}`;
+        const tituloAtualizado = a.titulo || resultadoVideo.titulo;
+        const ok = await atualizarAnotacaoLivre(a.id, tituloAtualizado, textoAtualizado);
+
+        if (ok) {
+            const agora = new Date().toISOString();
+            setLivres(prev => prev.map(item => item.id === a.id
+                ? { ...item, titulo: tituloAtualizado, texto: textoAtualizado, updated_at: agora }
+                : item));
+            setResultadoVideo(null);
+            avisar('Transcrição salva na anotação!');
+        } else {
+            setErroVideo({ notaId: a.id, mensagem: 'Não consegui salvar a transcrição. Verifique a conexão.' });
+        }
+        setSalvandoTranscricao(false);
     };
 
     const botaoAcao = 'p-2 rounded-lg text-slate-300 dark:text-text-muted hover:bg-amber-50 dark:hover:bg-amber-500/15 hover:text-amber-600 dark:hover:text-amber-400 transition-all';
@@ -282,7 +377,7 @@ export default function AnotacoesPage() {
                                 <textarea
                                     value={textoEdit}
                                     onChange={(e) => setTextoEdit(e.target.value)}
-                                    placeholder="Escreva sua anotação..."
+                                    placeholder="Escreva uma anotação ou cole um link do Instagram/TikTok..."
                                     rows={6}
                                     autoFocus
                                     className="w-full px-3 py-2 rounded-lg bg-white dark:bg-surface-1 border border-slate-200 dark:border-border-subtle text-text-primary text-sm leading-relaxed resize-y focus:outline-none focus:border-amber-400 dark:focus:border-amber-500/50"
@@ -300,7 +395,7 @@ export default function AnotacoesPage() {
                         ) : (
                             <button onClick={abrirNova}
                                 className="w-full py-3 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-colors flex items-center justify-center gap-2">
-                                <Plus className="w-5 h-5" /> Nova anotação
+                                <Plus className="w-5 h-5" /> Nova anotação ou link
                             </button>
                         )}
 
@@ -317,8 +412,14 @@ export default function AnotacoesPage() {
                                 </div>
                             </div>
                         ) : (
-                            livres.map((a) => (
-                                <div key={a.id} className="p-4 rounded-xl bg-slate-50 dark:bg-surface-2 border border-slate-100 dark:border-transparent group">
+                            livres.map((a) => {
+                                const linkVideo = extrairLinkVideoSocial(a.texto);
+                                const transcrevendo = transcrevendoId === a.id;
+                                const resultadoDestaNota = resultadoVideo?.notaId === a.id ? resultadoVideo : null;
+                                const erroDestaNota = erroVideo?.notaId === a.id ? erroVideo.mensagem : null;
+
+                                return (
+                                <div key={a.id} className={`p-4 rounded-2xl bg-slate-50 dark:bg-surface-2 border group transition-colors ${linkVideo ? 'border-amber-300/70 dark:border-amber-500/25' : 'border-slate-100 dark:border-transparent'}`}>
                                     <div className="flex items-start gap-3">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -326,8 +427,13 @@ export default function AnotacoesPage() {
                                                 <span className="text-[10px] font-semibold text-slate-400 dark:text-text-muted bg-slate-100 dark:bg-surface-1 px-1.5 py-0.5 rounded-full" title={new Date(a.updated_at).toLocaleString('pt-BR')}>
                                                     {formatarDataRelativa(a.updated_at)}
                                                 </span>
+                                                {linkVideo && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 px-2 py-1 rounded-full">
+                                                        <Link2 className="w-3 h-3" /> {linkVideo.plataforma === 'instagram' ? 'Instagram' : 'TikTok'}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p className="text-sm text-text-secondary whitespace-pre-wrap mt-1.5 leading-relaxed">{a.texto}</p>
+                                            <p className="text-sm text-text-secondary whitespace-pre-wrap mt-1.5 leading-relaxed max-h-64 overflow-y-auto">{a.texto}</p>
                                         </div>
                                         <div className="flex items-center gap-0.5 shrink-0">
                                             <button onClick={() => copiarLivre(a)} className={botaoAcao} title="Copiar">
@@ -344,8 +450,83 @@ export default function AnotacoesPage() {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {linkVideo && (
+                                        <div className="mt-4 pt-3 border-t border-amber-200/70 dark:border-amber-500/15 flex flex-wrap items-center gap-2">
+                                            <button
+                                                onClick={() => transcreverVideo(a)}
+                                                disabled={Boolean(transcrevendoId)}
+                                                className="flex-1 min-w-[190px] px-4 py-2.5 rounded-xl bg-amber-500 text-amber-950 text-sm font-bold hover:bg-amber-400 disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm shadow-amber-500/15"
+                                            >
+                                                {transcrevendo
+                                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                    : <Sparkles className="w-4 h-4" />}
+                                                {transcrevendo ? 'Ouvindo e transcrevendo…' : 'Transcrever vídeo'}
+                                            </button>
+                                            <a
+                                                href={linkVideo.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="px-3 py-2.5 rounded-xl border border-border-subtle text-text-muted hover:text-amber-600 dark:hover:text-amber-400 text-sm font-semibold flex items-center gap-1.5"
+                                            >
+                                                <ExternalLink className="w-4 h-4" /> Abrir
+                                            </a>
+                                            {transcrevendo && (
+                                                <p className="w-full text-[11px] text-text-muted text-center mt-1">
+                                                    Buscando o vídeo e ouvindo toda a fala. Pode levar alguns minutos.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {erroDestaNota && (
+                                        <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-600 dark:text-red-400 text-xs leading-relaxed">
+                                            {erroDestaNota}
+                                        </div>
+                                    )}
+
+                                    {resultadoDestaNota && (
+                                        <div className="mt-3 rounded-2xl bg-white dark:bg-surface-1 border border-emerald-300/70 dark:border-emerald-500/25 overflow-hidden">
+                                            <div className="px-4 py-3 bg-emerald-50 dark:bg-emerald-500/10 border-b border-emerald-200/70 dark:border-emerald-500/20 flex items-start gap-3">
+                                                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                                    <FileText className="w-4.5 h-4.5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-bold text-text-primary">Transcrição pronta</p>
+                                                    <p className="text-[11px] text-text-muted truncate">{resultadoDestaNota.titulo}</p>
+                                                </div>
+                                            </div>
+                                            <p className="px-4 py-3 text-sm text-text-secondary whitespace-pre-wrap leading-relaxed max-h-[45vh] overflow-y-auto">
+                                                {resultadoDestaNota.texto}
+                                            </p>
+                                            {!resultadoDestaNota.completa && (
+                                                <p className="mx-4 mb-3 text-xs text-amber-700 dark:text-amber-300">
+                                                    O vídeo gerou um texto muito longo e pode ter sido cortado no final.
+                                                </p>
+                                            )}
+                                            <div className="p-3 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <button
+                                                    onClick={copiarTranscricao}
+                                                    className="px-4 py-2.5 rounded-xl border border-border-subtle text-text-primary text-sm font-bold hover:bg-surface-2 flex items-center justify-center gap-2"
+                                                >
+                                                    <Copy className="w-4 h-4" /> Copiar texto
+                                                </button>
+                                                <button
+                                                    onClick={() => salvarTranscricaoNaAnotacao(a)}
+                                                    disabled={salvandoTranscricao}
+                                                    className="px-4 py-2.5 rounded-xl bg-emerald-500 text-emerald-950 text-sm font-bold hover:bg-emerald-400 disabled:opacity-60 flex items-center justify-center gap-2"
+                                                >
+                                                    {salvandoTranscricao
+                                                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                        : <Check className="w-4 h-4" />}
+                                                    Salvar nesta anotação
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}

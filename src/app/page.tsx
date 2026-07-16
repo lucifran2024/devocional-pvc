@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
   User, AlertTriangle,
   Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic,
-  HeartHandshake, Brain
+  HeartHandshake
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
@@ -184,20 +184,6 @@ export default function DashboardPage() {
               iconBg="bg-amber-500/10 border-amber-500/20"
               badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
               badge="Oração"
-            />
-          </div>
-
-          {/* Card: Memorização */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/memorizacao"
-              title="Memorização"
-              desc="Decore versículos com revisão espaçada, no seu ritmo."
-              icon={Brain}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Treino"
             />
           </div>
 
