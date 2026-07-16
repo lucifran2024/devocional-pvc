@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { extrairLinkVideoSocial, identificarLinkVideoSocial } from '@/lib/social-video';
+import {
+    extrairLinkVideoSocial,
+    extrairLinksVideoSocial,
+    identificarLinkVideoSocial,
+} from '@/lib/social-video';
 
 describe('links de vídeo social', () => {
     it('encontra Reel do Instagram dentro de uma anotação', () => {
@@ -23,5 +27,15 @@ describe('links de vídeo social', () => {
         expect(identificarLinkVideoSocial('https://instagram.com.evil.test/reel/ABC/')).toBeNull();
         expect(identificarLinkVideoSocial('https://www.instagram.com/p/ABC/')).toBeNull();
         expect(extrairLinkVideoSocial('Uma anotação sem link')).toBeNull();
+    });
+
+    it('lista todos os vídeos da anotação em ordem e sem duplicar links', () => {
+        const instagram = 'https://www.instagram.com/reel/PRIMEIRO/';
+        const tiktok = 'https://www.tiktok.com/@autor/video/987';
+
+        expect(extrairLinksVideoSocial(`${instagram}\n${tiktok}\n${instagram}`)).toEqual([
+            { url: instagram, plataforma: 'instagram' },
+            { url: tiktok, plataforma: 'tiktok' },
+        ]);
     });
 });

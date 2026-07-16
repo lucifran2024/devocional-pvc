@@ -36,11 +36,22 @@ export function identificarLinkVideoSocial(urlBruta: string): LinkVideoSocial | 
     return null;
 }
 
-export function extrairLinkVideoSocial(texto: string): LinkVideoSocial | null {
+export function extrairLinksVideoSocial(texto: string): LinkVideoSocial[] {
     const candidatas = texto.match(URL_REGEX) || [];
+    const links: LinkVideoSocial[] = [];
+    const urlsEncontradas = new Set<string>();
+
     for (const candidata of candidatas) {
         const link = identificarLinkVideoSocial(candidata);
-        if (link) return link;
+        if (link && !urlsEncontradas.has(link.url)) {
+            urlsEncontradas.add(link.url);
+            links.push(link);
+        }
     }
-    return null;
+
+    return links;
+}
+
+export function extrairLinkVideoSocial(texto: string): LinkVideoSocial | null {
+    return extrairLinksVideoSocial(texto)[0] || null;
 }
