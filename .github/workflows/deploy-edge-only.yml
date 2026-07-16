@@ -16,9 +16,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v2
         with:
-          version: latest
+          version: 2.101.0
 
       - name: Deploy Execute Edge Function
         run: supabase functions deploy execute --project-ref tayopwdelkmelgmrtnoa --no-verify-jwt
