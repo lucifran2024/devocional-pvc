@@ -126,6 +126,42 @@ export async function marcarParteLida(data: string, parte: number, totalPartes: 
     return true;
 }
 
+/**
+ * Marca TODAS as partes de 1 até `ateParte` de uma vez (cumulativo).
+ * Usada pelo auto-marcar da leitura: estar na parte N significa que a leitura
+ * chegou até ali, então as anteriores contam junto. Sem isso, quem navega por
+ * restauração de progresso (ou pula o botão Continuar em alguma parte) nunca
+ * fecha o dia — as partes do meio ficam sem marca e o contador anual congela
+ * (bug real: "3 de 307" parado por uma semana, linhas [5]/[1,5] no banco).
+ * Idempotente: só adiciona, preserva marcas existentes, nunca desmarca.
+ */
+export async function marcarPartesAteLida(data: string, ateParte: number, totalPartes: number): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const atual = await getLeituraDia(data);
+    // Registro legado (dia inteiro): considera todas as partes já lidas
+    const base = atual.existe && atual.partesLidas === null
+        ? Array.from({ length: totalPartes }, (_, i) => i + 1)
+        : (atual.partesLidas || []);
+    const ate = Math.min(Math.max(ateParte, 1), totalPartes);
+    const novas = Array.from({ length: ate }, (_, i) => i + 1);
+    const partes = [...new Set([...base, ...novas])].sort((a, b) => a - b);
+
+    const { error } = await supabase
+        .from('leitura_diaria_lida')
+        .upsert(
+            { user_id: user.id, data, partes_lidas: partes, total_partes: totalPartes },
+            { onConflict: 'user_id,data' }
+        );
+
+    if (error) {
+        console.error('Erro ao marcar partes lidas (cumulativo):', error.message);
+        return false;
+    }
+    return true;
+}
+
 export async function desmarcarParteLida(data: string, parte: number, totalPartes: number): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;

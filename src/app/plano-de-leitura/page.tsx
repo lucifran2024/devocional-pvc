@@ -32,7 +32,7 @@ import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
-import { marcarParteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
+import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
@@ -1099,25 +1099,32 @@ function PlanoLeituraContent() {
         setMarcandoLeitura(false);
     };
 
-    // Marca a parte recém-lida da leitura pessoal como concluída e atualiza o
+    // Marca a leitura ATÉ a parte recém-lida (cumulativo: 1..N) e atualiza o
     // card "Sua leitura no ano" na hora. Chamada ao avançar/concluir a leitura
     // (não só pelo botão manual), para que o progresso anual evolua sozinho.
+    // Cumulativo porque a restauração de progresso ("Seu progresso fica salvo")
+    // reabre direto na parte onde parou, pulando as transições — marcando só a
+    // parte atual, as do meio nunca eram registradas e o dia jamais completava
+    // (contador preso em "3 de 307" por uma semana; banco com [5]/[1,5] de 5).
+    // Estar na parte N = a leitura chegou até ali; Concluir fecha o dia inteiro.
     // Roda em segundo plano para não travar o avanço da leitura (inclusive
-    // offline) e é idempotente — só adiciona a parte, nunca desmarca.
+    // offline) e é idempotente — só adiciona partes, nunca desmarca.
     const marcarParteAutomaticamente = async (parte: number, totalPartes: number) => {
         const alvo = passagem?.data;
         if (!alvo) return;
         const parteAlvo = Math.min(Math.max(parte, 1), totalPartes);
-        if (parteEstaLida(parteAlvo)) return; // já registrada — evita escrita redundante
+        const todasAteJaLidas = Array.from({ length: parteAlvo }, (_, i) => i + 1)
+            .every(p => parteEstaLida(p));
+        if (todasAteJaLidas) return; // nada novo a registrar — evita escrita redundante
         try {
-            const ok = await marcarParteLida(alvo, parteAlvo, totalPartes);
+            const ok = await marcarPartesAteLida(alvo, parteAlvo, totalPartes);
             if (!ok) return;
             const [prog, dia] = await Promise.all([getProgressoLeituraAnual(), getLeituraDia(alvo)]);
             setProgressoAnual(prog);
             setLeituraDia(dia);
             setLeuHoje(prog.datasLidas.includes(alvo));
         } catch (e) {
-            console.error('Erro ao marcar parte lida automaticamente:', e);
+            console.error('Erro ao marcar partes lidas automaticamente:', e);
         }
     };
 
