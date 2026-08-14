@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { YoutubeTranscript } from 'youtube-transcript-plus';
-import { formatarSegmentosLegenda } from '@/lib/youtube-captions';
+import { formatarSegmentosLegenda, parsearDocumentoLegenda } from '@/lib/youtube-captions';
 import {
     criarInteracaoYoutube,
     extrairTextoInteracao,
@@ -62,6 +62,29 @@ export async function POST(request: Request) {
     const url = normalizarUrl(urlBruta);
     if (!url) {
         return NextResponse.json({ ok: false, error: 'link_invalido' }, { status: 400 });
+    }
+
+    const videoId = new URL(url).searchParams.get('v');
+    if (videoId) {
+        try {
+            const respostaPublica = await fetch(`https://youtube-transcript.ai/transcript/${videoId}.txt`, {
+                headers: { 'User-Agent': 'devocional-pvc/0.1' },
+                signal: AbortSignal.timeout(20000),
+            });
+            if (respostaPublica.ok) {
+                const legendaPublica = parsearDocumentoLegenda(await respostaPublica.text());
+                if (legendaPublica) {
+                    return NextResponse.json({
+                        ok: true,
+                        titulo: legendaPublica.titulo,
+                        texto: legendaPublica.texto,
+                        idioma: `legenda do YouTube (${legendaPublica.idioma})`,
+                    });
+                }
+            }
+        } catch (erroPublico) {
+            console.warn('Serviço público de legenda indisponível; tentando YouTube direto:', erroPublico instanceof Error ? erroPublico.name : 'erro');
+        }
     }
 
     try {
