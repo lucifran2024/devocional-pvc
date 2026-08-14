@@ -8,7 +8,35 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.6-flash';
+const INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta2/interactions';
+
+function criarInteracaoYoutube(url: string, prompt: string) {
+    return {
+        model: MODEL,
+        input: [
+            { type: 'video', uri: url },
+            { type: 'text', text: prompt },
+        ],
+        store: false,
+        generation_config: {
+            temperature: 0.2,
+            max_output_tokens: 65536,
+        },
+    };
+}
+
+function extrairTextoInteracao(data: {
+    steps?: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }>;
+}): string {
+    return (data.steps || [])
+        .filter((step) => step.type === 'model_output')
+        .flatMap((step) => step.content || [])
+        .filter((content) => content.type === 'text')
+        .map((content) => content.text || '')
+        .join('')
+        .trim();
+}
 
 function normalizarUrl(url: string): string | null {
     const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
@@ -51,21 +79,14 @@ Deno.serve(async (req) => {
 
     try {
         const resp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`,
+            INTERACTIONS_URL,
             {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: PROMPT }, { file_data: { file_uri: url } }] }],
-                    // resolução baixa: p/ transcrever só importa o áudio; corta
-                    // muito os tokens de vídeo (permite pregações mais longas).
-                    // maxOutputTokens alto p/ não truncar transcrição longa.
-                    generationConfig: {
-                        temperature: 0.2,
-                        mediaResolution: 'MEDIA_RESOLUTION_LOW',
-                        maxOutputTokens: 65536,
-                    },
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': GEMINI_KEY,
+                },
+                body: JSON.stringify(criarInteracaoYoutube(url, PROMPT)),
             }
         );
 
@@ -83,10 +104,7 @@ Deno.serve(async (req) => {
         }
 
         const data = await resp.json();
-        const texto: string = (data.candidates?.[0]?.content?.parts || [])
-            .map((p: { text?: string }) => p.text || '')
-            .join('')
-            .trim();
+        const texto = extrairTextoInteracao(data);
 
         if (!texto) return json({ ok: false, error: 'sem_texto', message: 'Não consegui extrair a fala deste vídeo.' }, 422);
 

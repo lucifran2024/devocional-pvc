@@ -6,6 +6,7 @@ on:
     paths:
       - "supabase/functions/execute/**"
       - "supabase/functions/transcrever-social/**"
+      - "supabase/functions/transcrever-youtube/**"
       - ".github/workflows/deploy-edge-only.yml"
 
 jobs:
@@ -27,5 +28,10 @@ jobs:
 
       - name: Deploy Social Transcription Edge Function
         run: supabase functions deploy transcrever-social --project-ref tayopwdelkmelgmrtnoa
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy YouTube Transcription Edge Function
+        run: supabase functions deploy transcrever-youtube --project-ref tayopwdelkmelgmrtnoa
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

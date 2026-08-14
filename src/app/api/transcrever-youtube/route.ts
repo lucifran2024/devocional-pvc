@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import {
+    criarInteracaoYoutube,
+    extrairTextoInteracao,
+    GEMINI_INTERACTIONS_URL,
+} from '@/lib/gemini-youtube-interactions';
 
 // ============================================
 // TRANSCRIÇÃO DE VÍDEO DO YOUTUBE via Gemini.
@@ -10,7 +15,6 @@ import { NextResponse } from 'next/server';
 export const maxDuration = 300;
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY;
-const MODEL = 'gemini-2.5-flash';
 
 function normalizarUrl(url: string): string | null {
     const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
@@ -73,23 +77,14 @@ Regras:
 
     try {
         const resp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`,
+            GEMINI_INTERACTIONS_URL,
             {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { file_data: { file_uri: url } },
-                        ],
-                    }],
-                    generationConfig: {
-                        temperature: 0.2,
-                        mediaResolution: 'MEDIA_RESOLUTION_LOW',
-                        maxOutputTokens: 65536,
-                    },
-                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': GEMINI_KEY,
+                },
+                body: JSON.stringify(criarInteracaoYoutube(url, prompt)),
                 signal: AbortSignal.timeout(290000),
             }
         );
@@ -104,10 +99,7 @@ Regras:
         }
 
         const data = await resp.json();
-        const texto: string = (data.candidates?.[0]?.content?.parts || [])
-            .map((p: { text?: string }) => p.text || '')
-            .join('')
-            .trim();
+        const texto = extrairTextoInteracao(data);
 
         if (!texto) {
             return NextResponse.json(
