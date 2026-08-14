@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { gerarTexto, chamarCompatGemini, get9RouterEndpoint } from './openrouter-client.ts';
+import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -2664,18 +2665,24 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
         'google/gemma-4-31b-it:free',
         'deepseek/deepseek-v4-flash',
       ];
-      const modelosPalavra = epPalavra.useTunnel
-        ? ['gemini/gemini-3-flash-preview', 'openclaw', 'ds/deepseek-v4-flash']
-        : MODELOS_PALAVRA_OR;
+      const MODELOS_PALAVRA_TUNEL = [
+        'gemini/gemini-3-flash-preview',
+        'openclaw',
+        'ds/deepseek-v4-flash',
+      ];
 
       // Teto de tokens: modelos instruct são concisos; 500 dá folga p/ o limite
       // de caracteres (400/600) sem virar "textão" (o corte por chars ainda existe).
-      const gerarPalavra = (promptTxt: string, temp: number) => gerarTexto(promptTxt, {
+      const gerarPalavra = (promptTxt: string, temp: number) => gerarPalavraComReserva({
+        prompt: promptTxt,
         temperature: temp,
         maxTokens: 500,
-        models: modelosPalavra,
-        baseUrl: epPalavra.useTunnel ? epPalavra.url : undefined,
-        apiKey: epPalavra.useTunnel ? epPalavra.apiKey : undefined,
+        useTunnel: epPalavra.useTunnel,
+        tunnelUrl: epPalavra.url,
+        tunnelApiKey: epPalavra.apiKey,
+        modelosTunel: MODELOS_PALAVRA_TUNEL,
+        modelosReserva: MODELOS_PALAVRA_OR,
+        gerarTexto,
       });
 
       const llmPalavra = await gerarPalavra(prompt, 0.85);
