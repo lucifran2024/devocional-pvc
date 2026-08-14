@@ -32,7 +32,7 @@ import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
-import { gerarExplicacaoLocal } from '@/lib/explicacao-local';
+import { gerarExplicacaoLocal, montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
@@ -1837,7 +1837,8 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
         }
     };
 
-    // Gerar APENAS o conteúdo da explicação (sem header/footer) para embutir na mensagem da Parte
+    // Explica somente o bloco de versículos exibido na parte atual.
+    // A IA recebe a faixa exata; o gerador local usa o mesmo bloco como reserva.
     const gerarExplicacaoConteudo = async (): Promise<string> => {
         if (!passagem) return '';
 
@@ -1846,14 +1847,41 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
         const primeiro = versiculosDaParte[0];
         const livroId = primeiro?.livroId ?? livroInfoAtual.livroId;
         const capitulo = primeiro?.chapter ?? livroInfoAtual.capitulo;
+        const pedido = montarPedidoExplicacaoParte({
+            referenciaPassagem: passagem.referencia,
+            parte: page,
+            versiculos: versiculosDaParte,
+        });
 
-        return gerarExplicacaoLocal({
-            referencia: passagem.referencia,
+        const explicacaoLocal = () => gerarExplicacaoLocal({
+            referencia: pedido.referencia,
             parte: page,
             introducao: livroId ? getIntroducaoLivro(livroId) : null,
             pericopes: livroId && capitulo ? getPericopes(livroId, capitulo) : [],
             versiculos: versiculosDaParte,
         });
+
+        if (!pedido.versiculos) return explicacaoLocal();
+
+        try {
+            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                body: {
+                    modo_id: 'explicar_passagem',
+                    data: new Date().toISOString().split('T')[0],
+                    referencia: pedido.referencia,
+                    versiculos: pedido.versiculos,
+                    parte: pedido.parte,
+                    quantidade_versiculos: pedido.quantidadeVersiculos,
+                },
+            });
+
+            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message);
+            if (!data?.ok || !data?.resultado) throw new Error(data?.error || 'Explicação vazia');
+            return data.resultado;
+        } catch (error) {
+            console.error('Erro ao explicar a parte com IA; usando explicação local:', error);
+            return explicacaoLocal();
+        }
     };
 
     // Gerar estudo via IA (Edge Function)

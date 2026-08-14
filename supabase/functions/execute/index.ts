@@ -795,7 +795,7 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, tipo_estudo, force_live_refresh } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, quantidade_versiculos, tipo_estudo, force_live_refresh } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}, Refresh ao vivo: ${force_live_refresh ? 'sim' : 'nao'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
@@ -2005,51 +2005,61 @@ Gere agora:
         throw new Error("GEMINI_API_KEY não configurada.");
       }
 
-      // Usar dados já parseados do início
-      const versiculosTexto = versiculos || '';
+      // Usar somente o bloco exato enviado pelo botão da parte atual.
+      const versiculosTexto = String(versiculos || '').trim();
       const referenciaPassagem = referencia || 'Passagem bíblica';
       const parteAtual = parte || 1;
+      const quantidadeInformada = Number(quantidade_versiculos);
+      const quantidadeVersiculos = Number.isFinite(quantidadeInformada) && quantidadeInformada > 0
+        ? quantidadeInformada
+        : Math.max(1, versiculosTexto.split('\n').filter((linha: string) => /^\s*\d+\s/.test(linha)).length);
+      const maxPalavrasExplicacao = Math.min(500, Math.max(220, 80 + quantidadeVersiculos * 18));
+      const maxTokensExplicacao = Math.min(2400, Math.max(1200, maxPalavrasExplicacao * 3));
 
-      console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}`);
+      console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}, Versículos: ${quantidadeVersiculos}`);
 
       const promptExplicar = `
-# EXPLICAÇÃO DO TRECHO BÍBLICO
+# EXPLICAÇÃO DA PARTE LIDA
 
-Você explica somente o trecho fornecido, com fidelidade textual. Não invente dados históricos, culturais, autoria, destinatários ou conexões que não possam ser sustentados pelo próprio texto.
+TODOS os versículos fornecidos pertencem à parte que o usuário acabou de ler. Explique o bloco completo com fidelidade textual: começo, desenvolvimento e encerramento da parte. Não invente dados históricos, culturais, autoria, destinatários ou conexões que não possam ser sustentados pelo próprio texto.
 
-## PASSAGEM: ${referenciaPassagem}
+## FAIXA EXATA DA PARTE: ${referenciaPassagem}
 ## PARTE: ${parteAtual}
+## QUANTIDADE: ${quantidadeVersiculos} versículos
 
-### VERSÍCULOS QUE O USUÁRIO ACABOU DE LER:
+### TEXTO INTEGRAL DA PARTE LIDA:
 ${versiculosTexto}
 
-## FORMATO OBRIGATÓRIO DA RESPOSTA:
+## FORMATO OBRIGATÓRIO:
 
-Gere uma explicação usando EXATAMENTE este formato com bullets (•):
+🔍 **EXPLICAÇÃO DA PARTE LIDA**
 
-🔍 **CONTEXTO & EXPLICAÇÃO**
+• Crie de 2 a 5 tópicos conforme os movimentos naturais do texto, em ordem.
+• Comece cada tópico com a faixa explicada em negrito, por exemplo: **Versículos 1–4 — A decisão:**
+• Em cada tópico, diga o que acontece e explique o sentido das palavras, ações, contrastes, causas e consequências daquele grupo de versículos.
+• Termine com **Sentido central da parte:** reunindo a mensagem que nasce do bloco inteiro.
 
-• **O que está acontecendo:** [1-2 frases explicando o que está literalmente acontecendo no texto. Quem fala, para quem, qual a ação.]
+## REGRAS INEGOCIÁVEIS:
+1. Explique TODOS os versículos fornecidos; nenhum pode ficar sem cobertura.
+2. NÃO explique somente um versículo isolado nem escolha apenas a frase mais conhecida.
+3. NÃO use versículos, acontecimentos ou contexto de partes que não foram fornecidas.
+4. Agrupe apenas versículos consecutivos que tratem do mesmo movimento; cite as faixas exatas.
+5. Não faça resumo geral do livro ou do capítulo no lugar de explicar esta parte.
+6. Faça conexão com outra passagem somente se for indispensável e direta; a explicação deve permanecer ancorada no texto fornecido.
+7. Linguagem profunda, clara, pastoral e acessível — não acadêmica.
+8. Não inclua oração nem seção separada de aplicação prática.
+9. Use até ${maxPalavrasExplicacao} palavras: profundidade proporcional à quantidade de versículos, sem enrolação.
+10. Não use emojis além do 🔍 no título.
 
-• **Contexto:** [1-2 frases situando o trecho dentro da passagem. Só inclua dado histórico ou cultural quando houver segurança; caso contrário, explique a sequência literária observável.]
-
-• **Significado:** [Explique a mensagem central a partir das palavras e ações do trecho, sem extrapolar. Termine com uma síntese clara e sóbria.]
-
-## REGRAS:
-1. Use o formato acima COM BULLETS (•), não números
-2. Cite versículos específicos do trecho (ex: "v.3", "v.9")
-3. Faça conexão com outra passagem somente se ela for direta e conhecida; nunca force conexão
-4. Linguagem profunda mas acessível — não acadêmica
-5. NÃO inclua oração
-6. NÃO inclua seção de aplicação prática separada
-7. A verdade prática deve estar DENTRO do "Significado"
-8. Máximo 150 palavras
-9. NÃO use emojis além do 🔍 no início
+Antes de responder, confira silenciosamente: cobri o primeiro, o meio e o último versículo sem sair da faixa?
 
 Gere a explicação agora:
 `;
 
-      const llmExplicar = await gerarTexto(promptExplicar, { temperature: 0.2, maxTokens: 900 });
+      const llmExplicar = await gerarTexto(promptExplicar, {
+        temperature: 0.2,
+        maxTokens: maxTokensExplicacao,
+      });
 
       if (!llmExplicar.ok) {
         console.error(`❌ Erro LLM:`, llmExplicar.error);
