@@ -10,7 +10,7 @@ describe('Gemini Interactions para YouTube', () => {
     it('usa a API atual e envia vídeo antes do prompt sem armazenar a interação', () => {
         const body = criarInteracaoYoutube('https://www.youtube.com/watch?v=12345678901', 'Transcreva');
 
-        expect(GEMINI_INTERACTIONS_URL).toBe('https://generativelanguage.googleapis.com/v1beta2/interactions');
+        expect(GEMINI_INTERACTIONS_URL).toBe('https://generativelanguage.googleapis.com/v1beta/interactions');
         expect(GEMINI_YOUTUBE_MODEL).toBe('gemini-3.6-flash');
         expect(body.input).toEqual([
             { type: 'video', uri: 'https://www.youtube.com/watch?v=12345678901' },

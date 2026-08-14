@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const MODEL = 'gemini-3.6-flash';
-const INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta2/interactions';
+const INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 
 function criarInteracaoYoutube(url: string, prompt: string) {
     return {

@@ -1,5 +1,5 @@
 export const GEMINI_YOUTUBE_MODEL = 'gemini-3.6-flash';
-export const GEMINI_INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta2/interactions';
+export const GEMINI_INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 
 export type GeminiInteraction = {
     steps?: Array<{
