@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { YoutubeTranscript } from 'youtube-transcript-plus';
+import { formatarSegmentosLegenda } from '@/lib/youtube-captions';
 import {
     criarInteracaoYoutube,
     extrairTextoInteracao,
@@ -6,10 +8,9 @@ import {
 } from '@/lib/gemini-youtube-interactions';
 
 // ============================================
-// TRANSCRIÇÃO DE VÍDEO DO YOUTUBE via Gemini.
-// O YouTube bloqueou o acesso direto às legendas (timedtext dá 404), então
-// usamos o Gemini, que processa a URL do vídeo público diretamente e
-// transcreve o áudio. Vídeos muito longos podem estourar o tempo/limite.
+// TRANSCRIÇÃO DE VÍDEO DO YOUTUBE.
+// Usa primeiro as legendas do próprio YouTube (rápido e sem LLM).
+// Gemini/Edge ficam como reserva para vídeos sem legenda acessível.
 // ============================================
 
 export const maxDuration = 300;
@@ -63,6 +64,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'link_invalido' }, { status: 400 });
     }
 
+    try {
+        const resultadoLegenda = await YoutubeTranscript.fetchTranscript(url, {
+            videoDetails: true,
+            retries: 1,
+            signal: AbortSignal.timeout(20000),
+        });
+        const textoLegenda = formatarSegmentosLegenda(resultadoLegenda.segments);
+        if (textoLegenda) {
+            return NextResponse.json({
+                ok: true,
+                titulo: resultadoLegenda.videoDetails.title || 'Vídeo do YouTube',
+                texto: textoLegenda,
+                idioma: `legenda do YouTube (${resultadoLegenda.segments[0]?.lang || 'auto'})`,
+            });
+        }
+    } catch (erroLegenda) {
+        console.warn('Legenda do YouTube indisponível; tentando reserva:', erroLegenda instanceof Error ? erroLegenda.name : 'erro');
+    }
+
     // Sem a chave na Vercel → usa a edge function do Supabase (que tem a chave)
     if (!GEMINI_KEY) {
         return viaEdgeFunction(url);
@@ -94,7 +114,9 @@ Regras:
             console.error(`Gemini YouTube ${resp.status}:`, errText.slice(0, 400));
             const amigavel = resp.status === 400
                 ? 'Não consegui acessar este vídeo (pode ser privado, restrito ou muito longo).'
-                : 'Falha ao transcrever. Tente novamente em instantes.';
+                : resp.status === 403
+                    ? 'Este vídeo não oferece legenda acessível e o serviço de áudio do Google não está liberado neste plano.'
+                    : 'Falha ao transcrever. Tente novamente em instantes.';
             return NextResponse.json({ ok: false, error: 'falha_gemini', status: resp.status, message: amigavel }, { status: 502 });
         }
 

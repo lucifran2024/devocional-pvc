@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Youtube, Loader2, Copy, Check, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { BackButton } from '@/components/ui/BackButton';
+import { SavedTranscriptEditor } from '@/components/SavedTranscriptEditor';
 import { getTranscricoes, salvarTranscricao, removerTranscricao, type Transcricao } from '@/lib/transcricoes';
 
 export default function TranscreverYoutubePage() {
@@ -129,7 +130,13 @@ export default function TranscreverYoutubePage() {
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </summary>
-                                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap mt-3 max-h-[40vh] overflow-y-auto">{t.texto}</p>
+                                <div className="mt-3">
+                                    <SavedTranscriptEditor
+                                        id={t.id}
+                                        texto={t.texto}
+                                        onSaved={(texto) => setHistorico(prev => prev.map(item => item.id === t.id ? { ...item, texto } : item))}
+                                    />
+                                </div>
                             </details>
                         ))}
                     </section>

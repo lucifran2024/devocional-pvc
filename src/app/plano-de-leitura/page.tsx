@@ -32,6 +32,7 @@ import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
+import { gerarExplicacaoLocal } from '@/lib/explicacao-local';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
@@ -1842,31 +1843,17 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
 
         const page = currentPageRef.current;
         const versiculosDaParte = getVersiculosDaParte(page);
-        const versiculosAtual = versiculosDaParte
-            .map(v => `**${v.verse}.** ${v.text}`)
-            .join('\n');
+        const primeiro = versiculosDaParte[0];
+        const livroId = primeiro?.livroId ?? livroInfoAtual.livroId;
+        const capitulo = primeiro?.chapter ?? livroInfoAtual.capitulo;
 
-        try {
-            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
-                body: {
-                    modo_id: 'explicar_passagem',
-                    data: new Date().toISOString().split('T')[0],
-                    referencia: passagem.referencia,
-                    versiculos: versiculosAtual,
-                    parte: page
-                }
-            });
-
-            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
-
-            if (data.ok && data.resultado) {
-                return data.resultado;
-            }
-            throw new Error(data.error || 'Erro ao gerar explicação');
-        } catch (error) {
-            console.error('Erro ao gerar explicação (conteúdo):', error);
-            return 'Não foi possível gerar a explicação no momento.';
-        }
+        return gerarExplicacaoLocal({
+            referencia: passagem.referencia,
+            parte: page,
+            introducao: livroId ? getIntroducaoLivro(livroId) : null,
+            pericopes: livroId && capitulo ? getPericopes(livroId, capitulo) : [],
+            versiculos: versiculosDaParte,
+        });
     };
 
     // Gerar estudo via IA (Edge Function)

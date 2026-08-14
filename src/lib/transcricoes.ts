@@ -83,6 +83,17 @@ export async function atualizarNotasTranscricao(id: string, notas: string): Prom
     return true;
 }
 
+export async function atualizarTextoTranscricao(id: string, texto: string): Promise<boolean> {
+    const limpo = texto.trim();
+    if (!limpo) return false;
+    const { error } = await supabase.from('transcricoes').update({ texto: limpo }).eq('id', id);
+    if (error) {
+        console.error('Erro ao atualizar transcrição:', error.message);
+        return false;
+    }
+    return true;
+}
+
 export async function removerTranscricao(id: string): Promise<boolean> {
     const { error } = await supabase.from('transcricoes').delete().eq('id', id);
     if (error) {

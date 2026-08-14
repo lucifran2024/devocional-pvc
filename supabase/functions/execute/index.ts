@@ -2015,7 +2015,7 @@ Gere agora:
       const promptExplicar = `
 # EXPLICAÇÃO DO TRECHO BÍBLICO
 
-Você é um estudioso bíblico experiente. Seu trabalho é explicar o trecho que o usuário ACABOU DE LER, da mesma forma que um comentarista bíblico faria.
+Você explica somente o trecho fornecido, com fidelidade textual. Não invente dados históricos, culturais, autoria, destinatários ou conexões que não possam ser sustentados pelo próprio texto.
 
 ## PASSAGEM: ${referenciaPassagem}
 ## PARTE: ${parteAtual}
@@ -2031,25 +2031,25 @@ Gere uma explicação usando EXATAMENTE este formato com bullets (•):
 
 • **O que está acontecendo:** [1-2 frases explicando o que está literalmente acontecendo no texto. Quem fala, para quem, qual a ação.]
 
-• **Contexto:** [2-3 frases com background histórico, cultural ou literário ESPECÍFICO deste trecho. Mencione versículos específicos quando relevante. Se há conexão com outras passagens, cite. Explique símbolos, nomes ou referências que o leitor moderno pode não entender.]
+• **Contexto:** [1-2 frases situando o trecho dentro da passagem. Só inclua dado histórico ou cultural quando houver segurança; caso contrário, explique a sequência literária observável.]
 
-• **Significado:** [A parte mais rica. Explique a mensagem teológica, espiritual ou prática. Pode ter múltiplos pontos se necessário. Use frases impactantes. Termine com uma verdade que ressoa no coração.]
+• **Significado:** [Explique a mensagem central a partir das palavras e ações do trecho, sem extrapolar. Termine com uma síntese clara e sóbria.]
 
 ## REGRAS:
 1. Use o formato acima COM BULLETS (•), não números
 2. Cite versículos específicos do trecho (ex: "v.3", "v.9")
-3. Faça conexões com outras passagens da Bíblia quando relevante
+3. Faça conexão com outra passagem somente se ela for direta e conhecida; nunca force conexão
 4. Linguagem profunda mas acessível — não acadêmica
 5. NÃO inclua oração
 6. NÃO inclua seção de aplicação prática separada
 7. A verdade prática deve estar DENTRO do "Significado"
-8. Máximo 200 palavras
+8. Máximo 150 palavras
 9. NÃO use emojis além do 🔍 no início
 
 Gere a explicação agora:
 `;
 
-      const llmExplicar = await gerarTexto(promptExplicar, { temperature: 0.7, maxTokens: 2048 });
+      const llmExplicar = await gerarTexto(promptExplicar, { temperature: 0.2, maxTokens: 900 });
 
       if (!llmExplicar.ok) {
         console.error(`❌ Erro LLM:`, llmExplicar.error);

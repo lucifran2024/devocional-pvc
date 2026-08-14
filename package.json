@@ -22,7 +22,8 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "rss-parser": "^3.13.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "youtube-transcript-plus": "^2.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

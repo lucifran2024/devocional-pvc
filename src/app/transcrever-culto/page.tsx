@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Mic, Square, Loader2, Save, Trash2, AlertTriangle, Check, FileAudio } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { BackButton } from '@/components/ui/BackButton';
+import { SavedTranscriptEditor } from '@/components/SavedTranscriptEditor';
 import {
     getTranscricoes, salvarTranscricao, removerTranscricao, atualizarNotasTranscricao,
     atualizarTituloTranscricao, uploadAudioCulto, type Transcricao,
@@ -311,7 +312,11 @@ export default function TranscreverCultoPage() {
                                         <input defaultValue={t.titulo || ''} onBlur={(e) => salvarTitulo(t.id, e.target.value)} placeholder="Ex: Culto de domingo"
                                             className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-text-primary text-sm font-semibold focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20" />
                                     </div>
-                                    <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">{t.texto}</p>
+                                    <SavedTranscriptEditor
+                                        id={t.id}
+                                        texto={t.texto}
+                                        onSaved={(texto) => setHistorico(prev => prev.map(item => item.id === t.id ? { ...item, texto } : item))}
+                                    />
                                     <div>
                                         <label className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">Notas</label>
                                         <textarea defaultValue={t.notas} onBlur={(e) => salvarNota(t.id, e.target.value)} rows={3} placeholder="Adicione notas..."
