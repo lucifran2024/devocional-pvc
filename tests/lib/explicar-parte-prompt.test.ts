@@ -28,4 +28,12 @@ describe('prompt da explicação da parte lida', () => {
     expect(prompt).toContain('${maxPalavrasExplicacao} palavras');
     expect(prompt).not.toContain('Máximo 150 palavras');
   });
+
+  it('revisa a fidelidade antes de devolver a explicação', () => {
+    expect(edgeSource).toContain('# REVISÃO DE FIDELIDADE AO TEXTO VISÍVEL');
+    expect(edgeSource).toContain('Não defina expressões bíblicas usando teologia ou contexto externo');
+    expect(edgeSource).toContain('simboliza, representa, implica, provavelmente, talvez');
+    expect(edgeSource).toContain('const llmRevisao = await gerarTexto(promptRevisaoExplicar');
+    expect(edgeSource).toContain('llmRevisao.ok && llmRevisao.text');
+  });
 });

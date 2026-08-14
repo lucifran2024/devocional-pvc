@@ -2068,9 +2068,42 @@ Gere a explicação agora:
         throw new Error(`Erro API LLM: ${llmExplicar.error}`);
       }
 
-      const explicacao = llmExplicar.text || "Erro ao gerar explicação.";
+      let explicacao = llmExplicar.text || "Erro ao gerar explicação.";
 
-      console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada com sucesso!`);
+      const promptRevisaoExplicar = `
+# REVISÃO DE FIDELIDADE AO TEXTO VISÍVEL
+
+Revise a explicação abaixo confrontando CADA frase com o texto bíblico fornecido. Devolva a explicação completa no mesmo formato, mas remova ou reescreva toda afirmação que não seja demonstrável pelas palavras, ações, contrastes ou promessas visíveis no próprio bloco.
+
+## TEXTO BÍBLICO — ÚNICA FONTE PERMITIDA
+${versiculosTexto}
+
+## RASCUNHO A REVISAR
+${explicacao}
+
+## REGRAS DE REVISÃO
+1. Preserve a cobertura do primeiro, do meio e do último versículo.
+2. Não defina expressões bíblicas usando teologia ou contexto externo. Explique apenas a relação que o próprio bloco estabelece.
+3. Remova leituras introduzidas por palavras como simboliza, representa, implica, provavelmente, talvez, pode ser, seja por, ou seja, quando não forem declaradas no texto.
+4. Não invente motivos, sentimentos, causas, cenários, funções de objetos, intenções ou resultados além dos escritos.
+5. Não acrescente outra passagem bíblica.
+6. Se o texto disser apenas que alguém chorou, por exemplo, não liste causas possíveis do choro; explique somente a promessa ligada ao choro dentro do bloco.
+7. Mantenha linguagem clara e pastoral, sem transformar a revisão em mera cópia dos versículos.
+8. Retorne somente a explicação final revisada, sem notas sobre a revisão.
+`;
+
+      const llmRevisao = await gerarTexto(promptRevisaoExplicar, {
+        temperature: 0.05,
+        maxTokens: maxTokensExplicacao,
+      });
+
+      if (llmRevisao.ok && llmRevisao.text) {
+        explicacao = llmRevisao.text;
+      } else {
+        console.warn(`⚠️ [EXPLICAR PASSAGEM] Revisão de fidelidade indisponível; mantendo rascunho.`);
+      }
+
+      console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada e revisada com sucesso!`);
 
       return new Response(
         JSON.stringify({
