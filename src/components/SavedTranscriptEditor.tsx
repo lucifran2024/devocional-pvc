@@ -1,18 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Copy, Edit3, Loader2, Save, X } from 'lucide-react';
 import { atualizarTextoTranscricao } from '@/lib/transcricoes';
 
 export function SavedTranscriptEditor({ id, texto, onSaved }: { id: string; texto: string; onSaved?: (texto: string) => void }) {
+    const [textoExibido, setTextoExibido] = useState(texto);
     const [editando, setEditando] = useState(false);
     const [rascunho, setRascunho] = useState(texto);
     const [copiado, setCopiado] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const [mensagem, setMensagem] = useState('');
 
+    useEffect(() => {
+        setTextoExibido(texto);
+        setRascunho(texto);
+    }, [texto]);
+
     const copiar = async () => {
-        await navigator.clipboard.writeText(editando ? rascunho : texto);
+        await navigator.clipboard.writeText(editando ? rascunho : textoExibido);
         setCopiado(true);
         setTimeout(() => setCopiado(false), 1800);
     };
@@ -26,15 +32,17 @@ export function SavedTranscriptEditor({ id, texto, onSaved }: { id: string; text
             setMensagem('Não foi possível salvar. Tente novamente.');
             return;
         }
-        onSaved?.(rascunho.trim());
-        setRascunho(rascunho.trim());
+        const limpo = rascunho.trim();
+        setTextoExibido(limpo);
+        onSaved?.(limpo);
+        setRascunho(limpo);
         setMensagem('Alterações salvas.');
         setEditando(false);
         setTimeout(() => setMensagem(''), 2200);
     };
 
     const cancelar = () => {
-        setRascunho(texto);
+        setRascunho(textoExibido);
         setMensagem('');
         setEditando(false);
     };
@@ -65,7 +73,7 @@ export function SavedTranscriptEditor({ id, texto, onSaved }: { id: string; text
                 <textarea value={rascunho} onChange={(e) => setRascunho(e.target.value)} rows={12}
                     className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-text-primary text-sm leading-relaxed resize-y focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20" />
             ) : (
-                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">{texto}</p>
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap max-h-[40vh] overflow-y-auto">{textoExibido}</p>
             )}
             {mensagem && <p className={`text-xs ${mensagem.includes('salvas') ? 'text-emerald-600' : 'text-red-500'}`}>{mensagem}</p>}
         </div>
