@@ -34,6 +34,8 @@ describe('prompt da explicação da parte lida', () => {
     expect(edgeSource).toContain('Não defina expressões bíblicas usando teologia ou contexto externo');
     expect(edgeSource).toContain('simboliza, representa, implica, provavelmente, talvez');
     expect(edgeSource).toContain('const llmRevisao = await gerarTexto(promptRevisaoExplicar');
-    expect(edgeSource).toContain('llmRevisao.ok && llmRevisao.text');
+    expect(edgeSource).toContain('<FINAL>');
+    expect(edgeSource).toContain('extrairRespostaFinal');
+    expect(edgeSource).toContain('if (!explicacaoRevisada)');
   });
 });

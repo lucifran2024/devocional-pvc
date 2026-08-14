@@ -18,6 +18,11 @@ import { getArchetype, formatArchetypeSection } from './archetype-selector.ts';
  * no fim de frase/parágrafo mais próximo do limite, nunca no meio de uma
  * palavra ou oração.
  */
+function extrairRespostaFinal(texto: string): string | null {
+  const match = (texto || '').match(/<FINAL>\s*([\s\S]*?)\s*<\/FINAL>/i);
+  return match?.[1]?.trim() || null;
+}
+
 function limitarTamanhoMensagem(texto: string, maxChars: number): string {
   const limpo = (texto || '').trim();
   if (limpo.length <= maxChars) return limpo;
@@ -2090,6 +2095,11 @@ ${explicacao}
 6. Se o texto disser apenas que alguém chorou, por exemplo, não liste causas possíveis do choro; explique somente a promessa ligada ao choro dentro do bloco.
 7. Mantenha linguagem clara e pastoral, sem transformar a revisão em mera cópia dos versículos.
 8. Retorne somente a explicação final revisada, sem notas sobre a revisão.
+9. Sua resposta deve terminar obrigatoriamente neste envelope exato:
+<FINAL>
+[explicação final completa]
+</FINAL>
+Tudo que estiver fora do envelope será descartado.
 `;
 
       const llmRevisao = await gerarTexto(promptRevisaoExplicar, {
@@ -2097,12 +2107,16 @@ ${explicacao}
         maxTokens: maxTokensExplicacao,
       });
 
-      if (llmRevisao.ok && llmRevisao.text) {
-        explicacao = llmRevisao.text;
-      } else {
-        console.warn(`⚠️ [EXPLICAR PASSAGEM] Revisão de fidelidade indisponível; mantendo rascunho.`);
+      const explicacaoRevisada = llmRevisao.ok && llmRevisao.text
+        ? extrairRespostaFinal(llmRevisao.text)
+        : null;
+
+      if (!explicacaoRevisada) {
+        console.error(`❌ [EXPLICAR PASSAGEM] Revisão não entregou envelope final seguro.`);
+        throw new Error('A revisão da explicação não devolveu uma resposta final segura.');
       }
 
+      explicacao = explicacaoRevisada;
       console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada e revisada com sucesso!`);
 
       return new Response(
