@@ -18,6 +18,8 @@ describe('prompt da explicação da parte lida', () => {
     expect(prompt).toContain('começo, desenvolvimento e encerramento da parte');
     expect(prompt).toContain('NÃO explique somente um versículo isolado');
     expect(prompt).toContain('NÃO use versículos, acontecimentos ou contexto de partes que não foram fornecidas');
+    expect(prompt).toContain('Toda afirmação explicativa deve apontar para palavras ou ações visíveis no texto integral');
+    expect(prompt).toContain('não acrescente possibilidades, motivos, causas, cenários ou categorias que o trecho não declara');
   });
 
   it('dimensiona a profundidade pela quantidade real de versículos', () => {

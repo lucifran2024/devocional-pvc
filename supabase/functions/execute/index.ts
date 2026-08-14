@@ -2043,13 +2043,15 @@ ${versiculosTexto}
 1. Explique TODOS os versículos fornecidos; nenhum pode ficar sem cobertura.
 2. NÃO explique somente um versículo isolado nem escolha apenas a frase mais conhecida.
 3. NÃO use versículos, acontecimentos ou contexto de partes que não foram fornecidas.
-4. Agrupe apenas versículos consecutivos que tratem do mesmo movimento; cite as faixas exatas.
-5. Não faça resumo geral do livro ou do capítulo no lugar de explicar esta parte.
-6. Faça conexão com outra passagem somente se for indispensável e direta; a explicação deve permanecer ancorada no texto fornecido.
-7. Linguagem profunda, clara, pastoral e acessível — não acadêmica.
-8. Não inclua oração nem seção separada de aplicação prática.
-9. Use até ${maxPalavrasExplicacao} palavras: profundidade proporcional à quantidade de versículos, sem enrolação.
-10. Não use emojis além do 🔍 no título.
+4. Toda afirmação explicativa deve apontar para palavras ou ações visíveis no texto integral.
+5. Se o trecho não declarar o motivo de uma ação, sentimento ou promessa, não acrescente possibilidades, motivos, causas, cenários ou categorias que o trecho não declara. Diga somente o que o texto afirma e como suas frases se relacionam.
+6. Agrupe apenas versículos consecutivos que tratem do mesmo movimento; cite as faixas exatas.
+7. Não faça resumo geral do livro ou do capítulo no lugar de explicar esta parte.
+8. Faça conexão com outra passagem somente se for indispensável e direta; a explicação deve permanecer ancorada no texto fornecido.
+9. Linguagem profunda, clara, pastoral e acessível — não acadêmica.
+10. Não inclua oração nem seção separada de aplicação prática.
+11. Use até ${maxPalavrasExplicacao} palavras: profundidade proporcional à quantidade de versículos, sem enrolação.
+12. Não use emojis além do 🔍 no título.
 
 Antes de responder, confira silenciosamente: cobri o primeiro, o meio e o último versículo sem sair da faixa?
 
