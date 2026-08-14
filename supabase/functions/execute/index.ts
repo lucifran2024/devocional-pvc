@@ -2063,9 +2063,17 @@ Antes de responder, confira silenciosamente: cobri o primeiro, o meio e o últim
 Gere a explicação agora:
 `;
 
+      const modelosExplicacaoDireta = [
+        'meta-llama/llama-3.3-70b-instruct:free',
+        'qwen/qwen3-next-80b-a3b-instruct:free',
+        'google/gemma-4-31b-it:free',
+        'deepseek/deepseek-v4-flash',
+      ];
+
       const llmExplicar = await gerarTexto(promptExplicar, {
         temperature: 0.2,
         maxTokens: maxTokensExplicacao,
+        models: modelosExplicacaoDireta,
       });
 
       if (!llmExplicar.ok) {
@@ -2105,6 +2113,7 @@ Tudo que estiver fora do envelope será descartado.
       const llmRevisao = await gerarTexto(promptRevisaoExplicar, {
         temperature: 0.05,
         maxTokens: maxTokensExplicacao,
+        models: modelosExplicacaoDireta,
       });
 
       const explicacaoRevisada = llmRevisao.ok && llmRevisao.text

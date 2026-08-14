@@ -33,6 +33,9 @@ describe('prompt da explicação da parte lida', () => {
     expect(edgeSource).toContain('# REVISÃO DE FIDELIDADE AO TEXTO VISÍVEL');
     expect(edgeSource).toContain('Não defina expressões bíblicas usando teologia ou contexto externo');
     expect(edgeSource).toContain('simboliza, representa, implica, provavelmente, talvez');
+    expect(edgeSource).toContain('const modelosExplicacaoDireta = [');
+    expect(edgeSource).toContain("'meta-llama/llama-3.3-70b-instruct:free'");
+    expect(edgeSource).not.toContain("modelosExplicacaoDireta = [\n        'openai/gpt-oss-120b:free'");
     expect(edgeSource).toContain('const llmRevisao = await gerarTexto(promptRevisaoExplicar');
     expect(edgeSource).toContain('<FINAL>');
     expect(edgeSource).toContain('extrairRespostaFinal');
