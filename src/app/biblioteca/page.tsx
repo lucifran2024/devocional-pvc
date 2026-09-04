@@ -22,10 +22,18 @@ import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import {
     BIBLIA_READING_ALIGN_KEY,
+    BIBLIA_READING_LINE_HEIGHT_KEY,
+    BIBLIA_READING_LINE_HEIGHT_STEP,
     DEFAULT_BIBLIA_READING_ALIGN,
+    DEFAULT_BIBLIA_READING_LINE_HEIGHT,
+    MAX_BIBLIA_READING_LINE_HEIGHT,
+    MIN_BIBLIA_READING_LINE_HEIGHT,
     bibliaReadingBodyStyle,
+    loadBibliaReadingLineHeight,
     parseBibliaReadingAlign,
     persistBibliaReadingAlign,
+    persistBibliaReadingLineHeight,
+    stepBibliaReadingLineHeight,
     type BibliaReadingAlign,
 } from '@/lib/biblia-reading-align';
 import {
@@ -616,6 +624,7 @@ function BibliotecaPage() {
     // Fonte e versão
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
     const [readingAlign, setReadingAlign] = useState<BibliaReadingAlign>(DEFAULT_BIBLIA_READING_ALIGN);
+    const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_BIBLIA_READING_LINE_HEIGHT);
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
     const [mostrarFontes, setMostrarFontes] = useState(false);
@@ -681,6 +690,14 @@ function BibliotecaPage() {
         persistBibliaReadingAlign(align);
     };
 
+    const alterarEspacamento = (delta: number) => {
+        setReadingLineHeight(prev => {
+            const next = stepBibliaReadingLineHeight(prev, delta);
+            persistBibliaReadingLineHeight(next);
+            return next;
+        });
+    };
+
     // ==========================================
     // INICIALIZAÇÃO: Carregar última leitura + prefs + online listener
     // ==========================================
@@ -694,6 +711,7 @@ function BibliotecaPage() {
             }
             const savedAlign = parseBibliaReadingAlign(localStorage.getItem(BIBLIA_READING_ALIGN_KEY));
             if (savedAlign) setReadingAlign(savedAlign);
+            setReadingLineHeight(loadBibliaReadingLineHeight());
             const savedVersao = localStorage.getItem('biblia-versao');
             if (savedVersao) {
                 const v = VERSOES_BIBLIA.find(ver => ver.codigo === savedVersao);
@@ -2064,7 +2082,29 @@ function BibliotecaPage() {
                                         </button>
                                     ))}
                                 </div>
-                                <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-border-subtle">
+                                <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-border-subtle space-y-2.5">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
+                                        <div className="flex items-center gap-1.5" role="group" aria-label="Espaçamento da leitura" data-storage-key={BIBLIA_READING_LINE_HEIGHT_KEY}>
+                                            <button
+                                                type="button"
+                                                onClick={() => alterarEspacamento(-BIBLIA_READING_LINE_HEIGHT_STEP)}
+                                                disabled={readingLineHeight <= MIN_BIBLIA_READING_LINE_HEIGHT}
+                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
+                                                title="Diminuir espaçamento"
+                                                aria-label="Diminuir espaçamento"
+                                            >−</button>
+                                            <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => alterarEspacamento(BIBLIA_READING_LINE_HEIGHT_STEP)}
+                                                disabled={readingLineHeight >= MAX_BIBLIA_READING_LINE_HEIGHT}
+                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
+                                                title="Aumentar espaçamento"
+                                                aria-label="Aumentar espaçamento"
+                                            >+</button>
+                                        </div>
+                                    </div>
                                     <BibliaReadingAlignControls value={readingAlign} onChange={definirAlinhamento} />
                                 </div>
                             </div>
@@ -2789,10 +2829,8 @@ function BibliotecaPage() {
                 )}
 
                 {!loading && !error && versiculos.length > 0 && (
-                    <div className="glass-panel rounded-2xl p-5 md:p-8 relative overflow-visible" ref={versiculosRef}>
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
-                        <div className={`space-y-1 ${fontConfig.value} leading-[1.85] text-text-primary reading-serif relative`} style={bibliaReadingBodyStyle(readingAlign)}>
+                    <div className="relative overflow-visible" ref={versiculosRef}>
+                        <div className={`space-y-1 ${fontConfig.value} text-text-primary reading-serif relative`} style={bibliaReadingBodyStyle(readingAlign, readingLineHeight)}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
