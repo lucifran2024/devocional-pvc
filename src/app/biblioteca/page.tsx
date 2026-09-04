@@ -17,8 +17,17 @@ import { ToastContainer } from '@/components/ui/ToastContainer';
 import { getCachedChapter, cacheChapter, searchVersesLocal } from '@/lib/bible-db';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { OfflineManager } from './components/OfflineManager';
+import { BibliaReadingAlignControls } from './components/BibliaReadingAlignControls';
 import { useOfflineInteractions } from './hooks/useOfflineInteractions';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
+import {
+    BIBLIA_READING_ALIGN_KEY,
+    DEFAULT_BIBLIA_READING_ALIGN,
+    bibliaReadingBodyStyle,
+    parseBibliaReadingAlign,
+    persistBibliaReadingAlign,
+    type BibliaReadingAlign,
+} from '@/lib/biblia-reading-align';
 import {
     supabase,
     getAllInteracoesPorTipo,
@@ -606,6 +615,7 @@ function BibliotecaPage() {
 
     // Fonte e versão
     const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_INDEX);
+    const [readingAlign, setReadingAlign] = useState<BibliaReadingAlign>(DEFAULT_BIBLIA_READING_ALIGN);
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
     const [mostrarFontes, setMostrarFontes] = useState(false);
@@ -666,6 +676,11 @@ function BibliotecaPage() {
         else localStorage.removeItem('biblia-versao-comparada');
     };
 
+    const definirAlinhamento = (align: BibliaReadingAlign) => {
+        setReadingAlign(align);
+        persistBibliaReadingAlign(align);
+    };
+
     // ==========================================
     // INICIALIZAÇÃO: Carregar última leitura + prefs + online listener
     // ==========================================
@@ -677,6 +692,8 @@ function BibliotecaPage() {
                 const idx = Number(savedFont);
                 if (idx >= 0 && idx < FONT_SIZES.length) setFontSizeIndex(idx);
             }
+            const savedAlign = parseBibliaReadingAlign(localStorage.getItem(BIBLIA_READING_ALIGN_KEY));
+            if (savedAlign) setReadingAlign(savedAlign);
             const savedVersao = localStorage.getItem('biblia-versao');
             if (savedVersao) {
                 const v = VERSOES_BIBLIA.find(ver => ver.codigo === savedVersao);
@@ -2024,7 +2041,7 @@ function BibliotecaPage() {
                         </button>
 
                         {mostrarFontes && (
-                            <div className="absolute top-full right-0 mt-1.5 w-56 bg-white/98 dark:bg-surface-2/98 border border-slate-200 dark:border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-white/98 dark:bg-surface-2/98 border border-slate-200 dark:border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                                 <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
                                     <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Tamanho do texto</p>
                                 </div>
@@ -2046,6 +2063,9 @@ function BibliotecaPage() {
                                             <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">{f.label}</span>
                                         </button>
                                     ))}
+                                </div>
+                                <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-border-subtle">
+                                    <BibliaReadingAlignControls value={readingAlign} onChange={definirAlinhamento} />
                                 </div>
                             </div>
                         )}
@@ -2772,7 +2792,7 @@ function BibliotecaPage() {
                     <div className="glass-panel rounded-2xl p-5 md:p-8 relative overflow-visible" ref={versiculosRef}>
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                        <div className={`space-y-1 ${fontConfig.value} leading-[1.85] text-text-primary reading-serif relative`}>
+                        <div className={`space-y-1 ${fontConfig.value} leading-[1.85] text-text-primary reading-serif relative`} style={bibliaReadingBodyStyle(readingAlign)}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
