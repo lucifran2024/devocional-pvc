@@ -24,11 +24,11 @@
 
   /* --- LIGHT THEME (Default) --- */
   /* Backgrounds */
-  --bg-surface-0: #f8fafc;
+  --bg-surface-0: #f8f6f1;
   /* Slate 50 */
   --bg-surface-1: #ffffff;
   /* White */
-  --bg-surface-2: #f1f5f9;
+  --bg-surface-2: #f0ede6;
   /* Slate 100 */
 
   /* Text */
@@ -36,7 +36,7 @@
   /* Slate 900 */
   --text-secondary: #475569;
   /* Slate 600 */
-  --text-muted: #94a3b8;
+  --text-muted: #667085;
   /* Slate 400 */
 
   /* Borders */
@@ -79,7 +79,7 @@
   /* Text: marfim em vez de branco puro (mais suave p/ leitura longa) */
   --text-primary: #f5efe6;
   --text-secondary: #cabfae;
-  --text-muted: #8a8174;
+  --text-muted: #b2a797;
 
   /* Borders quentes */
   --border-subtle: #2c261d;
@@ -120,6 +120,27 @@
   --animate-slide-up: slideUp 0.5s ease-out forwards;
 }
 
+/* Shared interaction and reading comfort */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+html { scroll-padding-top: 9rem; }
+button, a, input, select, textarea { touch-action: manipulation; }
+button:not(:disabled), [role="button"] { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+button:disabled { cursor: not-allowed; }
+header button { min-height: 44px; min-width: 44px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Base Setup */
 body {
   background: var(--bg-surface-0);
@@ -128,16 +149,13 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 
   /* Subtle Texture/Pattern for depth */
-  background-image:
-    radial-gradient(circle at 50% 0%, var(--accent-primary) 0%, transparent 40%, transparent 100%);
+  background-image: none;
   background-size: 100% 100vh;
   background-repeat: no-repeat;
 }
 
 .dark body {
-  background-image:
-    radial-gradient(circle at 50% -5%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 110%, rgba(180, 83, 9, 0.08) 0%, transparent 40%);
+  background-image: none;
 }
 
 /* Tipografia de leitura (Bíblia / passagem do dia) — serifada premium */

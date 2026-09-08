@@ -51,17 +51,18 @@ function NavigationInner() {
         <>
             {/* Mobile Bottom Bar */}
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-border-subtle md:hidden shadow-[0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]">
-                <ul className="flex items-stretch justify-around px-2 pt-1.5 pb-3">
+                <ul className="flex items-stretch justify-around px-2 pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                     {navItems.map((item) => {
                         const isActive = isItemActive(item.href);
                         return (
                             <li key={item.name} className="flex-1">
                                 <Link
                                     href={item.href}
+                                    aria-current={isActive ? "page" : undefined}
                                     className={`flex flex-col items-center justify-center w-full py-1.5 gap-1 rounded-xl transition-all duration-200
                                         ${isActive
                                             ? 'text-amber-600 dark:text-amber-400'
-                                            : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                            : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     <div className={`relative p-1.5 rounded-xl transition-all duration-200
@@ -94,10 +95,11 @@ function NavigationInner() {
                             <li key={item.name} className="w-full">
                                 <Link
                                     href={item.href}
+                                    aria-current={isActive ? "page" : undefined}
                                     className={`relative flex flex-col items-center justify-center w-full py-3.5 gap-1.5 rounded-2xl transition-all duration-200
                                         ${isActive
                                             ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/12'
-                                            : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                            : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     {isActive && (
@@ -116,7 +118,7 @@ function NavigationInner() {
                 {/* Sair (desktop) */}
                 <button
                     onClick={signOut}
-                    className="mt-auto flex flex-col items-center gap-1.5 py-3.5 px-3 rounded-2xl text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 w-full"
+                    className="mt-auto flex flex-col items-center gap-1.5 py-3.5 px-3 rounded-2xl text-slate-600 dark:text-text-muted hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 w-full"
                     title="Sair da conta"
                 >
                     <LogOut className="w-5 h-5 stroke-[1.8]" />

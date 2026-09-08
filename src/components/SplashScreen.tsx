@@ -16,7 +16,7 @@ export function SplashScreen() {
         // Hide splash screen after animation
         const hideTimer = setTimeout(() => {
             setIsVisible(false);
-        }, 2000);
+        }, 700);
 
         return () => {
             clearTimeout(timer);
@@ -28,7 +28,7 @@ export function SplashScreen() {
 
     return (
         <div
-            className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#14110d] transition-opacity duration-500 ${
+            className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-surface-0 pointer-events-none transition-opacity duration-500 ${
                 isAnimating ? 'opacity-0' : 'opacity-100'
             }`}
         >

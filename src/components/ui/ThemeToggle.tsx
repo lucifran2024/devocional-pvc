@@ -5,13 +5,14 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 export function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
+    const { resolvedTheme, setTheme } = useTheme();
 
     return (
         <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="btn-glass p-2 rounded-full relative overflow-hidden group"
-            aria-label="Toggle theme"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="btn-glass min-h-11 min-w-11 flex items-center justify-center p-2 rounded-xl relative overflow-hidden group"
+            aria-label={resolvedTheme === "dark" ? "Ativar modo claro" : "Ativar modo noturno"}
+            title={resolvedTheme === "dark" ? "Ativar modo claro" : "Ativar modo noturno"}
         >
             <div className="relative z-10">
                 <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-amber-500" />

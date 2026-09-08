@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   User, AlertTriangle,
   Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic,
@@ -93,12 +95,22 @@ export default function DashboardPage() {
         </button>
       </header>
 
+      <section className="mx-5 mt-20 md:mx-auto md:w-[calc(100%-3rem)] max-w-6xl grid md:grid-cols-2 overflow-hidden rounded-2xl border border-border-subtle bg-surface-1">
+        <div className="p-7 md:p-10 flex flex-col justify-center items-start">
+          <p className="text-sm text-text-secondary mb-3">PVC · Seu espaço de leitura</p>
+          <h1 className="reading-serif text-4xl md:text-5xl leading-tight mb-4">Um momento para a Palavra.</h1>
+          <p className="text-text-secondary leading-relaxed max-w-md mb-6">Abra sua Bíblia, retome a leitura e guarde o que tocou seu coração.</p>
+          <Link href="/biblioteca" className="inline-flex items-center gap-3 min-h-12 px-6 rounded-xl bg-amber-500 text-amber-950 font-semibold hover:bg-amber-400 transition-colors"><Book className="w-5 h-5" /> Abrir minha Bíblia</Link>
+        </div>
+        <div className="relative min-h-48 md:min-h-80">
+          <Image src="/leitura-natureza.jpg" alt="Luz natural atravessando uma floresta verde" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
+        </div>
+      </section>
       {/* 1. HERO SECTION (Imersiva) */}
-      <section className="relative w-full pt-32 pb-20 px-6 overflow-hidden">
+      <section className="relative w-full pt-24 pb-12 px-6 overflow-hidden">
         {/* Decorative Elements - Blue glow removed as requested */}
         {/* <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div> */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none"></div>
+
 
         <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
 

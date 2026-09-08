@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Mail, Lock, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 
 // ===============================================
@@ -68,7 +69,8 @@ export default function LoginPage() {
 
     return (
         <CosmicBackground className="min-h-screen flex items-center justify-center px-6 py-12">
-            <div className="w-full max-w-sm">
+            <header className="absolute right-4 top-4"><ThemeToggle /></header>
+            <div className="w-full max-w-sm mx-auto">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-4">

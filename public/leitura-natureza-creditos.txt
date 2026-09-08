@@ -1,0 +1,3 @@
+Fotografia de natureza: Unsplash. Original: https://images.unsplash.com/photo-1441974231531-c6227db76b6e
+Uso conforme licença Unsplash: https://unsplash.com/license
+Arquivo local para evitar dependência do host durante a leitura.

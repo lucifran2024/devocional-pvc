@@ -9,10 +9,10 @@ interface CosmicBackgroundProps {
 export function CosmicBackground({
     children,
     className = '',
-    showOrbs = true
+    showOrbs = false
 }: CosmicBackgroundProps) {
     return (
-        <div className={`relative min-h-screen bg-slate-50 dark:bg-transparent text-slate-900 dark:text-text-primary overflow-x-hidden ${className}`}>
+        <div className={`relative min-h-screen bg-surface-0 text-text-primary overflow-x-hidden ${className}`}>
 
             {/* 1. Divine Gradient Background (Base) - SINGLE TONE */}
             <div className="absolute inset-0 bg-transparent z-0 pointer-events-none"></div>

@@ -1961,9 +1961,9 @@ function BibliotecaPage() {
             {/* Barra de Navegação (Sticky) */}
             <div className="sticky top-[57px] z-40 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-                    <button onClick={abrirModal} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-surface-2 transition-colors group">
+                    <button onClick={abrirModal} aria-label="Escolher livro e capítulo" aria-haspopup="dialog" aria-expanded={modalAberto} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-surface-2 transition-colors group">
                         <div className="text-left min-w-0">
-                            <div className="text-[10px] text-text-muted uppercase tracking-wider">Leitura</div>
+                            <div className="text-[11px] text-text-muted font-medium">Livros e capítulos</div>
                             <div className="text-text-primary font-bold text-sm flex items-center gap-1 truncate">
                                 {livroAtual.nome} {capituloAtual}
                                 <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
@@ -2131,7 +2131,7 @@ function BibliotecaPage() {
             {modalAberto && (
                 <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center sm:p-4 bg-black/50 dark:bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
                     <div
-                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden sm:border border-slate-200 dark:border-border-subtle shadow-2xl"
+                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden sm:border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
                     >
                         <div className="px-4 py-3.5 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-white dark:bg-surface-1">
@@ -2147,7 +2147,7 @@ function BibliotecaPage() {
                             <h3 className="text-base sm:text-lg font-bold text-text-primary tracking-tight">
                                 {faseSelecao === 'livros' ? 'Escolha o Livro' : faseSelecao === 'capitulos' ? livroSelecionadoTemp.nome : `${livroSelecionadoTemp.nome} ${capituloSelecionadoTemp}`}
                             </h3>
-                            <button onClick={fecharModalSelecao} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-2 text-text-muted hover:text-text-primary transition-colors"><X className="w-5 h-5" /></button>
+                            <button onClick={fecharModalSelecao} aria-label="Fechar seleção de livros" className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-surface-2 text-text-muted hover:text-text-primary transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="overflow-y-auto flex-1">
                             {faseSelecao === 'livros' && (
@@ -2166,6 +2166,7 @@ function BibliotecaPage() {
                                                         irParaReferencia();
                                                     }
                                                 }}
+                                                aria-label="Buscar livro ou referência"
                                                 placeholder="Buscar livro ou referência (ex: João 3:16)"
                                                 className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-surface-2/60 border border-slate-200 dark:border-border-subtle text-[14px] text-slate-900 dark:text-text-primary placeholder:text-slate-400 dark:placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40 transition"
                                                 autoComplete="off"
@@ -2266,7 +2267,7 @@ function BibliotecaPage() {
 
                                                                     {/* Nome + capítulos */}
                                                                     <span className="flex flex-col min-w-0 flex-1">
-                                                                        <span className={`font-semibold text-[16px] leading-snug tracking-tight truncate ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
+                                                                        <span className={`font-semibold text-[16px] leading-snug tracking-tight break-words ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
                                                                             {livro.nome}
                                                                         </span>
                                                                         <span className={`text-[12px] font-medium tabular-nums truncate ${isAtual ? 'text-amber-600/80 dark:text-amber-300/70' : 'text-slate-400 dark:text-text-muted'}`}>
@@ -2366,7 +2367,7 @@ function BibliotecaPage() {
             {painelAberto && (
                 <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
                     <div
-                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
+                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
                     >
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-surface-2 dark:to-surface-2">
