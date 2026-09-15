@@ -39,4 +39,22 @@ describe('contrato dos envios automáticos do PVC ao Telegram', () => {
         expect(route).not.toContain('const msgVersiculo =');
         expect(route).not.toContain('Versiculo do Dia');
     });
+
+    it('mantém o endpoint antigo daily-devotional permanentemente inerte', () => {
+        const route = readProjectFile('src/app/api/cron/daily-devotional/route.ts');
+
+        expect(route).toContain('status: 410');
+        expect(route).not.toContain('enviarTelegram');
+        expect(route).not.toContain('TELEGRAM_BOT_TOKEN');
+        expect(route).not.toContain('tribodejuda');
+        expect(route).not.toContain('evangelhoparatodos');
+    });
+
+    it('usa Vercel CLI atual no deploy do GitHub Actions', () => {
+        const workflow = readProjectFile('.github/workflows/deploy.yml');
+
+        expect(workflow).not.toContain('amondnet/vercel-action');
+        expect(workflow).toContain('npm install --global vercel@latest');
+        expect(workflow).toContain('vercel deploy --prebuilt --prod');
+    });
 });
