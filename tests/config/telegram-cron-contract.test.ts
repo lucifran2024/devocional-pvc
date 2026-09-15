@@ -50,11 +50,11 @@ describe('contrato dos envios automáticos do PVC ao Telegram', () => {
         expect(route).not.toContain('evangelhoparatodos');
     });
 
-    it('usa Vercel CLI atual no deploy do GitHub Actions', () => {
+    it('deixa o deploy do frontend somente com a integração Git da Vercel', () => {
         const workflow = readProjectFile('.github/workflows/deploy.yml');
 
         expect(workflow).not.toContain('amondnet/vercel-action');
-        expect(workflow).toContain('npm install --global vercel@latest');
-        expect(workflow).toContain('vercel deploy --prebuilt --prod');
+        expect(workflow).not.toContain('deploy-frontend:');
+        expect(workflow).not.toContain('vercel deploy');
     });
 });
