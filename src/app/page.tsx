@@ -9,60 +9,61 @@ import {
   HeartHandshake
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
+import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RandomVerse } from '@/components/RandomVerse';
-import { DashboardSkeleton } from '@/components/ui/DashboardSkeleton';
 import { useAuth } from '@/components/AuthProvider';
 
 // ===============================================
 // PÁGINA DASHBOARD
 // ===============================================
 
+const PAYLOAD_LOCAL_KEY = 'payload-dia-local';
+
+function lerPayloadLocal(): PayloadDoDia | null {
+  try {
+    const raw = localStorage.getItem(PAYLOAD_LOCAL_KEY);
+    return raw ? (JSON.parse(raw) as PayloadDoDia) : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function DashboardPage() {
   const [payload, setPayload] = useState<PayloadDoDia | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [continuar, setContinuar] = useState<BibliaPosicao | null>(null);
   const dataHoje = getDataHoje();
   const { signOut } = useAuth();
 
+  // ABERTURA RÁPIDA (25/09/2026): a tela aparece na hora. O payload do dia só
+  // dá nome à passagem sob a Palavra da Manhã, então é buscado em segundo
+  // plano (antes a página inteira esperava baixar o SECAO6.TXT, até 8 s).
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Demorou muito para conectar (Timeout).')), 8000)
-      );
+    let ativo = true;
+    const local = lerPayloadLocal();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage na montagem (hydration-safe)
+    setContinuar(loadBibliaPosicao());
+    if (local?.data === dataHoje) setPayload(local);
 
-      try {
-        const res = await Promise.race([
-          getPayloadDoDia(dataHoje),
-          timeoutPromise
-        ]) as { data: PayloadDoDia | null; error: string | null };
-
-        if (res.error) throw new Error(res.error);
+    getPayloadDoDia(dataHoje)
+      .then((res) => {
+        if (!ativo) return;
+        if (res.error || !res.data) throw new Error(res.error || 'Payload vazio');
         setPayload(res.data);
         // Guarda o último payload para o dashboard abrir offline
-        try { localStorage.setItem('payload-dia-local', JSON.stringify(res.data)); } catch { /* ignore */ }
-      } catch (e) {
+        try { localStorage.setItem(PAYLOAD_LOCAL_KEY, JSON.stringify(res.data)); } catch { /* ignore */ }
+      })
+      .catch((e) => {
         console.error(e);
         // Offline/erro: usa o último payload salvo no aparelho
-        try {
-          const local = localStorage.getItem('payload-dia-local');
-          if (local) setPayload(JSON.parse(local));
-          else setError(e instanceof Error ? e.message : 'Erro desconhecido.');
-        } catch {
-          setError(e instanceof Error ? e.message : 'Erro desconhecido.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+        if (ativo && local) setPayload((atual) => atual ?? local);
+      });
+
+    return () => { ativo = false; };
   }, [dataHoje]);
 
   const formatarDataExtenso = (dataStr: string) => {
@@ -70,17 +71,6 @@ export default function DashboardPage() {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
   };
-
-  if (loading) {
-    return (
-      <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
-        <header className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </header>
-        <DashboardSkeleton />
-      </CosmicBackground>
-    );
-  }
 
   return (
     <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
@@ -100,14 +90,24 @@ export default function DashboardPage() {
           <p className="text-sm text-text-secondary mb-3">PVC · Seu espaço de leitura</p>
           <h1 className="reading-serif text-4xl md:text-5xl leading-tight mb-4">Um momento para a Palavra.</h1>
           <p className="text-text-secondary leading-relaxed max-w-md mb-6">Abra sua Bíblia, retome a leitura e guarde o que tocou seu coração.</p>
-          <Link href="/biblioteca" className="inline-flex items-center gap-3 min-h-12 px-6 rounded-xl bg-amber-500 text-amber-950 font-semibold hover:bg-amber-400 transition-colors"><Book className="w-5 h-5" /> Abrir minha Bíblia</Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Com leitura em andamento, o botão leva direto de volta a ela
+                (a Bíblia reabre no capítulo e no versículo onde parou). */}
+            <Link href="/biblioteca" className="inline-flex items-center gap-3 min-h-12 px-6 rounded-xl bg-amber-500 text-amber-950 font-semibold hover:bg-amber-400 transition-colors">
+              <Book className="w-5 h-5" />
+              {continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}
+            </Link>
+            <Link href="/plano-de-leitura?ler=1" className="inline-flex items-center gap-2 min-h-12 px-5 rounded-xl border border-border-strong text-text-primary font-semibold hover:border-amber-500/60 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
+              <Calendar className="w-5 h-5" /> Leitura do dia
+            </Link>
+          </div>
         </div>
-        <div className="relative min-h-48 md:min-h-80">
+        <div className="relative min-h-36 md:min-h-80">
           <Image src="/leitura-natureza.jpg" alt="Luz natural atravessando uma floresta verde" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
         </div>
       </section>
       {/* 1. HERO SECTION (Imersiva) */}
-      <section className="relative w-full pt-24 pb-12 px-6 overflow-hidden">
+      <section className="relative w-full pt-10 md:pt-24 pb-12 px-6 overflow-hidden">
         {/* Decorative Elements - Blue glow removed as requested */}
         {/* <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div> */}
 

@@ -17,8 +17,10 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
 
             if (Notification.permission === 'granted') {
                 // Permissao ja ativa — registra subscription automaticamente
-                // (necessario quando a chave VAPID mudou ou subscription expirou)
-                registerPushSubscription();
+                // (necessario quando a chave VAPID mudou ou subscription expirou).
+                // Adiado alguns segundos para não disputar a rede com a abertura.
+                const timer = setTimeout(() => registerPushSubscription(), 4000);
+                return () => clearTimeout(timer);
             } else if (Notification.permission === 'default') {
                 // Show banner if permission not yet decided
                 const timer = setTimeout(() => setShowBanner(true), 5000);
@@ -128,7 +130,7 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
     if (!showBanner) return null;
 
     return (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-up">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[60] animate-slide-up">
             <div className="bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                 <button
                     onClick={dismissBanner}

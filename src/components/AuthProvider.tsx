@@ -80,8 +80,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     useEffect(() => {
-        // Sessão inicial (localStorage — funciona offline)
+        let ativo = true;
+
+        // ABERTURA RÁPIDA (25/09/2026): com sessão guardada no aparelho, o app
+        // abre na hora. Antes ele esperava o getSession(), que renova o token
+        // pela rede quando a sessão venceu (toda abertura após ~1h parado).
+        // A validação abaixo continua valendo: se a sessão cair, volta ao login.
+        const guardado = lerUsuarioLocal();
+        if (guardado) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- leitura síncrona de localStorage na montagem (hydration-safe)
+            setUser(guardado);
+            setLoading(false);
+        }
+
+        // Validação real (localStorage + renovação do token quando preciso)
         supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!ativo) return;
             let u = session?.user ?? null;
             if (!u && estaOffline()) u = lerUsuarioLocal();
             setUser(u);
@@ -97,7 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            ativo = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     // Gate de navegação
@@ -135,12 +152,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (
         <AuthContext.Provider value={{ user, isAdmin, loading, signOut }}>
             {loading || bloqueado ? (
-                <div className="min-h-screen flex items-center justify-center bg-surface-0">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center animate-pulse">
-                            <BookOpen className="w-5 h-5 text-amber-400" />
+                // Abertura da marca: é a primeira pintura (vem pronta no HTML) e
+                // só fica na tela enquanto a sessão é conferida.
+                <div role="status" aria-label="Abrindo a Bíblia" className="min-h-screen flex items-center justify-center bg-surface-0">
+                    <div className="flex flex-col items-center gap-5">
+                        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/25 animate-pulse">
+                            <BookOpen className="w-8 h-8 text-white" strokeWidth={2.2} />
                         </div>
-                        <span className="text-xs text-text-muted tracking-widest uppercase">Carregando…</span>
+                        <div className="text-center">
+                            <p className="reading-serif text-2xl font-semibold text-text-primary">Bíblia</p>
+                            <p className="text-xs text-text-muted mt-1">Sua jornada espiritual diária</p>
+                        </div>
                     </div>
                 </div>
             ) : (

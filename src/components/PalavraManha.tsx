@@ -37,12 +37,23 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const [modoOffline, setModoOffline] = useState(false); // Exibindo cache local sem rede
 
     async function loadData() {
-        setLoading(true);
         const hoje = getDataHoje();
+        const local = lerPalavraLocal();
+
+        // ABERTURA RÁPIDA (25/09/2026): a mensagem de HOJE já guardada no
+        // aparelho aparece na hora; o banco só confirma/atualiza em seguida.
+        // Mensagem de outro dia não é exibida como se fosse de hoje (online).
+        const temLocalDeHoje = !!local && local.data === hoje;
+        if (temLocalDeHoje) {
+            setData(local);
+            setModoOffline(false);
+            setLoading(false);
+        } else {
+            setLoading(true);
+        }
 
         // Offline: usa direto a última mensagem salva no aparelho
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            const local = lerPalavraLocal();
             if (local) {
                 setData(local);
                 setModoOffline(local.data !== hoje);
@@ -60,14 +71,13 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                 salvarPalavraLocal(cache);
                 setModoOffline(false);
                 setLoading(false);
-            } else {
+            } else if (!temLocalDeHoje) {
                 // 2. Se não tem cache, gera
                 console.log('🌅 [PALAVRA] Gerando nova mensagem...');
                 await handleGenerate();
             }
         } catch (err) {
             console.error(err);
-            const local = lerPalavraLocal();
             if (local) {
                 setData(local);
                 setModoOffline(local.data !== hoje);

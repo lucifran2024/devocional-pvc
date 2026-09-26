@@ -4,15 +4,23 @@ interface CosmicBackgroundProps {
     children: React.ReactNode;
     className?: string;
     showOrbs?: boolean;
+    /**
+     * Recorta a largura com `overflow-x: clip`. O `overflow-x: hidden` padrão
+     * transforma o fundo numa caixa de rolagem e faz `position: sticky` parar
+     * de funcionar nas páginas; use `clipX` onde o cabeçalho precisa ficar fixo.
+     */
+    clipX?: boolean;
 }
 
 export function CosmicBackground({
     children,
     className = '',
-    showOrbs = false
+    showOrbs = false,
+    clipX = false,
 }: CosmicBackgroundProps) {
+    const recorte = clipX ? 'overflow-x-hidden supports-[overflow:clip]:overflow-x-clip' : 'overflow-x-hidden';
     return (
-        <div className={`relative min-h-screen bg-surface-0 text-text-primary overflow-x-hidden ${className}`}>
+        <div className={`relative min-h-screen bg-surface-0 text-text-primary ${recorte} ${className}`}>
 
             {/* 1. Divine Gradient Background (Base) - SINGLE TONE */}
             <div className="absolute inset-0 bg-transparent z-0 pointer-events-none"></div>
@@ -28,8 +36,11 @@ export function CosmicBackground({
                 </div>
             )}
 
-            {/* 5. Main Content Content Container */}
-            <div className="relative z-10 w-full min-h-screen flex flex-col">
+            {/* 5. Main Content Content Container
+                Sem z-index próprio (25/09/2026): com "z-10" as janelas e painéis
+                das páginas ficavam presos ABAIXO da barra inferior de navegação,
+                que escondia a parte de baixo deles. Continua acima do grão. */}
+            <div className="relative w-full min-h-screen flex flex-col">
                 {children}
             </div>
         </div>

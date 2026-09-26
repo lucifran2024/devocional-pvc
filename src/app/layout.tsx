@@ -1,21 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Geist, Newsreader } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { NotificationManager } from "@/components/NotificationManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { SplashScreen } from "@/components/SplashScreen";
 import { Navigation } from "@/components/ui/Navigation";
 import { AuthProvider } from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -57,7 +51,11 @@ export const metadata: Metadata = {
   },
 };
 
+// Tela do celular em escala 1, com a pinça liberada (sem maximumScale nem
+// userScalable): o zoom acidental é evitado no CSS (globals.css), não aqui.
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#F59E0B",
   colorScheme: "light dark",
 };
@@ -70,12 +68,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} antialiased min-h-screen bg-surface-0 text-text-primary transition-colors duration-300`}
+        className={`${geistSans.variable} ${newsreader.variable} antialiased min-h-screen bg-surface-0 text-text-primary transition-colors duration-300`}
         suppressHydrationWarning
       >
         <ThemeProvider defaultTheme="dark" storageKey="devocional-theme">
+          {/* A abertura da marca agora é a tela do AuthProvider: aparece só
+              enquanto a sessão é conferida, sem somar 700 ms a cada abertura. */}
           <AuthProvider>
-            <SplashScreen />
             <Navigation />
             <div className="md:pl-24 pb-20 md:pb-0 min-h-screen">
               <ErrorBoundary>

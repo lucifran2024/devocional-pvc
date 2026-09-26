@@ -26,7 +26,8 @@ export function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+        // No celular fica acima da barra inferior de navegação (antes a cobria)
+        <div className="fixed left-4 right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:left-auto md:right-4 md:bottom-4 z-[70] space-y-2 md:max-w-sm">
             {toasts.map((toast) => {
                 const Icon = icons[toast.type];
 

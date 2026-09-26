@@ -9,7 +9,7 @@ import {
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
     CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download,
-    BookmarkCheck, Columns2
+    BookmarkCheck, Columns2, History
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -36,6 +36,14 @@ import {
     stepBibliaReadingLineHeight,
     type BibliaReadingAlign,
 } from '@/lib/biblia-reading-align';
+import {
+    loadBibliaPosicao,
+    loadBibliaRecentes,
+    persistBibliaPosicao,
+    registrarBibliaRecente,
+    type BibliaRecente,
+} from '@/lib/biblia-posicao';
+import { barraDeveAparecer, progressoLeitura } from '@/lib/leitura-rolagem';
 import {
     supabase,
     getAllInteracoesPorTipo,
@@ -541,6 +549,16 @@ function BibliotecaPage() {
     const [error, setError] = useState<string | null>(null);
     const [inicializado, setInicializado] = useState(false);
 
+    // Leitura mais livre (25/09/2026): a barra do topo some enquanto se lê
+    // descendo e volta ao rolar para cima; mostra o progresso do capítulo.
+    const [barraVisivel, setBarraVisivel] = useState(true);
+    const [progresso, setProgresso] = useState(0);
+    const ultimaRolagemRef = useRef(0);
+    // Versículo onde a leitura parou — reabre no mesmo ponto, sem destaque
+    const [retomarVersiculo, setRetomarVersiculo] = useState<number | null>(null);
+    // Capítulos lidos recentemente (atalhos no seletor de livros)
+    const [recentes, setRecentes] = useState<BibliaRecente[]>([]);
+
     // Modal de seleção
     const [modalAberto, setModalAberto] = useState(false);
     const [faseSelecao, setFaseSelecao] = useState<'livros' | 'capitulos' | 'versiculos'>('livros');
@@ -726,12 +744,22 @@ function BibliotecaPage() {
             // Status de conectividade
             setIsOnline(navigator.onLine);
 
-            const ultima = await getUltimaLeitura();
-            if (ultima) {
-                const livro = LIVROS_BIBLIA.find(l => l.abrev === ultima.livro_abrev);
-                if (livro) {
-                    setLivroAtual(livro);
-                    setCapituloAtual(ultima.capitulo);
+            // Onde a leitura parou: primeiro o aparelho (instantâneo, funciona
+            // offline); o banco só é consultado se aqui ainda não houver posição.
+            const posicao = loadBibliaPosicao();
+            const livroSalvo = posicao ? LIVROS_BIBLIA.find(l => l.abrev === posicao.livro) : undefined;
+            if (posicao && livroSalvo && posicao.capitulo <= livroSalvo.capitulos) {
+                setLivroAtual(livroSalvo);
+                setCapituloAtual(posicao.capitulo);
+                if (posicao.versiculo && posicao.versiculo > 1) setRetomarVersiculo(posicao.versiculo);
+            } else {
+                const ultima = await getUltimaLeitura();
+                if (ultima) {
+                    const livro = LIVROS_BIBLIA.find(l => l.abrev === ultima.livro_abrev);
+                    if (livro) {
+                        setLivroAtual(livro);
+                        setCapituloAtual(ultima.capitulo);
+                    }
                 }
             }
             setInicializado(true);
@@ -827,6 +855,84 @@ function BibliotecaPage() {
         setVersiculosSelecionados(new Set());
         setMostrarCores(false);
     }, [livroAtual, capituloAtual, inicializado, buscarCapitulo, versaoBiblia, carregarInteracoes]);
+
+    // Guarda no aparelho o capítulo aberto (a Bíblia e a tela inicial reabrem
+    // aqui) e o registra entre os recentes do seletor de livros.
+    useEffect(() => {
+        if (!inicializado) return;
+        const salva = loadBibliaPosicao();
+        const mesmoCapitulo = salva?.livro === livroAtual.abrev && salva?.capitulo === capituloAtual;
+        persistBibliaPosicao({
+            livro: livroAtual.abrev,
+            livroNome: livroAtual.nome,
+            capitulo: capituloAtual,
+            versiculo: mesmoCapitulo ? salva!.versiculo : null,
+        });
+        registrarBibliaRecente({ livro: livroAtual.abrev, livroNome: livroAtual.nome, capitulo: capituloAtual });
+    }, [livroAtual, capituloAtual, inicializado]);
+
+    // Rolagem da leitura: barra do topo some ao descer e volta ao subir,
+    // progresso do capítulo e versículo do topo guardado para reabrir ali.
+    useEffect(() => {
+        let quadro = 0;
+        let salvarTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const salvarVersiculoDoTopo = () => {
+            const corpo = versiculosRef.current;
+            if (!corpo) return;
+            let noTopo: number | null = null;
+            for (const el of corpo.querySelectorAll<HTMLElement>('[id^="verse-"]')) {
+                if (el.getBoundingClientRect().bottom > 150) {
+                    noTopo = Number(el.id.slice('verse-'.length)) || null;
+                    break;
+                }
+            }
+            persistBibliaPosicao({
+                livro: livroAtual.abrev,
+                livroNome: livroAtual.nome,
+                capitulo: capituloAtual,
+                versiculo: noTopo && noTopo > 1 ? noTopo : null,
+            });
+        };
+
+        const aoRolar = () => {
+            if (!quadro) {
+                quadro = requestAnimationFrame(() => {
+                    quadro = 0;
+                    const y = window.scrollY;
+                    // Guarda a posição anterior ANTES: o React pode rodar a função
+                    // de atualização depois, quando a ref já teria o valor novo.
+                    const anterior = ultimaRolagemRef.current;
+                    ultimaRolagemRef.current = y;
+                    setBarraVisivel(v => barraDeveAparecer({ anterior, atual: y, visivel: v }));
+                    const corpo = versiculosRef.current;
+                    if (corpo) {
+                        const topo = corpo.getBoundingClientRect().top + y;
+                        setProgresso(progressoLeitura(y, topo - 160, topo + corpo.offsetHeight - window.innerHeight));
+                    }
+                });
+            }
+            clearTimeout(salvarTimer);
+            salvarTimer = setTimeout(salvarVersiculoDoTopo, 400);
+        };
+
+        window.addEventListener('scroll', aoRolar, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', aoRolar);
+            cancelAnimationFrame(quadro);
+            clearTimeout(salvarTimer);
+        };
+    }, [livroAtual, capituloAtual]);
+
+    // Reabre no versículo onde a leitura parou (sem o destaque da busca)
+    useEffect(() => {
+        if (!retomarVersiculo || loading || versiculos.length === 0) return;
+        const quadro = requestAnimationFrame(() => {
+            document.getElementById(`verse-${retomarVersiculo}`)?.scrollIntoView({ block: 'start' });
+            setRetomarVersiculo(null);
+        });
+        return () => cancelAnimationFrame(quadro);
+    }, [retomarVersiculo, loading, versiculos]);
 
     // Carregar a versão de comparação (cache local primeiro, igual à principal)
     useEffect(() => {
@@ -944,7 +1050,28 @@ function BibliotecaPage() {
     const abrirModal = () => {
         setLivroSelecionadoTemp(livroAtual);
         setFaseSelecao('livros');
+        // Recentes (sem o capítulo que já está aberto)
+        setRecentes(loadBibliaRecentes()
+            .filter(r => !(r.livro === livroAtual.abrev && r.capitulo === capituloAtual))
+            .slice(0, 6));
         setModalAberto(true);
+    };
+
+    // Atalhos do seletor: voltar a um capítulo recente num toque
+    const abrirRecente = (r: BibliaRecente) => {
+        const livro = LIVROS_BIBLIA.find(l => l.abrev === r.livro);
+        if (!livro) return;
+        setLivroAtual(livro);
+        setCapituloAtual(r.capitulo);
+        setScrollToVerse(null);
+        setBuscaLivro('');
+        setModalAberto(false);
+        window.scrollTo(0, 0);
+    };
+
+    // ... ou pular direto para o Antigo / Novo Testamento na lista de livros
+    const pularParaTestamento = (qual: 'at' | 'nt') => {
+        document.getElementById(`secao-${qual}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     };
 
     const selecionarLivroTemp = (livro: typeof LIVROS_BIBLIA[0]) => {
@@ -1071,11 +1198,29 @@ function BibliotecaPage() {
         setLoadingVersiculosTemp(true);
         setTotalVersiculosTemp(0);
 
-        // Buscar quantidade de versículos do capítulo (com fallback)
+        // Quantidade de versículos: primeiro o capítulo já salvo no aparelho
+        // (instantâneo e offline); só vai à internet se não houver cópia.
+        const bookId = LIVRO_PARA_ID[livroSelecionadoTemp.abrev] || 1;
+        const codigo = versaoBiblia.codigo;
         try {
-            const bookId = LIVRO_PARA_ID[livroSelecionadoTemp.abrev] || 1;
-            const data = await fetchBibliaComFallback(bookId, cap, versaoBiblia.codigo);
-            if (data.length > 0) setTotalVersiculosTemp(data.length);
+            const cached = await getCachedChapter(codigo, bookId, cap);
+            if (cached && cached.length > 0) {
+                setTotalVersiculosTemp(cached.length);
+                setLoadingVersiculosTemp(false);
+                return;
+            }
+        } catch { /* IndexedDB indisponível — segue para a internet */ }
+
+        try {
+            const data = await fetchBibliaComFallback(bookId, cap, codigo);
+            if (data.length > 0) {
+                setTotalVersiculosTemp(data.length);
+                // Guarda o capítulo baixado: abrir em seguida fica imediato
+                cacheChapter(codigo, bookId, cap, data.map(v => ({
+                    verse: v.verse,
+                    text: (v.text || '').replace(/<[^>]*>/g, ''),
+                }))).catch(() => { });
+            }
         } catch { /* silencioso */ }
         setLoadingVersiculosTemp(false);
     };
@@ -1800,10 +1945,17 @@ function BibliotecaPage() {
         return arr;
     })();
 
+    // A barra do topo só se esconde durante a leitura (nunca com busca ou menus abertos)
+    const barraEscondida = !barraVisivel && !buscaAberta && !mostrarVersoes && !mostrarFontes && !modalAberto;
+
     return (
-        <CosmicBackground className="min-h-screen">
+        <CosmicBackground className="min-h-screen" clipX>
+            {/* Topo fixo (cabeçalho + navegação): some ao descer lendo e volta ao
+                rolar para cima; com busca ou menus abertos fica sempre visível.
+                Antes era "sticky", mas o fundo com overflow-x-hidden anulava. */}
+            <div className={`sticky top-0 z-50 transition-transform duration-200 ease-out ${barraEscondida ? '-translate-y-full' : 'translate-y-0'}`}>
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
+            <header className="bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
                     <Link href="/" aria-label="Voltar ao início" className="flex items-center gap-1.5 pl-2 pr-3 py-2 -ml-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors">
                         <ArrowLeft className="w-5 h-5" />
@@ -1819,7 +1971,8 @@ function BibliotecaPage() {
                                 <WifiOff className="w-3 h-3" /> offline
                             </span>
                         ) : cameFromCache ? (
-                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded-full">
+                            // Aviso técnico: no celular apertava o título em duas linhas
+                            <span className="hidden sm:flex items-center gap-1 text-[10px] text-text-muted bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded-full">
                                 <Database className="w-3 h-3" /> cache
                             </span>
                         ) : null}
@@ -1958,8 +2111,8 @@ function BibliotecaPage() {
                 )}
             </header>
 
-            {/* Barra de Navegação (Sticky) */}
-            <div className="sticky top-[57px] z-40 bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
+            {/* Barra de Navegação (dentro do topo fixo) */}
+            <div className="bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
                 <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
                     <button onClick={abrirModal} aria-label="Escolher livro e capítulo" aria-haspopup="dialog" aria-expanded={modalAberto} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-surface-2 transition-colors group">
                         <div className="text-left min-w-0">
@@ -2120,6 +2273,11 @@ function BibliotecaPage() {
                         </button>
                     </div>
                 </div>
+                {/* Progresso do capítulo */}
+                <div className="h-0.5 w-full" aria-hidden="true">
+                    <div className="h-full origin-left bg-amber-500/80 transition-transform duration-150" style={{ transform: `scaleX(${progresso})` }} />
+                </div>
+            </div>
             </div>
 
             {/* Backdrop para fechar dropdowns (versões / fontes) */}
@@ -2199,6 +2357,53 @@ function BibliotecaPage() {
                                         )}
                                     </div>
 
+                                    {/* Atalhos: capítulos do livro atual, recentes e testamentos */}
+                                    {!buscaLivro.trim() && (
+                                        <div className="px-4 pt-3 space-y-3">
+                                            <button
+                                                onClick={() => { setLivroSelecionadoTemp(livroAtual); setFaseSelecao('capitulos'); }}
+                                                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-left hover:bg-amber-500/15 transition-colors active:scale-[0.99]"
+                                            >
+                                                <span className="flex items-center gap-2.5 min-w-0">
+                                                    <Book className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                    <span className="text-sm font-semibold text-slate-900 dark:text-text-primary truncate">Capítulos de {livroAtual.nome}</span>
+                                                </span>
+                                                <ChevronRight className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                            </button>
+
+                                            {recentes.length > 0 && (
+                                                <div>
+                                                    <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-text-muted mb-1.5">
+                                                        <History className="w-3.5 h-3.5" /> Lidos recentemente
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {recentes.map(r => (
+                                                            <button
+                                                                key={`${r.livro}-${r.capitulo}`}
+                                                                onClick={() => abrirRecente(r)}
+                                                                className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2/60 text-sm font-medium text-slate-800 dark:text-text-primary hover:border-amber-400 dark:hover:border-amber-500/50 transition-colors active:scale-[0.97]"
+                                                            >
+                                                                {r.livroNome} {r.capitulo}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {(['at', 'nt'] as const).map(qual => (
+                                                    <button
+                                                        key={qual}
+                                                        onClick={() => pularParaTestamento(qual)}
+                                                        className="py-2 rounded-xl border border-slate-200 dark:border-border-subtle text-sm font-semibold text-slate-700 dark:text-text-secondary hover:border-amber-400 dark:hover:border-amber-500/50 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                                                    >
+                                                        {qual === 'at' ? 'Antigo Testamento' : 'Novo Testamento'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="px-4 py-3 space-y-5">
                                         {categoriasFiltradas.length === 0 && (
                                             <div className="py-12 text-center">
@@ -2213,7 +2418,11 @@ function BibliotecaPage() {
                                             const ehInicioAT = semBusca && idxOriginal === 0;
                                             const ehInicioNT = semBusca && idxOriginal === 5;
                                             return (
-                                                <div key={categoria.nome}>
+                                                <div
+                                                    key={categoria.nome}
+                                                    id={ehInicioAT ? 'secao-at' : ehInicioNT ? 'secao-nt' : undefined}
+                                                    className="scroll-mt-16"
+                                                >
                                                     {/* Divisor AT / NT */}
                                                     {(ehInicioAT || ehInicioNT) && (
                                                         <div className="sticky top-[64px] z-20 bg-white/95 dark:bg-surface-1/95 backdrop-blur-md -mx-4 px-4 py-3 mb-3 border-b border-slate-200 dark:border-border-subtle">
@@ -2365,9 +2574,11 @@ function BibliotecaPage() {
 
             {/* --- PAINEL DE SALVOS --- */}
             {painelAberto && (
-                <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                // Salvos é uma aba: o painel termina acima da barra inferior,
+                // que continua visível (altura informada pela navegação).
+                <div className="fixed inset-x-0 top-0 bottom-[var(--altura-nav-inferior,0px)] z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
                     <div
-                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
+                        className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
                     >
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-surface-2 dark:to-surface-2">
@@ -2761,11 +2972,12 @@ function BibliotecaPage() {
             {/* Conteúdo Principal */}
             <main className="w-full max-w-4xl mx-auto px-4 py-6">
                 {/* Etiqueta de capítulo via portal — aparece ao rolar (quando o cabeçalho sai da tela) */}
-                {montado && !cabecalhoVisivel && versiculos.length > 0 && createPortal(
-                    <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
+                {montado && !cabecalhoVisivel && barraEscondida && versiculos.length > 0 && createPortal(
+                    <div className="fixed top-[max(0.5rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full overflow-hidden bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
                             <Book className="w-3 h-3" />
                             {livroAtual.nome} {capituloAtual}
+                            <span className="absolute left-0 bottom-0 h-[2px] w-full origin-left bg-amber-500/70" style={{ transform: `scaleX(${progresso})` }} aria-hidden="true" />
                         </span>
                     </div>,
                     document.body

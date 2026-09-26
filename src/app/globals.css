@@ -124,7 +124,17 @@
 :root { color-scheme: light; }
 .dark { color-scheme: dark; }
 html { scroll-padding-top: 9rem; }
-button, a, input, select, textarea { touch-action: manipulation; }
+/* Zoom acidental no iPhone (25/09/2026): o app abria "com zoom" porque o iOS
+   amplia ao tocar duas vezes num versículo e ao focar campo com fonte < 16px,
+   e mantém esse zoom quando o app volta do segundo plano. Em todos os
+   elementos (o iOS reinicia a regra dentro de áreas com rolagem própria):
+   sem zoom de toque duplo; a pinça continua liberada. */
+* { touch-action: manipulation; }
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea { font-size: 16px; }
+}
 button:not(:disabled), [role="button"] { cursor: pointer; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid var(--accent-primary);
