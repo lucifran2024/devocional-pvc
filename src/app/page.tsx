@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   User, AlertTriangle,
@@ -16,6 +15,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RandomVerse } from '@/components/RandomVerse';
+import { ImagemDoDia } from '@/components/ImagemDoDia';
 import { useAuth } from '@/components/AuthProvider';
 
 // ===============================================
@@ -101,10 +101,15 @@ export default function DashboardPage() {
               <Calendar className="w-5 h-5" /> Leitura do dia
             </Link>
           </div>
+          {/* Passagem do plano de hoje — antes aparecia sem nome sob "Palavra da Manhã" */}
+          {payload?.passagem_do_dia && (
+            <p className="mt-4 text-sm text-text-secondary">
+              Leitura de hoje: <span className="font-semibold text-text-primary">{payload.passagem_do_dia}</span>
+            </p>
+          )}
         </div>
-        <div className="relative min-h-36 md:min-h-80">
-          <Image src="/leitura-natureza.jpg" alt="Luz natural atravessando uma floresta verde" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" priority />
-        </div>
+        {/* Foto do topo: muda todo dia (ver src/lib/imagem-do-dia.ts) */}
+        <ImagemDoDia />
       </section>
       {/* 1. HERO SECTION (Imersiva) */}
       <section className="relative w-full pt-10 md:pt-24 pb-12 px-6 overflow-hidden">
@@ -128,10 +133,6 @@ export default function DashboardPage() {
               <h2 className="reading-serif text-2xl md:text-3xl font-semibold text-text-primary mb-1">
                 Palavra da Manhã
               </h2>
-              {/* Data da Leitura */}
-              <div className="text-xs text-slate-600 dark:text-text-muted font-medium tracking-wide">
-                {payload?.passagem_do_dia || "Leitura Sagrada"}
-              </div>
             </div>
 
             <PalavraManha />

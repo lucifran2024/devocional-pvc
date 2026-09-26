@@ -9,6 +9,8 @@ export interface PushPayload {
     title: string;
     body: string;
     url?: string;
+    /** Etiqueta por tipo: a nova substitui só a anterior do mesmo tipo */
+    tag?: string;
 }
 
 export interface PushResultado {

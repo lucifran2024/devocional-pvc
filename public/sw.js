@@ -174,8 +174,11 @@ self.addEventListener('push', (event) => {
         body: data.body || 'Sua mensagem diária está pronta!',
         icon: '/icon-192.png',
         badge: '/icon-192.png',
-        tag: 'devotional',
+        // Etiqueta por tipo (Palavra, Versículo, lembrete): a de hoje substitui
+        // a de ontem do mesmo tipo, mas uma não apaga a outra.
+        tag: data.tag || 'pvc',
         renotify: true,
+        lang: 'pt-BR',
         data: data.url || '/',
     };
 
@@ -184,10 +187,21 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// Notification click handler
+// Toque na notificação: volta ao app já aberto (e vai para a tela certa);
+// só abre uma janela nova se o app estiver fechado.
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data || '/')
-    );
+    const destino = new URL(event.notification.data || '/', self.location.origin).href;
+    event.waitUntil((async () => {
+        const janelas = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const aberta = janelas.find((j) => new URL(j.url).origin === self.location.origin);
+        if (aberta) {
+            await aberta.focus();
+            if (aberta.url !== destino && 'navigate' in aberta) {
+                try { await aberta.navigate(destino); } catch { /* segue na tela atual */ }
+            }
+            return;
+        }
+        await clients.openWindow(destino);
+    })());
 });

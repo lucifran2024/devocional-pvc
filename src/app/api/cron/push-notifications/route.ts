@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { enviarPushParaTodos } from '@/lib/push-server';
-import { getDailyVerse } from '@/lib/daily-verse';
+import { buscarVersiculoDoDia } from '@/lib/daily-verse';
+import { notificacaoLembrete, notificacaoPalavra, notificacaoVersiculo } from '@/lib/notificacoes';
 
 // ============================================
 // PUSH NOTIFICATIONS (Web Push para o celular)
 // Uma rota, três horários no vercel.json (BRT = UTC-3):
-//   10:00 UTC (07h) → Palavra da Manhã + Versículo do Dia
+//   10:00 UTC (07h) → Versículo do Dia + Palavra da Manhã
 //   17:00 UTC (14h) → lembrete de leitura (se pendente)
 //   23:00 UTC (20h) → lembrete de leitura (se pendente)
 // A rota decide o modo pela hora em São Paulo.
@@ -44,39 +45,24 @@ export async function GET(request: Request) {
         const dataHoje = getDataHoje();
         const hora = getHoraSaoPaulo();
 
-        // ===== MANHÃ (< 12h): Palavra da Manhã + Versículo do Dia =====
+        // ===== MANHÃ (< 12h): Versículo do Dia + Palavra da Manhã =====
+        // Cada uma com a sua etiqueta (antes o Versículo apagava a Palavra).
+        // A Palavra sai por último para ficar em cima na tela de bloqueio.
         if (hora < 12) {
             const enviados: Record<string, unknown> = {};
 
-            // 1) Palavra da Manhã — usa um trecho da mensagem do dia, se existir
+            // 1) Versículo do Dia — o mesmo do cartão do app (texto NTLH;
+            //    se a Bíblia não responder, vai só a referência)
+            const verse = await buscarVersiculoDoDia(dataHoje);
+            enviados.versiculo = await enviarPushParaTodos(notificacaoVersiculo(verse));
+
+            // 2) Palavra da Manhã — título da mensagem + primeiras frases inteiras
             const { data: palavra } = await supabase
                 .from('palavra_manha_diaria')
                 .select('mensagem')
                 .eq('data', dataHoje)
                 .maybeSingle();
-
-            let corpoPalavra = 'Sua palavra de hoje está pronta. Toque para ler.';
-            if (palavra?.mensagem) {
-                const trecho = String(palavra.mensagem)
-                    .replace(/[*#_>]/g, '')
-                    .replace(/\s+/g, ' ')
-                    .trim()
-                    .slice(0, 110);
-                if (trecho.length > 30) corpoPalavra = `${trecho}…`;
-            }
-            enviados.palavra = await enviarPushParaTodos({
-                title: '🌅 Palavra da Manhã',
-                body: corpoPalavra,
-                url: '/',
-            });
-
-            // 2) Versículo do Dia — o mesmo que aparece no widget do app
-            const verse = getDailyVerse(dataHoje);
-            enviados.versiculo = await enviarPushParaTodos({
-                title: `📖 Versículo do Dia · ${verse.ref}`,
-                body: `“${verse.text}”`,
-                url: '/',
-            });
+            enviados.palavra = await enviarPushParaTodos(notificacaoPalavra(palavra?.mensagem));
 
             return NextResponse.json({ ok: true, modo: 'manha', data: dataHoje, ...enviados });
         }
@@ -108,13 +94,7 @@ export async function GET(request: Request) {
 
         // Texto varia pelo horário para não repetir a mesma frase 2x/dia
         const noite = hora >= 18;
-        const resultado = await enviarPushParaTodos({
-            title: noite ? '📖 Leitura de hoje pendente' : '📖 Momento com a Palavra',
-            body: noite
-                ? 'Ainda dá tempo de manter sua sequência. Alguns minutos antes de dormir?'
-                : 'Que tal uma pausa para a leitura do seu plano de hoje?',
-            url: '/planos',
-        });
+        const resultado = await enviarPushParaTodos(notificacaoLembrete(noite));
 
         return NextResponse.json({
             ok: true,
