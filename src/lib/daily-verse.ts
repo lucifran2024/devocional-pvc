@@ -91,7 +91,7 @@ export const REFERENCIAS_DO_DIA: readonly string[] = [
     'Salmos 86:5',
 ];
 
-export function numeroDoDia(dataStr?: string): number {
+function numeroDoDia(dataStr?: string): number {
     if (dataStr) {
         const [y, m, d] = dataStr.split('-').map(Number);
         return Math.floor(Date.UTC(y, m - 1, d) / 86400000);

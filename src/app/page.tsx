@@ -15,7 +15,6 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RandomVerse } from '@/components/RandomVerse';
-import { ImagemDoDia } from '@/components/ImagemDoDia';
 import { useAuth } from '@/components/AuthProvider';
 
 // ===============================================
@@ -85,7 +84,7 @@ export default function DashboardPage() {
         </button>
       </header>
 
-      <section className="mx-5 mt-20 md:mx-auto md:w-[calc(100%-3rem)] max-w-6xl grid md:grid-cols-2 overflow-hidden rounded-2xl border border-border-subtle bg-surface-1">
+      <section className="mx-5 mt-20 md:mx-auto md:w-[calc(100%-3rem)] max-w-6xl overflow-hidden rounded-2xl border border-border-subtle bg-surface-1">
         <div className="p-7 md:p-10 flex flex-col justify-center items-start">
           <p className="text-sm text-text-secondary mb-3">PVC · Seu espaço de leitura</p>
           <h1 className="reading-serif text-4xl md:text-5xl leading-tight mb-4">Um momento para a Palavra.</h1>
@@ -108,8 +107,6 @@ export default function DashboardPage() {
             </p>
           )}
         </div>
-        {/* Foto do topo: muda todo dia (ver src/lib/imagem-do-dia.ts) */}
-        <ImagemDoDia />
       </section>
       {/* 1. HERO SECTION (Imersiva) */}
       <section className="relative w-full pt-10 md:pt-24 pb-12 px-6 overflow-hidden">
