@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   User, AlertTriangle,
   Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic,
-  HeartHandshake
+  HeartHandshake, ChevronRight
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
@@ -89,24 +89,30 @@ export default function DashboardPage() {
           <p className="text-sm text-text-secondary mb-3">PVC · Seu espaço de leitura</p>
           <h1 className="reading-serif text-4xl md:text-5xl leading-tight mb-4">Um momento para a Palavra.</h1>
           <p className="text-text-secondary leading-relaxed max-w-md mb-6">Abra sua Bíblia, retome a leitura e guarde o que tocou seu coração.</p>
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Com leitura em andamento, o botão leva direto de volta a ela
-                (a Bíblia reabre no capítulo e no versículo onde parou). */}
-            <Link href="/biblioteca" className="inline-flex items-center gap-3 min-h-12 px-6 rounded-xl bg-amber-500 text-amber-950 font-semibold hover:bg-amber-400 transition-colors">
-              <Book className="w-5 h-5" />
-              {continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}
-            </Link>
-            <Link href="/plano-de-leitura?ler=1" className="inline-flex items-center gap-2 min-h-12 px-5 rounded-xl border border-border-strong text-text-primary font-semibold hover:border-amber-500/60 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
-              <Calendar className="w-5 h-5" /> Leitura do dia
-            </Link>
-          </div>
-          {/* Passagem do plano de hoje — antes aparecia sem nome sob "Palavra da Manhã" */}
-          {payload?.passagem_do_dia && (
-            <p className="mt-4 text-sm text-text-secondary">
-              Leitura de hoje: <span className="font-semibold text-text-primary">{payload.passagem_do_dia}</span>
-            </p>
-          )}
+          {/* Com leitura em andamento, o botão leva direto de volta a ela
+              (a Bíblia reabre no capítulo e no versículo onde parou). */}
+          <Link href="/biblioteca" className="inline-flex max-w-full items-center gap-2.5 min-h-11 px-5 rounded-xl bg-amber-500 text-amber-950 text-[15px] font-semibold hover:bg-amber-400 active:scale-[0.98] transition">
+            <Book className="w-[18px] h-[18px] shrink-0" />
+            <span className="truncate">{continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}</span>
+          </Link>
         </div>
+        {/* Leitura do dia: rodapé do cartão, junto da passagem de hoje (01/10/2026).
+            Antes era um segundo botão grande que quebrava linha no celular, com a
+            passagem solta embaixo. Sem a passagem carregada, o atalho continua. */}
+        <Link href="/plano-de-leitura?ler=1" className="group flex items-center gap-3 min-h-14 px-7 md:px-10 py-3 border-t border-border-subtle hover:bg-surface-2/60 transition-colors">
+          <Calendar className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="min-w-0 flex-1">
+            {payload?.passagem_do_dia ? (
+              <>
+                <span className="block text-[13px] leading-tight text-text-muted">Leitura de hoje</span>{' '}
+                <span className="block font-semibold leading-snug text-text-primary">{payload.passagem_do_dia}</span>
+              </>
+            ) : (
+              <span className="block font-semibold text-text-primary">Leitura do dia</span>
+            )}
+          </span>
+          <ChevronRight className="w-5 h-5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </section>
       {/* 1. HERO SECTION (Imersiva) */}
       <section className="relative w-full pt-10 md:pt-24 pb-12 px-6 overflow-hidden">

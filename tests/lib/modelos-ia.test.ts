@@ -24,7 +24,9 @@ const REMOVIDOS = [
 const respostaOk = (texto = 'texto gerado') => ({ ok: true, json: async () => ({ choices: [{ message: { content: texto } }] }) }) as Response;
 const corpoEnviado = (i = 0) => JSON.parse(String((vi.mocked(global.fetch).mock.calls[i][1] as RequestInit).body));
 
-afterEach(() => vi.mocked(global.fetch).mockReset());
+afterEach(() => {
+    vi.mocked(global.fetch).mockReset();
+});
 
 describe('cadeias de reserva do OpenRouter', () => {
     it('não tentam mais os modelos que saíram do OpenRouter', () => {

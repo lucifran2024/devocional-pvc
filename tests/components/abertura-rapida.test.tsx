@@ -99,6 +99,34 @@ describe('página inicial não espera o payload do dia', () => {
         const link = await screen.findByRole('link', { name: /Continuar em João 3/ });
         expect(link).toHaveAttribute('href', '/biblioteca');
     });
+
+    // Topo no celular (01/10/2026): o botão grande "Leitura do dia" virou o
+    // rodapé do cartão, junto da passagem de hoje (um atalho só, mais baixo).
+    it('leitura do dia é um atalho só, junto da passagem de hoje', async () => {
+        getPayloadDoDia.mockResolvedValue({ data: { data: '2026-09-26', passagem_do_dia: 'Salmos 84-88' }, error: null });
+        const { default: DashboardPage } = await import('@/app/page');
+        render(<DashboardPage />);
+        const atalho = await screen.findByRole('link', { name: /Leitura de hoje.*Salmos 84-88/ });
+        expect(atalho).toHaveAttribute('href', '/plano-de-leitura?ler=1');
+        const paraLeitura = screen.getAllByRole('link').filter((l) => l.getAttribute('href') === '/plano-de-leitura?ler=1');
+        expect(paraLeitura).toHaveLength(1);
+    });
+
+    it('sem a passagem carregada o atalho continua lá', async () => {
+        getPayloadDoDia.mockReturnValue(pendurada());
+        const { default: DashboardPage } = await import('@/app/page');
+        render(<DashboardPage />);
+        expect(screen.getByRole('link', { name: /Leitura do dia/ })).toHaveAttribute('href', '/plano-de-leitura?ler=1');
+    });
+
+    it('botão principal compacto para o celular', async () => {
+        getPayloadDoDia.mockReturnValue(pendurada());
+        const { default: DashboardPage } = await import('@/app/page');
+        render(<DashboardPage />);
+        const principal = screen.getByRole('link', { name: /Abrir minha Bíblia/ });
+        expect(principal.className).toContain('min-h-11');
+        expect(principal.className).not.toContain('min-h-12');
+    });
 });
 
 describe('Palavra da Manhã usa a cópia de hoje guardada no aparelho', () => {

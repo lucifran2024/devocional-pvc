@@ -33,8 +33,10 @@ import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromI
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
 import { gerarExplicacaoLocal, montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
+import { formatarExplicacao } from '@/lib/explicacao-apresentacao';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
+import { FimDaParte } from '@/components/leitura/FimDaParte';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -846,7 +848,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                 <div className="animate-enter mb-4">
                     {/* Texto antes dos versículos */}
                     {partes[0] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert [&_hr]:border-border-subtle prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
                     )}
@@ -875,9 +877,13 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         versiculosChave={versiculosChave}
                     />
 
-                    {/* Texto depois dos versículos */}
-                    {partes[1] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mt-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                    {/* Texto depois dos versículos (a explicação, quando pedida) */}
+                    {partes[1]?.replace('%%EXPLICACAO_SLOT%%', '').trim() && (
+                        <div
+                            data-explicacao
+                            className="mt-6 scroll-mt-28 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-5 leading-relaxed break-words text-text-secondary [&_h3]:mb-1 [&_h3]:text-[13px] [&_h3]:font-medium [&_h3]:text-text-muted [&_h4]:mt-5 [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-text-primary [&_p]:mt-1.5 [&_strong]:font-semibold [&_strong]:text-text-primary [&_hr]:hidden"
+                            style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
+                        >
                             <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
@@ -890,7 +896,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
         return (
             <div className="animate-enter mb-4">
-                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert [&_hr]:border-border-subtle prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
                     <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                 </div>
             </div>
@@ -953,6 +959,7 @@ function PlanoLeituraContent() {
     const [diaExibido, setDiaExibido] = useState<number>(1);
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
     const [isLoadingExplicacao, setIsLoadingExplicacao] = useState(false);
+    const [erroExplicacao, setErroExplicacao] = useState(false);
     const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE);
     const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
     const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
@@ -1637,9 +1644,9 @@ function PlanoLeituraContent() {
 
         const totalPartes = getTotalPartesLeitura();
         const parteAtual = Math.min(Math.max(parteDesejada, 1), totalPartes);
-        const ehUltimaParte = parteAtual >= totalPartes;
 
         currentPageRef.current = parteAtual;
+        setErroExplicacao(false);
         setCurrentPage(parteAtual);
         atualizarContextoVersiculos(parteAtual);
         if (isPlanoMode) {
@@ -1648,31 +1655,15 @@ function PlanoLeituraContent() {
             salvarProgressoLeituraDiariaLocal(parteAtual);
         }
 
-        const linhaPersistencia = isPlanoMode
-            ? '\n\n*Seu progresso fica salvo até o fim do dia.*'
-            : '\n\n*Seu progresso fica salvo até você trocar de passagem.*';
-
         const versiculosDaParte = getVersiculosDaParte(parteAtual);
         const primeiroVersiculoDaParte = versiculosDaParte[0];
         const capDaParte = primeiroVersiculoDaParte?.chapter ?? null;
         const nomeLivroDaParte = capitalizarLivro(primeiroVersiculoDaParte?.livro || livroInfoAtual.nome || passagem.referencia);
         const tituloCapitulo = capDaParte ? `${nomeLivroDaParte} ${capDaParte}` : passagem.referencia;
 
-        // Frases devocionais que variam conforme a parte — evita a sensação
-        // robótica de ler sempre a mesma instrução ao fim de cada trecho.
-        const FRASES_ENTRE_PARTES = [
-            'Respire um instante e guarde no coração o que essa leitura falou com você.',
-            'Antes de seguir, volte ao versículo que mais tocou você e leia-o de novo, devagar.',
-            'Um momento de silêncio diante da Palavra também é oração.',
-            'Siga no seu ritmo — a Palavra não tem pressa, ela tem propósito.',
-            'O que Deus destacou para você nesse trecho? Leve isso para a próxima parte.',
-        ];
-        const fraseDaParte = FRASES_ENTRE_PARTES[(parteAtual - 1) % FRASES_ENTRE_PARTES.length];
-
-        const rodapeAcao = ehUltimaParte
-            ? `Você chegou ao fim de **${tituloCapitulo}** — a leitura de hoje está completa.\nQue essa Palavra permaneça com você ao longo do dia.\n\nToque em **Concluir leitura** para encerrar.`
-            : `${fraseDaParte}\n\nQuando estiver pronto, toque em **Continuar**.`;
-
+        // A mensagem termina nos versículos (e na explicação, quando pedida).
+        // Onde o leitor está, o que vem a seguir e as ações ficam no bloco
+        // <FimDaParte> logo abaixo — sem frases de instrução no texto.
         return `**${tituloCapitulo}**
 *Parte ${parteAtual} de ${totalPartes} · ${passagem.referencia}*
 
@@ -1680,11 +1671,7 @@ function PlanoLeituraContent() {
 
 %%VERSICULOS_INTERATIVOS%%
 
----
-
-%%EXPLICACAO_SLOT%%**Parte ${parteAtual} de ${totalPartes} concluída** · ${tituloCapitulo}
-
-${rodapeAcao}${linhaPersistencia}`;
+%%EXPLICACAO_SLOT%%`;
     };
 
     // Gerar resposta do menu inicial
@@ -2109,21 +2096,36 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     };
 
     // Gerar explicação sob demanda (botão Explicar) - embute na última mensagem da Parte
+    // A explicação entra entre os versículos e o fim da parte; leva o leitor até ela
+    const rolarParaExplicacao = () => {
+        window.setTimeout(() => {
+            const blocos = document.querySelectorAll('[data-explicacao]');
+            blocos[blocos.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    };
+
     const handleExplicar = async () => {
         if (isLoadingExplicacao) return;
+        // Parte já explicada: não chama a IA de novo, só volta até a explicação
+        const ultimaParte = [...messages].reverse().find(m => m.role === 'assistant' && m.content.includes('%%VERSICULOS_INTERATIVOS%%'));
+        const jaExplicada = Boolean(ultimaParte) && !ultimaParte!.content.includes('%%EXPLICACAO_SLOT%%');
+        if (jaExplicada) {
+            rolarParaExplicacao();
+            return;
+        }
+        setErroExplicacao(false);
         setIsLoadingExplicacao(true);
         try {
             const conteudo = await gerarExplicacaoConteudo();
             const page = currentPageRef.current;
-
-            const explicacaoFormatada = `**Entenda a passagem**
-*Parte ${page} de ${passagem?.referencia}*
-
-${conteudo}
-
----
-
-`;
+            const versiculosDaParte = getVersiculosDaParte(page);
+            const primeiro = versiculosDaParte[0];
+            const ultimo = versiculosDaParte[versiculosDaParte.length - 1];
+            const faixa = primeiro?.chapter
+                ? `${capitalizarLivro(primeiro.livro || livroInfoAtual.nome)} ${primeiro.chapter}:${primeiro.verse}${ultimo && ultimo.verse !== primeiro.verse ? `-${ultimo.verse}` : ''}`
+                : passagem?.referencia || '';
+            const explicacaoFormatada = formatarExplicacao(conteudo, `Explicação de ${faixa}`);
+            if (!explicacaoFormatada) throw new Error('Explicação vazia');
 
             setMessages(prev => {
                 const updated = [...prev];
@@ -2142,27 +2144,14 @@ ${conteudo}
                 }
                 return updated;
             });
+            rolarParaExplicacao();
         } catch {
-            setMessages(prev => {
-                const updated = [...prev];
-                for (let i = updated.length - 1; i >= 0; i--) {
-                    if (updated[i].role === 'assistant' && updated[i].content.includes('%%EXPLICACAO_SLOT%%')) {
-                        updated[i] = {
-                            ...updated[i],
-                            content: updated[i].content.replace('%%EXPLICACAO_SLOT%%', '*Não foi possível gerar a explicação.*\n\n---\n\n')
-                        };
-                        break;
-                    }
-                }
-                return updated;
-            });
+            // Mantém o espaço da explicação livre para tentar de novo
+            setErroExplicacao(true);
         } finally {
             setIsLoadingExplicacao(false);
         }
     };
-
-    // Última parte da leitura? Muda o rótulo do botão fixo para "Concluir leitura"
-    const naUltimaParte = (isPlanoMode || activeOption === '1') && !!bibleData && currentPage >= getTotalPartesLeitura();
 
     // Inicia uma opção do menu (usada pelo CTA do hero e pelos cards)
     const iniciarOpcao = (optionId: MenuOption) => {
@@ -2692,105 +2681,78 @@ ${conteudo}
                             <div ref={chatEndRef} />
                         </div>
 
-                        {/* Progresso anual da leitura diária + marcar PARTE como lida (só leitura pessoal) */}
-                        {!isPlanoMode && activeOption === '1' && progressoAnual && (() => {
+                        {/* Fim da parte: onde o leitor está, o que vem a seguir e as ações.
+                            Fica no fim do conteúdo (a antiga barra "fixa" nunca grudava:
+                            o fundo com overflow-x-hidden anula o sticky). */}
+                        {(isPlanoMode || activeOption === '1') ? (bibleData && passagem && (() => {
                             const totalPartesUI = getTotalPartesLeitura();
                             const parteUI = Math.min(Math.max(currentPage, 1), totalPartesUI);
-                            const parteLida = parteEstaLida(parteUI);
+                            const atual = getVersiculosDaParte(parteUI)[0];
+                            const seguinte = parteUI < totalPartesUI ? getVersiculosDaParte(parteUI + 1)[0] : undefined;
+                            const nomeCapitulo = (v?: Versiculo) => (v?.chapter
+                                ? `${capitalizarLivro(v.livro || livroInfoAtual.nome)} ${v.chapter}`
+                                : passagem.referencia);
+                            const secaoSeguinte = seguinte?.livroId && seguinte.chapter
+                                ? getPericopes(seguinte.livroId, seguinte.chapter)[0]?.title
+                                : undefined;
+                            const todasAsPartes = Array.from({ length: totalPartesUI }, (_, i) => i + 1);
+                            // Plano: as partes anteriores já foram percorridas; leitura pessoal: registro do banco
+                            const partesLidas = isPlanoMode
+                                ? todasAsPartes.filter(p => leituraDiaConcluida || p < parteUI)
+                                : todasAsPartes.filter(parteEstaLida);
                             return (
-                                <div className="px-4 pt-3 max-w-3xl mx-auto w-full">
-                                    <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/[0.05] p-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">
-                                                Sua leitura no ano
-                                            </span>
-                                            <span className="text-xs font-bold text-amber-700 dark:text-amber-300 tabular-nums">
-                                                {progressoAnual.lidos} de {progressoAnual.total} · {progressoAnual.pct}%
-                                            </span>
-                                        </div>
-                                        <div className="h-2 rounded-full bg-surface-2 overflow-hidden mb-3">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
-                                                style={{ width: `${Math.max(2, progressoAnual.pct)}%` }}
-                                            />
-                                        </div>
-
-                                        {/* Progresso das partes de hoje */}
-                                        {totalPartesUI > 1 && (
-                                            <div className="mb-3">
-                                                <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">
-                                                        Partes de hoje
-                                                    </span>
-                                                    <span className={`text-[11px] font-bold tabular-nums ${leuHoje ? 'text-emerald-500' : 'text-text-muted'}`}>
-                                                        {leuHoje
-                                                            ? 'Dia completo 🎉'
-                                                            : `${Array.from({ length: totalPartesUI }, (_, i) => i + 1).filter(parteEstaLida).length} de ${totalPartesUI} lidas`}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    {Array.from({ length: totalPartesUI }, (_, i) => i + 1).map(p => (
-                                                        <span
-                                                            key={p}
-                                                            title={`Parte ${p}${parteEstaLida(p) ? ' — lida' : ''}`}
-                                                            className={`h-1.5 flex-1 rounded-full transition-colors ${parteEstaLida(p)
-                                                                ? 'bg-emerald-500'
-                                                                : p === parteUI ? 'bg-amber-400/70' : 'bg-surface-2'}`}
-                                                        />
-                                                    ))}
-                                                </div>
+                                <div className="px-4 pt-2 pb-6 max-w-3xl mx-auto w-full">
+                                    {isLoadingExplicacao && (
+                                        <div role="status" className="mb-6 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-5">
+                                            <p className="text-[13px] font-medium text-text-muted">Preparando a explicação desta parte…</p>
+                                            <div className="mt-4 space-y-2.5 animate-pulse" aria-hidden="true">
+                                                <div className="h-3 w-2/5 rounded-full bg-surface-2" />
+                                                <div className="h-3 rounded-full bg-surface-2" />
+                                                <div className="h-3 w-11/12 rounded-full bg-surface-2" />
+                                                <div className="h-3 w-4/5 rounded-full bg-surface-2" />
                                             </div>
-                                        )}
-
-                                        <button
-                                            type="button"
-                                            onClick={handleToggleLido}
-                                            disabled={marcandoLeitura}
-                                            className={`w-full py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all disabled:opacity-60 ${parteLida
-                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                                                : 'bg-amber-500 text-amber-950 hover:bg-amber-400'
-                                                }`}
-                                        >
-                                            {marcandoLeitura
-                                                ? <Loader2 className="w-4 h-4 animate-spin" />
-                                                : <Check className="w-4 h-4" />}
-                                            {totalPartesUI > 1
-                                                ? (parteLida ? `Parte ${parteUI} lida · toque para desmarcar` : `Marcar parte ${parteUI} como lida`)
-                                                : (parteLida ? 'Lido · toque para desmarcar' : 'Marcar como lido')}
-                                        </button>
-                                    </div>
+                                        </div>
+                                    )}
+                                    {erroExplicacao && !isLoadingExplicacao && (
+                                        <p role="alert" className="mb-6 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-4 text-sm text-text-secondary">
+                                            Não foi possível preparar a explicação agora. Toque em Explicar para tentar de novo.
+                                        </p>
+                                    )}
+                                    <FimDaParte
+                                        parte={parteUI}
+                                        totalPartes={totalPartesUI}
+                                        partesLidas={partesLidas}
+                                        capituloAtual={nomeCapitulo(atual)}
+                                        proxima={seguinte ? { capitulo: nomeCapitulo(seguinte), secao: secaoSeguinte } : null}
+                                        passagem={passagem.referencia}
+                                        concluida={isPlanoMode ? leituraDiaConcluida : leuHoje}
+                                        ocupado={isProcessing || isLoadingExplicacao}
+                                        explicando={isLoadingExplicacao}
+                                        onContinuar={() => submitMessage('Continuar')}
+                                        onExplicar={handleExplicar}
+                                        marcacao={!isPlanoMode && passagem.data
+                                            ? { lida: parteEstaLida(parteUI), carregando: marcandoLeitura, onAlternar: handleToggleLido }
+                                            : null}
+                                        anual={!isPlanoMode && progressoAnual
+                                            ? { lidos: progressoAnual.lidos, total: progressoAnual.total, pct: progressoAnual.pct }
+                                            : null}
+                                    />
                                 </div>
                             );
-                        })()}
-
-                        {/* Input Area - botão fixo no fundo */}
-                        <div className="sticky bottom-0 px-4 py-3 bg-surface-0/80 backdrop-blur-md border-t border-border-subtle/30">
-                            <div className="flex gap-3">
+                        })()) : (
+                            /* Demais opções (estudos por IA): só o botão Continuar */
+                            <div className="sticky bottom-0 px-4 py-3 bg-surface-0/80 backdrop-blur-md border-t border-border-subtle/30">
                                 <button
                                     type="button"
                                     onClick={() => submitMessage('Continuar')}
-                                    className="flex-1 btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="w-full btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
                                     disabled={isProcessing || isLoadingExplicacao}
                                 >
-                                    {naUltimaParte ? <Check className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
-                                    {naUltimaParte ? 'Concluir leitura' : 'Continuar'}
+                                    <ArrowRight className="w-5 h-5" />
+                                    Continuar
                                 </button>
-
-                                {(isPlanoMode || activeOption === '1') && <button
-                                    type="button"
-                                    onClick={handleExplicar}
-                                    className="flex-1 bg-surface-2 border border-border-subtle hover:bg-surface-2/70 hover:border-amber-500/30 text-text-primary py-3.5 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-                                    disabled={isProcessing || isLoadingExplicacao}
-                                >
-                                    {isLoadingExplicacao ? (
-                                        <Loader2 className="w-5 h-5 text-amber-400 animate-spin" />
-                                    ) : (
-                                        <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                                    )}
-                                    {isLoadingExplicacao ? 'Gerando...' : 'Explicar'}
-                                </button>}
                             </div>
-                        </div>
+                        )}
 
                     </div>
                 )}
