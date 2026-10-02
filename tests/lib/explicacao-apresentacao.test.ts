@@ -67,6 +67,15 @@ describe('ligação com a tela da leitura', () => {
         expect(pagina).toContain('rolarParaExplicacao()');
     });
 
+    it('envia o contexto do app e mostra o texto real da NTLH nas ligações', () => {
+        const trecho = pagina.slice(pagina.indexOf('const gerarExplicacaoConteudo = async'), pagina.indexOf('// Gerar estudo via IA (Edge Function)'));
+        expect(trecho).toContain('getIntroducaoLivro(livroId)');
+        expect(trecho).toContain('posicao: `parte ${page} de ${getTotalPartesLeitura()} da leitura de hoje');
+        expect(trecho).toMatch(/quantidade_versiculos: pedido\.quantidadeVersiculos,\s*contexto,/);
+        expect(trecho).toContain('return await completarLigacoes(data.resultado);');
+        expect(pagina).toContain('Na primeira vez leva uns 20 segundos; depois fica guardada para todos.');
+    });
+
     it('a parte já explicada não chama a IA de novo', () => {
         const trecho = pagina.slice(pagina.indexOf('const handleExplicar = async'), pagina.indexOf('// Inicia uma opção do menu'));
         expect(trecho.indexOf('jaExplicada')).toBeGreaterThan(-1);

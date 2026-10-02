@@ -34,6 +34,7 @@ import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
 import { gerarExplicacaoLocal, montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
 import { formatarExplicacao } from '@/lib/explicacao-apresentacao';
+import { completarLigacoes } from '@/lib/explicacao-ligacoes';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
@@ -1850,6 +1851,16 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
 
         if (!pedido.versiculos) return explicacaoLocal();
 
+        // Contexto que o app já tem (sem IA): introdução do livro, seções do
+        // capítulo e a posição na leitura — a explicação parte disso (02/10/2026).
+        const intro = livroId ? getIntroducaoLivro(livroId) : null;
+        const contexto = {
+            livro: capitalizarLivro(primeiro?.livro || livroInfoAtual.nome),
+            ...(intro ? { categoria: intro.categoria, autor: intro.autor, epoca: intro.epoca, tema: intro.tema, resumo: intro.resumo } : {}),
+            secoes: livroId && capitulo ? getPericopes(livroId, capitulo).map(p => ({ verso: p.verse, titulo: p.title })) : [],
+            posicao: `parte ${page} de ${getTotalPartesLeitura()} da leitura de hoje (${passagem.referencia})`,
+        };
+
         try {
             const { data, error: invokeError } = await supabase.functions.invoke('execute', {
                 body: {
@@ -1859,12 +1870,14 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
                     versiculos: pedido.versiculos,
                     parte: pedido.parte,
                     quantidade_versiculos: pedido.quantidadeVersiculos,
+                    contexto,
                 },
             });
 
             if (invokeError) throw new Error(invokeError.context?.message || invokeError.message);
             if (!data?.ok || !data?.resultado) throw new Error(data?.error || 'Explicação vazia');
-            return data.resultado;
+            // A IA só dá a referência das ligações; o texto vem da NTLH real
+            return await completarLigacoes(data.resultado);
         } catch (error) {
             console.error('Erro ao explicar a parte com IA; usando explicação local:', error);
             return explicacaoLocal();
@@ -2705,6 +2718,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                     {isLoadingExplicacao && (
                                         <div role="status" className="mb-6 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-5">
                                             <p className="text-[13px] font-medium text-text-muted">Preparando a explicação desta parte…</p>
+                                            <p className="mt-1 text-[13px] text-text-muted">Na primeira vez leva uns 20 segundos; depois fica guardada para todos.</p>
                                             <div className="mt-4 space-y-2.5 animate-pulse" aria-hidden="true">
                                                 <div className="h-3 w-2/5 rounded-full bg-surface-2" />
                                                 <div className="h-3 rounded-full bg-surface-2" />

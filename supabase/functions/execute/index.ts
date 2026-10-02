@@ -4,6 +4,7 @@ import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { gerarTexto, chamarCompatGemini, get9RouterEndpoint, APP_TUNNEL_MODELS } from './openrouter-client.ts';
 import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
+import { CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar } from './explicar-parte.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -800,7 +801,7 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, quantidade_versiculos, tipo_estudo, force_live_refresh } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, quantidade_versiculos, contexto, tipo_estudo, force_live_refresh } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}, Refresh ao vivo: ${force_live_refresh ? 'sim' : 'nao'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
@@ -2018,72 +2019,67 @@ Gere agora:
       const quantidadeVersiculos = Number.isFinite(quantidadeInformada) && quantidadeInformada > 0
         ? quantidadeInformada
         : Math.max(1, versiculosTexto.split('\n').filter((linha: string) => /^\s*\d+\s/.test(linha)).length);
-      const maxPalavrasExplicacao = Math.min(500, Math.max(220, 80 + quantidadeVersiculos * 18));
-      const maxTokensExplicacao = Math.min(2400, Math.max(1200, maxPalavrasExplicacao * 3));
+      const { maxPalavras: maxPalavrasExplicacao, maxTokens: maxTokensExplicacao } = limitesExplicacao(quantidadeVersiculos);
 
       console.log(`📖 Referência: ${referenciaPassagem}, Parte: ${parteAtual}, Versículos: ${quantidadeVersiculos}`);
 
-      const promptExplicar = `
-# EXPLICAÇÃO DA PARTE LIDA
+      // 02/10/2026: cada parte é explicada uma vez e guardada para todos (a
+      // leitura do dia é a mesma); a próxima pessoa recebe na hora.
+      const cacheUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+      const cacheChave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+      const cacheExplicar = cacheUrl && cacheChave ? createClient(cacheUrl, cacheChave) : null;
+      if (cacheExplicar && versiculosTexto) {
+        try {
+          const { data: guardada } = await cacheExplicar
+            .from('estudo_cache')
+            .select('resultado')
+            .eq('referencia', referenciaPassagem)
+            .eq('tipo_estudo', CACHE_EXPLICAR)
+            .maybeSingle();
+          if (guardada?.resultado) {
+            console.log(`⚡ [EXPLICAR PASSAGEM] Explicação guardada: ${referenciaPassagem}`);
+            return new Response(
+              JSON.stringify({ ok: true, resultado: guardada.resultado, tipo: 'explicar_passagem', cached: true }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+          }
+        } catch (erroCache) {
+          console.warn('[EXPLICAR PASSAGEM] Falha ao ler o cache (segue gerando):', erroCache);
+        }
+      }
 
-TODOS os versículos fornecidos pertencem à parte que o usuário acabou de ler. Explique o bloco completo com fidelidade textual: começo, desenvolvimento e encerramento da parte. Não invente dados históricos, culturais, autoria, destinatários ou conexões que não possam ser sustentados pelo próprio texto.
-
-## FAIXA EXATA DA PARTE: ${referenciaPassagem}
-## PARTE: ${parteAtual}
-## QUANTIDADE: ${quantidadeVersiculos} versículos
-
-### TEXTO INTEGRAL DA PARTE LIDA:
-${versiculosTexto}
-
-## FORMATO OBRIGATÓRIO:
-
-🔍 **EXPLICAÇÃO DA PARTE LIDA**
-
-• Crie de 2 a 5 tópicos conforme os movimentos naturais do texto, em ordem.
-• Comece cada tópico com a faixa explicada em negrito, por exemplo: **Versículos 1–4 — A decisão:**
-• Em cada tópico, diga o que acontece e explique o sentido das palavras, ações, contrastes, causas e consequências daquele grupo de versículos.
-• Termine com **Sentido central da parte:** reunindo a mensagem que nasce do bloco inteiro.
-
-## REGRAS INEGOCIÁVEIS:
-1. Explique TODOS os versículos fornecidos; nenhum pode ficar sem cobertura.
-2. NÃO explique somente um versículo isolado nem escolha apenas a frase mais conhecida.
-3. NÃO use versículos, acontecimentos ou contexto de partes que não foram fornecidas.
-4. Toda afirmação explicativa deve apontar para palavras ou ações visíveis no texto integral.
-5. Se o trecho não declarar o motivo de uma ação, sentimento ou promessa, não acrescente possibilidades, motivos, causas, cenários ou categorias que o trecho não declara. Diga somente o que o texto afirma e como suas frases se relacionam.
-6. Agrupe apenas versículos consecutivos que tratem do mesmo movimento; cite as faixas exatas.
-7. Não faça resumo geral do livro ou do capítulo no lugar de explicar esta parte.
-8. Faça conexão com outra passagem somente se for indispensável e direta; a explicação deve permanecer ancorada no texto fornecido.
-9. Linguagem profunda, clara, pastoral e acessível — não acadêmica.
-10. Não inclua oração nem seção separada de aplicação prática.
-11. Use até ${maxPalavrasExplicacao} palavras: profundidade proporcional à quantidade de versículos, sem enrolação.
-12. Não use emojis além do 🔍 no título.
-
-Antes de responder, confira silenciosamente: cobri o primeiro, o meio e o último versículo sem sair da faixa?
-
-Gere a explicação agora:
-`;
+      // Método aprovado (explicar-parte.ts): contexto certo, todos os versículos,
+      // uma gema, ligação só com referência e aplicação curta no fim.
+      const promptExplicar = montarPromptExplicar({
+        referencia: referenciaPassagem,
+        parte: parteAtual,
+        versiculos: versiculosTexto,
+        quantidade: quantidadeVersiculos,
+        contexto,
+        maxPalavras: maxPalavrasExplicacao,
+      });
 
       const modelosExplicacaoDireta = [
         'google/gemma-4-31b-it:free',
         'deepseek/deepseek-v4-flash',
       ];
-      // 01/10/2026: combo rápido do app no 9Router (túnel) primeiro; se o túnel
-      // não estiver configurado ou falhar, o mesmo prompt vai para a reserva.
+      // Túnel do 9Router primeiro (escrita no Gemini caprichado, revisão no combo
+      // rápido do app); sem túnel ou se ele falhar, o mesmo prompt vai para a reserva.
       const epExplicar = get9RouterEndpoint();
-      const gerarExplicacao = (promptTxt: string, temp: number) => gerarPalavraComReserva({
+      const gerarExplicacao = (promptTxt: string, temp: number, modelosTunel: string[]) => gerarPalavraComReserva({
         prompt: promptTxt,
         temperature: temp,
         maxTokens: maxTokensExplicacao,
         useTunnel: epExplicar.useTunnel,
         tunnelUrl: epExplicar.url,
         tunnelApiKey: epExplicar.apiKey,
-        modelosTunel: APP_TUNNEL_MODELS,
+        modelosTunel,
         modelosReserva: modelosExplicacaoDireta,
         gerarTexto,
         rotulo: 'EXPLICAR PASSAGEM',
       });
 
-      const llmExplicar = await gerarExplicacao(promptExplicar, 0.2);
+      const llmExplicar = await gerarExplicacao(promptExplicar, 0.3, MODELOS_EXPLICAR_TUNEL);
 
       if (!llmExplicar.ok) {
         console.error(`❌ Erro LLM:`, llmExplicar.error);
@@ -2092,34 +2088,14 @@ Gere a explicação agora:
 
       let explicacao = llmExplicar.text || "Erro ao gerar explicação.";
 
-      const promptRevisaoExplicar = `
-# REVISÃO DE FIDELIDADE AO TEXTO VISÍVEL
+      // Revisão de precisão: corta o incerto e o errado, sem apagar o contexto certo
+      const promptRevisaoExplicar = montarPromptRevisaoExplicar({
+        referencia: referenciaPassagem,
+        versiculos: versiculosTexto,
+        rascunho: explicacao,
+      });
 
-Revise a explicação abaixo confrontando CADA frase com o texto bíblico fornecido. Devolva a explicação completa no mesmo formato, mas remova ou reescreva toda afirmação que não seja demonstrável pelas palavras, ações, contrastes ou promessas visíveis no próprio bloco.
-
-## TEXTO BÍBLICO — ÚNICA FONTE PERMITIDA
-${versiculosTexto}
-
-## RASCUNHO A REVISAR
-${explicacao}
-
-## REGRAS DE REVISÃO
-1. Preserve a cobertura do primeiro, do meio e do último versículo.
-2. Não defina expressões bíblicas usando teologia ou contexto externo. Explique apenas a relação que o próprio bloco estabelece.
-3. Remova leituras introduzidas por palavras como simboliza, representa, implica, provavelmente, talvez, pode ser, seja por, ou seja, quando não forem declaradas no texto.
-4. Não invente motivos, sentimentos, causas, cenários, funções de objetos, intenções ou resultados além dos escritos.
-5. Não acrescente outra passagem bíblica.
-6. Se o texto disser apenas que alguém chorou, por exemplo, não liste causas possíveis do choro; explique somente a promessa ligada ao choro dentro do bloco.
-7. Mantenha linguagem clara e pastoral, sem transformar a revisão em mera cópia dos versículos.
-8. Retorne somente a explicação final revisada, sem notas sobre a revisão.
-9. Sua resposta deve terminar obrigatoriamente neste envelope exato:
-<FINAL>
-[explicação final completa]
-</FINAL>
-Tudo que estiver fora do envelope será descartado.
-`;
-
-      const llmRevisao = await gerarExplicacao(promptRevisaoExplicar, 0.05);
+      const llmRevisao = await gerarExplicacao(promptRevisaoExplicar, 0.1, MODELOS_REVISAO_TUNEL);
 
       const explicacaoRevisada = llmRevisao.ok && llmRevisao.text
         ? extrairRespostaFinal(llmRevisao.text)
@@ -2132,6 +2108,17 @@ Tudo que estiver fora do envelope será descartado.
 
       explicacao = explicacaoRevisada;
       console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada e revisada com sucesso!`);
+
+      if (cacheExplicar) {
+        try {
+          await cacheExplicar.from('estudo_cache').upsert(
+            { referencia: referenciaPassagem, tipo_estudo: CACHE_EXPLICAR, resultado: explicacao },
+            { onConflict: 'referencia,tipo_estudo' }
+          );
+        } catch (erroCache) {
+          console.warn('[EXPLICAR PASSAGEM] Falha ao guardar no cache:', erroCache);
+        }
+      }
 
       return new Response(
         JSON.stringify({
