@@ -9,39 +9,43 @@
  * de/para o formato Gemini (contents/parts/functionCall), para que o
  * código existente do index.ts continue funcionando sem reescrita.
  *
- * OCR/visão (combo "visao") e a Palavra da Manhã (combo "openclaw") são
- * roteáveis para o 9Router via secrets LLM_VISION_BASE_URL e LLM_VISION_API_KEY
+ * OCR/visão (combo "visao"), a Palavra da Manhã e o Explicar (combo "app-pvc")
+ * são roteáveis para o 9Router via secrets LLM_VISION_BASE_URL e LLM_VISION_API_KEY
  * (ver get9RouterEndpoint); o resto do texto/tools continua no OpenRouter.
  */
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // ============================================================
-// CADEIAS DE FALLBACK (modelos free verificados em 10/06/2026)
+// CADEIAS DE FALLBACK (modelos free verificados em 10/06/2026;
+// revisadas em 01/10/2026: gpt-oss-120b, llama-3.3-70b, qwen3-next e
+// nemotron-3-nano deixaram de ser :free e davam HTTP 404 — saíram)
 // ============================================================
 
 // Texto/geração: ordem por qualidade em PT-BR + disponibilidade.
 // deepseek-v4-flash fecha a cadeia: ultra-barato (não :free), contexto 1M —
 // só é acionado se TODOS os modelos free estiverem indisponíveis.
 export const FREE_TEXT_MODELS = [
-    'openai/gpt-oss-120b:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
     'nvidia/nemotron-3-super-120b-a12b:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
     'google/gemma-4-31b-it:free',
-    'nvidia/nemotron-3-nano-30b-a3b:free',
     'deepseek/deepseek-v4-flash',
 ];
 
 // Function calling (todos suportam tools)
 export const FREE_TOOL_MODELS = [
-    'openai/gpt-oss-120b:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
     'nvidia/nemotron-3-super-120b-a12b:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
     'google/gemma-4-31b-it:free',
     'deepseek/deepseek-v4-flash',
 ];
+
+// Combo dedicado do app no 9Router (criado em 01/10/2026 a pedido do Lucifran):
+// modelos rápidos escolhidos no painel do 9Router, isolados dos combos do Hermes.
+// Usado pela Palavra da Manhã e pelo Explicar quando o túnel está configurado.
+export const APP_TUNNEL_MODELS = ['app-pvc'];
+
+// Modelos que, no OpenRouter, vêm com raciocínio ligado por padrão e gastariam
+// o max_tokens pensando (resposta vazia). Pedimos resposta direta.
+const MODELOS_SEM_RACIOCINIO = new Set(['deepseek/deepseek-v4-flash']);
 
 // ===== OCR / VISÃO via 9Router (túnel do usuário) =====
 // PRINCIPAL = combo "visao" do 9Router (criado pelo usuário com SÓ modelos de
@@ -150,6 +154,8 @@ export async function chamarOpenRouter(
             };
             if (opts.temperature !== undefined) body.temperature = opts.temperature;
             if (opts.maxTokens !== undefined) body.max_tokens = opts.maxTokens;
+            // Só no OpenRouter: no túnel, quem decide o raciocínio é o combo do 9Router
+            if (!opts.baseUrl && MODELOS_SEM_RACIOCINIO.has(model)) body.reasoning = { enabled: false };
             if (opts.tools && opts.tools.length > 0) body.tools = opts.tools;
 
             const resp = await fetch(endpointUrl, {

@@ -25,6 +25,8 @@ interface GerarPalavraComReservaOpts {
     modelosTunel: string[];
     modelosReserva: string[];
     gerarTexto: GerarTexto;
+    /** Nome da função no aviso de queda (padrão: Palavra da Manhã). */
+    rotulo?: string;
 }
 
 /**
@@ -42,6 +44,7 @@ export async function gerarPalavraComReserva({
     modelosTunel,
     modelosReserva,
     gerarTexto,
+    rotulo = 'PALAVRA DA MANHÃ',
 }: GerarPalavraComReservaOpts): Promise<RespostaLLM> {
     const principal = await gerarTexto(prompt, {
         temperature,
@@ -54,7 +57,7 @@ export async function gerarPalavraComReserva({
     if (principal.ok || !useTunnel) return principal;
 
     console.warn(
-        `⚠️ [PALAVRA DA MANHÃ] Túnel principal falhou (${principal.error || 'erro sem detalhe'}) — tentando OpenRouter de reserva com o mesmo prompt.`,
+        `⚠️ [${rotulo}] Túnel principal falhou (${principal.error || 'erro sem detalhe'}) — tentando OpenRouter de reserva com o mesmo prompt.`,
     );
 
     return gerarTexto(prompt, {

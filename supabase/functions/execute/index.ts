@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // RAG REMOVIDO - Agora baixamos o arquivo INTEIRO para evitar fragmentação
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
-import { gerarTexto, chamarCompatGemini, get9RouterEndpoint } from './openrouter-client.ts';
+import { gerarTexto, chamarCompatGemini, get9RouterEndpoint, APP_TUNNEL_MODELS } from './openrouter-client.ts';
 import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
@@ -2064,17 +2064,26 @@ Gere a explicação agora:
 `;
 
       const modelosExplicacaoDireta = [
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-next-80b-a3b-instruct:free',
         'google/gemma-4-31b-it:free',
         'deepseek/deepseek-v4-flash',
       ];
-
-      const llmExplicar = await gerarTexto(promptExplicar, {
-        temperature: 0.2,
+      // 01/10/2026: combo rápido do app no 9Router (túnel) primeiro; se o túnel
+      // não estiver configurado ou falhar, o mesmo prompt vai para a reserva.
+      const epExplicar = get9RouterEndpoint();
+      const gerarExplicacao = (promptTxt: string, temp: number) => gerarPalavraComReserva({
+        prompt: promptTxt,
+        temperature: temp,
         maxTokens: maxTokensExplicacao,
-        models: modelosExplicacaoDireta,
+        useTunnel: epExplicar.useTunnel,
+        tunnelUrl: epExplicar.url,
+        tunnelApiKey: epExplicar.apiKey,
+        modelosTunel: APP_TUNNEL_MODELS,
+        modelosReserva: modelosExplicacaoDireta,
+        gerarTexto,
+        rotulo: 'EXPLICAR PASSAGEM',
       });
+
+      const llmExplicar = await gerarExplicacao(promptExplicar, 0.2);
 
       if (!llmExplicar.ok) {
         console.error(`❌ Erro LLM:`, llmExplicar.error);
@@ -2110,11 +2119,7 @@ ${explicacao}
 Tudo que estiver fora do envelope será descartado.
 `;
 
-      const llmRevisao = await gerarTexto(promptRevisaoExplicar, {
-        temperature: 0.05,
-        maxTokens: maxTokensExplicacao,
-        models: modelosExplicacaoDireta,
-      });
+      const llmRevisao = await gerarExplicacao(promptRevisaoExplicar, 0.05);
 
       const explicacaoRevisada = llmRevisao.ok && llmRevisao.text
         ? extrairRespostaFinal(llmRevisao.text)
@@ -2724,20 +2729,16 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
       // 6. Chamar LLM. Palavra da Manhã é tarefa CRIATIVA em PT — usa modelos
       // INSTRUCT (não-raciocínio). Modelos de raciocínio (ex.: gpt-oss-120b,
       // nemotron-reasoning) vazavam o rascunho ("Sentence 1: Introduce passage...")
-      // em vez do texto final. Se o túnel do 9Router estiver setado, ainda o
-      // usamos, mas com um modelo não-raciocínio à frente do combo "openclaw".
+      // em vez do texto final. Se o túnel do 9Router estiver setado, usa o combo
+      // dedicado do app ("app-pvc", modelos rápidos); senão, a reserva OpenRouter.
       const epPalavra = get9RouterEndpoint();
       const MODELOS_PALAVRA_OR = [
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'qwen/qwen3-next-80b-a3b-instruct:free',
         'google/gemma-4-31b-it:free',
         'deepseek/deepseek-v4-flash',
       ];
-      const MODELOS_PALAVRA_TUNEL = [
-        'gemini/gemini-3-flash-preview',
-        'openclaw',
-        'ds/deepseek-v4-flash',
-      ];
+      // Túnel: combo dedicado "app-pvc" (01/10/2026). Antes apontava para o combo
+      // compartilhado "openclaw" do Hermes e para "ds/deepseek-v4-flash", que não
+      // existe no 9Router do Mac.
 
       // Teto de tokens: modelos instruct são concisos; 500 dá folga p/ o limite
       // de caracteres (400/600) sem virar "textão" (o corte por chars ainda existe).
@@ -2748,7 +2749,7 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
         useTunnel: epPalavra.useTunnel,
         tunnelUrl: epPalavra.url,
         tunnelApiKey: epPalavra.apiKey,
-        modelosTunel: MODELOS_PALAVRA_TUNEL,
+        modelosTunel: APP_TUNNEL_MODELS,
         modelosReserva: MODELOS_PALAVRA_OR,
         gerarTexto,
       });

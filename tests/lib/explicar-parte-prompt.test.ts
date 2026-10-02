@@ -34,9 +34,12 @@ describe('prompt da explicação da parte lida', () => {
     expect(edgeSource).toContain('Não defina expressões bíblicas usando teologia ou contexto externo');
     expect(edgeSource).toContain('simboliza, representa, implica, provavelmente, talvez');
     expect(edgeSource).toContain('const modelosExplicacaoDireta = [');
-    expect(edgeSource).toContain("'meta-llama/llama-3.3-70b-instruct:free'");
+    // 01/10/2026: llama-3.3 e qwen3-next :free saíram do OpenRouter (HTTP 404).
+    // Reserva com resposta direta: Gemma grátis + DeepSeek com raciocínio desligado.
+    expect(edgeSource).toContain("modelosExplicacaoDireta = [\n        'google/gemma-4-31b-it:free',\n        'deepseek/deepseek-v4-flash',");
     expect(edgeSource).not.toContain("modelosExplicacaoDireta = [\n        'openai/gpt-oss-120b:free'");
-    expect(edgeSource).toContain('const llmRevisao = await gerarTexto(promptRevisaoExplicar');
+    // A revisão de fidelidade continua: mesma etapa, agora pelo combo do app com reserva
+    expect(edgeSource).toContain('const llmRevisao = await gerarExplicacao(promptRevisaoExplicar');
     expect(edgeSource).toContain('<FINAL>');
     expect(edgeSource).toContain('extrairRespostaFinal');
     expect(edgeSource).toContain('if (!explicacaoRevisada)');
