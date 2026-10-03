@@ -28,9 +28,9 @@ export const REGRAS_DA_EXPLICACAO = `- Fiel ao texto: não invente fatos, nomes,
 - Escreva só a explicação: não fale de você, deste pedido ou do formato, e não use palavras como "gema", "seção" ou "bloco".
 - Não vire sermão nem oração.`;
 
-export const LIGACAO_NA_BIBLIA = `Se houver uma ligação clara com outra parte da Bíblia, acrescente **Ligação na Bíblia:** com a referência exata (de 1 a 3 versículos, ex.: Hebreus 3:7-8) e uma frase dizendo por que ela se liga; o app mostra o texto da NTLH.`;
+export const LIGACAO_NA_BIBLIA = `Se houver uma ligação clara com outra parte da Bíblia, acrescente **Ligação na Bíblia:** com a referência exata em texto normal, sem negrito (de 1 a 3 versículos, ex.: Hebreus 3:7-8), e uma frase dizendo por que ela se liga. Não escreva o texto dessa passagem: o app mostra o texto da NTLH.`;
 
-export const PARA_GUARDAR = `Termine com **Para guardar:** uma frase que resume o que aprender e uma pergunta curta para pensar hoje.`;
+export const PARA_GUARDAR = `Termine com **Para guardar:** uma frase que resume o que aprender e, quando ajudar, uma pergunta curta para pensar hoje.`;
 
 /** Revisão de precisão comum: confere cobertura, fatos, citações e forma, e devolve no envelope <FINAL>. */
 export function montarRevisaoDoMetodo({ cobertura, versiculos, rascunho }: {
@@ -61,6 +61,57 @@ ${versiculos}
 ## EXPLICAÇÃO A REVISAR
 ${rascunho}
 `;
+}
+
+/** Texto comparável: sem marcas de versículo, pontuação, aspas e diferença de maiúsculas. */
+function comparavel(texto: string): string {
+    return String(texto || '')
+        .normalize('NFC')
+        .toLowerCase()
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\*\*\d+\.\*\*/g, ' ')
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+const INICIO_LIGACAO = /^\s*\*\*\s*Liga[çc][ãa]o na B[íi]blia/iu;
+const OUTRO_TITULO = /^\s*\*\*[^*]+:\s*\*\*/u;
+const CITACAO = /“([^”]+)”|"([^"]+)"/g;
+const REFERENCIA = '(?:[1-3]\\s)?\\p{Lu}[\\p{L} ]*?\\s\\d{1,3}:\\d{1,3}(?:\\s?[-–]\\s?\\d{1,3})?';
+const REFERENCIA_EM_NEGRITO = new RegExp(`\\*\\*(${REFERENCIA})\\*\\*`, 'gu');
+/** "1 Pedro 2:9 — "texto de memória"." → "1 Pedro 2:9 — " (o app põe o texto da NTLH). */
+const TEXTO_DEPOIS_DA_REFERENCIA = new RegExp(`(${REFERENCIA})\\s*[—–:-]?\\s*(?:“[^”]*”|"[^"]*")[\\s.]*(?:[—–-]\\s*)?`, 'gu');
+
+/**
+ * Conferência das citações (03/10/2026: no teste real a IA pôs entre aspas
+ * frases que não eram o texto da NTLH e citou 1 Pedro 2:9 de memória, e a
+ * revisão nem sempre pega). Trecho entre aspas que não está no texto lido
+ * perde as aspas: fica como explicação, não como citação. Na Ligação na
+ * Bíblia, o texto escrito logo depois da referência sai (o app mostra a NTLH
+ * real) e a referência perde o negrito para o app achá-la.
+ */
+export function conferirCitacoes(explicacao: string, textoBiblico: string): string {
+    const base = comparavel(textoBiblico);
+    const conferir = (linha: string) => linha.replace(CITACAO, (inteira, curvas, retas) => {
+        const trecho = curvas ?? retas ?? '';
+        const palavras = comparavel(trecho);
+        // palavra solta entre aspas ("tolo") é destaque, não citação
+        if (palavras.split(' ').length < 3 || base.includes(palavras)) return inteira;
+        return trecho;
+    });
+    let naLigacao = false;
+    return String(explicacao || '').split('\n').map((linha) => {
+        if (INICIO_LIGACAO.test(linha)) naLigacao = true;
+        else if (OUTRO_TITULO.test(linha)) naLigacao = false;
+        if (!naLigacao) return conferir(linha);
+        const semTextoDeFora = linha
+            .replace(REFERENCIA_EM_NEGRITO, '$1')
+            .replace(TEXTO_DEPOIS_DA_REFERENCIA, '$1 — ')
+            .replace(/\s+—\s*$/u, '')
+            .replace(/ {2,}/g, ' ');
+        return conferir(semTextoDeFora);
+    }).join('\n');
 }
 
 // ---------- A PARTE LIDA ----------

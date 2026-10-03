@@ -8,6 +8,7 @@ import {
     MODELOS_REVISAO_TUNEL,
     TEMPO_ESCRITA_TESTAMENTO_MS,
     TEMPO_REVISAO_TESTAMENTO_MS,
+    conferirCitacoes,
     descreverContexto,
     descreverContextoTestamento,
     limitesExplicacao,
@@ -45,10 +46,10 @@ describe('método novo de explicar', () => {
         }
     });
 
-    it('abre com "Em uma frase" e fecha com "Para guardar" (frase + pergunta)', () => {
+    it('abre com "Em uma frase" e fecha com "Para guardar" (frase e, quando ajudar, pergunta)', () => {
         for (const prompt of [parte, testamento]) {
             expect(prompt).toContain('**Em uma frase:**');
-            expect(prompt).toContain('**Para guardar:** uma frase que resume o que aprender e uma pergunta curta para pensar hoje');
+            expect(prompt).toContain('**Para guardar:** uma frase que resume o que aprender e, quando ajudar, uma pergunta curta para pensar hoje');
         }
     });
 
@@ -119,5 +120,52 @@ describe('método novo de explicar', () => {
         expect(MODELOS_REVISAO_TUNEL).toEqual(['app-pvc']);
         expect(TEMPO_ESCRITA_TESTAMENTO_MS).toBeGreaterThan(40_000);
         expect(TEMPO_REVISAO_TESTAMENTO_MS).toBeGreaterThan(40_000);
+    });
+});
+
+describe('conferência das citações (teste real de 03/10/2026)', () => {
+    // Trechos reais: no Salmo 92 a IA pôs "plantados na casa do SENHOR" entre
+    // aspas (não é o texto da NTLH) e em Números 1 citou 1 Pedro 2:9 de memória.
+    const SALMO = '**12.** Os justos florescerão como as palmeiras;\n**13.** estão plantados no Templo do SENHOR e na velhice ainda produzem frutos.';
+
+    it('citação que está no texto lido continua entre aspas', () => {
+        const r = conferirCitacoes('Eles "na velhice ainda produzem frutos" (v. 13).', SALMO);
+        expect(r).toBe('Eles "na velhice ainda produzem frutos" (v. 13).');
+    });
+
+    it('trecho entre aspas que não é o texto lido perde as aspas', () => {
+        const r = conferirCitacoes('Os justos são “plantados na casa do SENHOR” (v. 13).', SALMO);
+        expect(r).toBe('Os justos são plantados na casa do SENHOR (v. 13).');
+    });
+
+    it('palavra solta entre aspas é destaque e fica', () => {
+        expect(conferirCitacoes('O "tolo" não entende.', SALMO)).toBe('O "tolo" não entende.');
+    });
+
+    it('na Ligação na Bíblia sai o texto citado e o negrito da referência', () => {
+        const r = conferirCitacoes(
+            '**Ligação na Bíblia:**\n**1 Pedro 2:9** — "Mas vocês são a raça escolhida, o povo santo." Assim como os levitas, todos servem.\n\n**Para guardar:** Deus organiza o seu povo "como as palmeiras" e ninguém fica de fora.',
+            SALMO,
+        );
+        expect(r).toContain('1 Pedro 2:9 — Assim como os levitas, todos servem.');
+        expect(r).not.toContain('raça escolhida');
+        expect(r).not.toContain('**1 Pedro');
+        // depois da Ligação, a regra normal volta a valer
+        expect(r).toContain('**Para guardar:** Deus organiza o seu povo "como as palmeiras"');
+    });
+
+    it('na Ligação, frase sobre o texto lido fica inteira (só perde as aspas se não for a NTLH)', () => {
+        const r = conferirCitacoes(
+            '**Ligação na Bíblia:** João 15:4-5. Jesus ensina a permanecer nele, assim como os justos são "plantados na casa do SENHOR".\n**Hebreus 3:7-8** — O autor usa este salmo.',
+            SALMO,
+        );
+        expect(r).toContain('assim como os justos são plantados na casa do SENHOR.');
+        expect(r).toContain('Hebreus 3:7-8 — O autor usa este salmo.');
+    });
+
+    it('a instrução pede a referência sem negrito e sem o texto da passagem', () => {
+        expect(parte).toMatch(/em texto normal, sem negrito/);
+        expect(parte).toMatch(/Não escreva o texto dessa passagem/);
+        expect(parte).toMatch(/e, quando ajudar, uma pergunta curta/);
     });
 });
