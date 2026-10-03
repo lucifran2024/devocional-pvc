@@ -2383,6 +2383,18 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lerDirect, isPlanoMode, loading, passagem, bibleData, messages.length]);
 
+    // O endereço manda na mesma página (03/10/2026): "Leitura" (?ler=1) abre a
+    // leitura e "Estudar a leitura do dia" (sem ?ler) volta ao menu. Sem isto a
+    // página só olhava o endereço ao abrir, e trocar entre os dois não fazia nada.
+    const lerDirectAnteriorRef = useRef(lerDirect);
+    useEffect(() => {
+        if (lerDirectAnteriorRef.current === lerDirect) return;
+        lerDirectAnteriorRef.current = lerDirect;
+        if (lerDirect) iniciarOpcao('1');
+        else setActiveOption(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lerDirect]);
+
     // ===========================================
     // RENDER
     // ===========================================

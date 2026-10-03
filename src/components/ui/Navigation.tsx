@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
     Home, BookOpen, Bookmark, Calendar, LogOut, LayoutGrid, X,
     BookMarked, NotebookPen, HeartHandshake, Youtube, Mic,
+    GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -24,6 +25,9 @@ export function Navigation() {
 // inicial ficam a um toque de qualquer tela. Mesma lista dos cartões da home;
 // Memorização continua fora, como o dono pediu em 16/07/2026.
 const MAIS_ITENS = [
+    // 03/10/2026: "Leitura" na barra abre direto a leitura de hoje (ele quer assim);
+    // a página do Plano de Leitura (Entender, Meditar, Fixar) ganha atalho aqui.
+    { name: 'Estudar a leitura do dia', desc: 'Entender, meditar e fixar', href: '/plano-de-leitura', icon: GraduationCap },
     { name: 'Planos de leitura', desc: 'Estudo guiado', href: '/planos', icon: BookMarked },
     { name: 'Caderno', desc: 'Anotações, versículos e vídeos', href: '/anotacoes', icon: NotebookPen },
     { name: 'Diário de Oração', desc: 'Pedidos e respostas', href: '/oracao', icon: HeartHandshake },
@@ -96,7 +100,14 @@ function NavigationInner() {
         if (path === '/') return pathname === '/';
         return pathname === path || !!pathname?.startsWith(path);
     };
-    const maisAtivo = MAIS_ITENS.some(item => pathname === item.href || !!pathname?.startsWith(`${item.href}/`));
+    // A página do plano e a leitura direta (?ler=1) têm o mesmo caminho: o item
+    // "Estudar a leitura do dia" só conta como aberto no menu da página, e não
+    // acende o "Mais" (quem acende é "Leitura").
+    const naLeituraDireta = searchParams.get('ler') === '1';
+    const itemMaisAtivo = (href: string): boolean => href === '/plano-de-leitura'
+        ? pathname === href && !naLeituraDireta
+        : pathname === href || !!pathname?.startsWith(`${href}/`);
+    const maisAtivo = MAIS_ITENS.some(item => item.href !== '/plano-de-leitura' && itemMaisAtivo(item.href));
     const fecharMais = () => setMaisAberto(false);
 
     return (
@@ -246,7 +257,7 @@ function NavigationInner() {
 
                         <ul className="grid grid-cols-2 gap-2.5">
                             {MAIS_ITENS.map((item) => {
-                                const ativo = pathname === item.href || !!pathname?.startsWith(`${item.href}/`);
+                                const ativo = itemMaisAtivo(item.href);
                                 return (
                                     <li key={item.href}>
                                         <Link

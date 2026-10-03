@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
@@ -526,6 +526,7 @@ export default function BibliotecaPageWrapper() {
 }
 
 function BibliotecaPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const abrirSalvos = searchParams.get('salvos') === '1';
 
@@ -657,15 +658,6 @@ function BibliotecaPage() {
     const [painelItens, setPainelItens] = useState<BibliaInteracao[]>([]);
     const [painelLoading, setPainelLoading] = useState(abrirSalvos);
 
-    // Carregar dados do painel quando aberto via query param
-    useEffect(() => {
-        if (abrirSalvos) {
-            getAllInteracoesPorTipo('favorito', 200).then(dados => {
-                setPainelItens(dados);
-                setPainelLoading(false);
-            });
-        }
-    }, [abrirSalvos]);
     const [painelNotaEditId, setPainelNotaEditId] = useState<number | null>(null);
     const [painelNotaTexto, setPainelNotaTexto] = useState('');
     const [painelBusca, setPainelBusca] = useState('');
@@ -1708,6 +1700,24 @@ function BibliotecaPage() {
         setPainelLoading(false);
     };
 
+    // A lista de salvos acompanha o endereço (?salvos=1). Com a Bíblia já aberta,
+    // o atalho "Salvos" (e o "Bíblia") da barra só troca o endereço — antes o
+    // painel só olhava o endereço ao montar a página e não abria/fechava
+    // ("tem hora que ele não muda para salvo", 03/10/2026).
+    useEffect(() => {
+        if (abrirSalvos) abrirPainel(painelAba);
+        else setPainelAberto(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [abrirSalvos]);
+
+    // Abrir e fechar pela própria tela também passam pelo endereço, para o
+    // destaque da barra (Bíblia / Salvos) seguir o que está na tela.
+    const mostrarSalvos = () => router.replace('/biblioteca?salvos=1', { scroll: false });
+    const fecharPainel = () => {
+        if (abrirSalvos) router.replace('/biblioteca', { scroll: false });
+        else setPainelAberto(false);
+    };
+
     const removerItemPainel = async (id: number) => {
         await removerInteracao(id);
         setPainelItens(prev => prev.filter(i => i.id !== id));
@@ -1733,7 +1743,7 @@ function BibliotecaPage() {
 
     const navegarParaItem = (item: BibliaInteracao) => {
         navegarPara(item.livro_abrev, item.capitulo, item.versiculo);
-        setPainelAberto(false);
+        fecharPainel();
     };
 
     const copiarItemPainel = async (item: BibliaInteracao) => {
@@ -1998,7 +2008,7 @@ function BibliotecaPage() {
                         <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Offline">
                             <Download className="w-5 h-5" />
                         </button>
-                        <button onClick={() => abrirPainel('favoritos')} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Salvos">
+                        <button onClick={mostrarSalvos} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Salvos">
                             <BookmarkIcon className="w-5 h-5" />
                         </button>
                     </div>
@@ -2594,7 +2604,7 @@ function BibliotecaPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <button onClick={() => setPainelAberto(false)} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-primary"><X className="w-5 h-5" /></button>
+                                <button onClick={fecharPainel} aria-label="Fechar salvos" className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-surface-2 text-slate-400 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-primary"><X className="w-5 h-5" /></button>
                             </div>
                         </div>
 
