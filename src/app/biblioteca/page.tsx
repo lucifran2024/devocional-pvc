@@ -1697,7 +1697,7 @@ function BibliotecaPage() {
         setPainelCorFiltro(null);
 
         // Carrega os 2 tipos em paralelo: a aba ativa + contador da outra.
-        // (Notas agora vivem na tela Anotações.)
+        // (Notas vivem no Caderno, /anotacoes.)
         const [favoritos, destaques] = await Promise.all([
             getAllInteracoesPorTipo('favorito', 200),
             getAllInteracoesPorTipo('destaque', 200),
@@ -2617,10 +2617,10 @@ function BibliotecaPage() {
                                     </button>
                                 );
                             })}
-                            {/* Notas agora vivem na tela Anotações */}
+                            {/* Notas vivem no Caderno (antes "Anotações") */}
                             <a href="/anotacoes"
                                 className="flex-1 py-3 px-2 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 text-slate-400 dark:text-text-muted hover:text-amber-600 dark:hover:text-amber-400"
-                                title="Suas notas agora ficam em Anotações">
+                                title="Suas notas ficam no Caderno">
                                 <StickyNote className="w-3.5 h-3.5" />
                                 <span>Notas</span>
                                 <ChevronRight className="w-3 h-3" />

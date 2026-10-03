@@ -189,6 +189,20 @@ export default function DashboardPage() {
             /dna-categorizado) e os crons/DNA no backend seguem intactos.
           */}
 
+          {/* Card: Caderno (antes "Anotações"; vem antes da Oração desde 03/10/2026) */}
+          <div className="stagger-item">
+            <DashboardCard
+              href="/anotacoes"
+              title="Caderno"
+              desc="Suas anotações, os versículos que você anotou e os vídeos transcritos."
+              icon={NotebookPen}
+              accentColor="text-amber-600 dark:text-amber-400"
+              iconBg="bg-amber-500/10 border-amber-500/20"
+              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+              badge="Caderno"
+            />
+          </div>
+
           {/* Card: Diário de Oração */}
           <div className="stagger-item">
             <DashboardCard
@@ -200,20 +214,6 @@ export default function DashboardPage() {
               iconBg="bg-amber-500/10 border-amber-500/20"
               badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
               badge="Oração"
-            />
-          </div>
-
-          {/* Card: Anotações */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/anotacoes"
-              title="Anotações"
-              desc="Seus versículos marcados e seu caderno pessoal, num só lugar."
-              icon={NotebookPen}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Notas"
             />
           </div>
 

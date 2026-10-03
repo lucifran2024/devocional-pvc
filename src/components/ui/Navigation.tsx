@@ -25,7 +25,7 @@ export function Navigation() {
 // Memorização continua fora, como o dono pediu em 16/07/2026.
 const MAIS_ITENS = [
     { name: 'Planos de leitura', desc: 'Estudo guiado', href: '/planos', icon: BookMarked },
-    { name: 'Anotações', desc: 'Notas e caderno', href: '/anotacoes', icon: NotebookPen },
+    { name: 'Caderno', desc: 'Anotações, versículos e vídeos', href: '/anotacoes', icon: NotebookPen },
     { name: 'Diário de Oração', desc: 'Pedidos e respostas', href: '/oracao', icon: HeartHandshake },
     { name: 'Transcrever do YouTube', desc: 'Texto da pregação', href: '/transcrever-youtube', icon: Youtube },
     { name: 'Gravar e Transcrever', desc: 'Culto ao vivo', href: '/transcrever-culto', icon: Mic },
