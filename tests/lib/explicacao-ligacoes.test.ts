@@ -70,6 +70,11 @@ describe('verso para guardar com o texto real da NTLH (Meditar e Viver, 03/10/20
         expect(buscar).toHaveBeenCalledTimes(1);
     });
 
+    it('se a IA já escreveu o verso na linha, não repete (teste real de 03/10/2026)', async () => {
+        const texto = '**Verso para guardar:** Salmos 96:1 — "Cantem uma nova canção a Deus, o SENHOR" porque o louvor responde ao Deus que age.';
+        expect(await completarVersoParaGuardar(texto, buscar)).toBe(texto);
+    });
+
     it('referência na linha de baixo também vale; sem texto encontrado, nada muda', async () => {
         const r = await completarVersoParaGuardar('**Verso para guardar:**\nSalmos 96:1 — o convite.', buscar);
         expect(r).toContain('Salmos 96:1 — o convite.\n\n*“Cantem uma nova canção a Deus, o SENHOR.” (Salmos 96:1, NTLH)*');
