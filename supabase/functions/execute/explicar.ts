@@ -350,3 +350,66 @@ export function montarPromptRevisaoTestamento({ referencia, versiculos, rascunho
         rascunho,
     });
 }
+
+// ---------- MEDITAR E VIVER / FIXAR EM 1 MINUTO (opções 3 e 4 do menu) ----------
+// Refeitos em 03/10/2026 (cartão de Lucifran: "Refazer os dois"): antes eram
+// moldes fixos com emojis no modelo grátis do OpenRouter. Agora nascem da
+// leitura do dia inteira (um cabeçalho por capítulo), no modelo do app, com a
+// mesma conferência de citações; o versículo para guardar vai só como
+// referência e o app põe o texto exato da NTLH.
+
+/** Cache novo (v2): nada dos estudos antigos é servido. */
+export const CACHE_ESTUDOS: Record<string, string> = {
+    aplicacao_pratica: 'aplicacao_pratica_v2',
+    sintese_rapida: 'sintese_rapida_v2',
+};
+
+const REGRAS_DOS_ESTUDOS = `- Fiel à leitura: nada que o texto não diga; não invente fatos.
+- Entre aspas, só palavras da leitura acima, copiadas exatamente.
+- Linguagem simples e calorosa, frases curtas, sem emoji, sem linguagem de coach ("destrave", "tome posse"), sem julgamento.
+- Títulos em negrito, como acima; não use # nem ##; não fale do pedido ou do formato.`;
+
+export function montarPromptMeditar({ referencia, versiculos }: { referencia: string; versiculos: string }): string {
+    return `
+# MEDITAR NA LEITURA DE HOJE
+
+Você é um pastor experiente e acolhedor ajudando alguém a deixar a leitura de hoje, na NTLH, falar com a vida dela. Nada de autoajuda nem frase de efeito: tudo nasce do texto.
+
+## A LEITURA DE HOJE: ${referencia}
+${versiculos}
+
+## COMO ESCREVER
+1. **Em uma frase:** o que a leitura de hoje diz ao coração; se a leitura tem Antigo e Novo Testamento, ligue os dois.
+2. **Verso para guardar:** só a referência exata de UM versículo da leitura (ex.: Salmos 96:1), um travessão e uma frase dizendo por que ele é o coração do texto. Não copie o texto do versículo: o app mostra o texto da NTLH.
+3. **Para pensar:** 3 perguntas curtas, pessoais e diretas, cada uma presa a um versículo da leitura (diga qual), que só servem para esta leitura.
+4. **Para viver hoje:** UMA atitude concreta, possível hoje, que nasce do texto — algo que dá para fazer e saber que fez.
+5. **Para orar:** uma oração curta (3 a 4 frases), em primeira pessoa, com as palavras e as imagens da leitura.
+
+## REGRAS
+${REGRAS_DOS_ESTUDOS}
+- Até 320 palavras.
+`;
+}
+
+export function montarPromptFixar({ referencia, versiculos }: { referencia: string; versiculos: string }): string {
+    return `
+# FIXAR A LEITURA DE HOJE EM 1 MINUTO
+
+Você é um professor que ajuda a pessoa a LEMBRAR o que leu hoje na NTLH.
+
+## A LEITURA DE HOJE: ${referencia}
+${versiculos}
+
+## COMO ESCREVER
+1. **Em uma frase:** a ideia principal da leitura de hoje.
+2. **O que aconteceu:** de 3 a 6 frases curtas, em ordem, cobrindo TODA a leitura (cada capítulo ou livro; se houver Antigo e Novo Testamento, os dois).
+3. **3 coisas para não esquecer:** três fatos ou ideias marcantes, numerados, cada um com o versículo entre parênteses (ex.: Salmos 97:5).
+4. **Teste rápido:** 3 perguntas objetivas que se respondem só com a leitura, numeradas (P1, P2, P3).
+5. **Frase para levar:** uma frase curta que resuma a leitura, fácil de repetir de memória.
+6. **Respostas:** as respostas curtas das 3 perguntas, na mesma ordem, por último (para a pessoa tentar antes de olhar).
+
+## REGRAS
+${REGRAS_DOS_ESTUDOS}
+- Até 260 palavras.
+`;
+}

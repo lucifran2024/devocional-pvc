@@ -73,8 +73,14 @@ describe('ligação com a tela da leitura', () => {
 
     it('Entender a Passagem usa a explicação nova do Antigo e do Novo Testamento', () => {
         expect(pagina).toMatch(/case '2':\s*return await gerarEntenderPassagem\(\);/);
-        expect(pagina).toContain("for (const tipo of ['aplicacao_pratica', 'sintese_rapida'])");
         expect(pagina).not.toContain("gerarEstudoIA('estudo_profundo')");
+    });
+
+    it('Meditar e Viver e Fixar em 1 Minuto: estudos novos, gerados só ao tocar (03/10/2026)', () => {
+        expect(pagina).toMatch(/case '3':\s*return await gerarEstudoNovo\('aplicacao_pratica', 'Meditar e Viver'\);/);
+        expect(pagina).toMatch(/case '4':\s*return await gerarEstudoNovo\('sintese_rapida', 'Fixar em 1 Minuto'\);/);
+        expect(pagina).not.toContain("for (const tipo of ['aplicacao_pratica', 'sintese_rapida'])");
+        expect(pagina).toContain('completarVersoParaGuardar(bruto)');
     });
 
     it('a parte já explicada não chama a IA de novo', () => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     CACHE_EXPLICAR,
     CACHE_EXPLICAR_TESTAMENTO,
+    CACHE_ESTUDOS,
     GUIA_TIPOS_DE_TEXTO,
     MODELOS_EXPLICAR_TUNEL,
     MODELOS_REVISAO_TUNEL,
@@ -17,6 +18,8 @@ import {
     normalizarTitulos,
     prepararExplicacao,
     montarPromptExplicarTestamento,
+    montarPromptFixar,
+    montarPromptMeditar,
     montarPromptRevisaoExplicar,
     montarPromptRevisaoTestamento,
 } from '../../supabase/functions/execute/explicar';
@@ -185,5 +188,40 @@ describe('títulos em markdown viram negrito (explicação real de Salmos 96-99)
 
     it('a instrução pede títulos só em negrito', () => {
         expect(parte).toMatch(/Títulos sempre em negrito, como nos exemplos; não use # nem ##/);
+    });
+});
+
+describe('Meditar e Viver e Fixar em 1 Minuto refeitos (cartão de 03/10/2026)', () => {
+    const LEITURA = '### Salmos 96\n1 Cantem uma nova canção a Deus, o SENHOR.\n\n### Efésios 4\n3 Façam tudo para conservar a união.';
+    const meditar = montarPromptMeditar({ referencia: 'Salmos 96-99, Efésios 4', versiculos: LEITURA });
+    const fixar = montarPromptFixar({ referencia: 'Salmos 96-99, Efésios 4', versiculos: LEITURA });
+
+    it('nascem da leitura do dia inteira, sem emoji e sem os moldes antigos', () => {
+        for (const p of [meditar, fixar]) {
+            expect(p).toContain('## A LEITURA DE HOJE: Salmos 96-99, Efésios 4');
+            expect(p).toContain(LEITURA);
+            expect(p).toMatch(/sem emoji/);
+            expect(p).toMatch(/Entre aspas, só palavras da leitura acima, copiadas exatamente/);
+            for (const antigo of ['⭐', '🪞', '🔥', '🙌', '📜', '🧠', '✍️', '💎', 'A HISTÓRIA EM 5 LINHAS']) expect(p).not.toContain(antigo);
+        }
+    });
+
+    it('meditar: verso para guardar só com a referência (o app põe a NTLH), perguntas presas a versículos, uma atitude e oração', () => {
+        expect(meditar).toContain('**Verso para guardar:** só a referência exata de UM versículo');
+        expect(meditar).toContain('Não copie o texto do versículo: o app mostra o texto da NTLH');
+        expect(meditar).toMatch(/3 perguntas curtas[\s\S]*presa a um versículo da leitura/);
+        expect(meditar).toContain('**Para viver hoje:** UMA atitude concreta');
+        expect(meditar).toContain('**Para orar:**');
+    });
+
+    it('fixar: cobre toda a leitura, 3 coisas com versículo, teste e respostas por último', () => {
+        expect(fixar).toMatch(/cobrindo TODA a leitura/);
+        expect(fixar).toContain('**3 coisas para não esquecer:**');
+        expect(fixar).toContain('**Teste rápido:**');
+        expect(fixar.indexOf('**Frase para levar:**')).toBeLessThan(fixar.indexOf('**Respostas:**'));
+    });
+
+    it('cache novo: nada dos estudos antigos é servido', () => {
+        expect(CACHE_ESTUDOS).toEqual({ aplicacao_pratica: 'aplicacao_pratica_v2', sintese_rapida: 'sintese_rapida_v2' });
     });
 });

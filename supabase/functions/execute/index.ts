@@ -8,6 +8,7 @@ import {
   CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar,
   CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento,
   prepararExplicacao,
+  CACHE_ESTUDOS, montarPromptMeditar, montarPromptFixar,
 } from './explicar.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
@@ -2260,6 +2261,10 @@ Gere agora:
       const versiculosTexto = versiculos || '';
       const referenciaPassagem = referencia || 'Passagem bíblica';
       const tipoEstudo = tipo_estudo || 'estudo_profundo';
+      // 03/10/2026: Meditar e Viver (aplicacao_pratica) e Fixar em 1 Minuto
+      // (sintese_rapida) refeitos — cache novo, modelo do app e citações conferidas.
+      const estudoNovo = Boolean(CACHE_ESTUDOS[tipoEstudo]);
+      const chaveCacheEstudo = CACHE_ESTUDOS[tipoEstudo] || tipoEstudo;
 
       // CACHE: o estudo é determinístico por (referência, tipo). Se já existe,
       // retorna instantaneamente — sem chamar a IA.
@@ -2272,18 +2277,61 @@ Gere agora:
             .from('estudo_cache')
             .select('resultado')
             .eq('referencia', referenciaPassagem)
-            .eq('tipo_estudo', tipoEstudo)
+            .eq('tipo_estudo', chaveCacheEstudo)
             .maybeSingle();
           if (cached?.resultado) {
-            console.log(`⚡ [ESTUDO BÍBLICO] Cache hit: ${referenciaPassagem} / ${tipoEstudo}`);
+            console.log(`⚡ [ESTUDO BÍBLICO] Cache hit: ${referenciaPassagem} / ${chaveCacheEstudo}`);
+            const resultadoGuardado = estudoNovo ? prepararExplicacao(cached.resultado, versiculosTexto) : cached.resultado;
             return new Response(
-              JSON.stringify({ ok: true, resultado: cached.resultado, tipo: 'estudo_biblico', tipo_estudo: tipoEstudo, cached: true }),
+              JSON.stringify({ ok: true, resultado: resultadoGuardado, tipo: 'estudo_biblico', tipo_estudo: tipoEstudo, cached: true }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
             );
           }
         }
       } catch (cacheErr) {
         console.warn('[ESTUDO BÍBLICO] Falha ao ler cache (segue gerando):', cacheErr);
+      }
+
+      if (estudoNovo) {
+        const promptEstudo = tipoEstudo === 'aplicacao_pratica'
+          ? montarPromptMeditar({ referencia: referenciaPassagem, versiculos: versiculosTexto })
+          : montarPromptFixar({ referencia: referenciaPassagem, versiculos: versiculosTexto });
+        const epEstudo = get9RouterEndpoint();
+        const llmNovo = await gerarPalavraComReserva({
+          prompt: promptEstudo,
+          temperature: tipoEstudo === 'aplicacao_pratica' ? 0.6 : 0.3,
+          maxTokens: 3000,
+          useTunnel: epEstudo.useTunnel,
+          tunnelUrl: epEstudo.url,
+          tunnelApiKey: epEstudo.apiKey,
+          modelosTunel: MODELOS_EXPLICAR_TUNEL,
+          modelosReserva: ['google/gemma-4-31b-it:free', 'deepseek/deepseek-v4-flash'],
+          gerarTexto,
+          rotulo: 'ESTUDO BÍBLICO',
+          timeoutMs: TEMPO_ESCRITA_TESTAMENTO_MS,
+        });
+        if (!llmNovo.ok || !llmNovo.text) {
+          console.error(`❌ [ESTUDO BÍBLICO] ${tipoEstudo}:`, llmNovo.error);
+          throw new Error(`Erro API LLM: ${llmNovo.error}`);
+        }
+        // Títulos em negrito e citação que não é da leitura perde as aspas
+        const estudo = prepararExplicacao(llmNovo.text, versiculosTexto);
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+          if (supabaseUrl && serviceKey) {
+            await createClient(supabaseUrl, serviceKey).from('estudo_cache').upsert(
+              { referencia: referenciaPassagem, tipo_estudo: chaveCacheEstudo, resultado: estudo },
+              { onConflict: 'referencia,tipo_estudo' }
+            );
+          }
+        } catch (saveErr) {
+          console.warn('[ESTUDO BÍBLICO] Falha ao salvar cache:', saveErr);
+        }
+        return new Response(
+          JSON.stringify({ ok: true, resultado: estudo, tipo: 'estudo_biblico', tipo_estudo: tipoEstudo }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
       }
 
       // Prompts pedagógicos: ENTENDER (2) → VIVER (3) → FIXAR (4)

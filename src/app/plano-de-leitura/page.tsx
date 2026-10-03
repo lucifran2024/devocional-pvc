@@ -34,12 +34,12 @@ import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
 import { montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
 import { formatarExplicacao } from '@/lib/explicacao-apresentacao';
-import { completarLigacoes } from '@/lib/explicacao-ligacoes';
+import { completarLigacoes, completarVersoParaGuardar } from '@/lib/explicacao-ligacoes';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
 import { BotoesExplicarTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
-import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, type Testamento } from '@/lib/explicacao-testamento';
+import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, textoDosCapitulos, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -1784,9 +1784,9 @@ Escolha o caminho e comece quando quiser.`;
             case '2':
                 return await gerarEntenderPassagem();
             case '3':
-                return await gerarEstudoIA('aplicacao_pratica');
+                return await gerarEstudoNovo('aplicacao_pratica', 'Meditar e Viver');
             case '4':
-                return await gerarEstudoIA('sintese_rapida');
+                return await gerarEstudoNovo('sintese_rapida', 'Fixar em 1 Minuto');
             default:
                 return 'Opção não reconhecida.';
         }
@@ -1850,13 +1850,16 @@ Escolha o caminho e comece quando quiser.`;
     // usuário quanto pelo prefetch silencioso em background.
     const buscarEstudo = async (tipoEstudo: string): Promise<string | null> => {
         if (!passagem) return null;
-        const versiculosTexto = bibleData
-            ? bibleData.versiculos.map(v => `${v.verse}. ${v.text?.replace(/<[^>]*>/g, '') || ''}`).join('\n')
-            : '';
+        // Estudos novos (03/10/2026): um cabeçalho por capítulo ("### Salmos 96"),
+        // para a IA saber de que capítulo é cada versículo da leitura do dia
+        const estudoNovo = tipoEstudo === 'aplicacao_pratica' || tipoEstudo === 'sintese_rapida';
+        const versiculosTexto = !bibleData ? '' : estudoNovo
+            ? textoDosCapitulos(getCapitulosAgrupados(), livroInfoAtual.nome)
+            : bibleData.versiculos.map(v => `${v.verse}. ${v.text?.replace(/<[^>]*>/g, '') || ''}`).join('\n');
         if (!versiculosTexto) return null;
 
-        // Cache de sessão (instantâneo na 2ª vez no mesmo aparelho)
-        const cacheKey = `estudo:${passagem.referencia}:${tipoEstudo}`;
+        // Cache de sessão (instantâneo na 2ª vez no mesmo aparelho); v2 = estudos novos
+        const cacheKey = `estudo:${estudoNovo ? 'v2:' : ''}${passagem.referencia}:${tipoEstudo}`;
         if (typeof window !== 'undefined') {
             const local = sessionStorage.getItem(cacheKey);
             if (local) return local;
@@ -1880,17 +1883,20 @@ Escolha o caminho e comece quando quiser.`;
         return data.resultado;
     };
 
-    const gerarEstudoIA = async (tipoEstudo: string): Promise<string> => {
+    // Opções 3 e 4 (Meditar e Viver, Fixar em 1 Minuto), refeitas em 03/10/2026:
+    // geradas ao tocar, o verso para guardar com o texto exato da NTLH e o mesmo
+    // visual das explicações.
+    const gerarEstudoNovo = async (tipoEstudo: 'aplicacao_pratica' | 'sintese_rapida', rotulo: string): Promise<string> => {
         if (!passagem) return 'Passagem não carregada.';
         if (!bibleData) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
-
         try {
-            const resultado = await buscarEstudo(tipoEstudo);
-            if (!resultado) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
-            return resultado;
+            const bruto = await buscarEstudo(tipoEstudo);
+            if (!bruto) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
+            const comVerso = await completarVersoParaGuardar(bruto);
+            return formatarExplicacao(comVerso, `${rotulo} · ${passagem.referencia}`) || bruto;
         } catch (error) {
-            console.error('Erro ao gerar estudo IA:', error);
-            return `**Não foi possível gerar o estudo**\n\nVerifique sua conexão e tente novamente.`;
+            console.error(`Erro ao gerar ${rotulo}:`, error);
+            return 'Não foi possível preparar agora. Volte ao menu e toque de novo.';
         }
     };
 
@@ -1962,26 +1968,8 @@ Escolha o caminho e comece quando quiser.`;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [passagem?.referencia, bibleData]);
 
-    // PREFETCH: quando a passagem e os versículos estão prontos, aquece as
-    // opções 3 e 4 em background (sequencial, sem travar a UI). A opção 2 usa a
-    // explicação dos testamentos, gerada só ao tocar (03/10/2026).
-    const prefetchDispARadoRef = useRef<string | null>(null);
-    useEffect(() => {
-        if (!passagem?.referencia || !bibleData) return;
-        if (prefetchDispARadoRef.current === passagem.referencia) return;
-        prefetchDispARadoRef.current = passagem.referencia;
-
-        let cancelado = false;
-        (async () => {
-            for (const tipo of ['aplicacao_pratica', 'sintese_rapida']) {
-                if (cancelado) return;
-                try { await buscarEstudo(tipo); } catch { /* silencioso */ }
-            }
-        })();
-        return () => { cancelado = true; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [passagem?.referencia, bibleData]);
-
+    // Sem pré-carregamento (03/10/2026): os estudos do menu são gerados só ao
+    // tocar e ficam guardados para todos, como o Explicar (decisão de 02/10).
 
     // Processar comando CONTINUAR
     const processarContinuar = async (): Promise<string> => {

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/bible-db', () => ({ getCachedChapter: vi.fn().mockResolvedValue(null), cacheChapter: vi.fn().mockResolvedValue(undefined) }));
 
-import { completarLigacoes } from '@/lib/explicacao-ligacoes';
+import { completarLigacoes, completarVersoParaGuardar } from '@/lib/explicacao-ligacoes';
 import { parseReferencia } from '@/lib/bible-api';
 
 // 02/10/2026: no protótipo a IA "citou" Salmos 27:4 como NTLH de memória, com
@@ -57,5 +57,24 @@ describe('ligações da explicação com o texto real da NTLH', () => {
         const md = await completarLigacoes('**Ligação na Bíblia:** Salmos 27:4 — mesmo desejo.', async (r) => NTLH[r] ?? null);
         expect(md).toContain('(Salmos 27:4, NTLH)');
         expect(await completarLigacoes('**Contexto:** só isso.', async () => 'x')).toBe('**Contexto:** só isso.');
+    });
+});
+
+describe('verso para guardar com o texto real da NTLH (Meditar e Viver, 03/10/2026)', () => {
+    const buscar = vi.fn(async (ref: string) => (ref === 'Salmos 96:1' ? 'Cantem uma nova canção a Deus, o SENHOR.' : null));
+
+    it('põe o texto exato logo abaixo da referência, só no verso para guardar', async () => {
+        const texto = '**Em uma frase:** Deus reina.\n\n**Verso para guardar:** Salmos 96:1 — é o convite que abre a leitura.\n\n**Para pensar:** Salmos 97:10 fala de odiar o mal.';
+        const r = await completarVersoParaGuardar(texto, buscar);
+        expect(r).toBe('**Em uma frase:** Deus reina.\n\n**Verso para guardar:** Salmos 96:1 — é o convite que abre a leitura.\n\n*“Cantem uma nova canção a Deus, o SENHOR.” (Salmos 96:1, NTLH)*\n\n\n**Para pensar:** Salmos 97:10 fala de odiar o mal.');
+        expect(buscar).toHaveBeenCalledTimes(1);
+    });
+
+    it('referência na linha de baixo também vale; sem texto encontrado, nada muda', async () => {
+        const r = await completarVersoParaGuardar('**Verso para guardar:**\nSalmos 96:1 — o convite.', buscar);
+        expect(r).toContain('Salmos 96:1 — o convite.\n\n*“Cantem uma nova canção a Deus, o SENHOR.” (Salmos 96:1, NTLH)*');
+        const sem = '**Verso para guardar:** Efésios 4:3 — a unidade.';
+        expect(await completarVersoParaGuardar(sem, buscar)).toBe(sem);
+        expect(await completarVersoParaGuardar('Sem a seção.', buscar)).toBe('Sem a seção.');
     });
 });

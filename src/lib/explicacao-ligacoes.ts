@@ -44,3 +44,25 @@ export async function completarLigacoes(texto: string, buscar: BuscarTexto = bus
     }
     return usadas ? saida.join('\n') : texto;
 }
+
+// "Verso para guardar" (Meditar e Viver, 03/10/2026): a IA dá só a referência;
+// o app põe o texto exato da NTLH logo abaixo — verso para memorizar não pode
+// vir de memória da IA. Sem texto encontrado, fica só a referência.
+const VERSO_PARA_GUARDAR = /^\s*\*\*\s*Verso para guardar/iu;
+
+export async function completarVersoParaGuardar(texto: string, buscar: BuscarTexto = buscarTextoVersiculo): Promise<string> {
+    const linhas = String(texto || '').split('\n');
+    const i = linhas.findIndex((l) => VERSO_PARA_GUARDAR.test(l));
+    if (i < 0) return texto;
+    // a referência pode estar na mesma linha do título ou na linha seguinte
+    for (const j of [i, i + 1]) {
+        const m = [...String(linhas[j] || '').matchAll(REFERENCIA)][0];
+        if (!m) continue;
+        const ref = `${m[1]} ${m[2]}:${m[3]}${m[4] ? `-${m[4]}` : ''}`;
+        const versiculo = await buscar(ref).catch(() => null);
+        if (!versiculo?.trim()) return texto;
+        linhas.splice(j + 1, 0, '', `*“${versiculo.trim()}” (${ref}, NTLH)*`, '');
+        return linhas.join('\n');
+    }
+    return texto;
+}
