@@ -14,6 +14,8 @@ import {
     limitesExplicacao,
     limitesTestamento,
     montarPromptExplicar,
+    normalizarTitulos,
+    prepararExplicacao,
     montarPromptExplicarTestamento,
     montarPromptRevisaoExplicar,
     montarPromptRevisaoTestamento,
@@ -167,5 +169,21 @@ describe('conferência das citações (teste real de 03/10/2026)', () => {
         expect(parte).toMatch(/em texto normal, sem negrito/);
         expect(parte).toMatch(/Não escreva o texto dessa passagem/);
         expect(parte).toMatch(/e, quando ajudar, uma pergunta curta/);
+    });
+});
+
+describe('títulos em markdown viram negrito (explicação real de Salmos 96-99)', () => {
+    it('## e ### viram títulos em negrito; o # do começo sai', () => {
+        const r = normalizarTitulos('# Salmos 96-99 · Deus é Rei\n\n**Em uma frase:** Deus reina.\n\n## Salmo 96 · Um cântico novo\nTexto.\n\n### Para guardar\nDeus é Rei.');
+        expect(r).toBe('\n**Em uma frase:** Deus reina.\n\n**Salmo 96 · Um cântico novo:**\nTexto.\n\n**Para guardar:**\nDeus é Rei.');
+    });
+
+    it('a Ligação em ## é achada depois de normalizada', () => {
+        const r = prepararExplicacao('## Ligação na Bíblia\n**Romanos 12:4-5** — "Um corpo com muitas partes." O mesmo corpo.', '1 Há um só corpo.');
+        expect(r).toBe('**Ligação na Bíblia:**\nRomanos 12:4-5 — O mesmo corpo.');
+    });
+
+    it('a instrução pede títulos só em negrito', () => {
+        expect(parte).toMatch(/Títulos sempre em negrito, como nos exemplos; não use # nem ##/);
     });
 });

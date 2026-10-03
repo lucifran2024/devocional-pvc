@@ -28,6 +28,10 @@ describe('apresentação da explicação da parte', () => {
         expect(md).not.toMatch(/^•/m);
     });
 
+    it('título em markdown vira subtítulo como os em negrito', () => {
+        expect(formatarExplicacao('## Salmo 96 · Um cântico novo\nTexto do salmo.', 'T')).toBe('### T\n\n#### Salmo 96 · Um cântico novo\n\nTexto do salmo.');
+    });
+
     it('não muda nenhuma palavra do texto explicativo', () => {
         const md = formatarExplicacao(DA_IA, 'Explicação');
         // o travessão dentro do texto (não no rótulo) continua como veio

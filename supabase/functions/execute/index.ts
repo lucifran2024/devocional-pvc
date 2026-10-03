@@ -7,7 +7,7 @@ import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
 import {
   CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar,
   CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento,
-  conferirCitacoes,
+  prepararExplicacao,
 } from './explicar.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
@@ -2043,7 +2043,7 @@ Gere agora:
           if (guardada?.resultado) {
             console.log(`⚡ [EXPLICAR PASSAGEM] Explicação guardada: ${referenciaPassagem}`);
             return new Response(
-              JSON.stringify({ ok: true, resultado: conferirCitacoes(guardada.resultado, versiculosTexto), tipo: 'explicar_passagem', cached: true }),
+              JSON.stringify({ ok: true, resultado: prepararExplicacao(guardada.resultado, versiculosTexto), tipo: 'explicar_passagem', cached: true }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
             );
           }
@@ -2110,8 +2110,8 @@ Gere agora:
         throw new Error('A revisão da explicação não devolveu uma resposta final segura.');
       }
 
-      // Citação que não é o texto lido perde as aspas; a Ligação fica só com a referência
-      explicacao = conferirCitacoes(explicacaoRevisada, versiculosTexto);
+      // Títulos em negrito; citação que não é o texto lido perde as aspas; a Ligação fica só com a referência
+      explicacao = prepararExplicacao(explicacaoRevisada, versiculosTexto);
       console.log(`✅ [EXPLICAR PASSAGEM] Explicação gerada e revisada com sucesso!`);
 
       if (cacheExplicar) {
@@ -2176,7 +2176,7 @@ Gere agora:
           if (guardada?.resultado) {
             console.log(`⚡ [EXPLICAR TESTAMENTO] Explicação guardada: ${referenciaTestamento}`);
             return new Response(
-              JSON.stringify({ ok: true, resultado: conferirCitacoes(guardada.resultado, versiculosTexto), tipo: 'explicar_testamento', cached: true }),
+              JSON.stringify({ ok: true, resultado: prepararExplicacao(guardada.resultado, versiculosTexto), tipo: 'explicar_testamento', cached: true }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
             );
           }
@@ -2223,8 +2223,8 @@ Gere agora:
       const revisadaTestamento = llmRevisaoTestamento.ok && llmRevisaoTestamento.text
         ? extrairRespostaFinal(llmRevisaoTestamento.text)
         : null;
-      // Citação que não é o texto lido perde as aspas; a Ligação fica só com a referência
-      const explicacaoTestamento = revisadaTestamento ? conferirCitacoes(revisadaTestamento, versiculosTexto) : null;
+      // Títulos em negrito; citação que não é o texto lido perde as aspas; a Ligação fica só com a referência
+      const explicacaoTestamento = revisadaTestamento ? prepararExplicacao(revisadaTestamento, versiculosTexto) : null;
       if (!explicacaoTestamento) {
         console.error(`❌ [EXPLICAR TESTAMENTO] Revisão não entregou envelope final seguro.`);
         throw new Error('A revisão da explicação não devolveu uma resposta final segura.');

@@ -26,7 +26,8 @@ export const REGRAS_DA_EXPLICACAO = `- Fiel ao texto: não invente fatos, nomes,
 - Entre aspas, só palavras do texto bíblico acima, copiadas exatamente; não cite outras passagens de memória.
 - Linguagem simples e calorosa, frases curtas, sem jargão, sem emoji, sem grego ou hebraico (no máximo uma palavra transliterada, explicada).
 - Escreva só a explicação: não fale de você, deste pedido ou do formato, e não use palavras como "gema", "seção" ou "bloco".
-- Não vire sermão nem oração.`;
+- Não vire sermão nem oração.
+- Títulos sempre em negrito, como nos exemplos; não use # nem ##.`;
 
 export const LIGACAO_NA_BIBLIA = `Se houver uma ligação clara com outra parte da Bíblia, acrescente **Ligação na Bíblia:** com a referência exata em texto normal, sem negrito (de 1 a 3 versículos, ex.: Hebreus 3:7-8), e uma frase dizendo por que ela se liga. Não escreva o texto dessa passagem: o app mostra o texto da NTLH.`;
 
@@ -112,6 +113,33 @@ export function conferirCitacoes(explicacao: string, textoBiblico: string): stri
             .replace(/ {2,}/g, ' ');
         return conferir(semTextoDeFora);
     }).join('\n');
+}
+
+/**
+ * Títulos em markdown ("## Salmo 96 · …") viram títulos em negrito, como o app
+ * espera (03/10/2026: a explicação real de Salmos 96-99 veio com # e ##, que na
+ * tela ficavam como texto comum e escondiam a Ligação na Bíblia). O título
+ * geral (#) antes de todo o conteúdo sai: a tela já tem o seu.
+ */
+export function normalizarTitulos(texto: string): string {
+    const saida: string[] = [];
+    let antesDoConteudo = true;
+    for (const linha of String(texto || '').split('\n')) {
+        const m = linha.match(/^\s*(#{1,6})\s+(.+?)\s*#*\s*$/u);
+        if (m) {
+            if (antesDoConteudo && m[1].length === 1) continue;
+            saida.push(`**${m[2].replace(/\*\*/g, '').replace(/[:：]\s*$/u, '').trim()}:**`);
+        } else {
+            saida.push(linha);
+        }
+        if (linha.trim()) antesDoConteudo = false;
+    }
+    return saida.join('\n');
+}
+
+/** O que sai para a tela e para a cópia guardada: títulos em negrito e citações conferidas. */
+export function prepararExplicacao(texto: string, textoBiblico: string): string {
+    return conferirCitacoes(normalizarTitulos(texto), textoBiblico);
 }
 
 // ---------- A PARTE LIDA ----------

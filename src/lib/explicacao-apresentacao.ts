@@ -9,6 +9,7 @@
 const CABECALHO = /^(?:🔍\s*)?\**\s*explica[çc][ãa]o da parte lida\s*\**\s*:?$/iu;
 const MARCADOR = /^(?:[•·*-]|\d+[.)])\s+/u;
 const ABERTURA = /^\*\*(.+?)\*\*\s*:?\s*(.*)$/u;
+const TITULO_MARKDOWN = /^#{1,6}\s+(.+?)\s*#*$/u;
 
 /** "Versículos 1–4 — A decisão:" → "Versículos 1-4 · A decisão" (só o rótulo). */
 function limparRotulo(rotulo: string): string {
@@ -32,6 +33,13 @@ export function formatarExplicacao(texto: string, titulo: string): string {
         const linha = bruta.trim();
         if (!linha || CABECALHO.test(linha)) {
             fecharParagrafo();
+            continue;
+        }
+        // Título em markdown ("## Salmo 96 · …") vira subtítulo, como os em negrito
+        const tituloMarkdown = linha.match(TITULO_MARKDOWN);
+        if (tituloMarkdown) {
+            fecharParagrafo();
+            blocos.push(`#### ${limparRotulo(tituloMarkdown[1].replace(/\*\*/g, ''))}`);
             continue;
         }
         const semMarcador = linha.replace(MARCADOR, '');
