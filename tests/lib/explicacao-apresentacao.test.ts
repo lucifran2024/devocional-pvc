@@ -3,7 +3,6 @@ import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 
 import { formatarExplicacao } from '@/lib/explicacao-apresentacao';
-import { gerarExplicacaoLocal } from '@/lib/explicacao-local';
 
 // Formato que a IA devolve (prompt do explicar_passagem)
 const DA_IA = `🔍 **EXPLICAÇÃO DA PARTE LIDA**
@@ -40,20 +39,6 @@ describe('apresentação da explicação da parte', () => {
         expect(formatarExplicacao('\n\n\n**A:** b\n\n\n\nc\n\n', 'T')).toBe('### T\n\n#### A\n\nb\n\nc');
         expect(formatarExplicacao('   ', 'T')).toBe('');
     });
-
-    it('a reserva local sai no mesmo formato', () => {
-        const local = gerarExplicacaoLocal({
-            referencia: 'Salmos 84:1-2',
-            parte: 1,
-            introducao: null,
-            pericopes: [],
-            versiculos: [{ verse: 1, text: 'Como eu amo o teu Templo.', chapter: 84 }, { verse: 2, text: 'Tenho saudade dos pátios.', chapter: 84 }],
-        });
-        const md = formatarExplicacao(local, 'Explicação de Salmos 84:1-2');
-        expect(md).not.toContain('EXPLICAÇÃO DA PARTE LIDA');
-        expect(md).toMatch(/^#### Versículos /m);
-        expect(md).toMatch(/^#### Sentido central da parte/m);
-    });
 });
 
 describe('ligação com a tela da leitura', () => {
@@ -74,6 +59,18 @@ describe('ligação com a tela da leitura', () => {
         expect(trecho).toMatch(/quantidade_versiculos: pedido\.quantidadeVersiculos,\s*contexto,/);
         expect(trecho).toContain('return await completarLigacoes(data.resultado);');
         expect(pagina).toContain('Na primeira vez leva uns 20 segundos; depois fica guardada para todos.');
+    });
+
+    it('sem a explicação local genérica: se a IA falhar, pede para tentar de novo (03/10/2026)', () => {
+        expect(pagina).not.toContain('gerarExplicacaoLocal');
+        const trecho = pagina.slice(pagina.indexOf('const handleExplicar = async'), pagina.indexOf('const buscarExplicacaoTestamento'));
+        expect(trecho).toContain('setErroExplicacao(true)');
+    });
+
+    it('Entender a Passagem usa a explicação nova do Antigo e do Novo Testamento', () => {
+        expect(pagina).toMatch(/case '2':\s*return await gerarEntenderPassagem\(\);/);
+        expect(pagina).toContain("for (const tipo of ['aplicacao_pratica', 'sintese_rapida'])");
+        expect(pagina).not.toContain("gerarEstudoIA('estudo_profundo')");
     });
 
     it('a parte já explicada não chama a IA de novo', () => {

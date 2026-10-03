@@ -1,5 +1,8 @@
-import type { IntroducaoLivro } from './bible-introducoes';
-import type { Pericope } from './bible-pericopes';
+// ===========================================
+// PEDIDO DA EXPLICAÇÃO DA PARTE — monta o texto exato da parte visível para a IA.
+// (03/10/2026: o gerador local de explicação genérica que morava aqui saiu; se a
+// IA falhar, a tela pede para tentar de novo. Lucifran recusou aquela versão.)
+// ===========================================
 
 export type VersiculoExplicacao = {
     verse: number;
@@ -83,46 +86,4 @@ export function montarPedidoExplicacaoParte({
         versiculos: texto,
         quantidadeVersiculos: validos.length,
     };
-}
-
-function dividirEmMovimentos(versiculos: VersiculoExplicacao[]): VersiculoExplicacao[][] {
-    const tamanho = versiculos.length <= 6 ? 2 : versiculos.length <= 12 ? 3 : 5;
-    const grupos: VersiculoExplicacao[][] = [];
-    for (let inicio = 0; inicio < versiculos.length; inicio += tamanho) {
-        grupos.push(versiculos.slice(inicio, inicio + tamanho));
-    }
-    return grupos;
-}
-
-export function gerarExplicacaoLocal({
-    referencia,
-    parte,
-    introducao: _introducao,
-    pericopes: _pericopes,
-    versiculos,
-}: {
-    referencia: string;
-    parte: number;
-    introducao: IntroducaoLivro | null;
-    pericopes: Pericope[];
-    versiculos: VersiculoExplicacao[];
-}): string {
-    const validos = versiculos.map(v => ({ ...v, text: limpar(v.text) })).filter(v => v.text);
-    if (!validos.length) return 'Não há texto suficiente nesta parte para montar a explicação.';
-
-    const topicos = dividirEmMovimentos(validos).map((grupo) => {
-        const primeiro = grupo[0];
-        const ultimo = grupo[grupo.length - 1];
-        const faixa = faixaVersiculos(primeiro.verse, ultimo.verse);
-        const falas = grupo.map(v => `no v.${v.verse}, “${v.text}”`).join('; ');
-        return `• **Versículos ${faixa}:** A sequência desta parte diz ${falas}. Leia essas afirmações juntas: a ação ou ideia avança nessa ordem, sem precisar buscar conteúdo fora do bloco.`;
-    });
-
-    const primeiro = validos[0];
-    const ultimo = validos[validos.length - 1];
-    const sentido = validos.length === 1
-        ? `A parte concentra sua mensagem no que o v.${primeiro.verse} afirma: “${primeiro.text}”`
-        : `A parte começa no v.${primeiro.verse} com “${primeiro.text}” e termina no v.${ultimo.verse} com “${ultimo.text}”. O sentido deve ser entendido pelo caminho entre esses dois pontos, cobrindo todos os versículos acima.`;
-
-    return `🔍 **EXPLICAÇÃO DA PARTE LIDA**\n\n${topicos.join('\n\n')}\n\n• **Sentido central da parte (${referencia}, parte ${parte}):** ${sentido}`;
 }

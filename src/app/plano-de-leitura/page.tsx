@@ -32,14 +32,14 @@ import { Suspense } from 'react'; // Added Suspense
 import { buscarPassagem, formatarVersiculosParte, parseReferencia, getAbrevFromId, type Versiculo } from '@/lib/bible-api';
 import { getPericopes } from '@/lib/bible-pericopes';
 import { getIntroducaoLivro } from '@/lib/bible-introducoes';
-import { gerarExplicacaoLocal, montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
+import { montarPedidoExplicacaoParte } from '@/lib/explicacao-local';
 import { formatarExplicacao } from '@/lib/explicacao-apresentacao';
 import { completarLigacoes } from '@/lib/explicacao-ligacoes';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
 import { BotoesExplicarTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
-import { contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, type Testamento } from '@/lib/explicacao-testamento';
+import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -708,7 +708,7 @@ type MenuOption = '1' | '2' | '3' | '4' | null;
 
 const MENU_OPTIONS = [
     { id: '1', icon: Book, label: 'Ler Passagem', desc: 'Texto bíblico puro, leitura rápida.' },
-    { id: '2', icon: Search, label: 'Entender a Passagem', desc: 'Contexto e explicação simples, bloco a bloco.' },
+    { id: '2', icon: Search, label: 'Entender a Passagem', desc: 'O Antigo e o Novo Testamento de hoje, capítulo por capítulo.' },
     { id: '3', icon: Rocket, label: 'Meditar e Viver', desc: 'Verso-chave, perguntas e um desafio para hoje.' },
     { id: '4', icon: Zap, label: 'Fixar em 1 Minuto', desc: 'Resumo, 3 pontos e teste rápido para lembrar.' },
 ] as const;
@@ -896,6 +896,22 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
 
         // Remove placeholders que não foram renderizados
         const conteudoLimpo = message.content.replace('%%VERSICULOS_INTERATIVOS%%', '').replace('%%EXPLICACAO_SLOT%%', '');
+
+        // Explicação dos testamentos (Entender a Passagem): títulos e parágrafos,
+        // com o mesmo respiro do cartão de explicação da leitura
+        if (conteudoLimpo.trimStart().startsWith('### ')) {
+            return (
+                <div className="animate-enter mb-4">
+                    <div
+                        data-explicacao-leitura
+                        className="leading-relaxed break-words text-text-secondary [&_h3]:mt-9 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-text-primary [&_h3:first-child]:mt-0 [&_h4]:mt-5 [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-text-primary [&_p]:mt-1.5 [&_strong]:font-semibold [&_strong]:text-text-primary [&_hr]:hidden"
+                        style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
+                    >
+                        <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div className="animate-enter mb-4">
@@ -1766,7 +1782,7 @@ Escolha o caminho e comece quando quiser.`;
             case '1':
                 return gerarLeituraGuiada();
             case '2':
-                return await gerarEstudoIA('estudo_profundo');
+                return await gerarEntenderPassagem();
             case '3':
                 return await gerarEstudoIA('aplicacao_pratica');
             case '4':
@@ -1782,61 +1798,9 @@ Escolha o caminho e comece quando quiser.`;
         return gerarLeituraParte(parteInicial);
     };
 
-    // Gerar explicação sob demanda via IA (comando EXPLICAR)
-    const gerarExplicacaoAtual = async (): Promise<string> => {
-        if (!passagem) return '';
-
-        const page = currentPageRef.current;
-
-        // Pegar versículos do capítulo atual
-        const versiculosDaParte = getVersiculosDaParte(page);
-        const versiculosAtual = versiculosDaParte
-            .map(v => `**${v.verse}.** ${v.text}`)
-            .join('\n');
-
-        try {
-            console.log('🔍 Chamando Edge Function explicar_passagem...');
-
-            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
-                body: {
-                    modo_id: 'explicar_passagem',
-                    data: new Date().toISOString().split('T')[0],
-                    referencia: passagem.referencia,
-                    versiculos: versiculosAtual,
-                    parte: page
-                }
-            });
-
-            if (invokeError) {
-                throw new Error(invokeError.context?.message || invokeError.message || 'Erro ao invocar função');
-            }
-
-            if (data.ok && data.resultado) {
-                return `**Entenda a passagem**
-*Parte ${page} de ${passagem.referencia}*
-
----
-
-${data.resultado}
-
----
-Toque em **Continuar** abaixo para os próximos versículos.`;
-            } else {
-                throw new Error(data.error || 'Erro ao gerar explicação');
-            }
-        } catch (error) {
-            console.error('Erro ao gerar explicação:', error);
-            return `**Não foi possível gerar a explicação**
-
-Não foi possível gerar a explicação no momento. Tente novamente.
-
----
-Toque em **Continuar** abaixo para os próximos versículos.`;
-        }
-    };
-
-    // Explica somente o bloco de versículos exibido na parte atual.
-    // A IA recebe a faixa exata; o gerador local usa o mesmo bloco como reserva.
+    // Explica somente o bloco de versículos exibido na parte atual, pelo método
+    // novo de 03/10/2026 (conforme o tipo de texto). Sem reserva local: se a IA
+    // falhar, a tela pede para tentar de novo em vez de mostrar texto genérico.
     const gerarExplicacaoConteudo = async (): Promise<string> => {
         if (!passagem) return '';
 
@@ -1851,15 +1815,7 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
             versiculos: versiculosDaParte,
         });
 
-        const explicacaoLocal = () => gerarExplicacaoLocal({
-            referencia: pedido.referencia,
-            parte: page,
-            introducao: livroId ? getIntroducaoLivro(livroId) : null,
-            pericopes: livroId && capitulo ? getPericopes(livroId, capitulo) : [],
-            versiculos: versiculosDaParte,
-        });
-
-        if (!pedido.versiculos) return explicacaoLocal();
+        if (!pedido.versiculos) throw new Error('Parte sem versículos');
 
         // Contexto que o app já tem (sem IA): introdução do livro, seções do
         // capítulo e a posição na leitura — a explicação parte disso (02/10/2026).
@@ -1871,27 +1827,22 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
             posicao: `parte ${page} de ${getTotalPartesLeitura()} da leitura de hoje (${passagem.referencia})`,
         };
 
-        try {
-            const { data, error: invokeError } = await supabase.functions.invoke('execute', {
-                body: {
-                    modo_id: 'explicar_passagem',
-                    data: new Date().toISOString().split('T')[0],
-                    referencia: pedido.referencia,
-                    versiculos: pedido.versiculos,
-                    parte: pedido.parte,
-                    quantidade_versiculos: pedido.quantidadeVersiculos,
-                    contexto,
-                },
-            });
+        const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+            body: {
+                modo_id: 'explicar_passagem',
+                data: new Date().toISOString().split('T')[0],
+                referencia: pedido.referencia,
+                versiculos: pedido.versiculos,
+                parte: pedido.parte,
+                quantidade_versiculos: pedido.quantidadeVersiculos,
+                contexto,
+            },
+        });
 
-            if (invokeError) throw new Error(invokeError.context?.message || invokeError.message);
-            if (!data?.ok || !data?.resultado) throw new Error(data?.error || 'Explicação vazia');
-            // A IA só dá a referência das ligações; o texto vem da NTLH real
-            return await completarLigacoes(data.resultado);
-        } catch (error) {
-            console.error('Erro ao explicar a parte com IA; usando explicação local:', error);
-            return explicacaoLocal();
-        }
+        if (invokeError) throw new Error(invokeError.context?.message || invokeError.message);
+        if (!data?.ok || !data?.resultado) throw new Error(data?.error || 'Explicação vazia');
+        // A IA só dá a referência das ligações; o texto vem da NTLH real
+        return await completarLigacoes(data.resultado);
     };
 
     // Gerar estudo via IA (Edge Function)
@@ -2011,9 +1962,9 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [passagem?.referencia, bibleData]);
 
-    // PREFETCH: quando a passagem e os versículos estão prontos, aquece as 3
-    // opções em background (sequencial, sem travar a UI). A 1ª também popula o
-    // cache do servidor — então a opção que o usuário clicar já volta pronta.
+    // PREFETCH: quando a passagem e os versículos estão prontos, aquece as
+    // opções 3 e 4 em background (sequencial, sem travar a UI). A opção 2 usa a
+    // explicação dos testamentos, gerada só ao tocar (03/10/2026).
     const prefetchDispARadoRef = useRef<string | null>(null);
     useEffect(() => {
         if (!passagem?.referencia || !bibleData) return;
@@ -2022,7 +1973,7 @@ Toque em **Continuar** abaixo para os próximos versículos.`;
 
         let cancelado = false;
         (async () => {
-            for (const tipo of ['estudo_profundo', 'aplicacao_pratica', 'sintese_rapida']) {
+            for (const tipo of ['aplicacao_pratica', 'sintese_rapida']) {
                 if (cancelado) return;
                 try { await buscarEstudo(tipo); } catch { /* silencioso */ }
             }
@@ -2168,7 +2119,8 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                 return updated;
             });
             rolarParaExplicacao();
-        } catch {
+        } catch (error) {
+            console.error('Erro ao explicar a parte:', error);
             // Mantém o espaço da explicação livre para tentar de novo
             setErroExplicacao(true);
         } finally {
@@ -2179,13 +2131,12 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     // Explica o Antigo ou o Novo Testamento inteiro da leitura de hoje, para o dia
     // em que não der para ler tudo (03/10/2026). Fica guardada no servidor para
     // todos; aqui, o mesmo pedido em andamento não é repetido.
-    const handleExplicarTestamento = async (testamento: Testamento) => {
-        if (!passagem || !bibleData) return;
+    const buscarExplicacaoTestamento = (testamento: Testamento): { referencia: string; pendente: Promise<string> } | null => {
+        if (!passagem || !bibleData) return null;
         const grupos = getCapitulosAgrupados();
         const pedido = montarPedidoTestamento(grupos, testamento, livroInfoAtual.nome);
-        if (!pedido) return;
+        if (!pedido) return null;
         const chave = pedido.referencia;
-        setExplicacaoTestamento({ testamento, referencia: chave, conteudo: null, carregando: true, erro: false });
 
         let pendente = explicacoesTestamentoRef.current.get(chave);
         if (!pendente) {
@@ -2211,6 +2162,14 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
             explicacoesTestamentoRef.current.set(chave, pendente);
             pendente.catch(() => explicacoesTestamentoRef.current.delete(chave));
         }
+        return { referencia: chave, pendente };
+    };
+
+    const handleExplicarTestamento = async (testamento: Testamento) => {
+        const busca = buscarExplicacaoTestamento(testamento);
+        if (!busca) return;
+        const { referencia: chave, pendente } = busca;
+        setExplicacaoTestamento({ testamento, referencia: chave, conteudo: null, carregando: true, erro: false });
 
         try {
             const conteudo = await pendente;
@@ -2222,6 +2181,27 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     };
 
     const fecharExplicacaoTestamento = useCallback(() => setExplicacaoTestamento(null), []);
+
+    // Opção 2 do menu (Entender a Passagem): o Antigo e o Novo Testamento de hoje
+    // explicados capítulo por capítulo — os mesmos textos dos botões da leitura.
+    const gerarEntenderPassagem = async (): Promise<string> => {
+        if (!bibleData) return 'Os versículos ainda estão carregando. Tente novamente em instantes.';
+        const buscas = (['AT', 'NT'] as Testamento[]).flatMap(t => {
+            const busca = buscarExplicacaoTestamento(t);
+            return busca ? [{ t, busca }] : [];
+        });
+        const partes = await Promise.all(buscas.map(async ({ t, busca }) => {
+            const titulo = `### ${NOME_TESTAMENTO[t]} · ${busca.referencia}`;
+            try {
+                // o título de cada testamento substitui o "Explicação de …" do formatador
+                return `${titulo}\n\n${(await busca.pendente).replace(/^### .*\n+/, '')}`;
+            } catch (error) {
+                console.error('Erro ao explicar o testamento no menu:', error);
+                return `${titulo}\n\nNão foi possível preparar esta explicação agora. Volte ao menu e toque de novo em Entender a Passagem.`;
+            }
+        }));
+        return partes.length ? partes.join('\n\n') : 'Os versículos ainda estão carregando. Tente novamente em instantes.';
+    };
 
     // Inicia uma opção do menu (usada pelo CTA do hero e pelos cards)
     const iniciarOpcao = (optionId: MenuOption) => {

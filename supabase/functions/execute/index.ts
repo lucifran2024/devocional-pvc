@@ -4,8 +4,10 @@ import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { gerarTexto, chamarCompatGemini, get9RouterEndpoint, APP_TUNNEL_MODELS } from './openrouter-client.ts';
 import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
-import { CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar } from './explicar-parte.ts';
-import { CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento } from './explicar-testamento.ts';
+import {
+  CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar,
+  CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento,
+} from './explicar.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -2049,8 +2051,8 @@ Gere agora:
         }
       }
 
-      // Método aprovado (explicar-parte.ts): contexto certo, todos os versículos,
-      // uma gema, ligação só com referência e aplicação curta no fim.
+      // Método de explicar (explicar.ts): conforme o tipo de texto, todos os
+      // versículos, "Em uma frase" no começo e "Para guardar" no fim.
       const promptExplicar = montarPromptExplicar({
         referencia: referenciaPassagem,
         parte: parteAtual,
