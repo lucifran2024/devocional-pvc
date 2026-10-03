@@ -5,6 +5,7 @@ import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { gerarTexto, chamarCompatGemini, get9RouterEndpoint, APP_TUNNEL_MODELS } from './openrouter-client.ts';
 import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
 import { CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar } from './explicar-parte.ts';
+import { CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento } from './explicar-testamento.ts';
 import { consultarInstagram } from './apify-tools.ts';
 import { consultarBibleAPI } from './bible-api.ts';
 import { getContextoTemporal } from './date-helper.ts';
@@ -801,7 +802,7 @@ Deno.serve(async (req) => {
 
   try {
     // 2. Receber dados do Frontend
-    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, quantidade_versiculos, contexto, tipo_estudo, force_live_refresh } = await req.json();
+    const { modo_id, data, fonte_rss, pergunta, filtros, referencia, versiculos, parte, quantidade_versiculos, contexto, tipo_estudo, testamento, force_live_refresh } = await req.json();
     console.log(`🚀 Iniciando execução. Modo: ${modo_id}, Data: ${data}, Fonte RSS: ${fonte_rss || 'auto'}, Refresh ao vivo: ${force_live_refresh ? 'sim' : 'nao'}`);
     if (pergunta) console.log(`💬 Pergunta do chat: ${pergunta.substring(0, 100)}...`);
     if (filtros) console.log(`🔍 Filtros:`, filtros);
@@ -2135,6 +2136,111 @@ Gere agora:
     // ========================================
     // FIM DO MODO EXPLICAR PASSAGEM
     // ========================================
+
+    // ========================================
+    // MODO EXPLICAR TESTAMENTO (03/10/2026): o Antigo ou o Novo Testamento
+    // inteiro da leitura de hoje, para o dia em que não der para ler tudo.
+    // Mesmo caminho do Explicar a parte: guardada → escrita → revisão → guarda.
+    // ========================================
+    if (modo_id === 'explicar_testamento') {
+      const geminiKey = Deno.env.get("OPENROUTER_API_KEY") || Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
+      if (!geminiKey) throw new Error("GEMINI_API_KEY não configurada.");
+
+      const versiculosTexto = String(versiculos || '').trim();
+      const referenciaTestamento = String(referencia || '').trim();
+      if (!versiculosTexto || !referenciaTestamento) throw new Error('Leitura do testamento não enviada.');
+      const nomeTestamento = testamento === 'NT' ? 'Novo' : 'Antigo';
+      const capitulosLeitura = Math.max(1, (versiculosTexto.match(/^###\s/gm) || []).length);
+      const quantidadeInformada = Number(quantidade_versiculos);
+      const quantidadeVersiculos = Number.isFinite(quantidadeInformada) && quantidadeInformada > 0
+        ? quantidadeInformada
+        : Math.max(1, versiculosTexto.split('\n').filter((linha: string) => /^\s*\d+\s/.test(linha)).length);
+      const { maxPalavras, maxTokens } = limitesTestamento(capitulosLeitura);
+      console.log(`📖 [EXPLICAR TESTAMENTO] ${nomeTestamento}: ${referenciaTestamento} (${capitulosLeitura} cap., ${quantidadeVersiculos} vers.)`);
+
+      const cacheUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("SB_URL");
+      const cacheChave = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SB_SERVICE_ROLE_KEY");
+      const cacheTestamento = cacheUrl && cacheChave ? createClient(cacheUrl, cacheChave) : null;
+      if (cacheTestamento) {
+        try {
+          const { data: guardada } = await cacheTestamento
+            .from('estudo_cache')
+            .select('resultado')
+            .eq('referencia', referenciaTestamento)
+            .eq('tipo_estudo', CACHE_EXPLICAR_TESTAMENTO)
+            .maybeSingle();
+          if (guardada?.resultado) {
+            console.log(`⚡ [EXPLICAR TESTAMENTO] Explicação guardada: ${referenciaTestamento}`);
+            return new Response(
+              JSON.stringify({ ok: true, resultado: guardada.resultado, tipo: 'explicar_testamento', cached: true }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+            );
+          }
+        } catch (erroCache) {
+          console.warn('[EXPLICAR TESTAMENTO] Falha ao ler o cache (segue gerando):', erroCache);
+        }
+      }
+
+      const epTestamento = get9RouterEndpoint();
+      const gerarTestamento = (promptTxt: string, temp: number, modelosTunel: string[], timeoutMs: number) => gerarPalavraComReserva({
+        prompt: promptTxt,
+        temperature: temp,
+        maxTokens,
+        useTunnel: epTestamento.useTunnel,
+        tunnelUrl: epTestamento.url,
+        tunnelApiKey: epTestamento.apiKey,
+        modelosTunel,
+        modelosReserva: ['google/gemma-4-31b-it:free', 'deepseek/deepseek-v4-flash'],
+        gerarTexto,
+        rotulo: 'EXPLICAR TESTAMENTO',
+        timeoutMs,
+      });
+
+      const promptTestamento = montarPromptExplicarTestamento({
+        testamento: nomeTestamento,
+        referencia: referenciaTestamento,
+        versiculos: versiculosTexto,
+        capitulos: capitulosLeitura,
+        quantidade: quantidadeVersiculos,
+        contexto,
+        maxPalavras,
+      });
+      const llmTestamento = await gerarTestamento(promptTestamento, 0.3, MODELOS_EXPLICAR_TUNEL, TEMPO_ESCRITA_TESTAMENTO_MS);
+      if (!llmTestamento.ok || !llmTestamento.text) {
+        console.error(`❌ [EXPLICAR TESTAMENTO] Erro LLM:`, llmTestamento.error);
+        throw new Error(`Erro API LLM: ${llmTestamento.error}`);
+      }
+
+      // Revisão de precisão: corta o incerto e o errado, sem apagar o contexto certo
+      const llmRevisaoTestamento = await gerarTestamento(
+        montarPromptRevisaoTestamento({ referencia: referenciaTestamento, versiculos: versiculosTexto, rascunho: llmTestamento.text }),
+        0.1, MODELOS_REVISAO_TUNEL, TEMPO_REVISAO_TESTAMENTO_MS,
+      );
+      const explicacaoTestamento = llmRevisaoTestamento.ok && llmRevisaoTestamento.text
+        ? extrairRespostaFinal(llmRevisaoTestamento.text)
+        : null;
+      if (!explicacaoTestamento) {
+        console.error(`❌ [EXPLICAR TESTAMENTO] Revisão não entregou envelope final seguro.`);
+        throw new Error('A revisão da explicação não devolveu uma resposta final segura.');
+      }
+      console.log(`✅ [EXPLICAR TESTAMENTO] ${referenciaTestamento} explicado e revisado.`);
+
+      if (cacheTestamento) {
+        try {
+          await cacheTestamento.from('estudo_cache').upsert(
+            { referencia: referenciaTestamento, tipo_estudo: CACHE_EXPLICAR_TESTAMENTO, resultado: explicacaoTestamento },
+            { onConflict: 'referencia,tipo_estudo' }
+          );
+        } catch (erroCache) {
+          console.warn('[EXPLICAR TESTAMENTO] Falha ao guardar no cache:', erroCache);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ ok: true, resultado: explicacaoTestamento, tipo: 'explicar_testamento' }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     // ========================================
     // MODO ESTUDO BÍBLICO (3 TIPOS VIA IA)

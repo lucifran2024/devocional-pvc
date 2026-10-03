@@ -30,6 +30,20 @@ describe('Palavra da Manhã — seleção de infraestrutura', () => {
         }));
     });
 
+    it('sem timeoutMs, não muda o tempo padrão; com ele, vale para túnel e reserva', async () => {
+        const base = { prompt, temperature: 0.3, maxTokens: 500, useTunnel: true, tunnelUrl: 'https://tunel.example/v1/chat/completions', tunnelApiKey: 'k', modelosTunel, modelosReserva };
+        const semTempo = vi.fn().mockResolvedValue({ ok: true, text: 'OK' });
+        await gerarPalavraComReserva({ ...base, gerarTexto: semTempo });
+        expect(semTempo.mock.calls[0][1]).not.toHaveProperty('timeoutMs');
+
+        const comTempo = vi.fn()
+            .mockResolvedValueOnce({ ok: false, error: 'túnel caiu' })
+            .mockResolvedValueOnce({ ok: true, text: 'OK' });
+        await gerarPalavraComReserva({ ...base, gerarTexto: comTempo, timeoutMs: 60_000 });
+        expect(comTempo.mock.calls[0][1]).toEqual(expect.objectContaining({ timeoutMs: 60_000, models: modelosTunel }));
+        expect(comTempo.mock.calls[1][1]).toEqual(expect.objectContaining({ timeoutMs: 60_000, models: modelosReserva }));
+    });
+
     it('repete o mesmo prompt na reserva quando todos os modelos do túnel falham', async () => {
         const gerarTexto = vi.fn()
             .mockResolvedValueOnce({ ok: false, error: 'Todos os modelos falharam: resposta vazia' })

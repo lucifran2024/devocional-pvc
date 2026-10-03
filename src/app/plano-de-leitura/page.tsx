@@ -38,6 +38,8 @@ import { completarLigacoes } from '@/lib/explicacao-ligacoes';
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
+import { BotoesExplicarTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
+import { contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -961,6 +963,11 @@ function PlanoLeituraContent() {
     const [leituraDiaConcluida, setLeituraDiaConcluida] = useState(false);
     const [isLoadingExplicacao, setIsLoadingExplicacao] = useState(false);
     const [erroExplicacao, setErroExplicacao] = useState(false);
+    // Explicação do testamento inteiro (03/10/2026): painel aberto e o que já foi pedido, por referência
+    const [explicacaoTestamento, setExplicacaoTestamento] = useState<{
+        testamento: Testamento; referencia: string; conteudo: string | null; carregando: boolean; erro: boolean;
+    } | null>(null);
+    const explicacoesTestamentoRef = useRef(new Map<string, Promise<string>>());
     const [readingFontSize, setReadingFontSize] = useState(DEFAULT_READING_FONT_SIZE);
     const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
     const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
@@ -1554,6 +1561,9 @@ function PlanoLeituraContent() {
     };
 
     const temVelhoTestamento = Boolean(getParteVelhoTestamento());
+
+    // Botões "Explicar o Antigo / o Novo": o testamento inteiro da leitura de hoje
+    const opcoesTestamento = bibleData ? opcoesDeTestamento(getCapitulosAgrupados(), livroInfoAtual.nome) : [];
 
     useEffect(() => {
         const action = pendingScrollRef.current;
@@ -2166,6 +2176,53 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
         }
     };
 
+    // Explica o Antigo ou o Novo Testamento inteiro da leitura de hoje, para o dia
+    // em que não der para ler tudo (03/10/2026). Fica guardada no servidor para
+    // todos; aqui, o mesmo pedido em andamento não é repetido.
+    const handleExplicarTestamento = async (testamento: Testamento) => {
+        if (!passagem || !bibleData) return;
+        const grupos = getCapitulosAgrupados();
+        const pedido = montarPedidoTestamento(grupos, testamento, livroInfoAtual.nome);
+        if (!pedido) return;
+        const chave = pedido.referencia;
+        setExplicacaoTestamento({ testamento, referencia: chave, conteudo: null, carregando: true, erro: false });
+
+        let pendente = explicacoesTestamentoRef.current.get(chave);
+        if (!pendente) {
+            pendente = (async () => {
+                const { data, error: invokeError } = await supabase.functions.invoke('execute', {
+                    body: {
+                        modo_id: 'explicar_testamento',
+                        data: new Date().toISOString().split('T')[0],
+                        testamento,
+                        referencia: pedido.referencia,
+                        versiculos: pedido.versiculos,
+                        quantidade_versiculos: pedido.quantidadeVersiculos,
+                        contexto: contextoDoTestamento(grupos, testamento, passagem.referencia, livroInfoAtual.nome),
+                    },
+                });
+                if (invokeError) throw new Error(invokeError.context?.message || invokeError.message);
+                if (!data?.ok || !data?.resultado) throw new Error(data?.error || 'Explicação vazia');
+                // A IA só dá a referência das ligações; o texto vem da NTLH real
+                const formatada = formatarExplicacao(await completarLigacoes(data.resultado), `Explicação de ${pedido.referencia}`);
+                if (!formatada) throw new Error('Explicação vazia');
+                return formatada;
+            })();
+            explicacoesTestamentoRef.current.set(chave, pendente);
+            pendente.catch(() => explicacoesTestamentoRef.current.delete(chave));
+        }
+
+        try {
+            const conteudo = await pendente;
+            setExplicacaoTestamento(atual => (atual?.referencia === chave ? { ...atual, conteudo, carregando: false } : atual));
+        } catch (error) {
+            console.error('Erro ao explicar o testamento:', error);
+            setExplicacaoTestamento(atual => (atual?.referencia === chave ? { ...atual, carregando: false, erro: true } : atual));
+        }
+    };
+
+    const fecharExplicacaoTestamento = useCallback(() => setExplicacaoTestamento(null), []);
+
     // Inicia uma opção do menu (usada pelo CTA do hero e pelos cards)
     const iniciarOpcao = (optionId: MenuOption) => {
         if (!passagem || isProcessing) return;
@@ -2625,7 +2682,24 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                     </button>
                                 </div>
                             )}
+
+                            {(isPlanoMode || activeOption === '1') && (
+                                <BotoesExplicarTestamento opcoes={opcoesTestamento} onExplicar={handleExplicarTestamento} />
+                            )}
                         </div>
+
+                        {explicacaoTestamento && (
+                            <PainelExplicacaoTestamento
+                                testamento={explicacaoTestamento.testamento}
+                                referencia={explicacaoTestamento.referencia}
+                                conteudo={explicacaoTestamento.conteudo}
+                                carregando={explicacaoTestamento.carregando}
+                                erro={explicacaoTestamento.erro}
+                                fontSize={readingFontSize}
+                                onFechar={fecharExplicacaoTestamento}
+                                onTentarDeNovo={() => handleExplicarTestamento(explicacaoTestamento.testamento)}
+                            />
+                        )}
 
                         {/* Etiqueta de capitulo via portal (escapa do transform do animate-enter); aparece ao rolar, quando o cabecalho sai da tela */}
                         {montado && !cabecalhoVisivel && capituloFoco != null && livroInfoAtual.nome && createPortal(

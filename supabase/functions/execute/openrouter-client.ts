@@ -215,7 +215,7 @@ export async function chamarOpenRouter(
  */
 export async function gerarTexto(
     prompt: string,
-    opts: { temperature?: number; maxTokens?: number; models?: string[]; baseUrl?: string; apiKey?: string } = {}
+    opts: { temperature?: number; maxTokens?: number; models?: string[]; baseUrl?: string; apiKey?: string; timeoutMs?: number } = {}
 ): Promise<RespostaLLM> {
     return chamarOpenRouter(
         [{ role: 'user', content: prompt }],

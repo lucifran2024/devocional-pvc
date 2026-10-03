@@ -11,6 +11,7 @@ interface OpcoesGerarTexto {
     models?: string[];
     baseUrl?: string;
     apiKey?: string;
+    timeoutMs?: number;
 }
 
 type GerarTexto = (prompt: string, opts: OpcoesGerarTexto) => Promise<RespostaLLM>;
@@ -27,6 +28,8 @@ interface GerarPalavraComReservaOpts {
     gerarTexto: GerarTexto;
     /** Nome da função no aviso de queda (padrão: Palavra da Manhã). */
     rotulo?: string;
+    /** Tempo por modelo; sem ele vale o padrão do cliente (40 s). */
+    timeoutMs?: number;
 }
 
 /**
@@ -45,6 +48,7 @@ export async function gerarPalavraComReserva({
     modelosReserva,
     gerarTexto,
     rotulo = 'PALAVRA DA MANHÃ',
+    timeoutMs,
 }: GerarPalavraComReservaOpts): Promise<RespostaLLM> {
     const principal = await gerarTexto(prompt, {
         temperature,
@@ -52,6 +56,7 @@ export async function gerarPalavraComReserva({
         models: useTunnel ? modelosTunel : modelosReserva,
         baseUrl: useTunnel ? tunnelUrl : undefined,
         apiKey: useTunnel ? tunnelApiKey : undefined,
+        ...(timeoutMs ? { timeoutMs } : {}),
     });
 
     if (principal.ok || !useTunnel) return principal;
@@ -66,5 +71,6 @@ export async function gerarPalavraComReserva({
         models: modelosReserva,
         baseUrl: undefined,
         apiKey: undefined,
+        ...(timeoutMs ? { timeoutMs } : {}),
     });
 }
