@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
     Book, Calendar, ArrowLeft, Loader2,
-    ChevronRight, ChevronLeft, RotateCcw, GraduationCap, Search,
+    RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
     ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight,
@@ -38,8 +38,8 @@ import { completarLigacoes, completarVersoParaGuardar } from '@/lib/explicacao-l
 import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia, getProgressoLeituraAnual, type ProgressoLeituraAnual, type LeituraDia } from '@/lib/leitura-diaria';
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
-import { BotoesExplicarTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
-import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, textoDosCapitulos, type Testamento } from '@/lib/explicacao-testamento';
+import { LeituraPorTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
+import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, testamentoDoCapitulo, textoDosCapitulos, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
 
@@ -1567,7 +1567,6 @@ function PlanoLeituraContent() {
         return idx >= 0 ? idx + 1 : null;
     };
 
-    const temNovoTestamento = Boolean(getParteNovoTestamento());
 
     const getParteVelhoTestamento = () => {
         if (!bibleData) return null;
@@ -1576,10 +1575,11 @@ function PlanoLeituraContent() {
         return idx >= 0 ? idx + 1 : null;
     };
 
-    const temVelhoTestamento = Boolean(getParteVelhoTestamento());
 
-    // Botões "Explicar o Antigo / o Novo": o testamento inteiro da leitura de hoje
+    // Quadro dos testamentos da leitura de hoje (Ler / Explicar) e qual está sendo lido
     const opcoesTestamento = bibleData ? opcoesDeTestamento(getCapitulosAgrupados(), livroInfoAtual.nome) : [];
+    const versiculosDaParteAtual = bibleData ? getVersiculosDaParte(currentPage) : [];
+    const testamentoAtual: Testamento | null = versiculosDaParteAtual.length ? testamentoDoCapitulo(versiculosDaParteAtual) : null;
 
     useEffect(() => {
         const action = pendingScrollRef.current;
@@ -2622,37 +2622,15 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                 </div>
                             )}
 
-                            {temNovoTestamento && (
-                                <div className="grid grid-cols-2 gap-2 w-full">
-                                    {temVelhoTestamento && (
-                                        <button
-                                            type="button"
-                                            onClick={handleIrParaVelhoTestamento}
-                                            className="group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-500/20 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20"
-                                        >
-                                            <ChevronLeft className="w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-500/60 group-hover:text-amber-500 dark:group-hover:text-amber-400 group-hover:-translate-x-0.5 transition-all" />
-                                            <span className="flex flex-col items-start leading-tight min-w-0">
-                                                <span className="text-[12px] font-bold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 transition-colors whitespace-nowrap">Antigo Testamento</span>
-                                                <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium whitespace-nowrap">Voltar ao começo</span>
-                                            </span>
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={handleIrParaNovoTestamento}
-                                        className={`group flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-400/60 hover:bg-amber-500/20 transition-all active:scale-[0.97] shadow-sm shadow-amber-900/20 ${temVelhoTestamento ? '' : 'col-span-2'}`}
-                                    >
-                                        <span className="flex flex-col items-start leading-tight min-w-0">
-                                            <span className="text-[12px] font-bold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 transition-colors whitespace-nowrap">Novo Testamento</span>
-                                            <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium whitespace-nowrap">Pular direto</span>
-                                        </span>
-                                        <ChevronRight className="w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-500/60 group-hover:text-amber-500 dark:group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-                                    </button>
-                                </div>
-                            )}
-
+                            {/* Um quadro só para os dois testamentos (03/10/2026): Ler e Explicar
+                                com o mesmo estilo; antes eram 4 botões de dois jeitos diferentes */}
                             {(isPlanoMode || activeOption === '1') && (
-                                <BotoesExplicarTestamento opcoes={opcoesTestamento} onExplicar={handleExplicarTestamento} />
+                                <LeituraPorTestamento
+                                    opcoes={opcoesTestamento}
+                                    atual={testamentoAtual}
+                                    onLer={(t) => (t === 'AT' ? handleIrParaVelhoTestamento() : handleIrParaNovoTestamento())}
+                                    onExplicar={handleExplicarTestamento}
+                                />
                             )}
                         </div>
 

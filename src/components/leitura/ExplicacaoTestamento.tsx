@@ -2,16 +2,16 @@
 
 // ===========================================
 // EXPLICAR O TESTAMENTO INTEIRO (03/10/2026)
-// Botões "Explicar o Antigo" / "Explicar o Novo" no topo da leitura do dia e o
-// painel que mostra a explicação do testamento inteiro, para o dia em que não
-// der para ler tudo. O painel cobre a tela e, ao fechar, a leitura continua
+// Quadro "Antigo / Novo Testamento" no topo da leitura do dia (Ler e Explicar)
+// e o painel que mostra a explicação do testamento inteiro, para o dia em que
+// não der para ler tudo. O painel cobre a tela e, ao fechar, a leitura continua
 // onde estava.
 // ===========================================
 
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
-import { Lightbulb, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 import { NOME_TESTAMENTO, type Testamento } from '@/lib/explicacao-testamento';
 
@@ -20,30 +20,53 @@ export interface OpcaoTestamento {
     referencia: string;
 }
 
-export function BotoesExplicarTestamento({ opcoes, onExplicar }: {
+/**
+ * Quadro da leitura por testamento (03/10/2026): Lucifran pediu para padronizar
+ * os 4 botões do topo ("o de antes tava feio") — os amarelados de navegação
+ * (Voltar ao começo / Pular direto) e os de explicar tinham estilos diferentes.
+ * Agora é uma linha por testamento, com a referência e os mesmos dois botões.
+ */
+export function LeituraPorTestamento({ opcoes, atual, onLer, onExplicar }: {
     opcoes: OpcaoTestamento[];
+    atual?: Testamento | null;
+    onLer: (testamento: Testamento) => void;
     onExplicar: (testamento: Testamento) => void;
 }) {
     if (!opcoes.length) return null;
     return (
-        <div className={`grid gap-2 w-full ${opcoes.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {opcoes.map(o => (
-                <button
-                    key={o.testamento}
-                    type="button"
-                    onClick={() => onExplicar(o.testamento)}
-                    aria-label={`Explicar o ${NOME_TESTAMENTO[o.testamento]} inteiro: ${o.referencia}`}
-                    className="flex min-h-11 items-center gap-2 rounded-xl border border-border-subtle bg-surface-1 px-3 py-2 text-left transition-colors hover:border-amber-500/30 active:scale-[0.98]"
-                >
-                    <Lightbulb className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                    <span className="flex min-w-0 flex-col leading-tight">
-                        <span className="text-[12px] font-semibold text-text-primary whitespace-nowrap">
-                            Explicar o {o.testamento === 'AT' ? 'Antigo' : 'Novo'}
-                        </span>
-                        <span className="truncate text-[11px] text-text-muted">{o.referencia}</span>
-                    </span>
-                </button>
-            ))}
+        <div data-leitura-por-testamento className="w-full divide-y divide-border-subtle rounded-2xl border border-border-subtle bg-surface-1">
+            {opcoes.map(o => {
+                const nome = NOME_TESTAMENTO[o.testamento];
+                return (
+                    <div key={o.testamento} className="flex items-center gap-2 px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-text-primary">
+                                <span className="truncate">{nome}</span>
+                                {atual === o.testamento && (
+                                    <span className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-400">· lendo</span>
+                                )}
+                            </p>
+                            <p className="truncate text-xs text-text-muted">{o.referencia}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => onLer(o.testamento)}
+                            aria-label={`Ler o ${nome}: ${o.referencia}`}
+                            className="min-h-10 shrink-0 rounded-xl border border-border-subtle px-3 text-sm font-semibold text-text-secondary transition-colors hover:border-amber-500/40 hover:text-text-primary active:scale-[0.98]"
+                        >
+                            Ler
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onExplicar(o.testamento)}
+                            aria-label={`Explicar o ${nome} inteiro: ${o.referencia}`}
+                            className="min-h-10 shrink-0 rounded-xl bg-amber-500/15 px-3 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-500/25 active:scale-[0.98] dark:text-amber-300"
+                        >
+                            Explicar
+                        </button>
+                    </div>
+                );
+            })}
         </div>
     );
 }

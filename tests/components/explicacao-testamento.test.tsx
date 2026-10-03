@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BotoesExplicarTestamento, PainelExplicacaoTestamento, type PainelExplicacaoTestamentoProps } from '@/components/leitura/ExplicacaoTestamento';
+import { LeituraPorTestamento, PainelExplicacaoTestamento, type PainelExplicacaoTestamentoProps } from '@/components/leitura/ExplicacaoTestamento';
 
 afterEach(cleanup);
 
@@ -21,18 +21,34 @@ function painel(extra: Partial<PainelExplicacaoTestamentoProps> = {}) {
     return props;
 }
 
-describe('botões Explicar o Antigo / o Novo', () => {
-    it('um botão por testamento, com a referência, e o toque avisa qual', () => {
-        const onExplicar = vi.fn();
-        render(<BotoesExplicarTestamento opcoes={[{ testamento: 'AT', referencia: 'Salmos 92-95' }, { testamento: 'NT', referencia: 'Efésios 3' }]} onExplicar={onExplicar} />);
-        expect(screen.getByText('Explicar o Antigo')).toBeTruthy();
+describe('quadro dos testamentos (Ler / Explicar), 4 botões no mesmo estilo', () => {
+    const opcoes = [{ testamento: 'AT' as const, referencia: 'Salmos 92-95' }, { testamento: 'NT' as const, referencia: 'Efésios 3' }];
+
+    it('uma linha por testamento, com a referência, Ler e Explicar', () => {
+        const onLer = vi.fn(); const onExplicar = vi.fn();
+        render(<LeituraPorTestamento opcoes={opcoes} atual="AT" onLer={onLer} onExplicar={onExplicar} />);
+        expect(screen.getByText('Antigo Testamento')).toBeTruthy();
         expect(screen.getByText('Salmos 92-95')).toBeTruthy();
-        fireEvent.click(screen.getByRole('button', { name: /Novo Testamento inteiro: Efésios 3/ }));
-        expect(onExplicar).toHaveBeenCalledWith('NT');
+        expect(screen.getAllByRole('button')).toHaveLength(4);
+        fireEvent.click(screen.getByRole('button', { name: 'Ler o Novo Testamento: Efésios 3' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Explicar o Antigo Testamento inteiro: Salmos 92-95' }));
+        expect(onLer).toHaveBeenCalledWith('NT');
+        expect(onExplicar).toHaveBeenCalledWith('AT');
     });
 
-    it('sem testamento, não mostra nada', () => {
-        const { container } = render(<BotoesExplicarTestamento opcoes={[]} onExplicar={vi.fn()} />);
+    it('os botões Ler têm o mesmo estilo entre si, e os Explicar também', () => {
+        render(<LeituraPorTestamento opcoes={opcoes} onLer={vi.fn()} onExplicar={vi.fn()} />);
+        const ler = screen.getAllByRole('button', { name: /^Ler o/ }).map(b => b.className);
+        const explicar = screen.getAllByRole('button', { name: /^Explicar o/ }).map(b => b.className);
+        expect(new Set(ler).size).toBe(1);
+        expect(new Set(explicar).size).toBe(1);
+    });
+
+    it('marca o testamento que está sendo lido; sem testamento, não mostra nada', () => {
+        render(<LeituraPorTestamento opcoes={opcoes} atual="NT" onLer={vi.fn()} onExplicar={vi.fn()} />);
+        expect(screen.getAllByText('· lendo')).toHaveLength(1);
+        cleanup();
+        const { container } = render(<LeituraPorTestamento opcoes={[]} onLer={vi.fn()} onExplicar={vi.fn()} />);
         expect(container.innerHTML).toBe('');
     });
 });
