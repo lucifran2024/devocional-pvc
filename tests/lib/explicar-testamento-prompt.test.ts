@@ -50,6 +50,15 @@ describe('instrução da explicação do testamento inteiro', () => {
         expect(prompt).toContain('Até 420 palavras');
     });
 
+    it('não deixa o método escapar para o leitor e mantém ligações curtas (teste real de 03/10)', () => {
+        // Na primeira explicação real de Salmos 92-95 saiu "A \"gema\" está no Salmo 95"
+        // e uma ligação de Hebreus 3:7-19 (13 versículos de texto abaixo dela).
+        expect(prompt).toMatch(/não escreva a palavra "gema"/);
+        expect(prompt).toMatch(/de 1 a 3 versículos/);
+        expect(revisao).toMatch(/Remova menções ao próprio método ou ao pedido, como a palavra "gema"/);
+        expect(revisao).toMatch(/referência \(de 1 a 3 versículos\)/);
+    });
+
     it('usa o contexto do app', () => {
         expect(prompt).toContain('Livro: Salmos — categoria: Poético; autor: Davi e outros.');
         expect(prompt).toContain('Seções de Salmos 92: "Um hino de louvor".');
@@ -74,7 +83,7 @@ describe('instrução da explicação do testamento inteiro', () => {
     });
 
     it('guarda num cache próprio e dá mais tempo que uma parte', () => {
-        expect(CACHE_EXPLICAR_TESTAMENTO).toBe('explicar_testamento_v1');
+        expect(CACHE_EXPLICAR_TESTAMENTO).toBe('explicar_testamento_v2');
         expect(TEMPO_ESCRITA_TESTAMENTO_MS).toBeGreaterThan(40_000);
         expect(TEMPO_REVISAO_TESTAMENTO_MS).toBeGreaterThan(40_000);
     });

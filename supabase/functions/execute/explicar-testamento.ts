@@ -30,7 +30,8 @@ export interface ContextoTestamento {
 }
 
 /** Tipo no estudo_cache: cada testamento da leitura é explicado uma vez e serve a todos. */
-export const CACHE_EXPLICAR_TESTAMENTO = 'explicar_testamento_v1';
+// v2 (03/10/2026): a v1 deixou escapar a palavra "gema" e ligação de 13 versículos.
+export const CACHE_EXPLICAR_TESTAMENTO = 'explicar_testamento_v2';
 /** Vários capítulos levam mais que uma parte: tempo por modelo na escrita e na revisão. */
 export const TEMPO_ESCRITA_TESTAMENTO_MS = 60_000;
 export const TEMPO_REVISAO_TESTAMENTO_MS = 45_000;
@@ -100,12 +101,13 @@ Proporção: cerca de 70% explicação e contexto, 30% aplicação.
 **Contexto:** 2 a 4 frases.
 **Nome do capítulo · título curto:** um bloco por capítulo, em ordem, com o nome escrito como no cabeçalho do texto (ex.: **Salmos 92 · O justo floresce:** ou **Efésios 3 · O segredo revelado:**), em 3 a 6 frases.
 **Para entender melhor:** a gema, em 1 a 3 frases.
-**Ligação na Bíblia:** 1 ou 2 passagens diretamente ligadas: escreva só a referência exata (ex.: Salmos 27:4) e, em uma frase, por que ela se liga a esta leitura. NÃO copie nem cite entre aspas o texto de nenhum versículo de fora; o app mostra o texto da NTLH. Omita a seção se não houver ligação direta.
+**Ligação na Bíblia:** 1 ou 2 passagens diretamente ligadas: escreva só a referência exata, de 1 a 3 versículos (ex.: Salmos 27:4 ou Hebreus 3:7-8), e, em uma frase, por que ela se liga a esta leitura. NÃO copie nem cite entre aspas o texto de nenhum versículo de fora; o app mostra o texto da NTLH. Omita a seção se não houver ligação direta.
 **Para hoje:** 2 a 3 frases.
 
 ## REGRAS
 - Não invente dado exegético, histórico, nomes, datas ou costumes. Se não tiver certeza, omita; se for algo incerto entre estudiosos, diga isso em poucas palavras.
 - Entre aspas, só palavras do texto acima, copiadas exatamente.
+- O leitor vê só a explicação: não escreva a palavra "gema" nem fale deste pedido ou do formato.
 - Não vire devocional, oração ou mensagem motivacional; não termine com oração.
 - Linguagem simples e calorosa de mentor, sem jargão acadêmico, sem emojis, sem grego ou hebraico (no máximo a palavra transliterada, se ajudar).
 - Até ${maxPalavras} palavras.
@@ -126,10 +128,11 @@ Revise a explicação abaixo para que cada afirmação seja verdadeira e útil.
 1. Confira que todos os capítulos de ${referencia} têm o seu bloco, em ordem; se faltar algum, acrescente-o no lugar certo.
 2. Remova ou corrija afirmações históricas, culturais, geográficas ou de autoria que não sejam conhecimento bíblico consolidado; nomes, datas e números errados; referências bíblicas trocadas.
 3. Mantenha o contexto correto, a gema e as explicações de palavras e costumes: NÃO reduza a explicação a uma paráfrase dos versículos.
-4. Remova qualquer texto citado entre aspas que não esteja no texto bíblico abaixo; na Ligação na Bíblia fica só a referência e a frase que explica a ligação.
-5. Mantenha as seções em negrito, a voz de mentor e o tamanho.
-6. Retorne somente a explicação final revisada, sem notas sobre a revisão.
-7. Sua resposta deve terminar obrigatoriamente neste envelope exato:
+4. Remova qualquer texto citado entre aspas que não esteja no texto bíblico abaixo; na Ligação na Bíblia fica só a referência (de 1 a 3 versículos) e a frase que explica a ligação.
+5. Remova menções ao próprio método ou ao pedido, como a palavra "gema"; a explicação diz o detalhe direto.
+6. Mantenha as seções em negrito, a voz de mentor e o tamanho.
+7. Retorne somente a explicação final revisada, sem notas sobre a revisão.
+8. Sua resposta deve terminar obrigatoriamente neste envelope exato:
 <FINAL>
 [explicação final completa]
 </FINAL>
