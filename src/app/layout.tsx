@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -8,17 +8,26 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/ui/Navigation";
 import { AuthProvider } from "@/components/AuthProvider";
 
-const geistSans = Geist({
+// Fontes guardadas no próprio app (03/10/2026): o next/font/google baixava
+// do Google na hora do build e o Turbopack às vezes quebrava com o endereço
+// /l/font?kit=…&skey=… ("queries have exactly one entry"). Mesmos arquivos
+// latinos (variáveis) que o Google servia; licença SIL OFL (fonts/LICENCA.md).
+const geistSans = localFont({
+  src: "./fonts/geist-latin.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
 // Serifada de leitura (Bíblia / passagem do dia) — elegante e legível
-const newsreader = Newsreader({
+const newsreader = localFont({
+  src: [
+    { path: "./fonts/newsreader-latin.woff2", weight: "400 600", style: "normal" },
+    { path: "./fonts/newsreader-latin-italic.woff2", weight: "400 600", style: "italic" },
+  ],
   variable: "--font-reading",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
 export const metadata: Metadata = {
