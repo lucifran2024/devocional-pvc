@@ -2999,13 +2999,14 @@ function BibliotecaPage() {
                     </span>
                 </h1>
 
-                {/* Player de áudio opcional — voz do dispositivo (Web Speech API) */}
+                {/* Narração do capítulo (Azure; voz do aparelho sem internet) */}
                 <div className="flex flex-col items-center mb-6">
                     <BibleAudioPlayer
                         key={`${livroAtual.abrev}-${capituloAtual}`}
                         versiculos={versiculos}
                         capitulo={capituloAtual}
                         livroId={LIVRO_PARA_ID[livroAtual.abrev] || 1}
+                        livroNome={livroAtual.nome}
                         onVerseChange={(verse) => setAudioVerse(verse)}
                         className="w-full max-w-md"
                     />

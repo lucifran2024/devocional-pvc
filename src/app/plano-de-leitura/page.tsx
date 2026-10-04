@@ -464,6 +464,7 @@ function VersiculosInterativos({
                         versiculos={versiculos}
                         capitulo={capitulo}
                         livroId={livroId}
+                        livroNome={livroNome}
                         onVerseChange={(verse, chapter) =>
                             setAudioVerse(verse == null ? null : { verse, chapter: chapter ?? capitulo })
                         }
