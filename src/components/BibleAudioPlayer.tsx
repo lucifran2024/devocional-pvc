@@ -53,6 +53,7 @@ export function BibleAudioPlayer({
     const [voz, setVoz] = useState(() => (typeof window === 'undefined' ? VOZ_PADRAO : lerVozSalva()));
     const [menuVoz, setMenuVoz] = useState(false);
     const [modo, setModo] = useState<'neural' | 'navegador'>('neural');
+    const [demorando, setDemorando] = useState(false);
 
     const idxRef = useRef(0);
     const pararRef = useRef(false);
@@ -310,6 +311,13 @@ export function BibleAudioPlayer({
         fecharRef.current = fechar;
     });
 
+    // Primeira vez num capítulo longo: a narração leva alguns segundos.
+    useEffect(() => {
+        if (estado !== 'carregando') return;
+        const timer = setTimeout(() => setDemorando(true), 6000);
+        return () => { clearTimeout(timer); setDemorando(false); };
+    }, [estado]);
+
     const total = versiculos.length;
     const ativo = estado !== 'fechado';
     const progresso = total > 0 ? ((posicao + 1) / total) * 100 : 0;
@@ -414,7 +422,9 @@ export function BibleAudioPlayer({
                             aria-expanded={menuVoz}
                             aria-label="Escolher a voz da narração"
                         >
-                            {modo === 'navegador' ? 'Voz do aparelho' : `Voz: ${nomeDaVoz(voz)}`}
+                            {estado === 'carregando' && demorando
+                                ? 'Na primeira vez demora; depois fica guardado'
+                                : modo === 'navegador' ? 'Voz do aparelho' : `Voz: ${nomeDaVoz(voz)}`}
                             <ChevronUp className={`w-3.5 h-3.5 transition-transform ${menuVoz ? '' : 'rotate-180'}`} />
                         </button>
                     </div>

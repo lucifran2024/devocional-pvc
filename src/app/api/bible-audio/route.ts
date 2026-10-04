@@ -30,7 +30,7 @@ const CACHE_VERSION = 'v3';
 
 const MAX_VERSES = 250;
 const MP3_BITRATE = 48000; // audio-24khz-48kbitrate-mono-mp3
-const BATCH_SIZE = 4; // blocos sintetizados em paralelo
+const BATCH_SIZE = 8; // blocos sintetizados em paralelo (Salmo 119 = 11 blocos)
 const TENTATIVAS = 3;
 
 interface VersiculoEntrada {
@@ -166,9 +166,11 @@ export async function POST(request: Request) {
         console.error('🔊 [BIBLE-AUDIO] upload full.mp3 falhou:', upErr.message);
         return NextResponse.json({ ok: false, error: 'upload_falhou' }, { status: 502 });
     }
-    await supabase.storage
+    // Sem o full.json o cache não é achado e o capítulo é narrado de novo.
+    const { error: metaErr } = await supabase.storage
         .from(BUCKET)
         .upload(metaPath, JSON.stringify({ segments }), { contentType: 'application/json', upsert: true });
+    if (metaErr) console.error('🔊 [BIBLE-AUDIO] upload full.json falhou (cache não vai valer):', metaErr.message);
 
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(fullPath);
     return NextResponse.json({ ok: true, fullUrl: pub.publicUrl, segments, voz, fonte });
