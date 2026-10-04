@@ -231,12 +231,12 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Card: Gravar e Transcrever culto */}
+          {/* Card: Transcrever áudio (gravar ao vivo ou enviar do celular) */}
           <div className="stagger-item">
             <DashboardCard
               href="/transcrever-culto"
-              title="Gravar e Transcrever"
-              desc="Grave a pregação ao vivo e organize com suas notas."
+              title="Transcrever áudio"
+              desc="Grave a pregação ao vivo ou envie um áudio do celular."
               icon={Mic}
               accentColor="text-amber-600 dark:text-amber-400"
               iconBg="bg-amber-500/10 border-amber-500/20"

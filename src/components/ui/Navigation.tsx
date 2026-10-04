@@ -32,7 +32,7 @@ const MAIS_ITENS = [
     { name: 'Caderno', desc: 'Anotações, versículos e vídeos', href: '/anotacoes', icon: NotebookPen },
     { name: 'Diário de Oração', desc: 'Pedidos e respostas', href: '/oracao', icon: HeartHandshake },
     { name: 'Transcrever do YouTube', desc: 'Texto da pregação', href: '/transcrever-youtube', icon: Youtube },
-    { name: 'Gravar e Transcrever', desc: 'Culto ao vivo', href: '/transcrever-culto', icon: Mic },
+    { name: 'Transcrever áudio', desc: 'Gravar ou enviar do celular', href: '/transcrever-culto', icon: Mic },
 ];
 
 function NavigationInner() {

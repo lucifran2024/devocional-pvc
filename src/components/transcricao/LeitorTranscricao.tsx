@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, CircleCheck, Copy, Edit3, ExternalLink, FileText, Loader2, Save, Share2, Trash2, X } from 'lucide-react';
 import { atualizarTextoTranscricao } from '@/lib/transcricoes';
@@ -33,6 +33,8 @@ export interface LeitorTranscricaoProps {
     onTextoSalvo?: (id: string, texto: string) => void;
     onExcluir?: (id: string) => Promise<boolean>;
     avisar?: Avisar;
+    /** Conteúdo extra abaixo do texto (ex.: título e notas do culto). */
+    extra?: ReactNode;
 }
 
 // Leitura em tela cheia de uma transcrição, com as ações sempre à mão.
@@ -49,6 +51,7 @@ export function LeitorTranscricao({
     onTextoSalvo,
     onExcluir,
     avisar,
+    extra,
 }: LeitorTranscricaoProps) {
     const idTitulo = useId();
     const idEditor = useId();
@@ -243,11 +246,14 @@ export function LeitorTranscricao({
                                     />
                                 </>
                             ) : (
-                                <article className="reading-serif space-y-5 text-[17px] leading-[1.8] text-text-primary">
-                                    {paragrafos.map((paragrafo, i) => (
-                                        <p key={i} className="whitespace-pre-line">{paragrafo}</p>
-                                    ))}
-                                </article>
+                                <>
+                                    <article className="reading-serif space-y-5 text-[17px] leading-[1.8] text-text-primary">
+                                        {paragrafos.map((paragrafo, i) => (
+                                            <p key={i} className="whitespace-pre-line">{paragrafo}</p>
+                                        ))}
+                                    </article>
+                                    {extra && <div className="mt-8 border-t border-border-subtle pt-6">{extra}</div>}
+                                </>
                             )}
                         </div>
                     </div>

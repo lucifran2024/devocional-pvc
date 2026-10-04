@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Youtube } from 'lucide-react';
+import { Youtube, type LucideIcon } from 'lucide-react';
 import { extrairIdYoutube, miniaturaYoutube } from '@/lib/transcricao-apresentacao';
 
 // Capa do vídeo do YouTube; sem link reconhecido (ou sem capa), mostra o ícone.
-export function MiniaturaVideo({ fonteUrl, className = '' }: { fonteUrl?: string | null; className?: string }) {
+export function MiniaturaVideo({ fonteUrl, className = '', icone: Icone = Youtube }: {
+    fonteUrl?: string | null;
+    className?: string;
+    icone?: LucideIcon;
+}) {
     const id = extrairIdYoutube(fonteUrl);
     const [falhouId, setFalhouId] = useState<string | null>(null);
 
@@ -24,7 +28,7 @@ export function MiniaturaVideo({ fonteUrl, className = '' }: { fonteUrl?: string
                 />
             ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-amber-600/70 dark:text-amber-400/70">
-                    <Youtube className="h-6 w-6" />
+                    <Icone className="h-6 w-6" />
                 </div>
             )}
         </div>

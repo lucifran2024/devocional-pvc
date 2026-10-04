@@ -46,7 +46,7 @@ describe('menu Mais da navegação', () => {
             'Anotações': '/anotacoes',
             'Diário de Oração': '/oracao',
             'Transcrever do YouTube': '/transcrever-youtube',
-            'Gravar e Transcrever': '/transcrever-culto',
+            'Transcrever áudio': '/transcrever-culto',
         };
         for (const [nome, href] of Object.entries(esperado)) {
             expect(within(menu).getByRole('link', { name: new RegExp(nome) })).toHaveAttribute('href', href);

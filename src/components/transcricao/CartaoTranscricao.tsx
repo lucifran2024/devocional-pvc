@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Mic } from 'lucide-react';
 import type { Transcricao } from '@/lib/transcricoes';
 import {
     contarPalavras,
@@ -32,7 +32,11 @@ export function CartaoTranscricao({ transcricao, destaque = false, onAbrir }: {
             className={`group flex w-full items-center gap-3 rounded-2xl border bg-surface-1 p-3 text-left transition hover:border-amber-500/40 active:scale-[0.99]
                 ${destaque ? 'border-amber-500/60 ring-2 ring-amber-500/25' : 'border-border-subtle'}`}
         >
-            <MiniaturaVideo fonteUrl={transcricao.fonte_url} className="aspect-video w-28 shrink-0 sm:w-36" />
+            <MiniaturaVideo
+                fonteUrl={transcricao.fonte_url}
+                icone={transcricao.tipo === 'culto' ? Mic : undefined}
+                className="aspect-video w-28 shrink-0 sm:w-36"
+            />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="reading-serif line-clamp-2 font-semibold leading-snug text-text-primary">{titulo}</span>
                 <span className="text-xs text-text-muted">
