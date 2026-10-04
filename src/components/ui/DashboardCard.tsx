@@ -34,7 +34,7 @@ export function DashboardCard({
             flex flex-col items-start justify-between
             border transition-all duration-300
             ${featured
-                ? 'p-7 lg:p-8 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/30 hover:border-amber-500/60 hover:shadow-lg hover:shadow-amber-500/10'
+                ? 'p-7 lg:p-8 bg-amber-500/[0.06] border-amber-500/30 hover:border-amber-500/60 hover:shadow-lg'
                 : 'p-5 lg:p-6 bg-white dark:bg-surface-1 border-slate-200 dark:border-white/6 hover:border-slate-300 dark:hover:border-white/12 hover:shadow-md dark:hover:shadow-black/30'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -42,7 +42,7 @@ export function DashboardCard({
         `}>
             {/* Subtle top border accent */}
             <div className={`absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-3xl
-                ${featured ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-transparent via-current to-transparent'}
+                ${featured ? 'bg-amber-500' : 'bg-gradient-to-r from-transparent via-current to-transparent'}
                 ${accentColor}
             `} />
 

@@ -117,9 +117,8 @@ export default function PlanosPage() {
 
                 {/* Plano Ativo (Destaque) */}
                 {planoAtivo && planoAtivo.plano && (
-                    <div className="w-full relative group rounded-3xl border border-amber-500/25 dark:border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-transparent to-transparent animate-enter overflow-hidden">
+                    <div className="w-full relative group rounded-3xl border border-amber-500/25 dark:border-amber-500/20 bg-amber-500/[0.06] animate-enter overflow-hidden">
                         <div className="p-6 md:p-8 relative">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none"></div>
 
                             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                                 <div className="space-y-2">
@@ -139,7 +138,7 @@ export default function PlanosPage() {
                                     {/* Barra de Progresso */}
                                     <div className="w-full md:w-64 h-2 bg-surface-2 rounded-full overflow-hidden mt-3">
                                         <div
-                                            className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-700 ease-out"
+                                            className="h-full bg-amber-500 rounded-full transition-all duration-700 ease-out"
                                             style={{ width: `${Math.max(5, progressoMap[planoAtivo.plano_id] ? Math.round((progressoMap[planoAtivo.plano_id].concluidos / progressoMap[planoAtivo.plano_id].total) * 100) : 0)}%` }}
                                         ></div>
                                     </div>
@@ -147,7 +146,7 @@ export default function PlanosPage() {
 
                                 <Link
                                     href={`/plano-detalhes?plano_id=${planoAtivo.plano_id}`}
-                                    className="shrink-0 px-6 py-3 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/15 hover:shadow-amber-500/25 flex items-center gap-2 group/btn"
+                                    className="shrink-0 px-6 py-3 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-all shadow-lg flex items-center gap-2 group/btn"
                                 >
                                     <Play className="w-4 h-4 fill-current" />
                                     Ver Progresso

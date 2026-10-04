@@ -2468,7 +2468,7 @@ function BibliotecaPage() {
                                                                 <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
                                                                     className={`relative group overflow-hidden w-full flex items-center gap-3 pl-3 pr-3 py-2.5 min-h-[72px] rounded-2xl text-left transition-all duration-200 border active:scale-[0.97]
                                                                         ${isAtual
-                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 shadow-sm'
                                                                             : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 hover:border-slate-300 dark:hover:border-white/15 hover:shadow-sm'
                                                                         }`}
                                                                 >
@@ -2510,7 +2510,7 @@ function BibliotecaPage() {
                                         return (
                                             <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
                                                 className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold tabular-nums transition-all border active:scale-[0.95] ${isAtual
-                                                    ? 'bg-amber-500 text-amber-950 border-amber-400 shadow-md shadow-amber-500/30'
+                                                    ? 'bg-amber-500 text-amber-950 border-amber-400 shadow-md'
                                                     : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 text-slate-800 dark:text-text-primary hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/40'
                                                     }`}>
                                                 {cap}
@@ -2522,7 +2522,7 @@ function BibliotecaPage() {
                             {faseSelecao === 'versiculos' && (
                                 <div className="p-4">
                                     {/* Botão abrir capítulo inteiro */}
-                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-amber-950 font-bold text-sm hover:bg-amber-400 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]">
+                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-amber-950 font-bold text-sm hover:bg-amber-400 transition-colors shadow-md active:scale-[0.98]">
                                         Abrir capítulo inteiro
                                     </button>
 
@@ -2591,7 +2591,7 @@ function BibliotecaPage() {
                         className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
                     >
-                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-orange-50/50 dark:from-surface-2 dark:to-surface-2">
+                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-amber-50/50 dark:bg-surface-2">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-400/30 flex items-center justify-center">
                                     <BookmarkIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -2899,7 +2899,7 @@ function BibliotecaPage() {
                         <button
                             onClick={salvarNotaFullscreen}
                             disabled={!textoNota.trim()}
-                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
                         >
                             {textoNota.trim() ? 'Salvar Anotação' : 'Digite sua anotação para salvar'}
                         </button>
@@ -3188,7 +3188,7 @@ function BibliotecaPage() {
                 <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[70dvh] sm:h-auto sm:max-h-[75vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
                         {/* Header */}
-                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-gradient-to-r from-amber-50/60 to-amber-50/30 dark:from-surface-2 dark:to-surface-2">
+                        <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-amber-50/50 dark:bg-surface-2">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-400/30 flex items-center justify-center">
                                     <BookmarkCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />

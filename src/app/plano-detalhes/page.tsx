@@ -105,7 +105,6 @@ function PlanoDetalhesContent() {
                 {/* Header com Progresso */}
                 <div className="animate-enter">
                     <div className="glass-panel rounded-3xl p-6 md:p-8 border border-border-subtle relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none"></div>
 
                         <div className="relative z-10 space-y-4">
                             <div className="flex items-start justify-between">
@@ -137,17 +136,11 @@ function PlanoDetalhesContent() {
                                             <path
                                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                                 fill="none"
-                                                stroke="url(#gold-gradient)"
+                                                stroke="var(--color-amber-500)"
                                                 strokeWidth="3"
                                                 strokeDasharray={`${percentual}, 100`}
                                                 strokeLinecap="round"
                                             />
-                                            <defs>
-                                                <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                    <stop offset="0%" stopColor="#fbbf24" />
-                                                    <stop offset="100%" stopColor="#d97706" />
-                                                </linearGradient>
-                                            </defs>
                                         </svg>
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <span className="text-lg font-bold text-text-primary">{percentual}%</span>
@@ -159,7 +152,7 @@ function PlanoDetalhesContent() {
                             {/* Barra de Progresso */}
                             <div className="w-full h-2.5 bg-surface-2 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-700 ease-out"
+                                    className="h-full bg-amber-500 rounded-full transition-all duration-700 ease-out"
                                     style={{ width: `${Math.max(2, percentual)}%` }}
                                 />
                             </div>
@@ -175,7 +168,7 @@ function PlanoDetalhesContent() {
                             {/* Botão Continuar Leitura */}
                             <Link
                                 href={`/plano-de-leitura?plano_id=${planoId}&dia=${diaAtual}`}
-                                className="w-full mt-2 px-6 py-3.5 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/15 hover:shadow-amber-500/25 flex items-center justify-center gap-2"
+                                className="w-full mt-2 px-6 py-3.5 rounded-xl bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-all shadow-lg flex items-center justify-center gap-2"
                             >
                                 <Play className="w-5 h-5 fill-current" />
                                 Continuar — Dia {diaAtual}
@@ -264,7 +257,7 @@ function PlanoDetalhesContent() {
                 {/* Conquista */}
                 {percentual >= 100 && (
                     <div className="text-center py-8 animate-enter">
-                        <div className="inline-flex flex-col items-center gap-3 p-8 rounded-3xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30">
+                        <div className="inline-flex flex-col items-center gap-3 p-8 rounded-3xl bg-amber-500/10 border border-amber-500/30">
                             <Trophy className="w-12 h-12 text-amber-400" />
                             <h3 className="reading-serif text-2xl font-semibold text-text-primary">Plano Concluído!</h3>
                             <p className="text-text-muted text-sm">Parabéns! Você completou toda a leitura deste plano.</p>

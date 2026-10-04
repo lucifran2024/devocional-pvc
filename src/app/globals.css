@@ -45,14 +45,14 @@
   --border-strong: #cbd5e1;
   /* Slate 300 */
 
-  /* Accents (PVC Identity - Gold/Amber) */
-  --accent-primary: #d97706;
-  /* Amber 600 - darker for contrast on light */
-  --accent-light: #fbbf24;
-  /* Amber 400 */
-  --accent-dark: #b45309;
-  /* Amber 700 */
-  --accent-text: #451a03;
+  /* Accents (PVC Identity - âmbar suave, 03/10/2026) */
+  --accent-primary: #8c632b;
+  /* Amber 700 — texto e ícones no papel (contraste 4,9) */
+  --accent-light: #ca9653;
+  /* Amber 500 */
+  --accent-dark: #6f4e21;
+  /* Amber 800 */
+  --accent-text: #352209;
   /* Amber 950 — texto escuro sobre âmbar (consistente com botões) */
 
   /* Glass Effects (Acrylic) */
@@ -85,19 +85,36 @@
   --border-subtle: #2c261d;
   --border-strong: #443a2c;
 
-  /* Accents */
-  --accent-primary: #f59e0b;
+  /* Accents (âmbar suave) */
+  --accent-primary: #ca9653;
   /* Amber 500 */
-  --accent-light: #fcd34d;
+  --accent-light: #f0c591;
   /* Amber 300 */
-  --accent-dark: #b45309;
+  --accent-dark: #8c632b;
   /* Amber 700 */
-  --accent-text: #1a1510;
+  --accent-text: #352209;
 
   /* Glass Effects (Frosted quente) */
   --glass-bg: rgba(28, 24, 19, 0.6);
   --glass-border: rgba(245, 220, 170, 0.10);
   --glass-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Paleta âmbar suave (03/10/2026, pedido "revise esse amarelão"): a mesma
+   família do âmbar, menos saturada. Toda classe amber-* do app usa estes
+   tons. Para trocar a cor do app inteiro, só mudar esta escala. */
+@theme {
+  --color-amber-50: #fff9ef;
+  --color-amber-100: #feedda;
+  --color-amber-200: #fadcb8;
+  --color-amber-300: #f0c591;
+  --color-amber-400: #dfad6e;
+  --color-amber-500: #ca9653;
+  --color-amber-600: #ab7c3c;
+  --color-amber-700: #8c632b;
+  --color-amber-800: #6f4e21;
+  --color-amber-900: #5a3f1b;
+  --color-amber-950: #352209;
 }
 
 @theme inline {
@@ -192,14 +209,14 @@ body {
 
 /* Palavra-chave destacada ao carregar a passagem */
 .keyword-highlight {
-  background: linear-gradient(180deg, transparent 62%, rgba(245, 158, 11, 0.28) 62%);
+  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--color-amber-500) 30%, transparent) 62%);
   border-radius: 2px;
   padding: 0 1px;
   font-weight: 600;
 }
 .dark .keyword-highlight {
-  background: linear-gradient(180deg, transparent 62%, rgba(245, 158, 11, 0.32) 62%);
-  color: #fde9c8;
+  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--color-amber-500) 34%, transparent) 62%);
+  color: var(--color-amber-100);
 }
 
 /* Premium Typography */
@@ -211,13 +228,6 @@ h5,
 h6 {
   letter-spacing: -0.02em;
   color: var(--text-primary);
-}
-
-.text-gradient-gold {
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 50%, var(--accent-primary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* --- COMPONENT CLASSES --- */
@@ -243,9 +253,8 @@ h6 {
 }
 
 .dark .glass-card {
-  background: linear-gradient(180deg, rgba(48, 40, 28, 0.55) 0%, rgba(28, 24, 19, 0.35) 100%);
-  border: 1px solid rgba(245, 220, 170, 0.10);
-  backdrop-filter: blur(10px);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
 }
 
 .glass-card:hover {
@@ -255,27 +264,27 @@ h6 {
 }
 
 .dark .glass-card:hover {
-  border-color: rgba(245, 158, 11, 0.40);
-  background: linear-gradient(180deg, rgba(60, 50, 34, 0.65) 0%, rgba(36, 30, 22, 0.45) 100%);
+  border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+  background: var(--bg-surface-2);
 }
 
-/* Premium Button - Adaptive */
+/* Botão principal: cor sólida, sem degradê nem brilho (03/10/2026) */
 .btn-premium {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-dark) 100%);
-  color: var(--accent-text);
+  background: var(--color-amber-500);
+  color: var(--color-amber-950);
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
-  /* Optimized shadow */
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   padding: var(--space-3) var(--space-4);
 }
 
 .btn-premium:hover {
-  box-shadow: 0 6px 12px -1px rgba(245, 158, 11, 0.4);
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: var(--color-amber-400);
+}
+
+.btn-premium:active {
+  transform: translateY(1px);
 }
 
 /* Glass Button - Adaptive */
@@ -322,7 +331,7 @@ h6 {
 }
 
 .dark .stellar-card:hover {
-  border-color: rgba(245, 158, 11, 0.25);
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
 /* Animations */

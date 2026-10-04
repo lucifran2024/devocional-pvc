@@ -189,7 +189,7 @@ export default function MemorizacaoPage() {
                     <button
                         onClick={iniciarPratica}
                         className={`w-full py-4 rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${vencidos.length > 0
-                            ? 'bg-amber-500 text-amber-950 hover:bg-amber-400 shadow-lg shadow-amber-500/20'
+                            ? 'bg-amber-500 text-amber-950 hover:bg-amber-400 shadow-lg'
                             : 'bg-surface-2 text-text-secondary hover:bg-surface-1 border border-border-subtle'}`}
                     >
                         <Brain className="w-5 h-5" />
@@ -350,7 +350,7 @@ export default function MemorizacaoPage() {
                         {!revelado ? (
                             <button
                                 onClick={() => setRevelado(true)}
-                                className="w-full max-w-xl mx-auto flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all active:scale-[0.98] shadow-lg shadow-amber-500/20"
+                                className="w-full max-w-xl mx-auto flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all active:scale-[0.98] shadow-lg"
                             >
                                 <Eye className="w-5 h-5" /> Mostrar versículo
                             </button>

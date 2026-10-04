@@ -41,13 +41,6 @@ export function CosmicHeader({
             {/* Subtle Bottom Glow Border */}
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border-subtle to-transparent"></div>
 
-            {/* Glow Effects (Reduced for Navbar) */}
-            {variant === 'hero' && (
-                <>
-                    <div className="absolute top-[-30%] right-[-10%] w-[700px] h-[700px] bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-[120px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
-                    <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-amber-600/[0.03] dark:bg-amber-700/[0.06] blur-[140px] rounded-full mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
-                </>
-            )}
 
             {/* Content Container */}
             <div className={`relative z-10 w-full ${variant === 'navbar' ? 'h-full' : ''}`}>

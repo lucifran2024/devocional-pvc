@@ -1090,7 +1090,7 @@ export default function DnaCategorizadoPage() {
 
                     {/* Resultado da Geração */}
                     {showResult && generatedResult && (
-                        <div className="bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-500/10 dark:via-amber-400/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
+                        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg">Mensagens Geradas ({parseMessages(generatedResult).length})</h3>
                                 <button onClick={() => setShowResult(false)} className="p-2 hover:bg-surface-2 rounded-lg">
@@ -1120,7 +1120,7 @@ export default function DnaCategorizadoPage() {
 
                     {/* NOVO: CARD ÚLTIMAS GERAÇÕES */}
                     {recentGenerations.length > 0 && (
-                        <div className="bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-500/10 dark:via-amber-400/5 dark:to-orange-500/5 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
+                        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-400/20 rounded-2xl p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-amber-600 dark:text-amber-200 font-bold text-lg flex items-center gap-2">
                                     <Calendar className="w-5 h-5" />
@@ -1226,7 +1226,7 @@ export default function DnaCategorizadoPage() {
                             const cat = getCategoriaInfo(item.categoria);
                             const isEditing = editingId === item.id;
                             return (
-                                <div key={item.id} className={`group relative bg-white/80 dark:bg-surface-0/70 backdrop-blur-xl border rounded-2xl p-6 transition-all shadow-sm ${isEditing ? 'border-amber-300 dark:border-amber-400/30 ring-1 ring-amber-200 dark:ring-amber-400/15' : 'border-slate-200/80 dark:border-white/5 hover:border-amber-300 dark:hover:border-amber-400/20 hover:shadow-amber-200/30 dark:hover:shadow-amber-500/5 hover:shadow-md'}`}>
+                                <div key={item.id} className={`group relative bg-white/80 dark:bg-surface-0/70 backdrop-blur-xl border rounded-2xl p-6 transition-all shadow-sm ${isEditing ? 'border-amber-300 dark:border-amber-400/30 ring-1 ring-amber-200 dark:ring-amber-400/15' : 'border-slate-200/80 dark:border-white/5 hover:border-amber-300 dark:hover:border-amber-400/20 hover:shadow-md'}`}>
                                     {isEditing ? (
                                         /* === MODO EDIÇÃO === */
                                         <div className="space-y-4">

@@ -422,7 +422,7 @@ function CartaoResultado({ resultado, salvoId, salvando, onSalvar, onLer, onVerL
                             type="button"
                             onClick={onSalvar}
                             disabled={salvando}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3.5 font-bold text-amber-950 shadow-sm shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.99] disabled:opacity-60"
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 py-3.5 font-bold text-amber-950 shadow-sm transition hover:bg-amber-400 active:scale-[0.99] disabled:opacity-60"
                         >
                             {salvando ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Save className="h-5 w-5" aria-hidden="true" />}
                             {salvando ? 'Salvando…' : 'Salvar em Minhas transcrições'}

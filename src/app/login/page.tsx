@@ -73,8 +73,8 @@ export default function LoginPage() {
             <div className="w-full max-w-sm mx-auto">
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-4">
-                        <BookOpen className="w-8 h-8 text-white" />
+                    <div className="w-16 h-16 rounded-3xl bg-amber-500 flex items-center justify-center mb-4">
+                        <BookOpen className="w-8 h-8 text-amber-950" />
                     </div>
                     <h1 className="reading-serif text-[1.7rem] font-semibold text-text-primary tracking-tight">Bíblia</h1>
                     <p className="text-xs text-text-muted mt-1 tracking-widest uppercase">Sua jornada espiritual diária</p>
@@ -148,7 +148,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={enviando || !email || senha.length < 6}
-                            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                         >
                             {enviando && <Loader2 className="w-4 h-4 animate-spin" />}
                             {modo === 'entrar' ? 'Entrar' : 'Criar minha conta'}

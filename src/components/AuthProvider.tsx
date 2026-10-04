@@ -156,8 +156,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // só fica na tela enquanto a sessão é conferida.
                 <div role="status" aria-label="Abrindo a Bíblia" className="min-h-screen flex items-center justify-center bg-surface-0">
                     <div className="flex flex-col items-center gap-5">
-                        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/25 animate-pulse">
-                            <BookOpen className="w-8 h-8 text-white" strokeWidth={2.2} />
+                        <div className="w-16 h-16 rounded-3xl bg-amber-500 flex items-center justify-center shadow-xl animate-pulse">
+                            <BookOpen className="w-8 h-8 text-amber-950" strokeWidth={2.2} />
                         </div>
                         <div className="text-center">
                             <p className="reading-serif text-2xl font-semibold text-text-primary">Bíblia</p>

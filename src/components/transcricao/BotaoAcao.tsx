@@ -7,7 +7,7 @@ type Variante = 'padrao' | 'barra' | 'primario' | 'feito';
 const CORES: Record<Variante, string> = {
     padrao: 'border border-border-subtle bg-surface-2/60 text-text-primary hover:border-amber-500/40 hover:bg-amber-500/10',
     barra: 'text-text-secondary hover:bg-amber-500/10 hover:text-text-primary',
-    primario: 'bg-amber-500 text-amber-950 shadow-sm shadow-amber-500/20 hover:bg-amber-400',
+    primario: 'bg-amber-500 text-amber-950 shadow-sm hover:bg-amber-400',
     feito: 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
 };
 

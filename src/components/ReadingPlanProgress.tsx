@@ -159,7 +159,7 @@ export default function ReadingPlanProgress({
                     <div className="absolute top-1/2 left-0 right-0 h-1 bg-surface-2 rounded-full -translate-y-1/2" />
                     {/* Linha preenchida */}
                     <div
-                        className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full -translate-y-1/2 transition-all duration-1000"
+                        className="absolute top-1/2 left-0 h-1 bg-amber-500 rounded-full -translate-y-1/2 transition-all duration-1000"
                         style={{ width: `${Math.min(100, percentual)}%` }}
                     />
                     {milestones.map((m, i) => {
@@ -173,7 +173,7 @@ export default function ReadingPlanProgress({
                                 <div className={`
                                     w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500
                                     ${m.reached
-                                        ? 'bg-surface-0 border-amber-500/50 shadow-lg shadow-amber-500/20'
+                                        ? 'bg-surface-0 border-amber-500/50 shadow-lg'
                                         : 'bg-surface-2 border-border-subtle'
                                     }
                                     ${m.current ? 'ring-2 ring-amber-500/30 scale-110' : ''}
@@ -324,7 +324,7 @@ function StatCard({
         <div className={`
             flex items-center gap-3 px-4 py-3 rounded-xl border transition-all
             ${highlight
-                ? 'bg-amber-500/10 border-amber-500/20 shadow-lg shadow-amber-500/5'
+                ? 'bg-amber-500/10 border-amber-500/20 shadow-lg'
                 : 'bg-surface-2/50 border-border-subtle'
             }
         `}>

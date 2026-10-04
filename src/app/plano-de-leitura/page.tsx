@@ -730,9 +730,6 @@ function PremiumOptionCard({ option, onClick, disabled }: {
             disabled={disabled}
             className="group relative w-full text-left p-6 rounded-2xl glass-card disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
         >
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Icon className="w-24 h-24 -mr-8 -mt-8 text-text-primary rotate-12" />
-            </div>
 
             <div className="flex items-center justify-between z-10">
                 <div className="p-3 rounded-xl bg-surface-2 border border-border-subtle text-amber-600 dark:text-amber-300 transition-colors duration-300">
@@ -926,7 +923,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
     // Mensagens do usuário mantêm o estilo de bolha (compactas)
     return (
         <div className="flex justify-end animate-enter mb-3">
-            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-amber-600 text-amber-50 rounded-br-none shadow-lg shadow-amber-900/20">
+            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-amber-600 text-amber-50 rounded-br-none shadow-lg">
                 <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
@@ -2457,7 +2454,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                             {inscricaoAtiva?.plano ? (
                                 inscricaoAtiva.plano.titulo
                             ) : (
-                                <>Plano de <span className="text-gradient-gold">Leitura</span></>
+                                <>Plano de <span className="text-amber-700 dark:text-amber-300">Leitura</span></>
                             )}
                         </h1>
                         <p className="text-text-secondary text-lg max-w-2xl mx-auto">
@@ -2477,7 +2474,6 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
 
                         {/* Daily Passage Card (Hero) */}
                         <div className="glass-panel rounded-3xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 border-amber-500/20 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none"></div>
 
                             <div className="flex-1 text-center md:text-left z-10">
                                 <h2 className="text-sm font-medium text-text-muted tracking-wide mb-2">
@@ -2509,7 +2505,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                 <button
                                     onClick={() => iniciarOpcao('1')}
                                     disabled={loading || !passagem}
-                                    className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 shadow-amber-500/20 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Book className="w-5 h-5" />
                                     Começar Leitura
