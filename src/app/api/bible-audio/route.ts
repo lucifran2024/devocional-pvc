@@ -4,7 +4,11 @@ import {
     prepararVersos, montarFalas, montarBlocos, ssmlDoBloco, segmentosDoBloco,
     type Fala, type Segmento,
 } from '@/lib/narracao-biblica';
-import { escolherVozNarracao, nomeDaVoz, estiloDaVoz } from '@/lib/vozes-narracao';
+import {
+    escolherVozNarracao, nomeDaVoz, estiloDaVoz,
+    VOZ_VOICESTUDIO_MASCULINA, vozAzureDeReserva,
+} from '@/lib/vozes-narracao';
+import { gravacaoVoiceStudio } from '@/lib/narracao-voicestudio';
 
 export const maxDuration = 120;
 
@@ -83,10 +87,6 @@ async function sintetizarBloco(bloco: Fala[], voz: string): Promise<ArrayBuffer 
 }
 
 export async function POST(request: Request) {
-    if (!AZURE_KEY || !AZURE_REGION) {
-        return NextResponse.json({ ok: false, error: 'sem_chave' }, { status: 503 });
-    }
-
     let body: { livroId?: number; capitulo?: number; verses?: VersiculoEntrada[]; voz?: string };
     try {
         body = await request.json();
@@ -97,17 +97,34 @@ export async function POST(request: Request) {
     const livroId = Number(body.livroId);
     const capitulo = Number(body.capitulo);
     const verses = Array.isArray(body.verses) ? body.verses.slice(0, MAX_VERSES) : [];
-    const voz = escolherVozNarracao(body.voz);
+    const vozEscolhida = escolherVozNarracao(body.voz);
 
     if (!livroId || !capitulo || verses.length === 0) {
         return NextResponse.json({ ok: false, error: 'parametros_invalidos' }, { status: 400 });
+    }
+
+    // A gravação pronta só vale para o texto NTLH idêntico ao narrado.
+    // Não misturar traduções nem servir capítulo inteiro à leitura parcial.
+    if (vozEscolhida === VOZ_VOICESTUDIO_MASCULINA) {
+        const gravacao = gravacaoVoiceStudio(livroId, capitulo, verses);
+        if (gravacao) {
+            return NextResponse.json({
+                ok: true, ...gravacao, voz: vozEscolhida,
+                fonte: 'Narração · VoiceStudio masculina',
+            });
+        }
+    }
+
+    const voz = vozAzureDeReserva(vozEscolhida);
+    if (!AZURE_KEY || !AZURE_REGION) {
+        return NextResponse.json({ ok: false, error: 'sem_chave' }, { status: 503 });
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
     const pastaCap = `${voz}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}`;
     const fullPath = `${pastaCap}/full.mp3`;
     const metaPath = `${pastaCap}/full.json`;
-    const fonte = `Narração · ${nomeDaVoz(voz)}`;
+    const fonte = `Narração · ${nomeDaVoz(voz)}${vozEscolhida !== voz ? ' (reserva)' : ''}`;
 
     // Cache: áudio já narrado para esta voz e este conjunto de versículos
     const { data: arquivos } = await supabase.storage.from(BUCKET).list(pastaCap, { limit: 10 });

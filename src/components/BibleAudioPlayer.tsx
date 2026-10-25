@@ -52,6 +52,7 @@ export function BibleAudioPlayer({
     const [velocidadeIdx, setVelocidadeIdx] = useState(0);
     const [voz, setVoz] = useState(() => (typeof window === 'undefined' ? VOZ_PADRAO : lerVozSalva()));
     const [menuVoz, setMenuVoz] = useState(false);
+    const [fonteAtual, setFonteAtual] = useState<string | null>(null);
     const [modo, setModo] = useState<'neural' | 'navegador'>('neural');
     const [demorando, setDemorando] = useState(false);
 
@@ -190,6 +191,7 @@ export function BibleAudioPlayer({
         modoRef.current = 'neural';
         setModo('neural');
         setMenuVoz(false);
+        setFonteAtual(null);
         if (!audioRef.current) audioRef.current = new Audio();
         setEstado('carregando');
 
@@ -208,6 +210,9 @@ export function BibleAudioPlayer({
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.ok && data.fullUrl && Array.isArray(data.segments)) {
+                    setFonteAtual(typeof data.fonte === 'string'
+                        ? data.fonte.replace(/^Narração\s*·\s*/, '')
+                        : nomeDaVoz(vozEscolhida));
                     // Casamento SEQUENCIAL segmento → lista: a parte do plano pode
                     // cruzar capítulos e repetir o número (Gn 4:26 e Gn 5:26).
                     let ponteiro = 0;
@@ -332,7 +337,7 @@ export function BibleAudioPlayer({
         try {
             ms.metadata = new MediaMetadata({
                 title: referencia,
-                artist: `Bíblia NTLH · ${nomeDaVoz(voz)}`,
+                artist: `Bíblia NTLH · ${fonteAtual || nomeDaVoz(voz)}`,
                 album: 'PVC Bíblia',
                 artwork: [{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
             });
@@ -345,7 +350,7 @@ export function BibleAudioPlayer({
         } catch {
             // navegador sem suporte completo
         }
-    }, [estado, referencia, voz]);
+    }, [estado, referencia, voz, fonteAtual]);
 
     const barra = ativo && typeof document !== 'undefined' ? createPortal(
         <div
@@ -424,7 +429,7 @@ export function BibleAudioPlayer({
                         >
                             {estado === 'carregando' && demorando
                                 ? 'Na primeira vez demora; depois fica guardado'
-                                : modo === 'navegador' ? 'Voz do aparelho' : `Voz: ${nomeDaVoz(voz)}`}
+                                : modo === 'navegador' ? 'Voz do aparelho' : `Voz: ${fonteAtual || nomeDaVoz(voz)}`}
                             <ChevronUp className={`w-3.5 h-3.5 transition-transform ${menuVoz ? '' : 'rotate-180'}`} />
                         </button>
                     </div>

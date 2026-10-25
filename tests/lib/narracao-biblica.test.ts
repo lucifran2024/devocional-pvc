@@ -3,7 +3,11 @@ import {
     anuncioDoCapitulo, separarVerso, pausaDepois, prepararVersos, montarFalas, montarBlocos,
     ssmlDoBloco, segmentosDoBloco, silabas, PAUSA, type Fala,
 } from '@/lib/narracao-biblica';
-import { escolherVozNarracao, VOZ_PADRAO, VOZES_NARRACAO, estiloDaVoz } from '@/lib/vozes-narracao';
+import {
+    escolherVozNarracao, VOZ_PADRAO, VOZES_NARRACAO, estiloDaVoz,
+    VOZ_VOICESTUDIO_MASCULINA, VOZ_AZURE_RESERVA, vozAzureDeReserva,
+} from '@/lib/vozes-narracao';
+import { gravacaoVoiceStudio } from '@/lib/narracao-voicestudio';
 
 // Trecho real da NTLH como vem da bolls.life (Salmo 23:1-2)
 const SALMO_23 = [
@@ -101,5 +105,26 @@ describe('vozes da narração', () => {
     it('só a Francisca usa o estilo calmo', () => {
         expect(estiloDaVoz('pt-BR-FranciscaNeural')).toBe('calm');
         expect(estiloDaVoz('pt-BR-ThalitaMultilingualNeural')).toBe('');
+    });
+
+    it('prioriza a voz masculina aprovada e preserva as vozes Azure anteriores', () => {
+        expect(VOZ_PADRAO).toBe(VOZ_VOICESTUDIO_MASCULINA);
+        expect(escolherVozNarracao(VOZ_VOICESTUDIO_MASCULINA)).toBe(VOZ_VOICESTUDIO_MASCULINA);
+        expect(vozAzureDeReserva(VOZ_VOICESTUDIO_MASCULINA)).toBe(VOZ_AZURE_RESERVA);
+        expect(vozAzureDeReserva('pt-BR-ThalitaMultilingualNeural')).toBe('pt-BR-ThalitaMultilingualNeural');
+        expect(VOZES_NARRACAO.length).toBe(5);
+    });
+
+    it('não serve gravação de outra tradução, capítulo ou leitura parcial', () => {
+        expect(gravacaoVoiceStudio(19, 23, SALMO_23)).toBeNull();
+        expect(gravacaoVoiceStudio(19, 22, SALMO_23)).toBeNull();
+        expect(gravacaoVoiceStudio(40, 23, SALMO_23)).toBeNull();
+        expect(gravacaoVoiceStudio(19, 23, [
+            ...SALMO_23,
+            { verse: 3, text: 'texto incorreto' },
+            { verse: 4, text: 'texto incorreto' },
+            { verse: 5, text: 'texto incorreto' },
+            { verse: 6, text: 'texto incorreto' },
+        ])).toBeNull();
     });
 });
