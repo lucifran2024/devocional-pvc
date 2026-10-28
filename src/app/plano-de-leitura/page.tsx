@@ -39,6 +39,7 @@ import { marcarParteLida, marcarPartesAteLida, desmarcarParteLida, getLeituraDia
 import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
 import { LeituraPorTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
+import { ExplicacaoAudioPlayer } from '@/components/leitura/ExplicacaoAudioPlayer';
 import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, testamentoDoCapitulo, textoDosCapitulos, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
@@ -885,6 +886,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                             className="mt-6 scroll-mt-28 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-5 leading-relaxed break-words text-text-secondary [&_h3]:mb-1 [&_h3]:text-[13px] [&_h3]:font-medium [&_h3]:text-text-muted [&_h4]:mt-5 [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-text-primary [&_p]:mt-1.5 [&_strong]:font-semibold [&_strong]:text-text-primary [&_hr]:hidden"
                             style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
                         >
+                            <ExplicacaoAudioPlayer texto={partes[1].replace('%%EXPLICACAO_SLOT%%', '')} />
                             <ReactMarkdown>{partes[1].replace('%%EXPLICACAO_SLOT%%', '')}</ReactMarkdown>
                         </div>
                     )}
@@ -905,6 +907,9 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                         className="leading-relaxed break-words text-text-secondary [&_h3]:mt-9 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-text-primary [&_h3:first-child]:mt-0 [&_h4]:mt-5 [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-text-primary [&_p]:mt-1.5 [&_strong]:font-semibold [&_strong]:text-text-primary [&_hr]:hidden"
                         style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
                     >
+                        {/(?:^|\n)###\s+(?:Antigo|Novo) Testamento\b/.test(conteudoLimpo) && (
+                            <ExplicacaoAudioPlayer texto={conteudoLimpo} />
+                        )}
                         <ReactMarkdown>{conteudoLimpo}</ReactMarkdown>
                     </div>
                 </div>

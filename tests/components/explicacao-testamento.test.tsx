@@ -66,12 +66,14 @@ describe('painel da explicação do testamento', () => {
     it('mostra a explicação e volta à leitura', () => {
         const props = painel({ conteudo: '### Explicação de Salmos 92-95\n\n#### Salmos 92 · O justo floresce\n\nO salmo do sábado.' });
         expect(screen.getByText('Salmos 92 · O justo floresce').tagName).toBe('H4');
+        expect(screen.getByRole('button', { name: 'Ouvir explicação' })).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Voltar à leitura' }));
         expect(props.onFechar).toHaveBeenCalled();
     });
 
     it('erro oferece tentar de novo', () => {
         const props = painel({ erro: true });
+        expect(screen.queryByRole('button', { name: 'Ouvir explicação' })).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
         expect(props.onTentarDeNovo).toHaveBeenCalled();
     });

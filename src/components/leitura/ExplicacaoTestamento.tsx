@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import { X } from 'lucide-react';
 
 import { NOME_TESTAMENTO, type Testamento } from '@/lib/explicacao-testamento';
+import { ExplicacaoAudioPlayer } from '@/components/leitura/ExplicacaoAudioPlayer';
 
 export interface OpcaoTestamento {
     testamento: Testamento;
@@ -153,6 +154,7 @@ export function PainelExplicacaoTestamento({
                         </div>
                     ) : (
                         <>
+                            <ExplicacaoAudioPlayer texto={conteudo} />
                             <div
                                 data-explicacao-testamento
                                 className="leading-relaxed break-words text-text-secondary [&_h3]:hidden [&_h4:first-of-type]:mt-0 [&_h4]:mt-6 [&_h4]:font-semibold [&_h4]:leading-snug [&_h4]:text-text-primary [&_p]:mt-1.5 [&_strong]:font-semibold [&_strong]:text-text-primary [&_em]:text-text-primary/80 [&_hr]:hidden"
