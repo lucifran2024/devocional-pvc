@@ -17,6 +17,10 @@ const URL_SEM_PROTOCOLO_REGEX =
 // backend desembrulha seguindo o redirecionamento antes de transcrever).
 const INSTAGRAM_PATH_REGEX = /^\/(reel|reels|tv|p)\//i;
 const INSTAGRAM_SHARE_REGEX = /^\/share(\/|$)/i;
+// Desde out/2026 o app do Instagram também compartilha com o perfil antes:
+// /<perfil>/reel/<código>/. Vira /reel/<código>/, que o backend já resolve.
+// O perfil sozinho e a grade /<perfil>/reels/ continuam sem botão.
+const INSTAGRAM_COM_PERFIL_REGEX = /^\/[A-Za-z0-9._]+\/(reel|p|tv)\/([A-Za-z0-9_-]+)\/?$/i;
 
 function limparPontuacaoFinal(url: string): string {
     return url.replace(/[),.;!?\]}]+$/g, '');
@@ -33,11 +37,15 @@ export function identificarLinkVideoSocial(urlBruta: string): LinkVideoSocial | 
         const url = new URL(urlLimpa);
         const host = url.hostname.toLowerCase();
 
-        if (
-            (hostPertenceA(host, 'instagram.com') || hostPertenceA(host, 'instagr.am')) &&
-            (INSTAGRAM_PATH_REGEX.test(url.pathname) || INSTAGRAM_SHARE_REGEX.test(url.pathname))
-        ) {
-            return { url: url.toString(), plataforma: 'instagram' };
+        if (hostPertenceA(host, 'instagram.com') || hostPertenceA(host, 'instagr.am')) {
+            if (INSTAGRAM_PATH_REGEX.test(url.pathname) || INSTAGRAM_SHARE_REGEX.test(url.pathname)) {
+                return { url: url.toString(), plataforma: 'instagram' };
+            }
+            const comPerfil = url.pathname.match(INSTAGRAM_COM_PERFIL_REGEX);
+            if (comPerfil) {
+                url.pathname = `/${comPerfil[1].toLowerCase()}/${comPerfil[2]}/`;
+                return { url: url.toString(), plataforma: 'instagram' };
+            }
         }
 
         if (hostPertenceA(host, 'tiktok.com')) {

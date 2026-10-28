@@ -45,6 +45,28 @@ describe('links de vídeo social', () => {
         expect(identificarLinkVideoSocial('https://instagr.am/reel/ABC/')?.plataforma).toBe('instagram');
     });
 
+    // 28/10/2026 — o app do Instagram passou a compartilhar o reel com o perfil
+    // antes (instagram.com/<perfil>/reel/<código>/) e o botão sumiu de novo.
+    it('aceita reel com o perfil antes e troca pelo endereço que o backend resolve', () => {
+        expect(identificarLinkVideoSocial('https://www.instagram.com/youversionpt/reel/DQabc123XYZ/')).toEqual({
+            url: 'https://www.instagram.com/reel/DQabc123XYZ/',
+            plataforma: 'instagram',
+        });
+        expect(identificarLinkVideoSocial('https://www.instagram.com/autor.x/p/ABC_1/?igsh=q')?.url)
+            .toBe('https://www.instagram.com/p/ABC_1/?igsh=q');
+        expect(extrairLinkVideoSocial('veja https://www.instagram.com/youversionpt/reel/DQabc123XYZ/')?.plataforma)
+            .toBe('instagram');
+        expect(extrairLinkVideoSocial('www.instagram.com/youversionpt/reel/DQabc123XYZ/')?.url)
+            .toBe('https://www.instagram.com/reel/DQabc123XYZ/');
+    });
+
+    it('perfil, grade de reels do perfil e link de compartilhar não viram outro endereço', () => {
+        expect(identificarLinkVideoSocial('https://www.instagram.com/youversionpt/reels/')).toBeNull();
+        expect(identificarLinkVideoSocial('https://www.instagram.com/youversionpt/reel/')).toBeNull();
+        expect(identificarLinkVideoSocial('https://www.instagram.com/share/reel/AbC123')?.url)
+            .toBe('https://www.instagram.com/share/reel/AbC123');
+    });
+
     it('encontra links colados sem https://', () => {
         expect(extrairLinkVideoSocial('olha esse www.instagram.com/reel/SemHttps/')).toEqual({
             url: 'https://www.instagram.com/reel/SemHttps/',
