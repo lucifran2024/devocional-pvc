@@ -80,6 +80,24 @@ describe('narração bíblica — blocos e SSML', () => {
         expect(semEstilo).toContain("<lang xml:lang='pt-BR'>");
     });
 
+    // 28/10/2026: opção comparada em amostras; Lucifran ficou com a leitura atual.
+    it('frase corrida (desligada por padrão) só pausa na pontuação', () => {
+        const falas = montarFalas(prepararVersos([
+            ...SALMO_23,
+            { verse: 3, text: 'Ele me dá novas forças <br>e me guia' },
+            { verse: 4, text: 'por caminhos certos.' },
+        ], 23), 19);
+        const corrida = ssmlDoBloco(falas, { voz: 'pt-BR-MacerioMultilingualNeural', fraseCorrida: true });
+        expect(corrida).toContain('em pastos verdes e me leva');
+        expect(corrida).toContain('e me guia por caminhos certos.');
+        expect(corrida).toContain(`nada me faltará.<break time='${PAUSA.fimDeFrase}ms'/>`);
+        const atual = ssmlDoBloco(falas, { voz: 'pt-BR-MacerioMultilingualNeural' });
+        expect(atual).toContain(`e me guia<break time='${PAUSA.semPontuacao}ms'/>`);
+        // a marcação do versículo acompanha: sem a pausa, o verso 3 termina antes
+        const fimV3 = (fc: boolean) => segmentosDoBloco(falas, 30, 0, fc).find(s => s.verse === 3)!.end;
+        expect(fimV3(true)).toBeLessThan(fimV3(false) + 1e-9);
+    });
+
     it('os tempos dos versículos seguem em ordem e fecham na duração do áudio', () => {
         const falas = montarFalas(prepararVersos(SALMO_23, 23), 19);
         const segs = segmentosDoBloco(falas, 20, 10);

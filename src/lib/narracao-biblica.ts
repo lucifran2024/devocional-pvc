@@ -201,11 +201,19 @@ export const TEMPO_NATURAL = {
     fimDeFrase: 0.5,
 } as const;
 
+// Frase corrida (28/10/2026): pausa forçada no meio da frase (linha do poema
+// ou versículo que continua no próximo) faz a voz fechar a entonação como se
+// a frase tivesse acabado. Com ela ligada, só a pontuação pausa.
+function continuaNaProxima(v: VersoFalado): boolean {
+    return v.pausaMs === PAUSA.semPontuacao;
+}
+
 // Silêncio que o próprio SSML acrescenta (fora as pausas naturais da voz).
-export function silencioDaFala(f: Fala): number {
+export function silencioDaFala(f: Fala, fraseCorrida = false): number {
     if (f.tipo === 'anuncio') return f.pausaMs;
     const v = f.verso;
-    let ms = v.pausaMs + (v.titulo ? PAUSA.titulo : 0);
+    let ms = (fraseCorrida && continuaNaProxima(v) ? 0 : v.pausaMs) + (v.titulo ? PAUSA.titulo : 0);
+    if (fraseCorrida) return ms;
     for (let i = 0; i < v.linhas.length - 1; i++) {
         if (!temPontuacaoFinal(v.linhas[i])) ms += PAUSA.linhaPoetica;
     }
@@ -248,7 +256,7 @@ export function escaparXml(t: string): string {
         .replace(/'/g, '&apos;');
 }
 
-function ssmlDaFala(f: Fala): string {
+function ssmlDaFala(f: Fala, fraseCorrida = false): string {
     if (f.tipo === 'anuncio') return `${escaparXml(f.texto)}<break time='${f.pausaMs}ms'/>`;
     const v = f.verso;
     let s = '';
@@ -256,10 +264,10 @@ function ssmlDaFala(f: Fala): string {
     v.linhas.forEach((linha, i) => {
         s += escaparXml(linha);
         if (i < v.linhas.length - 1) {
-            s += temPontuacaoFinal(linha) ? ' ' : `<break time='${PAUSA.linhaPoetica}ms'/>`;
+            s += temPontuacaoFinal(linha) || fraseCorrida ? ' ' : `<break time='${PAUSA.linhaPoetica}ms'/>`;
         }
     });
-    s += `<break time='${v.pausaMs}ms'/>`;
+    if (!(fraseCorrida && continuaNaProxima(v))) s += `<break time='${v.pausaMs}ms'/>`;
     return s;
 }
 
@@ -268,10 +276,14 @@ export interface OpcoesVoz {
     estilo?: string;
     velocidade?: string;
     pausaEntreFrasesMs?: number;
+    fraseCorrida?: boolean;
 }
 
-export function ssmlDoBloco(bloco: Fala[], { voz, estilo = '', velocidade = '-5%', pausaEntreFrasesMs = 150 }: OpcoesVoz): string {
-    let corpo = bloco.map(ssmlDaFala).join(' ');
+export function ssmlDoBloco(
+    bloco: Fala[],
+    { voz, estilo = '', velocidade = '-5%', pausaEntreFrasesMs = 150, fraseCorrida = false }: OpcoesVoz,
+): string {
+    let corpo = bloco.map(f => ssmlDaFala(f, fraseCorrida)).join(' ');
     corpo = `<prosody rate='${velocidade}'>${corpo}</prosody>`;
     if (estilo) corpo = `<mstts:express-as style='${estilo}'>${corpo}</mstts:express-as>`;
     if (/Multilingual/i.test(voz)) corpo = `<lang xml:lang='pt-BR'>${corpo}</lang>`;
@@ -287,8 +299,8 @@ export function ssmlDoBloco(bloco: Fala[], { voz, estilo = '', velocidade = '-5%
 // Estima onde cada versículo começa e termina dentro do áudio de um bloco.
 // Pausas do SSML e da pontuação são conhecidas; o resto da duração é
 // dividido pelas sílabas.
-export function segmentosDoBloco(bloco: Fala[], duracaoSeg: number, inicioSeg = 0): Segmento[] {
-    const pausaDe = (f: Fala) => silencioDaFala(f) / 1000 + pausasNaturais(f);
+export function segmentosDoBloco(bloco: Fala[], duracaoSeg: number, inicioSeg = 0, fraseCorrida = false): Segmento[] {
+    const pausaDe = (f: Fala) => silencioDaFala(f, fraseCorrida) / 1000 + pausasNaturais(f);
     const inicio = Math.min(TEMPO_NATURAL.inicioDoBloco, duracaoSeg * 0.1);
     const pausaTotal = bloco.reduce((s, f) => s + pausaDe(f), 0);
     const silabasTotal = bloco.reduce((s, f) => s + Math.max(1, silabas(textosDaFala(f).join(' '))), 0);
