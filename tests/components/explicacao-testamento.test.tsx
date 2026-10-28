@@ -57,6 +57,7 @@ describe('painel da explicação do testamento', () => {
     it('enquanto prepara, avisa a espera e que fica guardada', () => {
         painel({ carregando: true });
         expect(screen.getByRole('status').textContent).toContain('Preparando a explicação de Salmos 92-95');
+        expect(screen.getByRole('status').textContent).toContain('pode levar mais de um minuto');
         expect(screen.getByRole('status').textContent).toContain('depois fica guardada para todos');
         expect(screen.getByRole('dialog', { name: /Antigo Testamento: Salmos 92-95/ })).toBeTruthy();
         expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Antigo Testamento · Salmos 92-95');

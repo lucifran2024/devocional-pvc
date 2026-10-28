@@ -129,7 +129,7 @@ export function PainelExplicacaoTestamento({
                     {carregando ? (
                         <div role="status">
                             <p className="text-[13px] font-medium text-text-muted">Preparando a explicação de {referencia}…</p>
-                            <p className="mt-1 text-[13px] text-text-muted">Na primeira vez leva até um minuto; depois fica guardada para todos.</p>
+                            <p className="mt-1 text-[13px] text-text-muted">Na primeira vez pode levar mais de um minuto; depois fica guardada para todos.</p>
                             <div className="mt-5 space-y-2.5 animate-pulse" aria-hidden="true">
                                 <div className="h-3 w-2/5 rounded-full bg-surface-2" />
                                 <div className="h-3 rounded-full bg-surface-2" />

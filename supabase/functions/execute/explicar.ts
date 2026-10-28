@@ -271,7 +271,9 @@ export interface ContextoTestamento {
 export const CACHE_EXPLICAR_TESTAMENTO = 'explicar_testamento_v3';
 /** Vários capítulos levam mais que uma parte: tempo por modelo na escrita e na revisão. */
 export const TEMPO_ESCRITA_TESTAMENTO_MS = 60_000;
-export const TEMPO_REVISAO_TESTAMENTO_MS = 45_000;
+// 28/10: o app-pvc concluiu revisões em ~56-72 s, depois do timeout antigo de 45 s.
+// 60 s de escrita + 80 s de revisão deixam margem para o timeout de requisição da Edge (150 s).
+export const TEMPO_REVISAO_TESTAMENTO_MS = 80_000;
 
 export function limitesTestamento(capitulos: number): { maxPalavras: number; maxTokens: number } {
     const n = Math.max(1, Math.floor(capitulos || 1));

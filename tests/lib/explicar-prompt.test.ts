@@ -124,7 +124,8 @@ describe('método novo de explicar', () => {
         expect(MODELOS_EXPLICAR_TUNEL).toEqual(['ag/gemini-3.8-flash-high', 'app-pvc']);
         expect(MODELOS_REVISAO_TUNEL).toEqual(['app-pvc']);
         expect(TEMPO_ESCRITA_TESTAMENTO_MS).toBeGreaterThan(40_000);
-        expect(TEMPO_REVISAO_TESTAMENTO_MS).toBeGreaterThan(40_000);
+        // 28/10: revisão concluiu no servidor após 56–72 s, mas o cliente abortava aos 45 s.
+        expect(TEMPO_REVISAO_TESTAMENTO_MS).toBe(80_000);
     });
 });
 
