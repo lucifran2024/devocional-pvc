@@ -66,11 +66,13 @@ function maiorPalavra(...textos: string[]): number {
   return Math.max(0, ...textos.flatMap((t) => t.split(/\s+/)).map((p) => p.length));
 }
 
+// Depois do 3º ajuste ("não tá muito grande os dois?"): 26 → 20 px no
+// nome comum; os passos menores continuam garantindo que nada vaza.
 function tamanhoDoNomeDoLivro(livroNome: string): string {
   const n = maiorPalavra(livroNome);
-  if (n <= 7) return 'text-[1.625rem]';
-  if (n <= 10) return 'text-[1.375rem]';
-  if (n <= 12) return 'text-[1.125rem]';
+  if (n <= 7) return 'text-[1.25rem]';
+  if (n <= 10) return 'text-[1.125rem]';
+  if (n <= 12) return 'text-[1rem]';
   return 'text-[0.9375rem]';
 }
 
@@ -81,7 +83,7 @@ const QUEBRA_SEGURA = 'hyphens-auto [overflow-wrap:anywhere]';
 function Passagem({ texto, tamanho }: { texto: string; tamanho: string }) {
   const partes = texto.match(/^(.*\S)\s+(\d[\d:.,–-]*)$/);
   return (
-    <span data-passagem className={`reading-serif block ${tamanho} font-medium leading-snug text-text-primary ${QUEBRA_SEGURA}`}>
+    <span data-passagem className={`reading-serif block ${tamanho} font-medium leading-tight text-text-primary ${QUEBRA_SEGURA}`}>
       {partes ? <>{partes[1]} <span className="whitespace-nowrap">{partes[2]}</span></> : texto}
     </span>
   );
@@ -126,8 +128,8 @@ export default function DashboardPage() {
   // O quadro da Bíblia diz onde abre (3º ajuste: "vai direto para a Bíblia, né?")
   const versiculoGuardado = continuar?.versiculo && continuar.versiculo > 1 ? continuar.versiculo : null;
   // A letra dos dois quadros segue a palavra mais longa (ver maiorPalavra)
-  const tamanhoNome = continuar ? tamanhoDoNomeDoLivro(continuar.livroNome) : 'text-[1.625rem]';
-  const tamanhoPassagem = maiorPalavra(...passagens) > 12 ? 'text-[0.9375rem]' : 'text-[1.125rem]';
+  const tamanhoNome = continuar ? tamanhoDoNomeDoLivro(continuar.livroNome) : 'text-[1.25rem]';
+  const tamanhoPassagem = maiorPalavra(...passagens) > 12 ? 'text-[0.9375rem]' : 'text-[1rem]';
   const rotuloBiblia = continuar
     ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}${versiculoGuardado ? `, versículo ${versiculoGuardado}` : ''}, na Bíblia`
     : 'Abrir minha Bíblia';
@@ -177,7 +179,8 @@ export default function DashboardPage() {
 
         {/* 2. Hoje (3º ajuste, 12/11/2026: "o ler na Bíblia e o plano de
             leitura, os dois de cima, dá uma melhorada"): dois quadros lado a
-            lado, o topo continua baixo no celular (25/09 e 01/10). A Bíblia
+            lado, o topo continua baixo no celular (25/09 e 01/10; mais baixo
+            ainda depois de "não tá muito grande os dois?"). A Bíblia
             (âmbar, a ação principal) reabre no capítulo e no versículo onde
             parou; a leitura de hoje mostra as passagens uma por linha. Um
             atalho só para a leitura do dia. */}
@@ -186,34 +189,34 @@ export default function DashboardPage() {
             <Link
               href="/biblioteca"
               aria-label={rotuloBiblia}
-              className="flex min-h-[7.5rem] flex-col justify-between rounded-[var(--radius-xl)] bg-amber-500 p-4 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97]"
+              className="flex flex-col justify-between rounded-[var(--radius-xl)] bg-amber-500 px-3.5 py-3 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97]"
             >
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-amber-950/75">
-                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-4 text-amber-950/75">
+                <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {continuar ? 'Continuar' : 'Bíblia'}
               </span>
-              <span className="mt-3 block">
+              <span className="mt-2 block">
                 {/* espaço comum: em nome comprido o capítulo desce de linha
                     em vez de empurrar o nome para fora do quadro */}
                 <span data-nome-livro className={`reading-serif block font-medium leading-[1.1] ${tamanhoNome} ${QUEBRA_SEGURA}`}>
                   {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
                 </span>
-                <span className="mt-1 block text-[13px] text-amber-950/70">
+                <span className="mt-0.5 block text-[13px] leading-4 text-amber-950/70">
                   {continuar ? (versiculoGuardado ? `Versículo ${versiculoGuardado}` : 'De onde parou') : 'Comece a leitura'}
                 </span>
               </span>
             </Link>
             <Link
               href="/plano-de-leitura?ler=1"
-              className="cartao flex min-h-[7.5rem] flex-col justify-between p-4 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97]"
+              className="cartao flex flex-col justify-between px-3.5 py-3 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97]"
             >
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary">
-                <Calendar className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-4 text-text-secondary">
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
                 {passagens.length ? 'Leitura de hoje' : 'Plano de leitura'}
               </span>
-              <span className="mt-3 block">
+              <span className="mt-2 block">
                 {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} tamanho={tamanhoPassagem} />) : (
-                  <span className="reading-serif block text-[1.125rem] font-medium leading-snug text-text-primary">Leitura do dia</span>
+                  <span className="reading-serif block text-[1rem] font-medium leading-tight text-text-primary">Leitura do dia</span>
                 )}
               </span>
             </Link>

@@ -71,6 +71,9 @@ describe('organização do início', () => {
         expect(leitura).toHaveAttribute('href', '/plano-de-leitura?ler=1');
         const linhas = [...leitura.querySelectorAll('[data-passagem]')].map((el) => el.textContent);
         expect(linhas).toEqual(['Isaías 51-54', 'Hebreus 7']);
+        // quadros compactos: sem altura mínima fixa, passagem em 16 px
+        for (const quadro of links) expect(quadro.className).not.toMatch(/min-h-/);
+        expect(leitura.querySelector('[data-passagem]')?.className).toContain('text-[1rem]');
         // os números não se separam ("33-" / "36")
         expect(leitura.querySelector('[data-passagem] .whitespace-nowrap')).toHaveTextContent('51-54');
         expect(links[0].parentElement?.className ?? hoje.className).toMatch(/grid-cols-2/);
@@ -96,12 +99,14 @@ describe('organização do início', () => {
         for (const p of passagens) expect(p.className).toContain('text-[0.9375rem]');
     });
 
+    // 12/11/2026, depois do 3º ajuste: "não tá muito grande os dois?" — os
+    // quadros do topo ficaram mais baixos e com a letra menor (26 → 20 px).
     it('a letra do quadro da Bíblia segue a palavra mais longa do nome', async () => {
         const casos: Array<[string, string]> = [
-            ['João', '1.625rem'],
-            ['Provérbios', '1.375rem'],
-            ['Cântico dos Cânticos', '1.375rem'],
-            ['Deuteronômio', '1.125rem'],
+            ['João', '1.25rem'],
+            ['Provérbios', '1.125rem'],
+            ['Cântico dos Cânticos', '1.125rem'],
+            ['Deuteronômio', '1rem'],
             ['2 Tessalonicenses', '0.9375rem'],
         ];
         for (const [livroNome, tamanho] of casos) {
