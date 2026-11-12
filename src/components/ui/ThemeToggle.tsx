@@ -4,13 +4,15 @@ import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
-export function ThemeToggle() {
+// `discreto` (início, 12/11/2026, 5º ajuste): sem a caixa com borda, que
+// pesava mais que os quadros ao lado; a área de toque continua 44 px.
+export function ThemeToggle({ discreto = false }: { discreto?: boolean }) {
     const { resolvedTheme, setTheme } = useTheme();
 
     return (
         <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="btn-glass min-h-11 min-w-11 flex items-center justify-center p-2 rounded-xl relative overflow-hidden group"
+            className={`${discreto ? "rounded-full transition-colors hover:bg-surface-2/60" : "btn-glass rounded-xl"} min-h-11 min-w-11 flex items-center justify-center p-2 relative overflow-hidden group`}
             aria-label={resolvedTheme === "dark" ? "Ativar modo claro" : "Ativar modo noturno"}
             title={resolvedTheme === "dark" ? "Ativar modo claro" : "Ativar modo noturno"}
         >

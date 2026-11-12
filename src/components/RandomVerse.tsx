@@ -56,10 +56,10 @@ export function RandomVerse() {
     // 2º ajuste: nome pequeno e âmbar, sem o ícone em quadradinho; botões
     // compactos na mesma fileira da Palavra.
     return (
-        <section aria-labelledby="titulo-versiculo-do-dia" className="cartao p-5 md:p-7">
+        <section aria-labelledby="titulo-versiculo-do-dia" className="cartao p-4 md:p-7">
             <header>
                 {/* Cor no <span>: a regra global de h1–h6 vence classe no título */}
-                <h2 id="titulo-versiculo-do-dia" className="text-[15px] font-semibold">
+                <h2 id="titulo-versiculo-do-dia" className="text-sm font-semibold">
                     <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                         <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {doDia ? 'Versículo do dia' : 'Outro versículo'}
@@ -75,7 +75,7 @@ export function RandomVerse() {
                         <div className="h-5 w-2/3 animate-pulse rounded-lg bg-surface-2" />
                     </div>
                 ) : texto ? (
-                    <blockquote className="reading-serif text-[21px] leading-[1.55] text-text-primary md:text-2xl">
+                    <blockquote className="reading-serif text-[1.25rem] leading-[1.55] text-text-primary md:text-2xl">
                         {texto}
                     </blockquote>
                 ) : (
@@ -85,7 +85,7 @@ export function RandomVerse() {
                 )}
                 <figcaption className="mt-4 flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
                     {ref}
-                    <span className="text-xs font-medium tracking-wide text-text-muted" title="Nova Tradução na Linguagem de Hoje">
+                    <span className="text-sm font-medium tracking-wide text-text-muted" title="Nova Tradução na Linguagem de Hoje">
                         {VERSAO_VERSICULO_DO_DIA}
                     </span>
                 </figcaption>
@@ -112,22 +112,22 @@ export function RandomVerse() {
             {/* Sorteio e retorno, discretos, embaixo da fileira */}
             <div className="-ml-3 mt-1 flex flex-wrap items-center gap-x-1">
                 {falhou && (
-                    <button type="button" onClick={tentarDeNovo} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-amber-700 dark:text-amber-400">
+                    <button type="button" onClick={tentarDeNovo} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-amber-700 dark:text-amber-400">
                         <RefreshCw className="h-4 w-4" aria-hidden="true" /> Tentar de novo
                     </button>
                 )}
                 {doDia ? (
-                    <button type="button" onClick={sortear} disabled={carregando} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary disabled:opacity-50">
+                    <button type="button" onClick={sortear} disabled={carregando} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary disabled:opacity-50">
                         <Shuffle className="h-4 w-4 transition-transform duration-300 group-active:rotate-180" aria-hidden="true" /> Outro versículo
                     </button>
                 ) : (
-                    <button type="button" onClick={voltarAoDeHoje} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary">
+                    <button type="button" onClick={voltarAoDeHoje} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary">
                         <RotateCcw className="h-4 w-4 transition-transform duration-300 group-active:-rotate-90" aria-hidden="true" /> Voltar ao versículo de hoje
                     </button>
                 )}
             </div>
             <p className="sr-only" aria-live="polite">{aviso}</p>
-            {aviso && <p className="mt-1 text-[13px] font-medium text-emerald-700 dark:text-emerald-300" aria-hidden="true">{aviso}</p>}
+            {aviso && <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-300" aria-hidden="true">{aviso}</p>}
         </section>
     );
 }

@@ -162,34 +162,34 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     // vai no <span>: a regra global de h1–h6 em globals.css vence classe de
     // cor posta direto no título.
     const cabecalho = (
-        <header className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-            <h2 id="titulo-palavra-manha" className="text-[15px] font-semibold">
+        <header className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+            <h2 id="titulo-palavra-manha" className="text-sm font-semibold">
                 <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                     <Sun className="h-4 w-4 shrink-0" aria-hidden="true" />
                     Palavra da Manhã
                 </span>
             </h2>
-            {subtitulo && <p className="text-[13px] text-text-muted">{subtitulo}</p>}
+            {subtitulo && <p className="text-sm text-text-muted">{subtitulo}</p>}
         </header>
     );
 
     if (loading && !data) {
         return (
-            <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7">
+            <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7">
                 {cabecalho}
                 <div className="mt-5 space-y-3" aria-hidden="true">
                     <div className="h-4 w-full animate-pulse rounded-lg bg-surface-2" />
                     <div className="h-4 w-11/12 animate-pulse rounded-lg bg-surface-2" />
                     <div className="h-4 w-4/5 animate-pulse rounded-lg bg-surface-2" />
                 </div>
-                <p className="mt-4 text-[13px] text-text-muted" role="status">Buscando inspiração matinal...</p>
+                <p className="mt-4 text-sm text-text-muted" role="status">Buscando inspiração matinal...</p>
             </section>
         );
     }
 
     if (error) {
         return (
-            <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7">
+            <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7">
                 {cabecalho}
                 <p className="mt-4 text-sm text-text-secondary">{error}</p>
                 <button
@@ -217,10 +217,10 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const comQuebras = (texto: string) => texto.replace(/\n/g, '  \n');
 
     return (
-        <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7 animate-[fadeIn_0.35s_ease-out]">
+        <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7 animate-[fadeIn_0.35s_ease-out]">
             {/* Aviso: exibindo mensagem salva (sem conexão) */}
             {modoOffline && (
-                <div className="mb-4 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-[13px] font-semibold text-orange-700 dark:text-orange-300">
+                <div className="mb-4 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-sm font-semibold text-orange-700 dark:text-orange-300">
                     <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
                     Sem conexão — mostrando a última mensagem salva ({data.dia_semana}).
                 </div>
@@ -230,7 +230,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
             {/* Dia de Passagem do Dia: referência extra */}
             {data.passagem_ref && (
-                <p className="mt-3 flex items-center gap-1.5 text-[13px] font-semibold text-amber-700 dark:text-amber-400">
+                <p className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400">
                     <BookOpen className="h-4 w-4" aria-hidden="true" />
                     {data.passagem_ref}
                 </p>
@@ -244,7 +244,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
             {/* Texto: à esquerda, com respiro entre parágrafos (.texto-palavra);
                 versículo em bloco próprio e fechamento destacado (globals.css) */}
-            <div className={`texto-palavra reading-serif ${capitular ? 'com-capitular' : ''} ${titulo ? 'mt-4' : 'mt-5'} text-[1.0625rem] leading-[1.75] text-text-primary`}>
+            <div className={`texto-palavra reading-serif ${capitular ? 'com-capitular' : ''} ${titulo ? 'mt-4' : 'mt-5'} text-[1.125rem] leading-[1.7] text-text-primary`}>
                 {blocos.map((bloco, i) => {
                     if (bloco.tipo === 'versiculo') {
                         return (

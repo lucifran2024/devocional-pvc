@@ -67,12 +67,14 @@ function maiorPalavra(...textos: string[]): number {
 }
 
 // Depois do 3º ajuste ("não tá muito grande os dois?"): 26 → 20 px no
-// nome comum; os passos menores continuam garantindo que nada vaza.
-function tamanhoDoNomeDoLivro(livroNome: string): string {
-  const n = maiorPalavra(livroNome);
-  if (n <= 7) return 'text-[1.25rem]';
-  if (n <= 10) return 'text-[1.125rem]';
-  if (n <= 12) return 'text-[1rem]';
+// nome comum. 5º ajuste ("ainda ficou desproporcional"): os dois quadros são
+// irmãos e usam a mesma letra, 18 px — o nome do livro de um lado e as
+// passagens do outro. A palavra mais longa dos dois decide; os passos menores
+// continuam garantindo que nada vaza.
+function tamanhoDosQuadros(...textos: string[]): string {
+  const n = maiorPalavra(...textos);
+  if (n <= 11) return 'text-[1.125rem]';
+  if (n <= 13) return 'text-[1rem]';
   return 'text-[0.9375rem]';
 }
 
@@ -102,14 +104,21 @@ function formatarDataCurta(dataStr: string): string {
 // 2º ajuste (12/11/2026): os cartões iguais com ícone em quadradinho
 // colorido eram o que deixava a tela "comum". Cada grupo virou um cartão só,
 // dividido em linhas, como uma lista do celular.
+// 5º ajuste ("as listas ficaram legais, mas não excelentes"): o nome do grupo
+// segue o nome dos cartões de cima (pequeno, âmbar, no mesmo recuo do texto de
+// dentro das caixas) e a divisória começa no texto, não na borda. A letra
+// com serifa fica só para o conteúdo (saudação, Palavra, passagens, versículo).
 function GrupoDeAtalhos({ id, titulo, itens, posicao }: { id: string; titulo: string; itens: Atalho[]; posicao: number }) {
   return (
     <section aria-labelledby={id} className="entrada" style={ordem(posicao)}>
-      <h2 id={id} className="reading-serif mb-3 text-xl font-semibold text-text-primary">{titulo}</h2>
-      <ul className="cartao divide-y divide-border-subtle overflow-hidden">
-        {itens.map((item) => (
+      {/* Cor no <span>: a regra global de h1–h6 vence classe no título */}
+      <h2 id={id} className="mb-2 px-4 text-sm font-semibold md:px-7">
+        <span className="text-amber-700 dark:text-amber-400">{titulo}</span>
+      </h2>
+      <ul className="cartao overflow-hidden">
+        {itens.map((item, i) => (
           <li key={item.href}>
-            <DashboardCard href={item.href} title={item.title} desc={item.desc} icon={item.icon} />
+            <DashboardCard href={item.href} title={item.title} desc={item.desc} icon={item.icon} divisoria={i > 0} />
           </li>
         ))}
       </ul>
@@ -127,9 +136,8 @@ export default function DashboardPage() {
   const passagens = dividirPassagens(payload?.passagem_do_dia);
   // O quadro da Bíblia diz onde abre (3º ajuste: "vai direto para a Bíblia, né?")
   const versiculoGuardado = continuar?.versiculo && continuar.versiculo > 1 ? continuar.versiculo : null;
-  // A letra dos dois quadros segue a palavra mais longa (ver maiorPalavra)
-  const tamanhoNome = continuar ? tamanhoDoNomeDoLivro(continuar.livroNome) : 'text-[1.25rem]';
-  const tamanhoPassagem = maiorPalavra(...passagens) > 12 ? 'text-[0.9375rem]' : 'text-[1rem]';
+  // Uma letra só para os dois quadros, pela palavra mais longa (ver maiorPalavra)
+  const tamanhoQuadro = tamanhoDosQuadros(continuar?.livroNome ?? '', ...passagens);
   const rotuloBiblia = continuar
     ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}${versiculoGuardado ? `, versículo ${versiculoGuardado}` : ''}, na Bíblia`
     : 'Abrir minha Bíblia';
@@ -170,10 +178,11 @@ export default function DashboardPage() {
         <header className="entrada flex items-start justify-between gap-4" style={ordem(0)}>
           <div className="min-w-0">
             <h1 className="reading-serif text-[2rem] font-medium leading-[1.1] tracking-[-0.01em]">{cumprimento}.</h1>
-            <p className="mt-1.5 text-[15px] text-text-secondary">{formatarDataCurta(dataHoje)}</p>
+            <p className="mt-1.5 text-base text-text-secondary">{formatarDataCurta(dataHoje)}</p>
           </div>
-          <div className="shrink-0">
-            <ThemeToggle />
+          {/* 5º ajuste: sem a caixa com borda, que pesava mais que os quadros */}
+          <div className="-mr-2 shrink-0">
+            <ThemeToggle discreto />
           </div>
         </header>
 
@@ -189,34 +198,34 @@ export default function DashboardPage() {
             <Link
               href="/biblioteca"
               aria-label={rotuloBiblia}
-              className="flex flex-col justify-between rounded-[var(--radius-xl)] bg-amber-500 px-3.5 py-3 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97]"
+              className="flex flex-col justify-between rounded-[var(--radius-xl)] border border-transparent bg-amber-500 px-4 py-3 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97] md:px-7"
             >
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-4 text-amber-950/75">
-                <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-sm font-semibold leading-4 text-amber-950/75">
+                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {continuar ? 'Continuar' : 'Bíblia'}
               </span>
               <span className="mt-2 block">
                 {/* espaço comum: em nome comprido o capítulo desce de linha
                     em vez de empurrar o nome para fora do quadro */}
-                <span data-nome-livro className={`reading-serif block font-medium leading-[1.1] ${tamanhoNome} ${QUEBRA_SEGURA}`}>
+                <span data-nome-livro className={`reading-serif block font-medium leading-tight ${tamanhoQuadro} ${QUEBRA_SEGURA}`}>
                   {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
                 </span>
-                <span className="mt-0.5 block text-[13px] leading-4 text-amber-950/70">
+                <span className="mt-0.5 block text-sm leading-5 text-amber-950/70">
                   {continuar ? (versiculoGuardado ? `Versículo ${versiculoGuardado}` : 'De onde parou') : 'Comece a leitura'}
                 </span>
               </span>
             </Link>
             <Link
               href="/plano-de-leitura?ler=1"
-              className="cartao flex flex-col justify-between px-3.5 py-3 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97]"
+              className="cartao flex flex-col justify-between px-4 py-3 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97] md:px-7"
             >
-              <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-4 text-text-secondary">
-                <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-sm font-semibold leading-4 text-text-secondary">
+                <Calendar className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
                 {passagens.length ? 'Leitura de hoje' : 'Plano de leitura'}
               </span>
               <span className="mt-2 block">
-                {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} tamanho={tamanhoPassagem} />) : (
-                  <span className="reading-serif block text-[1rem] font-medium leading-tight text-text-primary">Leitura do dia</span>
+                {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} tamanho={tamanhoQuadro} />) : (
+                  <span className={`reading-serif block font-medium leading-tight text-text-primary ${tamanhoQuadro}`}>Leitura do dia</span>
                 )}
               </span>
             </Link>

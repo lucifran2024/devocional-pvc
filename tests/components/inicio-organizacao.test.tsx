@@ -71,9 +71,15 @@ describe('organização do início', () => {
         expect(leitura).toHaveAttribute('href', '/plano-de-leitura?ler=1');
         const linhas = [...leitura.querySelectorAll('[data-passagem]')].map((el) => el.textContent);
         expect(linhas).toEqual(['Isaías 51-54', 'Hebreus 7']);
-        // quadros compactos: sem altura mínima fixa, passagem em 16 px
-        for (const quadro of links) expect(quadro.className).not.toMatch(/min-h-/);
-        expect(leitura.querySelector('[data-passagem]')?.className).toContain('text-[1rem]');
+        // quadros compactos: sem altura mínima fixa; 5º ajuste ("ainda ficou
+        // desproporcional"): o nome e as passagens têm a mesma letra (18 px)
+        // e o mesmo recuo de dentro dos cartões (16 px)
+        for (const quadro of links) {
+            expect(quadro.className).not.toMatch(/min-h-/);
+            expect(quadro.className).toContain('px-4');
+        }
+        expect(leitura.querySelector('[data-passagem]')?.className).toContain('text-[1.125rem]');
+        expect(biblia.querySelector('[data-nome-livro]')?.className).toContain('text-[1.125rem]');
         // os números não se separam ("33-" / "36")
         expect(leitura.querySelector('[data-passagem] .whitespace-nowrap')).toHaveTextContent('51-54');
         expect(links[0].parentElement?.className ?? hoje.className).toMatch(/grid-cols-2/);
@@ -101,9 +107,10 @@ describe('organização do início', () => {
 
     // 12/11/2026, depois do 3º ajuste: "não tá muito grande os dois?" — os
     // quadros do topo ficaram mais baixos e com a letra menor (26 → 20 px).
+    // 5º ajuste: 20 → 18 px, a mesma letra das passagens ao lado.
     it('a letra do quadro da Bíblia segue a palavra mais longa do nome', async () => {
         const casos: Array<[string, string]> = [
-            ['João', '1.25rem'],
+            ['João', '1.125rem'],
             ['Provérbios', '1.125rem'],
             ['Cântico dos Cânticos', '1.125rem'],
             ['Deuteronômio', '1rem'],
@@ -116,6 +123,20 @@ describe('organização do início', () => {
             expect(container.querySelector('[data-nome-livro]')?.className, livroNome).toContain(`text-[${tamanho}]`);
             unmount();
         }
+    });
+
+    // 5º ajuste: os dois quadros são irmãos e usam a mesma letra; uma
+    // passagem comprida na leitura de hoje diminui os dois juntos.
+    it('os dois quadros do topo usam sempre a mesma letra', async () => {
+        localStorage.setItem('biblia-posicao-leitura', JSON.stringify({ livro: 'jo', livroNome: 'João', capitulo: 3, versiculo: 16, atualizadoEm: 1 }));
+        localStorage.setItem('payload-dia-local', JSON.stringify({ data: '2026-11-12', passagem_do_dia: '1 Tessalonicenses 1-3, Salmos 2' }));
+        render(<DashboardPage />);
+        const hoje = screen.getByRole('region', { name: 'Hoje' });
+        const biblia = await within(hoje).findByRole('link', { name: /Continuar em João 3/ });
+        const tamanhoDe = (el: Element | null | undefined) => el?.className.match(/text-\[[\d.]+rem\]/)?.[0];
+        const nome = tamanhoDe(biblia.querySelector('[data-nome-livro]'));
+        expect(nome).toBe('text-[0.9375rem]');
+        for (const p of hoje.querySelectorAll('[data-passagem]')) expect(tamanhoDe(p)).toBe(nome);
     });
 
     it('sem leitura guardada, a Bíblia oferece abrir', () => {
@@ -142,6 +163,26 @@ describe('organização do início', () => {
             expect(within(estudar).getByRole('link', { name: nome })).toHaveAttribute('href', href);
         }
         expect(within(estudar).getAllByRole('link')).toHaveLength(4);
+    });
+
+    // 5º ajuste (12/11/2026): "as listas ficaram legais, mas não excelentes".
+    // O nome de cada grupo segue o nome dos cartões (pequeno, âmbar, alinhado
+    // com o texto de dentro das caixas); a divisória começa no texto, não na
+    // borda; o ícone é âmbar (cinza parecia desligado).
+    it('listas: nome do grupo igual ao dos cartões e divisória a partir do texto', () => {
+        render(<DashboardPage />);
+        const estudar = screen.getByRole('region', { name: 'Estudar' });
+        const titulo = within(estudar).getByRole('heading', { level: 2, name: 'Estudar' });
+        expect(titulo.className).toContain('text-sm');
+        expect(titulo.className).not.toMatch(/reading-serif|text-xl/);
+        const lista = estudar.querySelector('ul');
+        expect(lista?.className).not.toMatch(/divide-y/);
+        const linhas = [...estudar.querySelectorAll('li')];
+        expect(linhas).toHaveLength(4);
+        const divisorias = linhas.map((li) => li.querySelector('[data-divisoria]')?.className ?? '');
+        expect(divisorias[0]).not.toMatch(/border-t/);
+        for (const d of divisorias.slice(1)) expect(d).toMatch(/border-t/);
+        for (const li of linhas) expect(li.querySelector('svg')?.getAttribute('class')).toMatch(/text-amber-700/);
     });
 
     it('transcrição num grupo próprio', () => {
