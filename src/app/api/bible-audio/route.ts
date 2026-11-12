@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-    prepararVersos, montarFalas, montarBlocos, ssmlDoBloco, segmentosDoBloco,
+    prepararVersos, montarFalas, montarBlocos, ssmlDoBloco, segmentosDoBloco, textosFalados,
     type Fala, type Segmento,
 } from '@/lib/narracao-biblica';
+import { assinaturaDePronuncia } from '@/lib/pronuncia';
 import {
     escolherVozNarracao, nomeDaVoz, estiloDaVoz,
     VOZ_VOICESTUDIO_MASCULINA, vozAzureDeReserva,
@@ -120,8 +121,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'sem_chave' }, { status: 503 });
     }
 
+    const versos = prepararVersos(
+        verses.map(v => ({ verse: Number(v.verse), text: String(v.text || ''), chapter: v.chapter ? Number(v.chapter) : undefined })),
+        capitulo,
+    );
+    if (versos.length === 0) {
+        return NextResponse.json({ ok: false, error: 'sem_texto' }, { status: 400 });
+    }
+
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-    const pastaCap = `${voz}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}`;
+    // Correção de pronúncia que toca este capítulo muda o endereço: o áudio
+    // antigo fica para trás e o capítulo é narrado de novo, já corrigido.
+    const pronuncia = assinaturaDePronuncia(textosFalados(versos));
+    const pastaCap = `${voz}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}${pronuncia ? `-p${pronuncia}` : ''}`;
     const fullPath = `${pastaCap}/full.mp3`;
     const metaPath = `${pastaCap}/full.json`;
     const fonte = `Narração · ${nomeDaVoz(voz)}${vozEscolhida !== voz ? ' (reserva)' : ''}`;
@@ -139,14 +151,6 @@ export async function POST(request: Request) {
         } catch {
             // cache corrompido: narra de novo
         }
-    }
-
-    const versos = prepararVersos(
-        verses.map(v => ({ verse: Number(v.verse), text: String(v.text || ''), chapter: v.chapter ? Number(v.chapter) : undefined })),
-        capitulo,
-    );
-    if (versos.length === 0) {
-        return NextResponse.json({ ok: false, error: 'sem_texto' }, { status: 400 });
     }
 
     const blocos = montarBlocos(montarFalas(versos, livroId));

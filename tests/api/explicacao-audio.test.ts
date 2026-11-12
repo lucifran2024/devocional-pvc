@@ -41,7 +41,26 @@ describe('POST /api/explicacao-audio', () => {
         expect(chamada[1]?.body).toContain("name='pt-BR-MacerioMultilingualNeural'");
         expect(chamada[1]?.body).not.toContain('###');
         expect(storage.upload).toHaveBeenCalledTimes(1);
-        expect(storage.upload.mock.calls[0][0]).toMatch(/^explicacoes\/v1\/pt-BR-MacerioMultilingualNeural\/[a-f0-9]{64}\/full.mp3$/);
+        expect(chamada[1]?.body).toContain("A fé.<break time='600ms'/>Confiar: Deus nos sustenta.</prosody>");
+        expect(storage.upload.mock.calls[0][0]).toMatch(/^explicacoes\/v2\/pt-BR-MacerioMultilingualNeural\/[a-f0-9]{64}\/full.mp3$/);
+    });
+
+    it('texto longo vai em blocos que terminam no fim do parágrafo, com pausa na emenda', async () => {
+        const paragrafo = (n: number) => Array.from({ length: 8 }, (_, i) => `Frase ${i} do parágrafo ${n}, com tamanho para o teste de blocos.`).join(' ');
+        const resposta = await POST(pedido({ texto: [1, 2, 3, 4, 5].map(paragrafo).join('\n\n') }));
+        expect(resposta.status).toBe(200);
+        const corpos = vi.mocked(fetch).mock.calls.map(c => String(c[1]?.body));
+        expect(corpos.length).toBeGreaterThan(1);
+        // todo bloco fecha num ponto final; só o último fica sem a pausa de parágrafo
+        corpos.slice(0, -1).forEach(c => expect(c).toMatch(/blocos\.<break time='600ms'\/><\/prosody>/));
+        expect(corpos[corpos.length - 1]).toMatch(/blocos\.<\/prosody>/);
+        expect(corpos.join('')).toContain('do parágrafo 5');
+    });
+
+    it('a mesma explicação com outra divisão de parágrafos é outro áudio', async () => {
+        await POST(pedido({ texto: 'Primeira parte. Segunda parte.' }));
+        await POST(pedido({ texto: 'Primeira parte.\n\nSegunda parte.' }));
+        expect(storage.upload.mock.calls[0][0]).not.toBe(storage.upload.mock.calls[1][0]);
     });
 
     it('cacheia por conteúdo e voz sem narrar novamente', async () => {

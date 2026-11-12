@@ -2,8 +2,10 @@ import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-import { dividirExplicacaoEmFalas, textoFaladoDaExplicacao } from '@/lib/explicacao-audio';
-import { escaparXml } from '@/lib/narracao-biblica';
+import {
+    blocosDaExplicacao, paragrafosFaladosDaExplicacao, ssmlDoBlocoDaExplicacao, type TrechoDaExplicacao,
+} from '@/lib/explicacao-audio';
+import { assinaturaDePronuncia } from '@/lib/pronuncia';
 import { escolherVozNarracao, estiloDaVoz, nomeDaVoz, vozAzureDeReserva } from '@/lib/vozes-narracao';
 
 export const maxDuration = 120;
@@ -11,22 +13,15 @@ export const maxDuration = 120;
 // A mesma conta, as vozes e o cache Azure da Bíblia, mas sob outra pasta:
 // explicação da IA não é um capítulo nem pode contaminar o áudio bíblico.
 const BUCKET = 'bible-audio';
-const VERSAO = 'v1';
+// v2 = blocos que não cortam frase + pausa na troca de parágrafo (v1 cortava a cada 1.200 letras)
+const VERSAO = 'v2';
 const MAX_TEXTO = 14_000;
 const TAMANHO_BLOCO = 1200;
 const LOTE = 5;
 
 const aguardar = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function ssmlDaExplicacao(texto: string, voz: string): string {
-    const estilo = estiloDaVoz(voz);
-    let corpo = `<prosody rate='-5%'>${escaparXml(texto)}</prosody>`;
-    if (estilo) corpo = `<mstts:express-as style='${estilo}'>${corpo}</mstts:express-as>`;
-    if (/Multilingual/i.test(voz)) corpo = `<lang xml:lang='pt-BR'>${corpo}</lang>`;
-    return `<speak version='1.0' xml:lang='pt-BR' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts'><voice name='${voz}'><mstts:silence type='Sentenceboundary' value='150ms'/>${corpo}</voice></speak>`;
-}
-
-async function sintetizar(texto: string, voz: string, chave: string, regiao: string): Promise<ArrayBuffer | null> {
+async function sintetizar(ssml: string, chave: string, regiao: string): Promise<ArrayBuffer | null> {
     for (let tentativa = 0; tentativa < 3; tentativa++) {
         try {
             const resposta = await fetch(`https://${regiao}.tts.speech.microsoft.com/cognitiveservices/v1`, {
@@ -37,7 +32,7 @@ async function sintetizar(texto: string, voz: string, chave: string, regiao: str
                     'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
                     'User-Agent': 'devocional-pvc',
                 },
-                body: ssmlDaExplicacao(texto, voz),
+                body: ssml,
                 signal: AbortSignal.timeout(35_000),
             });
             if (resposta.ok) {
@@ -66,8 +61,8 @@ export async function POST(request: Request) {
     if (entrada.texto.length > MAX_TEXTO) {
         return NextResponse.json({ ok: false, error: 'texto_longo' }, { status: 413 });
     }
-    const texto = textoFaladoDaExplicacao(entrada.texto);
-    if (!texto) return NextResponse.json({ ok: false, error: 'texto_vazio' }, { status: 400 });
+    const paragrafos = paragrafosFaladosDaExplicacao(entrada.texto);
+    if (paragrafos.length === 0) return NextResponse.json({ ok: false, error: 'texto_vazio' }, { status: 400 });
     const vozEscolhida = escolherVozNarracao(typeof entrada.voz === 'string' ? entrada.voz : undefined);
     // O VoiceStudio só tem gravações exatas de capítulos selecionados (como Salmo 23).
     // Para explicação inédita, vale a MESMA reserva masculina do player bíblico.
@@ -81,7 +76,11 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
-    const hash = createHash('sha256').update(texto).digest('hex');
+    // O áudio depende do texto, da divisão em parágrafos e das correções de pronúncia que o tocam.
+    const hash = createHash('sha256')
+        .update(paragrafos.join('\n\n'))
+        .update(assinaturaDePronuncia(paragrafos))
+        .digest('hex');
     const pasta = `explicacoes/${VERSAO}/${voz}/${hash}`;
     const caminho = `${pasta}/full.mp3`;
     const bucket = supabase.storage.from(BUCKET);
@@ -92,11 +91,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true, fullUrl: url(), voz, fonte, cached: true });
     }
 
-    const blocos = dividirExplicacaoEmFalas(texto, TAMANHO_BLOCO);
+    const estilo = estiloDaVoz(voz);
+    const blocos = blocosDaExplicacao(paragrafos, TAMANHO_BLOCO);
+    const ssmlDe = (bloco: TrechoDaExplicacao[], indice: number) =>
+        ssmlDoBlocoDaExplicacao(bloco, { voz, estilo, ultimo: indice === blocos.length - 1 });
     const audios: (ArrayBuffer | null)[] = [];
     for (let inicio = 0; inicio < blocos.length; inicio += LOTE) {
         const resultados = await Promise.all(blocos.slice(inicio, inicio + LOTE)
-            .map(bloco => sintetizar(bloco, voz, chave, regiao)));
+            .map((bloco, i) => sintetizar(ssmlDe(bloco, inicio + i), chave, regiao)));
         audios.push(...resultados);
         if (resultados.some(audio => !audio)) {
             return NextResponse.json({ ok: false, error: 'sem_audio' }, { status: 502 });

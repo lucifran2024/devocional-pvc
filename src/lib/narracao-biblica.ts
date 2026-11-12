@@ -13,6 +13,8 @@
 // marcação na tela acompanhar a voz.
 // ============================================
 
+import { escaparXml, ssmlComPronuncia } from './pronuncia';
+
 export interface VersoEntrada {
     verse: number;
     text: string;
@@ -247,22 +249,21 @@ export function montarBlocos(falas: Fala[], maxChars = 1400, limiteDuro = 2200):
     return blocos;
 }
 
-export function escaparXml(t: string): string {
-    return t
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+// Texto que vai à voz: escapado e com as correções de pronúncia (pronuncia.ts).
+export { escaparXml };
+
+/** Linhas faladas dos versículos, para saber se alguma correção de pronúncia toca o capítulo. */
+export function textosFalados(versos: VersoFalado[]): string[] {
+    return versos.flatMap(v => (v.titulo ? [v.titulo, ...v.linhas] : v.linhas));
 }
 
 function ssmlDaFala(f: Fala, fraseCorrida = false): string {
     if (f.tipo === 'anuncio') return `${escaparXml(f.texto)}<break time='${f.pausaMs}ms'/>`;
     const v = f.verso;
     let s = '';
-    if (v.titulo) s += `${escaparXml(v.titulo)}<break time='${PAUSA.titulo}ms'/>`;
+    if (v.titulo) s += `${ssmlComPronuncia(v.titulo)}<break time='${PAUSA.titulo}ms'/>`;
     v.linhas.forEach((linha, i) => {
-        s += escaparXml(linha);
+        s += ssmlComPronuncia(linha);
         if (i < v.linhas.length - 1) {
             s += temPontuacaoFinal(linha) || fraseCorrida ? ' ' : `<break time='${PAUSA.linhaPoetica}ms'/>`;
         }
