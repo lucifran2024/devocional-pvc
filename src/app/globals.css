@@ -430,6 +430,50 @@ h6 {
   text-underline-offset: 2px;
 }
 
+/* Início, meio e fim da Palavra (12/11/2026, 3º ajuste: "ficou tudo
+   misturado"). O versículo ganha bloco próprio com a referência embaixo e a
+   frase final fica destacada. Aqui e não em classes do Tailwind porque a
+   regra ".texto-palavra > * + *" acima vence qualquer mt-* posto no bloco. */
+.texto-palavra .versiculo-palavra {
+  margin-top: 1.4em;
+  padding: 0.15em 0 0.15em 1em;
+  border-left: 3px solid color-mix(in srgb, var(--color-amber-500) 55%, transparent);
+}
+.texto-palavra .versiculo-palavra:first-child {
+  margin-top: 0;
+}
+.texto-palavra .versiculo-palavra + * {
+  margin-top: 1.4em;
+}
+.texto-palavra .versiculo-palavra blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-style: italic;
+}
+.texto-palavra .versiculo-palavra figcaption {
+  margin-top: 0.6em;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent-primary);
+}
+.texto-palavra .fechamento-palavra {
+  margin-top: 1.6em;
+  font-weight: 600;
+}
+.texto-palavra .fechamento-palavra::before {
+  content: '';
+  display: block;
+  width: 2rem;
+  height: 2px;
+  margin-bottom: 0.9em;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-amber-500) 70%, transparent);
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {

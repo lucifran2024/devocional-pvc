@@ -68,3 +68,15 @@ describe('posição de leitura da Bíblia guardada no aparelho', () => {
         expect(loadBibliaRecentes()).toEqual([{ livro: 'jo', livroNome: 'João', capitulo: 3 }]);
     });
 });
+
+// 3º ajuste do início (12/11/2026): o "Ler na Bíblia" do Versículo do dia
+// abre a Bíblia com ?destacar=1 e o versículo aparece realçado ao chegar.
+describe('pedido de destaque ao abrir a Bíblia', () => {
+    it('reconhece só ?destacar=1', async () => {
+        const { pedidoDeDestaque } = await import('@/lib/biblia-posicao');
+        expect(pedidoDeDestaque('?destacar=1')).toBe(true);
+        expect(pedidoDeDestaque('?outra=1&destacar=1')).toBe(true);
+        expect(pedidoDeDestaque('')).toBe(false);
+        expect(pedidoDeDestaque('?destacar=0')).toBe(false);
+    });
+});

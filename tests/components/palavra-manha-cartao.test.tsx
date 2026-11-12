@@ -62,6 +62,26 @@ describe('cartão da Palavra da Manhã', () => {
         expect(screen.getByText('Primeiro parágrafo.').closest('.com-capitular')).not.toBeNull();
     });
 
+    // 3º ajuste (12/11/2026): "ficou sem quebra de linha, tudo misturado; não
+    // tem início, meio e fim". Mensagem real de hoje, com o versículo colado no
+    // corpo: versículo destacado com a referência embaixo, reflexão no meio,
+    // fechamento no fim. Sem capitular quando o texto abre com o versículo.
+    it('mensagem real de hoje: versículo, reflexão e fechamento separados', async () => {
+        const real = 'A LUZ PARA O PRÓXIMO PASSO\n\n"Lâmpada para os meus pés é a tua palavra e luz, para o meu caminho." (Salmos 119:105). Deus não nos promete clareza sobre cada detalhe do futuro distante, mas garante direção segura para o próximo passo.\n\nDê o passo de hoje com fé.';
+        localStorage.setItem('palavra-manha-local', JSON.stringify({ id: 9, data: '2026-11-12', dia_semana: 'Quinta', categoria: 'DEVOCIONAL', formato: 'Médio', mensagem: real }));
+        const { container } = render(<PalavraManha />);
+        expect(await screen.findByRole('heading', { level: 3, name: 'A luz para o próximo passo' })).toBeInTheDocument();
+        const citacao = container.querySelector('figure.versiculo-palavra')!;
+        expect(citacao).not.toBeNull();
+        expect(citacao.querySelector('blockquote')).toHaveTextContent('Lâmpada para os meus pés é a tua palavra e luz, para o meu caminho.');
+        expect(citacao.querySelector('figcaption')).toHaveTextContent('Salmos 119:105');
+        const meio = screen.getByText(/^Deus não nos promete clareza/);
+        expect(meio.tagName).toBe('P');
+        expect(meio.closest('figure')).toBeNull();
+        expect(screen.getByText('Dê o passo de hoje com fé.').closest('.fechamento-palavra')).not.toBeNull();
+        expect(container.querySelector('.com-capitular')).toBeNull();
+    });
+
     // 2º ajuste: os três quadradões de 58 px pesavam demais ("muito grande").
     // Agora: Amém em pílula e Copiar/Compartilhar só com ícone, 44 px de toque.
     it('Amém, Copiar e Compartilhar compactos, com nome e 44 px de toque', async () => {

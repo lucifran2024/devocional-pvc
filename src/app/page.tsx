@@ -3,12 +3,12 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import Link from 'next/link';
 import {
-  BookMarked, BookOpen, Calendar, ChevronRight, HeartHandshake, Mic, NotebookPen, Youtube,
+  BookMarked, BookOpen, Calendar, HeartHandshake, Mic, NotebookPen, Youtube,
   type LucideIcon,
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
-import { saudacao } from '@/lib/palavra-apresentacao';
+import { dividirPassagens, saudacao } from '@/lib/palavra-apresentacao';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 import { PalavraManha } from '@/components/PalavraManha';
@@ -59,6 +59,17 @@ const TRANSCREVER: Atalho[] = [
   { href: '/transcrever-culto', title: 'Áudio', desc: 'Grave ao vivo ou envie do celular.', icon: Mic },
 ];
 
+// Uma passagem por linha no quadro da leitura, sem quebrar no meio dos
+// números ("33-" numa linha e "36" na outra, visto num celular de 360 px)
+function Passagem({ texto }: { texto: string }) {
+  const partes = texto.match(/^(.*\S)\s+(\d[\d:.,–-]*)$/);
+  return (
+    <span data-passagem className="reading-serif block text-[1.125rem] font-medium leading-snug text-text-primary">
+      {partes ? <>{partes[1]} <span className="whitespace-nowrap">{partes[2]}</span></> : texto}
+    </span>
+  );
+}
+
 // Ordem da chegada ao abrir (classe .entrada em globals.css)
 const ordem = (i: number) => ({ '--i': i }) as CSSProperties;
 
@@ -94,6 +105,14 @@ export default function DashboardPage() {
   // A tela só é desenhada no aparelho (depois de conferir o login), então a
   // hora é a de quem abre, sem risco de divergir do servidor.
   const cumprimento = saudacao(new Date().getHours());
+  const passagens = dividirPassagens(payload?.passagem_do_dia);
+  // O quadro da Bíblia diz onde abre (3º ajuste: "vai direto para a Bíblia, né?")
+  const versiculoGuardado = continuar?.versiculo && continuar.versiculo > 1 ? continuar.versiculo : null;
+  // Nome comprido ("Cântico dos Cânticos 8") usa letra menor para caber em 2 linhas
+  const nomeLongo = continuar ? `${continuar.livroNome} ${continuar.capitulo}`.length > 12 : false;
+  const rotuloBiblia = continuar
+    ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}${versiculoGuardado ? `, versículo ${versiculoGuardado}` : ''}, na Bíblia`
+    : 'Abrir minha Bíblia';
 
   // ABERTURA RÁPIDA (25/09/2026): a tela aparece na hora. O payload do dia só
   // dá nome à passagem de hoje, então é buscado em segundo plano (antes a
@@ -138,30 +157,48 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* 2. Hoje: continuar a leitura + leitura do dia (um atalho só, 01/10) */}
-        <section aria-label="Hoje" className="cartao entrada overflow-hidden" style={ordem(1)}>
-          <div className="p-4">
-            {/* Com leitura em andamento, o botão leva direto de volta a ela
-                (a Bíblia reabre no capítulo e no versículo onde parou). */}
-            <Link href="/biblioteca" className="flex w-full min-h-11 items-center justify-center gap-2.5 rounded-full bg-amber-500 px-5 text-[15px] font-semibold text-amber-950 transition hover:bg-amber-400 active:scale-[0.97]">
-              <BookOpen className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-              <span className="truncate">{continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}</span>
+        {/* 2. Hoje (3º ajuste, 12/11/2026: "o ler na Bíblia e o plano de
+            leitura, os dois de cima, dá uma melhorada"): dois quadros lado a
+            lado, o topo continua baixo no celular (25/09 e 01/10). A Bíblia
+            (âmbar, a ação principal) reabre no capítulo e no versículo onde
+            parou; a leitura de hoje mostra as passagens uma por linha. Um
+            atalho só para a leitura do dia. */}
+        <section aria-label="Hoje" className="entrada" style={ordem(1)}>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/biblioteca"
+              aria-label={rotuloBiblia}
+              className="flex min-h-[7.5rem] flex-col justify-between rounded-[var(--radius-xl)] bg-amber-500 p-4 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97]"
+            >
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-amber-950/75">
+                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {continuar ? 'Continuar' : 'Bíblia'}
+              </span>
+              <span className="mt-3 block">
+                <span className={`reading-serif block font-medium leading-[1.1] ${nomeLongo ? 'text-[1.375rem]' : 'text-[1.625rem]'}`}>
+                  {/* espaço que não quebra: o capítulo fica junto do nome */}
+                  {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
+                </span>
+                <span className="mt-1 block text-[13px] text-amber-950/70">
+                  {continuar ? (versiculoGuardado ? `Versículo ${versiculoGuardado}` : 'De onde parou') : 'Comece a leitura'}
+                </span>
+              </span>
+            </Link>
+            <Link
+              href="/plano-de-leitura?ler=1"
+              className="cartao flex min-h-[7.5rem] flex-col justify-between p-4 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97]"
+            >
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary">
+                <Calendar className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+                {passagens.length ? 'Leitura de hoje' : 'Plano de leitura'}
+              </span>
+              <span className="mt-3 block">
+                {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} />) : (
+                  <span className="reading-serif block text-[1.125rem] font-medium leading-snug text-text-primary">Leitura do dia</span>
+                )}
+              </span>
             </Link>
           </div>
-          <Link href="/plano-de-leitura?ler=1" className="group flex min-h-16 items-center gap-3.5 border-t border-border-subtle px-5 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2">
-            <Calendar className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              {payload?.passagem_do_dia ? (
-                <>
-                  <span className="block text-[13px] leading-tight text-text-muted">Leitura de hoje</span>{' '}
-                  <span className="block font-semibold leading-snug text-text-primary">{payload.passagem_do_dia}</span>
-                </>
-              ) : (
-                <span className="block font-semibold text-text-primary">Leitura do dia</span>
-              )}
-            </span>
-            <ChevronRight className="h-5 w-5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </Link>
         </section>
 
         {/* 3. Palavra da Manhã (gerada a cada dia) */}

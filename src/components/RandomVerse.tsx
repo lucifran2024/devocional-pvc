@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BookOpen, Check, Copy, RefreshCw, RotateCcw, Share, Shuffle } from 'lucide-react';
 import { BotaoIcone, PilulaAcao } from '@/components/ui/BotaoIcone';
 import { useVersiculoDoDia } from '@/hooks/useVersiculoDoDia';
-import { persistBibliaPosicao } from '@/lib/biblia-posicao';
+import { BIBLIA_DESTACAR_PARAM, persistBibliaPosicao } from '@/lib/biblia-posicao';
 import { VERSAO_VERSICULO_DO_DIA, montarTextoVersiculo, posicaoNaBiblia } from '@/lib/daily-verse';
 import { compartilharTexto, copiarTexto } from '@/lib/transcricao-acoes';
 
@@ -42,11 +42,12 @@ export function RandomVerse() {
         else if (resultado === 'erro') avisar('Não consegui compartilhar. Tente Copiar.');
     };
 
-    // Abre a Bíblia do app no capítulo, já no versículo
+    // Abre a Bíblia do app no capítulo, já no versículo, e o realça ao chegar
+    // (3º ajuste, 12/11/2026: "vai direto para a Bíblia, né?")
     const lerNaBiblia = () => {
         const posicao = posicaoNaBiblia(ref);
         if (posicao) persistBibliaPosicao(posicao);
-        router.push('/biblioteca');
+        router.push(posicao ? `/biblioteca?${BIBLIA_DESTACAR_PARAM}=1` : '/biblioteca');
     };
 
     // Início premium (12/11/2026): mesmo cartão e mesmo cabeçalho da Palavra da

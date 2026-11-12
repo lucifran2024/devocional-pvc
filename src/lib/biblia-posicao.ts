@@ -8,6 +8,17 @@ export const BIBLIA_POSICAO_KEY = 'biblia-posicao-leitura';
 export const BIBLIA_RECENTES_KEY = 'biblia-recentes';
 export const MAX_BIBLIA_RECENTES = 8;
 
+// "Ler na Bíblia" do Versículo do dia (12/11/2026): abre a Bíblia com
+// ?destacar=1 e o versículo guardado chega realçado, como na busca.
+export const BIBLIA_DESTACAR_PARAM = 'destacar';
+export function pedidoDeDestaque(search: string): boolean {
+    try {
+        return new URLSearchParams(search).get(BIBLIA_DESTACAR_PARAM) === '1';
+    } catch {
+        return false;
+    }
+}
+
 export interface BibliaPosicao {
     livro: string;
     livroNome: string;

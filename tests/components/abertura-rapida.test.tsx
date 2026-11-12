@@ -122,13 +122,17 @@ describe('página inicial não espera o payload do dia', () => {
         expect(screen.getByRole('link', { name: /Leitura do dia/ })).toHaveAttribute('href', '/plano-de-leitura?ler=1');
     });
 
-    it('botão principal compacto para o celular', async () => {
+    // Topo baixo no celular (25/09 e 01/10). Desde o 3º ajuste de 12/11 a
+    // Bíblia e a leitura do dia dividem a mesma linha, em vez de um botão
+    // largo em cima do outro.
+    it('topo compacto no celular: Bíblia e leitura do dia na mesma linha', async () => {
         getPayloadDoDia.mockReturnValue(pendurada());
         const { default: DashboardPage } = await import('@/app/page');
         render(<DashboardPage />);
         const principal = screen.getByRole('link', { name: /Abrir minha Bíblia/ });
-        expect(principal.className).toContain('min-h-11');
-        expect(principal.className).not.toContain('min-h-12');
+        const leitura = screen.getByRole('link', { name: /Leitura do dia/ });
+        expect(principal.parentElement).toBe(leitura.parentElement);
+        expect(principal.parentElement!.className).toMatch(/\bgrid-cols-2\b/);
     });
 });
 

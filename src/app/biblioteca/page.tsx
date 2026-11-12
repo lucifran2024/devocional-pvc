@@ -39,6 +39,7 @@ import {
 import {
     loadBibliaPosicao,
     loadBibliaRecentes,
+    pedidoDeDestaque,
     persistBibliaPosicao,
     registrarBibliaRecente,
     type BibliaRecente,
@@ -743,7 +744,10 @@ function BibliotecaPage() {
             if (posicao && livroSalvo && posicao.capitulo <= livroSalvo.capitulos) {
                 setLivroAtual(livroSalvo);
                 setCapituloAtual(posicao.capitulo);
-                if (posicao.versiculo && posicao.versiculo > 1) setRetomarVersiculo(posicao.versiculo);
+                // Vindo do "Ler na Bíblia" do Versículo do dia (?destacar=1): o
+                // versículo chega centralizado e realçado, como na busca.
+                if (pedidoDeDestaque(window.location.search) && posicao.versiculo) setScrollToVerse(posicao.versiculo);
+                else if (posicao.versiculo && posicao.versiculo > 1) setRetomarVersiculo(posicao.versiculo);
             } else {
                 const ultima = await getUltimaLeitura();
                 if (ultima) {
@@ -754,6 +758,8 @@ function BibliotecaPage() {
                     }
                 }
             }
+            // O pedido de destaque vale uma vez: sai do endereço
+            if (pedidoDeDestaque(window.location.search)) window.history.replaceState(window.history.state, '', window.location.pathname);
             setInicializado(true);
         }
         init();

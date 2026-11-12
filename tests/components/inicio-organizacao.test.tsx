@@ -53,6 +53,35 @@ describe('organização do início', () => {
         }
     });
 
+    // 3º ajuste (12/11/2026): "o ler na Bíblia e o plano de leitura, os dois de
+    // cima, dá uma melhorada". Viraram dois quadros lado a lado (o topo continua
+    // baixo no celular): a Bíblia diz onde abre; a leitura mostra as passagens
+    // uma por linha. Continua um atalho só para a leitura do dia.
+    it('Bíblia e leitura de hoje lado a lado, cada quadro diz onde leva', async () => {
+        localStorage.setItem('biblia-posicao-leitura', JSON.stringify({ livro: 'jo', livroNome: 'João', capitulo: 3, versiculo: 16, atualizadoEm: 1 }));
+        localStorage.setItem('payload-dia-local', JSON.stringify({ data: '2026-11-12', passagem_do_dia: 'Isaías 51-54, Hebreus 7' }));
+        render(<DashboardPage />);
+        const hoje = screen.getByRole('region', { name: 'Hoje' });
+        const links = within(hoje).getAllByRole('link');
+        expect(links).toHaveLength(2);
+        const biblia = await within(hoje).findByRole('link', { name: /Continuar em João 3, versículo 16/ });
+        expect(biblia).toHaveAttribute('href', '/biblioteca');
+        expect(within(biblia).getByText('João 3')).toBeInTheDocument();
+        const leitura = within(hoje).getByRole('link', { name: /Leitura de hoje/ });
+        expect(leitura).toHaveAttribute('href', '/plano-de-leitura?ler=1');
+        const linhas = [...leitura.querySelectorAll('[data-passagem]')].map((el) => el.textContent);
+        expect(linhas).toEqual(['Isaías 51-54', 'Hebreus 7']);
+        // os números não se separam ("33-" / "36")
+        expect(leitura.querySelector('[data-passagem] .whitespace-nowrap')).toHaveTextContent('51-54');
+        expect(links[0].parentElement?.className ?? hoje.className).toMatch(/grid-cols-2/);
+    });
+
+    it('sem leitura guardada, a Bíblia oferece abrir', () => {
+        render(<DashboardPage />);
+        const biblia = screen.getByRole('link', { name: /Abrir minha Bíblia/ });
+        expect(biblia).toHaveAttribute('href', '/biblioteca');
+    });
+
     it('ferramentas em lista, sem ícone dentro de quadradinho colorido', () => {
         const { container } = render(<DashboardPage />);
         expect(container.querySelectorAll('[class*="bg-amber-500/10"]')).toHaveLength(0);

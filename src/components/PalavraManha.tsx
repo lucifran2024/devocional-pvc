@@ -5,7 +5,7 @@ import { Copy, Sun, Check, BookOpen, Heart, Share, WifiOff, RefreshCw } from 'lu
 import ReactMarkdown from 'react-markdown';
 import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
 import { BotaoIcone, PilulaAcao } from '@/components/ui/BotaoIcone';
-import { nomeCategoria, separarTitulo } from '@/lib/palavra-apresentacao';
+import { estruturarPalavra, nomeCategoria, separarTitulo } from '@/lib/palavra-apresentacao';
 import { compartilharTexto } from '@/lib/transcricao-acoes';
 
 interface PalavraManhaProps {
@@ -205,8 +205,16 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
     if (!data) return null;
 
-    // Título em MAIÚSCULAS da mensagem → manchete; o resto, com capitular
+    // Título em MAIÚSCULAS da mensagem → manchete. O corpo vira blocos
+    // (3º ajuste): versículo, parágrafos e fechamento. A capitular só entra
+    // quando o texto abre com uma letra (com o versículo na frente, ela pegava
+    // a aspa junto: "L).
     const { titulo, corpo } = separarTitulo(data.mensagem);
+    const blocos = estruturarPalavra(corpo);
+    const primeiro = blocos[0];
+    const capitular = Boolean(titulo) && primeiro?.tipo === 'paragrafo' && /^(?:\*\*|__|\*|_)?\p{L}/u.test(primeiro.texto);
+    // Quebra de linha simples vira quebra de verdade (no markdown ela some)
+    const comQuebras = (texto: string) => texto.replace(/\n/g, '  \n');
 
     return (
         <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7 animate-[fadeIn_0.35s_ease-out]">
@@ -234,9 +242,27 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                 </h3>
             )}
 
-            {/* Texto: à esquerda, com respiro entre parágrafos (.texto-palavra) */}
-            <div className={`texto-palavra reading-serif ${titulo ? 'com-capitular mt-4' : 'mt-5'} text-[1.0625rem] leading-[1.75] text-text-primary`}>
-                <ReactMarkdown>{corpo}</ReactMarkdown>
+            {/* Texto: à esquerda, com respiro entre parágrafos (.texto-palavra);
+                versículo em bloco próprio e fechamento destacado (globals.css) */}
+            <div className={`texto-palavra reading-serif ${capitular ? 'com-capitular' : ''} ${titulo ? 'mt-4' : 'mt-5'} text-[1.0625rem] leading-[1.75] text-text-primary`}>
+                {blocos.map((bloco, i) => {
+                    if (bloco.tipo === 'versiculo') {
+                        return (
+                            <figure key={i} className="versiculo-palavra">
+                                <blockquote>{bloco.texto}</blockquote>
+                                {bloco.referencia && <figcaption>{bloco.referencia}</figcaption>}
+                            </figure>
+                        );
+                    }
+                    if (bloco.tipo === 'fechamento') {
+                        return (
+                            <div key={i} className="fechamento-palavra">
+                                <ReactMarkdown>{comQuebras(bloco.texto)}</ReactMarkdown>
+                            </div>
+                        );
+                    }
+                    return <ReactMarkdown key={i}>{comQuebras(bloco.texto)}</ReactMarkdown>;
+                })}
             </div>
 
             {/* Botões compactos (2º ajuste): Amém em pílula; Copiar e

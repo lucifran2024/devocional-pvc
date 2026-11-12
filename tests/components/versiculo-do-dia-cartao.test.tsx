@@ -61,7 +61,8 @@ describe('cartão do Versículo do Dia', () => {
         const pos = JSON.parse(localStorage.getItem('biblia-posicao-leitura')!);
         const esperado = posicaoNaBiblia(ref)!;
         expect(pos).toMatchObject({ livro: esperado.livro, capitulo: esperado.capitulo });
-        expect(push).toHaveBeenCalledWith('/biblioteca');
+        // 3º ajuste (12/11/2026): a Bíblia abre no versículo e o destaca
+        expect(push).toHaveBeenCalledWith('/biblioteca?destacar=1');
     });
 
     it('Outro versículo troca o cartão e dá para voltar ao de hoje', async () => {
