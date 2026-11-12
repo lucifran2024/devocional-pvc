@@ -334,6 +334,62 @@ h6 {
   border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
+/* Início premium (12/11/2026): uma superfície só para todos os cartões do
+   início — mesmo fundo, mesma borda, canto de 16 px e sombra quase invisível
+   no tema claro (no escuro, sem sombra). Fica na camada "components" para
+   que as classes do Tailwind (hover, por exemplo) ainda possam mudá-la. */
+@layer components {
+  .cartao {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 2px rgb(41 37 36 / 0.05), 0 1px 1px rgb(41 37 36 / 0.03);
+  }
+  .dark .cartao {
+    box-shadow: none;
+  }
+}
+
+/* Texto da Palavra da Manhã (12/11/2026): o projeto não tem o plugin de
+   tipografia, então as classes "prose" não fazem nada e os parágrafos
+   ficavam grudados. Estilo só deste bloco; as outras telas não mudam. */
+.texto-palavra > * + * {
+  margin-top: 1em;
+}
+.texto-palavra strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.texto-palavra em {
+  font-style: italic;
+}
+.texto-palavra blockquote {
+  margin: 1.25em 0;
+  padding: 0.15em 0 0.15em 1em;
+  border-left: 3px solid color-mix(in srgb, var(--color-amber-500) 55%, transparent);
+  font-style: italic;
+}
+.texto-palavra h1,
+.texto-palavra h2,
+.texto-palavra h3,
+.texto-palavra h4 {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.texto-palavra ul {
+  list-style: disc;
+  padding-left: 1.25em;
+}
+.texto-palavra ol {
+  list-style: decimal;
+  padding-left: 1.25em;
+}
+.texto-palavra a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {

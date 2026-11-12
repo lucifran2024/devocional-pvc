@@ -3,22 +3,27 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  User, AlertTriangle,
-  Calendar, Book, Star, LogOut, NotebookPen, Youtube, Mic,
-  HeartHandshake, ChevronRight
+  BookMarked, BookOpen, Calendar, ChevronRight, HeartHandshake, Mic, NotebookPen, Youtube,
+  type LucideIcon,
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RandomVerse } from '@/components/RandomVerse';
-import { useAuth } from '@/components/AuthProvider';
 
 // ===============================================
-// PÁGINA DASHBOARD
+// PÁGINA INICIAL
+//
+// Início premium (12/11/2026, pedido "organização da página inicial, dos
+// cards e dos botões"): uma coluna só, de cima para baixo — data e título,
+// cartão "Hoje" (continuar + leitura de hoje), Palavra da Manhã, Versículo
+// do dia e as ferramentas em dois grupos compactos. A data aparece uma vez;
+// tema fica no cabeçalho, no fluxo da página (antes flutuava sobre o texto);
+// Sair fica no menu Mais e na barra lateral. Sem foto no topo (27/09) e sem
+// degradê, brilho ou ícone gigante (03/10).
 // ===============================================
 
 const PAYLOAD_LOCAL_KEY = 'payload-dia-local';
@@ -32,15 +37,57 @@ function lerPayloadLocal(): PayloadDoDia | null {
   }
 }
 
+interface Atalho {
+  href: string;
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+}
+
+// Cards de "Devocional Externo", "DNA Categorizado" e "Memorização" ficam fora
+// do início a pedido (16/07/2026); as páginas seguem acessíveis por URL.
+const ESTUDAR: Atalho[] = [
+  { href: '/planos', title: 'Plano de Leitura', desc: 'Estudo guiado, com explicação.', icon: BookMarked },
+  { href: '/biblioteca', title: 'Bíblia Sagrada', desc: 'Leia, busque e salve versículos.', icon: BookOpen },
+  { href: '/anotacoes', title: 'Caderno', desc: 'Anotações, versículos e vídeos.', icon: NotebookPen },
+  { href: '/oracao', title: 'Diário de Oração', desc: 'Pedidos e respostas de Deus.', icon: HeartHandshake },
+];
+
+const TRANSCREVER: Atalho[] = [
+  { href: '/transcrever-youtube', title: 'YouTube', desc: 'Cole o link de uma pregação.', icon: Youtube },
+  { href: '/transcrever-culto', title: 'Áudio', desc: 'Grave ao vivo ou envie do celular.', icon: Mic },
+];
+
+function formatarDataCurta(dataStr: string): string {
+  const texto = new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+function GrupoDeAtalhos({ id, titulo, itens }: { id: string; titulo: string; itens: Atalho[] }) {
+  return (
+    <section aria-labelledby={id}>
+      <h2 id={id} className="reading-serif mb-3 text-xl font-semibold text-text-primary">{titulo}</h2>
+      <ul className="grid grid-cols-2 gap-3">
+        {itens.map((item) => (
+          <li key={item.href}>
+            <DashboardCard href={item.href} title={item.title} desc={item.desc} icon={item.icon} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const [payload, setPayload] = useState<PayloadDoDia | null>(null);
   const [continuar, setContinuar] = useState<BibliaPosicao | null>(null);
   const dataHoje = getDataHoje();
-  const { signOut } = useAuth();
 
   // ABERTURA RÁPIDA (25/09/2026): a tela aparece na hora. O payload do dia só
-  // dá nome à passagem sob a Palavra da Manhã, então é buscado em segundo
-  // plano (antes a página inteira esperava baixar o SECAO6.TXT, até 8 s).
+  // dá nome à passagem de hoje, então é buscado em segundo plano (antes a
+  // página inteira esperava baixar o SECAO6.TXT, até 8 s).
   useEffect(() => {
     let ativo = true;
     const local = lerPayloadLocal();
@@ -53,7 +100,7 @@ export default function DashboardPage() {
         if (!ativo) return;
         if (res.error || !res.data) throw new Error(res.error || 'Payload vazio');
         setPayload(res.data);
-        // Guarda o último payload para o dashboard abrir offline
+        // Guarda o último payload para o início abrir offline
         try { localStorage.setItem(PAYLOAD_LOCAL_KEY, JSON.stringify(res.data)); } catch { /* ignore */ }
       })
       .catch((e) => {
@@ -65,194 +112,59 @@ export default function DashboardPage() {
     return () => { ativo = false; };
   }, [dataHoje]);
 
-  const formatarDataExtenso = (dataStr: string) => {
-    return new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
-  };
-
   return (
-    <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30 relative">
-      <header className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <ThemeToggle />
-        <button
-          onClick={signOut}
-          className="md:hidden p-2.5 rounded-full bg-white/80 dark:bg-surface-2 border border-slate-300 dark:border-border-subtle text-slate-500 dark:text-text-muted hover:text-red-500 transition-colors shadow-sm"
-          title="Sair da conta"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
-      </header>
+    <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30">
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-12 pt-[max(3.5rem,calc(env(safe-area-inset-top)_+_1rem))] md:pt-12">
 
-      <section className="mx-5 mt-20 md:mx-auto md:w-[calc(100%-3rem)] max-w-6xl overflow-hidden rounded-2xl border border-border-subtle bg-surface-1">
-        <div className="p-7 md:p-10 flex flex-col justify-center items-start">
-          <p className="text-sm text-text-secondary mb-3">PVC · Seu espaço de leitura</p>
-          <h1 className="reading-serif text-4xl md:text-5xl leading-tight mb-4">Um momento para a Palavra.</h1>
-          <p className="text-text-secondary leading-relaxed max-w-md mb-6">Abra sua Bíblia, retome a leitura e guarde o que tocou seu coração.</p>
-          {/* Com leitura em andamento, o botão leva direto de volta a ela
-              (a Bíblia reabre no capítulo e no versículo onde parou). */}
-          <Link href="/biblioteca" className="inline-flex max-w-full items-center gap-2.5 min-h-11 px-5 rounded-xl bg-amber-500 text-amber-950 text-[15px] font-semibold hover:bg-amber-400 active:scale-[0.98] transition">
-            <Book className="w-[18px] h-[18px] shrink-0" />
-            <span className="truncate">{continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}</span>
-          </Link>
-        </div>
-        {/* Leitura do dia: rodapé do cartão, junto da passagem de hoje (01/10/2026).
-            Antes era um segundo botão grande que quebrava linha no celular, com a
-            passagem solta embaixo. Sem a passagem carregada, o atalho continua. */}
-        <Link href="/plano-de-leitura?ler=1" className="group flex items-center gap-3 min-h-14 px-7 md:px-10 py-3 border-t border-border-subtle hover:bg-surface-2/60 transition-colors">
-          <Calendar className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <span className="min-w-0 flex-1">
-            {payload?.passagem_do_dia ? (
-              <>
-                <span className="block text-[13px] leading-tight text-text-muted">Leitura de hoje</span>{' '}
-                <span className="block font-semibold leading-snug text-text-primary">{payload.passagem_do_dia}</span>
-              </>
-            ) : (
-              <span className="block font-semibold text-text-primary">Leitura do dia</span>
-            )}
-          </span>
-          <ChevronRight className="w-5 h-5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </section>
-      {/* 1. HERO SECTION (Imersiva) */}
-      <section className="relative w-full pt-10 md:pt-24 pb-12 px-6 overflow-hidden">
-        {/* Decorative Elements - Blue glow removed as requested */}
-        {/* <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div> */}
+        {/* 1. Cabeçalho: data uma vez só, título e tema */}
+        <header className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{formatarDataCurta(dataHoje)}</p>
+            <h1 className="reading-serif mt-1 text-[2rem] leading-[1.15] md:text-4xl">Um momento para a Palavra.</h1>
+          </div>
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
+        </header>
 
-
-        <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
-
-          {/* Date Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 dark:bg-surface-2 border border-slate-300 dark:border-border-subtle backdrop-blur-md mb-8 animate-enter shadow-sm">
-            <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-accent-primary" />
-            <span className="text-xs font-bold text-slate-700 dark:text-text-secondary uppercase tracking-widest">
-              {formatarDataExtenso(dataHoje)}
+        {/* 2. Hoje: continuar a leitura + leitura do dia (um atalho só, 01/10) */}
+        <section aria-label="Hoje" className="cartao overflow-hidden">
+          <div className="p-5">
+            {/* Com leitura em andamento, o botão leva direto de volta a ela
+                (a Bíblia reabre no capítulo e no versículo onde parou). */}
+            <Link href="/biblioteca" className="flex w-full min-h-11 items-center justify-center gap-2.5 rounded-xl bg-amber-500 px-5 text-[15px] font-semibold text-amber-950 transition hover:bg-amber-400 active:scale-[0.98]">
+              <BookOpen className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+              <span className="truncate">{continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}</span>
+            </Link>
+          </div>
+          <Link href="/plano-de-leitura?ler=1" className="group flex min-h-16 items-center gap-3 border-t border-border-subtle px-5 py-3 transition-colors hover:bg-surface-2/60">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400" aria-hidden="true">
+              <Calendar className="h-5 w-5" />
             </span>
-          </div>
+            <span className="min-w-0 flex-1">
+              {payload?.passagem_do_dia ? (
+                <>
+                  <span className="block text-[13px] leading-tight text-text-muted">Leitura de hoje</span>{' '}
+                  <span className="block font-semibold leading-snug text-text-primary">{payload.passagem_do_dia}</span>
+                </>
+              ) : (
+                <span className="block font-semibold text-text-primary">Leitura do dia</span>
+              )}
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </Link>
+        </section>
 
-          {/* PALAVRA DA MANHÃ (AUTO-GERADA) */}
-          <div className="w-full relative z-20">
-            <div className="flex flex-col items-center mb-2">
-              <h2 className="reading-serif text-2xl md:text-3xl font-semibold text-text-primary mb-1">
-                Palavra da Manhã
-              </h2>
-            </div>
+        {/* 3. Palavra da Manhã (gerada a cada dia) */}
+        <PalavraManha />
 
-            <PalavraManha />
-          </div>
-
-        </div>
-      </section>
-
-
-      {/* 1.5 VERSICULO DO DIA */}
-      <section className="w-full px-6 -mt-8 mb-8 z-10">
+        {/* 4. Versículo do dia */}
         <RandomVerse />
-      </section>
-      {/* 2. GRID DE FERRAMENTAS (Design Premium) */}
-      <section className="flex-1 w-full max-w-7xl mx-auto px-6 pb-24 z-10">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-
-          {/* Card 1: Plano de Leitura */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/planos"
-              title="Plano de Leitura"
-              desc="Estudo bíblico interativo, comentado e profundo."
-              icon={Book}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Diário"
-            />
-          </div>
-
-          {/* Card 3: Bíblia Sagrada */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/biblioteca"
-              title="Bíblia Sagrada"
-              desc="Leia a Palavra de Deus com navegação intuitiva e busca rápida."
-              icon={Star}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="66 livros"
-            />
-          </div>
-
-          {/*
-            Cards de "Devocional Externo" e "DNA Categorizado" removidos da
-            tela principal a pedido — eram só atalhos (admin). As páginas
-            continuam acessíveis por URL direta (/devocional-externo e
-            /dna-categorizado) e os crons/DNA no backend seguem intactos.
-          */}
-
-          {/* Card: Caderno (antes "Anotações"; vem antes da Oração desde 03/10/2026) */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/anotacoes"
-              title="Caderno"
-              desc="Suas anotações, os versículos que você anotou e os vídeos transcritos."
-              icon={NotebookPen}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Caderno"
-            />
-          </div>
-
-          {/* Card: Diário de Oração */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/oracao"
-              title="Diário de Oração"
-              desc="Registre pedidos e celebre cada resposta de Deus."
-              icon={HeartHandshake}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Oração"
-            />
-          </div>
-
-          {/* Card: Transcrever do YouTube */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/transcrever-youtube"
-              title="Transcrever do YouTube"
-              desc="Cole o link de uma pregação e receba o texto da legenda."
-              icon={Youtube}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Vídeo"
-            />
-          </div>
-
-          {/* Card: Transcrever áudio (gravar ao vivo ou enviar do celular) */}
-          <div className="stagger-item">
-            <DashboardCard
-              href="/transcrever-culto"
-              title="Transcrever áudio"
-              desc="Grave a pregação ao vivo ou envie um áudio do celular."
-              icon={Mic}
-              accentColor="text-amber-600 dark:text-amber-400"
-              iconBg="bg-amber-500/10 border-amber-500/20"
-              badgeColor="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
-              badge="Áudio"
-            />
-          </div>
-
-        </div>
-      </section>
-
-      {/* Footer Minimalista */}
-      <footer className="w-full text-center py-8 text-slate-500 dark:text-text-muted text-xs border-t border-slate-200/70 dark:border-border-subtle">
-        <p className="tracking-widest uppercase">Bíblia • {new Date().getFullYear()}</p>
-      </footer>
-
+        {/* 5. Ferramentas, em dois grupos */}
+        <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} />
+        <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} />
+      </main>
     </CosmicBackground>
   );
 }
