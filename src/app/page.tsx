@@ -59,12 +59,29 @@ const TRANSCREVER: Atalho[] = [
   { href: '/transcrever-culto', title: 'Áudio', desc: 'Grave ao vivo ou envie do celular.', icon: Mic },
 ];
 
+// Uma palavra só não quebra: num quadro de meia tela (122 px de texto num
+// celular de 360 px), "Tessalonicenses" (15 letras, a maior da Bíblia) vazava.
+// A letra segue a palavra mais longa; hífen e quebra forçada ficam de reserva.
+function maiorPalavra(...textos: string[]): number {
+  return Math.max(0, ...textos.flatMap((t) => t.split(/\s+/)).map((p) => p.length));
+}
+
+function tamanhoDoNomeDoLivro(livroNome: string): string {
+  const n = maiorPalavra(livroNome);
+  if (n <= 7) return 'text-[1.625rem]';
+  if (n <= 10) return 'text-[1.375rem]';
+  if (n <= 12) return 'text-[1.125rem]';
+  return 'text-[0.9375rem]';
+}
+
+const QUEBRA_SEGURA = 'hyphens-auto [overflow-wrap:anywhere]';
+
 // Uma passagem por linha no quadro da leitura, sem quebrar no meio dos
 // números ("33-" numa linha e "36" na outra, visto num celular de 360 px)
-function Passagem({ texto }: { texto: string }) {
+function Passagem({ texto, tamanho }: { texto: string; tamanho: string }) {
   const partes = texto.match(/^(.*\S)\s+(\d[\d:.,–-]*)$/);
   return (
-    <span data-passagem className="reading-serif block text-[1.125rem] font-medium leading-snug text-text-primary">
+    <span data-passagem className={`reading-serif block ${tamanho} font-medium leading-snug text-text-primary ${QUEBRA_SEGURA}`}>
       {partes ? <>{partes[1]} <span className="whitespace-nowrap">{partes[2]}</span></> : texto}
     </span>
   );
@@ -108,8 +125,9 @@ export default function DashboardPage() {
   const passagens = dividirPassagens(payload?.passagem_do_dia);
   // O quadro da Bíblia diz onde abre (3º ajuste: "vai direto para a Bíblia, né?")
   const versiculoGuardado = continuar?.versiculo && continuar.versiculo > 1 ? continuar.versiculo : null;
-  // Nome comprido ("Cântico dos Cânticos 8") usa letra menor para caber em 2 linhas
-  const nomeLongo = continuar ? `${continuar.livroNome} ${continuar.capitulo}`.length > 12 : false;
+  // A letra dos dois quadros segue a palavra mais longa (ver maiorPalavra)
+  const tamanhoNome = continuar ? tamanhoDoNomeDoLivro(continuar.livroNome) : 'text-[1.625rem]';
+  const tamanhoPassagem = maiorPalavra(...passagens) > 12 ? 'text-[0.9375rem]' : 'text-[1.125rem]';
   const rotuloBiblia = continuar
     ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}${versiculoGuardado ? `, versículo ${versiculoGuardado}` : ''}, na Bíblia`
     : 'Abrir minha Bíblia';
@@ -175,9 +193,10 @@ export default function DashboardPage() {
                 {continuar ? 'Continuar' : 'Bíblia'}
               </span>
               <span className="mt-3 block">
-                <span className={`reading-serif block font-medium leading-[1.1] ${nomeLongo ? 'text-[1.375rem]' : 'text-[1.625rem]'}`}>
-                  {/* espaço que não quebra: o capítulo fica junto do nome */}
-                  {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
+                {/* espaço comum: em nome comprido o capítulo desce de linha
+                    em vez de empurrar o nome para fora do quadro */}
+                <span data-nome-livro className={`reading-serif block font-medium leading-[1.1] ${tamanhoNome} ${QUEBRA_SEGURA}`}>
+                  {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
                 </span>
                 <span className="mt-1 block text-[13px] text-amber-950/70">
                   {continuar ? (versiculoGuardado ? `Versículo ${versiculoGuardado}` : 'De onde parou') : 'Comece a leitura'}
@@ -193,7 +212,7 @@ export default function DashboardPage() {
                 {passagens.length ? 'Leitura de hoje' : 'Plano de leitura'}
               </span>
               <span className="mt-3 block">
-                {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} />) : (
+                {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} tamanho={tamanhoPassagem} />) : (
                   <span className="reading-serif block text-[1.125rem] font-medium leading-snug text-text-primary">Leitura do dia</span>
                 )}
               </span>

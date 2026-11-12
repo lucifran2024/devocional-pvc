@@ -76,6 +76,43 @@ describe('organização do início', () => {
         expect(links[0].parentElement?.className ?? hoje.className).toMatch(/grid-cols-2/);
     });
 
+    // Revisão do 3º ajuste (12/11/2026): uma palavra só não quebra. Com o
+    // espaço que não quebra entre nome e capítulo, "Deuteronômio 34" e
+    // "1 Tessalonicenses 5" vazavam do quadro num celular de 360 px. A letra
+    // agora segue a palavra mais longa e o capítulo pode descer de linha.
+    it('nome de livro comprido diminui a letra e o capítulo pode descer de linha', async () => {
+        localStorage.setItem('biblia-posicao-leitura', JSON.stringify({ livro: '1ts', livroNome: '1 Tessalonicenses', capitulo: 5, versiculo: 17, atualizadoEm: 1 }));
+        localStorage.setItem('payload-dia-local', JSON.stringify({ data: '2026-11-12', passagem_do_dia: '1 Tessalonicenses 1-3, Deuteronômio 34' }));
+        render(<DashboardPage />);
+        const hoje = screen.getByRole('region', { name: 'Hoje' });
+        const biblia = await within(hoje).findByRole('link', { name: /Continuar em 1 Tessalonicenses 5/ });
+        const nome = biblia.querySelector('[data-nome-livro]');
+        expect(nome?.textContent).toBe('1 Tessalonicenses 5');
+        expect(nome?.className).toContain('text-[0.9375rem]');
+        expect(nome?.className).toContain('hyphens-auto');
+        const leitura = within(hoje).getByRole('link', { name: /Leitura de hoje/ });
+        const passagens = [...leitura.querySelectorAll('[data-passagem]')];
+        expect(passagens).toHaveLength(2);
+        for (const p of passagens) expect(p.className).toContain('text-[0.9375rem]');
+    });
+
+    it('a letra do quadro da Bíblia segue a palavra mais longa do nome', async () => {
+        const casos: Array<[string, string]> = [
+            ['João', '1.625rem'],
+            ['Provérbios', '1.375rem'],
+            ['Cântico dos Cânticos', '1.375rem'],
+            ['Deuteronômio', '1.125rem'],
+            ['2 Tessalonicenses', '0.9375rem'],
+        ];
+        for (const [livroNome, tamanho] of casos) {
+            localStorage.setItem('biblia-posicao-leitura', JSON.stringify({ livro: 'x', livroNome, capitulo: 3, versiculo: 1, atualizadoEm: 1 }));
+            const { container, unmount } = render(<DashboardPage />);
+            await screen.findByRole('link', { name: new RegExp(`Continuar em ${livroNome} 3`) });
+            expect(container.querySelector('[data-nome-livro]')?.className, livroNome).toContain(`text-[${tamanho}]`);
+            unmount();
+        }
+    });
+
     it('sem leitura guardada, a Bíblia oferece abrir', () => {
         render(<DashboardPage />);
         const biblia = screen.getByRole('link', { name: /Abrir minha Bíblia/ });
