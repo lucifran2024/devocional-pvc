@@ -84,11 +84,14 @@ describe('página inicial não espera o payload do dia', () => {
         vi.doMock('@/components/PalavraManha', () => ({ PalavraManha: () => <div>palavra</div> }));
     });
 
+    // 12/11/2026: o título "Um momento para a Palavra" virou a saudação do
+    // horário (pedido do dono: "não tá legal"). A intenção do teste continua:
+    // o título aparece na hora, sem esperar o payload.
     it('mostra a chamada principal enquanto o payload ainda carrega', async () => {
         getPayloadDoDia.mockReturnValue(pendurada());
         const { default: DashboardPage } = await import('@/app/page');
         render(<DashboardPage />);
-        expect(screen.getByRole('heading', { name: /Um momento para a Palavra/ })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: /^(Bom dia|Boa tarde|Boa noite)\.$/ })).toBeInTheDocument();
     });
 
     it('oferece continuar a leitura de onde parou', async () => {

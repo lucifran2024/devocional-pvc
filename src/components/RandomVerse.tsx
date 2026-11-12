@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Check, Copy, RefreshCw, RotateCcw, Share2, Shuffle } from 'lucide-react';
-import { BotaoAcao } from '@/components/transcricao/BotaoAcao';
+import { BookOpen, Check, Copy, RefreshCw, RotateCcw, Share, Shuffle } from 'lucide-react';
+import { BotaoIcone, PilulaAcao } from '@/components/ui/BotaoIcone';
 import { useVersiculoDoDia } from '@/hooks/useVersiculoDoDia';
 import { persistBibliaPosicao } from '@/lib/biblia-posicao';
 import { VERSAO_VERSICULO_DO_DIA, montarTextoVersiculo, posicaoNaBiblia } from '@/lib/daily-verse';
@@ -52,14 +52,17 @@ export function RandomVerse() {
     // Início premium (12/11/2026): mesmo cartão e mesmo cabeçalho da Palavra da
     // Manhã. Saíram a faixa em degradê e as aspas gigantes (restos de "cara de
     // IA" que escaparam em 03/10) e a data, que já aparece no topo do início.
+    // 2º ajuste: nome pequeno e âmbar, sem o ícone em quadradinho; botões
+    // compactos na mesma fileira da Palavra.
     return (
         <section aria-labelledby="titulo-versiculo-do-dia" className="cartao p-5 md:p-7">
-            <header className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400" aria-hidden="true">
-                    <BookOpen className="h-5 w-5" />
-                </span>
-                <h2 id="titulo-versiculo-do-dia" className="reading-serif text-xl font-semibold leading-tight text-text-primary">
-                    {doDia ? 'Versículo do dia' : 'Outro versículo'}
+            <header>
+                {/* Cor no <span>: a regra global de h1–h6 vence classe no título */}
+                <h2 id="titulo-versiculo-do-dia" className="text-[15px] font-semibold">
+                    <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                        <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {doDia ? 'Versículo do dia' : 'Outro versículo'}
+                    </span>
                 </h2>
             </header>
 
@@ -81,42 +84,49 @@ export function RandomVerse() {
                 )}
                 <figcaption className="mt-4 flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
                     {ref}
-                    <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-xs font-semibold tracking-wide" title="Nova Tradução na Linguagem de Hoje">
+                    <span className="text-xs font-medium tracking-wide text-text-muted" title="Nova Tradução na Linguagem de Hoje">
                         {VERSAO_VERSICULO_DO_DIA}
                     </span>
                 </figcaption>
             </figure>
 
-            <div className="mt-6 grid grid-cols-3 gap-2">
-                <BotaoAcao
-                    icone={copiado ? Check : Copy}
-                    rotulo={copiado ? 'Copiado' : 'Copiar'}
-                    variante={copiado ? 'feito' : 'padrao'}
-                    onClick={copiar}
-                    disabled={!texto}
-                />
-                <BotaoAcao icone={Share2} rotulo="Compartilhar" onClick={compartilhar} disabled={!texto} />
-                <BotaoAcao icone={BookOpen} rotulo="Ler na Bíblia" onClick={lerNaBiblia} />
+            {/* Mesma fileira compacta da Palavra da Manhã */}
+            <div className="mt-6 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
+                <PilulaAcao onClick={lerNaBiblia}>
+                    <BookOpen className="h-[18px] w-[18px]" aria-hidden="true" />
+                    Ler na Bíblia
+                </PilulaAcao>
+                <div className="flex items-center gap-1">
+                    <BotaoIcone rotulo={copiado ? 'Copiado' : 'Copiar'} onClick={copiar} feito={copiado} disabled={!texto}>
+                        {copiado
+                            ? <Check className="h-5 w-5 animate-[surgir_0.25s_ease-out]" aria-hidden="true" />
+                            : <Copy className="h-5 w-5" aria-hidden="true" />}
+                    </BotaoIcone>
+                    <BotaoIcone rotulo="Compartilhar" onClick={compartilhar} disabled={!texto}>
+                        <Share className="h-5 w-5" aria-hidden="true" />
+                    </BotaoIcone>
+                </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            {/* Sorteio e retorno, discretos, embaixo da fileira */}
+            <div className="-ml-3 mt-1 flex flex-wrap items-center gap-x-1">
                 {falhou && (
-                    <button type="button" onClick={tentarDeNovo} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                    <button type="button" onClick={tentarDeNovo} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-amber-700 dark:text-amber-400">
                         <RefreshCw className="h-4 w-4" aria-hidden="true" /> Tentar de novo
                     </button>
                 )}
                 {doDia ? (
-                    <button type="button" onClick={sortear} disabled={carregando} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary disabled:opacity-50">
-                        <Shuffle className="h-4 w-4" aria-hidden="true" /> Outro versículo
+                    <button type="button" onClick={sortear} disabled={carregando} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary disabled:opacity-50">
+                        <Shuffle className="h-4 w-4 transition-transform duration-300 group-active:rotate-180" aria-hidden="true" /> Outro versículo
                     </button>
                 ) : (
-                    <button type="button" onClick={voltarAoDeHoje} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary">
-                        <RotateCcw className="h-4 w-4" aria-hidden="true" /> Voltar ao versículo de hoje
+                    <button type="button" onClick={voltarAoDeHoje} className="group inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-text-muted transition-colors hover:text-text-primary">
+                        <RotateCcw className="h-4 w-4 transition-transform duration-300 group-active:-rotate-90" aria-hidden="true" /> Voltar ao versículo de hoje
                     </button>
                 )}
             </div>
             <p className="sr-only" aria-live="polite">{aviso}</p>
-            {aviso && <p className="mt-2 text-center text-[13px] font-medium text-emerald-700 dark:text-emerald-300" aria-hidden="true">{aviso}</p>}
+            {aviso && <p className="mt-1 text-[13px] font-medium text-emerald-700 dark:text-emerald-300" aria-hidden="true">{aviso}</p>}
         </section>
     );
 }

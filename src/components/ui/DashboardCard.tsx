@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
 
 interface DashboardCardProps {
     href: string;
@@ -10,22 +10,28 @@ interface DashboardCardProps {
     icon: LucideIcon;
 }
 
-// Cartão de atalho do início (12/11/2026): compacto, em grade de 2 colunas.
-// O cartão inteiro é o botão. Saíram a etiqueta que repetia o título
-// ("Caderno" no Caderno), o rodapé "ACESSAR" e o realce em degradê.
+// Linha de atalho do início (12/11/2026, 2º ajuste). Os cartões iguais com
+// ícone em quadradinho colorido deixavam a tela "comum"; cada grupo virou um
+// cartão dividido em linhas (GrupoDeAtalhos, em app/page.tsx). Ícone simples,
+// cinza, que fica âmbar no toque; a seta anda um pouco. A linha inteira é o botão.
 export function DashboardCard({ href, title, desc, icon: Icon }: DashboardCardProps) {
     return (
         <Link
             href={href}
-            className="cartao group flex h-full min-h-[132px] flex-col gap-3 p-4 transition-colors hover:border-amber-500/45 active:scale-[0.98] dark:hover:bg-surface-2"
+            className="group flex min-h-16 items-center gap-3.5 px-5 py-3 transition-colors duration-200 hover:bg-surface-2/60 active:bg-surface-2"
         >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400" aria-hidden="true">
-                <Icon className="h-5 w-5" />
+            <Icon
+                className="h-5 w-5 shrink-0 text-text-muted transition-[color,transform] duration-200 group-hover:text-amber-700 group-active:scale-90 group-active:text-amber-700 dark:group-hover:text-amber-400 dark:group-active:text-amber-400"
+                aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold leading-snug text-text-primary">{title}</span>
+                <span className="block text-[13px] leading-snug text-text-secondary">{desc}</span>
             </span>
-            <span className="flex flex-col gap-1">
-                <span className="reading-serif text-[17px] font-semibold leading-snug text-text-primary">{title}</span>
-                <span className="text-[13px] leading-snug text-text-secondary">{desc}</span>
-            </span>
+            <ChevronRight
+                className="h-5 w-5 shrink-0 text-text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-active:translate-x-1"
+                aria-hidden="true"
+            />
         </Link>
     );
 }

@@ -28,7 +28,8 @@ const NOMES_PROPRIOS: Record<string, string> = {
     'nele': 'nEle',
 };
 
-function ehTituloEmMaiusculas(linha: string): boolean {
+// Também usado no cartão da Palavra do início (palavra-apresentacao.ts)
+export function ehTituloEmMaiusculas(linha: string): boolean {
     const letras = linha.replace(/[^A-Za-zÀ-ÿ]/g, '');
     return letras.length >= 6 && letras === letras.toUpperCase() && linha.length <= 90;
 }

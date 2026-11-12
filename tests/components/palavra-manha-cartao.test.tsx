@@ -16,7 +16,7 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 import { PalavraManha } from '@/components/PalavraManha';
-import { nomeCategoria } from '@/lib/palavra-apresentacao';
+import { nomeCategoria, saudacao, separarTitulo } from '@/lib/palavra-apresentacao';
 
 const MENSAGEM = 'O PASTOR QUE NÃO SE ATRASA\n\nPrimeiro parágrafo.\n\nSegundo parágrafo.';
 const writeText = vi.fn();
@@ -51,13 +51,28 @@ describe('cartão da Palavra da Manhã', () => {
         expect(segundo.closest('.texto-palavra')).not.toBeNull();
     });
 
-    it('Amém, Copiar e Compartilhar com nome e tamanho de toque', async () => {
+    // 12/11/2026 (2º ajuste): o título em maiúsculas da mensagem vira a
+    // manchete do cartão (mesma regra das notificações) e o texto abre com
+    // letra capitular. Só apresentação: o texto copiado continua o mesmo.
+    it('o título em maiúsculas vira manchete e o texto abre com capitular', async () => {
+        guardarHoje();
+        render(<PalavraManha />);
+        expect(await screen.findByRole('heading', { level: 3, name: 'O pastor que não se atrasa' })).toBeInTheDocument();
+        expect(screen.queryByText('O PASTOR QUE NÃO SE ATRASA')).toBeNull();
+        expect(screen.getByText('Primeiro parágrafo.').closest('.com-capitular')).not.toBeNull();
+    });
+
+    // 2º ajuste: os três quadradões de 58 px pesavam demais ("muito grande").
+    // Agora: Amém em pílula e Copiar/Compartilhar só com ícone, 44 px de toque.
+    it('Amém, Copiar e Compartilhar compactos, com nome e 44 px de toque', async () => {
         guardarHoje();
         render(<PalavraManha />);
         for (const nome of ['Amém', 'Copiar', 'Compartilhar']) {
             const botao = await screen.findByRole('button', { name: nome });
-            expect(botao.className).toMatch(/min-h-\[58px\]/);
+            expect(botao.className).toMatch(/\bh-11\b/);
+            expect(botao.className).not.toMatch(/min-h-\[58px\]/);
         }
+        expect(screen.getByRole('button', { name: 'Amém' })).toHaveTextContent('Amém');
     });
 
     it('Copiar mantém o formato de antes', async () => {
@@ -105,5 +120,38 @@ describe('nome da categoria', () => {
         expect(nomeCategoria('NOVA_CATEGORIA')).toBe('Nova categoria');
         expect(nomeCategoria('')).toBe('');
         expect(nomeCategoria(undefined)).toBe('');
+    });
+});
+
+describe('título da mensagem', () => {
+    it('separa a primeira linha em maiúsculas e mantém o resto igual', () => {
+        expect(separarTitulo('O ERRO DO OUTRO NÃO JUSTIFICA O SEU\n\nTexto.\n\nMais.')).toEqual({ titulo: 'O erro do outro não justifica o seu', corpo: 'Texto.\n\nMais.' });
+    });
+
+    it('nomes de Deus continuam com maiúscula', () => {
+        expect(separarTitulo('QUANDO DEUS FICA EM SILÊNCIO\n\nTexto.').titulo).toBe('Quando Deus fica em silêncio');
+    });
+
+    it('aceita o título em negrito ou como cabeçalho', () => {
+        expect(separarTitulo('**A PAZ QUE NÃO SE EXPLICA**\nTexto.').titulo).toBe('A paz que não se explica');
+        expect(separarTitulo('# A PAZ QUE NÃO SE EXPLICA\nTexto.').titulo).toBe('A paz que não se explica');
+    });
+
+    it('sem título em maiúsculas, nada muda', () => {
+        const texto = 'Há manhãs em que a gente acorda.\n\nOutro parágrafo.';
+        expect(separarTitulo(texto)).toEqual({ titulo: null, corpo: texto });
+        expect(separarTitulo('SÓ UMA LINHA EM MAIÚSCULAS')).toEqual({ titulo: null, corpo: 'SÓ UMA LINHA EM MAIÚSCULAS' });
+    });
+});
+
+describe('saudação do horário', () => {
+    it('manhã, tarde e noite', () => {
+        expect(saudacao(5)).toBe('Bom dia');
+        expect(saudacao(11)).toBe('Bom dia');
+        expect(saudacao(12)).toBe('Boa tarde');
+        expect(saudacao(17)).toBe('Boa tarde');
+        expect(saudacao(18)).toBe('Boa noite');
+        expect(saudacao(0)).toBe('Boa noite');
+        expect(saudacao(4)).toBe('Boa noite');
     });
 });

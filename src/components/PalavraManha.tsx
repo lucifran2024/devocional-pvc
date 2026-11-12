@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Copy, Sun, Check, BookOpen, Heart, Share2, WifiOff, RefreshCw } from 'lucide-react';
+import { Copy, Sun, Check, BookOpen, Heart, Share, WifiOff, RefreshCw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
-import { BotaoAcao } from '@/components/transcricao/BotaoAcao';
-import { nomeCategoria } from '@/lib/palavra-apresentacao';
+import { BotaoIcone, PilulaAcao } from '@/components/ui/BotaoIcone';
+import { nomeCategoria, separarTitulo } from '@/lib/palavra-apresentacao';
 import { compartilharTexto } from '@/lib/transcricao-acoes';
 
 interface PalavraManhaProps {
@@ -157,17 +157,19 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     // Cartão do início (12/11/2026): o título fica dentro do cartão e aparece
     // já enquanto carrega, para a tela não pular quando a mensagem chega.
     const subtitulo = data ? [data.dia_semana, nomeCategoria(data.categoria)].filter(Boolean).join(' · ') : '';
+    // 2º ajuste: o nome do cartão ficou pequeno e âmbar (sem o ícone em
+    // quadradinho); quem ganha tamanho é o título da mensagem do dia. A cor
+    // vai no <span>: a regra global de h1–h6 em globals.css vence classe de
+    // cor posta direto no título.
     const cabecalho = (
-        <header className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400" aria-hidden="true">
-                <Sun className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-                <h2 id="titulo-palavra-manha" className="reading-serif text-xl font-semibold leading-tight text-text-primary">
+        <header className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+            <h2 id="titulo-palavra-manha" className="text-[15px] font-semibold">
+                <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                    <Sun className="h-4 w-4 shrink-0" aria-hidden="true" />
                     Palavra da Manhã
-                </h2>
-                {subtitulo && <p className="mt-0.5 text-[13px] text-text-muted">{subtitulo}</p>}
-            </div>
+                </span>
+            </h2>
+            {subtitulo && <p className="text-[13px] text-text-muted">{subtitulo}</p>}
         </header>
     );
 
@@ -203,8 +205,11 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
     if (!data) return null;
 
+    // Título em MAIÚSCULAS da mensagem → manchete; o resto, com capitular
+    const { titulo, corpo } = separarTitulo(data.mensagem);
+
     return (
-        <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7 animate-enter">
+        <section aria-labelledby="titulo-palavra-manha" className="cartao p-5 md:p-7 animate-[fadeIn_0.35s_ease-out]">
             {/* Aviso: exibindo mensagem salva (sem conexão) */}
             {modoOffline && (
                 <div className="mb-4 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-[13px] font-semibold text-orange-700 dark:text-orange-300">
@@ -223,26 +228,37 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
                 </p>
             )}
 
+            {titulo && (
+                <h3 className="reading-serif mt-4 text-[1.5rem] font-medium leading-[1.2] tracking-[-0.01em] text-text-primary">
+                    {titulo}
+                </h3>
+            )}
+
             {/* Texto: à esquerda, com respiro entre parágrafos (.texto-palavra) */}
-            <div className="texto-palavra reading-serif mt-5 text-[1.0625rem] leading-[1.75] text-text-primary">
-                <ReactMarkdown>{data.mensagem}</ReactMarkdown>
+            <div className={`texto-palavra reading-serif ${titulo ? 'com-capitular mt-4' : 'mt-5'} text-[1.0625rem] leading-[1.75] text-text-primary`}>
+                <ReactMarkdown>{corpo}</ReactMarkdown>
             </div>
 
-            {/* Mesma fileira de botões do Versículo do dia */}
-            <div className="mt-6 grid grid-cols-3 gap-2">
-                <BotaoAcao
-                    icone={Heart}
-                    rotulo={amei ? 'Amém!' : 'Amém'}
-                    variante={amei ? 'primario' : 'padrao'}
-                    onClick={handleAmen}
-                />
-                <BotaoAcao
-                    icone={copied ? Check : Copy}
-                    rotulo={copied ? 'Copiado' : 'Copiar'}
-                    variante={copied ? 'feito' : 'padrao'}
-                    onClick={handleCopy}
-                />
-                <BotaoAcao icone={Share2} rotulo="Compartilhar" onClick={handleShare} />
+            {/* Botões compactos (2º ajuste): Amém em pílula; Copiar e
+                Compartilhar só com ícone. Mesma fileira do Versículo do dia. */}
+            <div className="mt-6 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
+                <PilulaAcao onClick={handleAmen} ativa={amei} pressionada={amei}>
+                    <Heart
+                        className={`h-[18px] w-[18px] ${amei ? 'fill-current animate-[coracao_0.5s_cubic-bezier(0.2,0.8,0.2,1)]' : ''}`}
+                        aria-hidden="true"
+                    />
+                    {amei ? 'Amém!' : 'Amém'}
+                </PilulaAcao>
+                <div className="flex items-center gap-1">
+                    <BotaoIcone rotulo={copied ? 'Copiado' : 'Copiar'} onClick={handleCopy} feito={copied}>
+                        {copied
+                            ? <Check className="h-5 w-5 animate-[surgir_0.25s_ease-out]" aria-hidden="true" />
+                            : <Copy className="h-5 w-5" aria-hidden="true" />}
+                    </BotaoIcone>
+                    <BotaoIcone rotulo="Compartilhar" onClick={handleShare}>
+                        <Share className="h-5 w-5" aria-hidden="true" />
+                    </BotaoIcone>
+                </div>
             </div>
         </section>
     );

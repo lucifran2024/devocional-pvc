@@ -339,15 +339,48 @@ h6 {
    no tema claro (no escuro, sem sombra). Fica na camada "components" para
    que as classes do Tailwind (hover, por exemplo) ainda possam mudá-la. */
 @layer components {
+  /* 2º ajuste: borda ou sombra, nunca as duas — fica só a borda */
   .cartao {
     background: var(--bg-surface-1);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
-    box-shadow: 0 1px 2px rgb(41 37 36 / 0.05), 0 1px 1px rgb(41 37 36 / 0.03);
   }
-  .dark .cartao {
-    box-shadow: none;
-  }
+}
+
+/* Movimento do início (12/11/2026, 2º ajuste, pedido "algum movimento"):
+   só transform e opacidade, curto. Com "reduzir movimento" no aparelho, a
+   regra global acima zera a duração e tudo aparece no lugar final. */
+@keyframes subir {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Chegada ao abrir: cada bloco sobe um pouco, um depois do outro (--i) */
+.entrada {
+  animation: subir 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+/* Amém: o coração pulsa uma vez ao tocar */
+@keyframes coracao {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.4); }
+  65% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+/* Copiado: o sinal de certo aparece crescendo */
+@keyframes surgir {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Letra capitular no primeiro parágrafo da Palavra (2º ajuste): marca de
+   livro, não enfeite. Só quando a mensagem tem título reconhecido. */
+.texto-palavra.com-capitular > p:first-child::first-letter {
+  float: left;
+  font-size: 3.3em;
+  line-height: 0.85;
+  font-weight: 600;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--accent-primary);
 }
 
 /* Texto da Palavra da Manhã (12/11/2026): o projeto não tem o plugin de

@@ -29,10 +29,33 @@ afterEach(cleanup);
 describe('organização do início', () => {
     it('a data aparece uma vez, por extenso e sem o ano, junto do título', () => {
         render(<DashboardPage />);
-        expect(screen.getByRole('heading', { level: 1, name: /Um momento para a Palavra/ })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
         expect(screen.getAllByText(/12 de novembro/)).toHaveLength(1);
         expect(screen.getByText('Quinta-feira, 12 de novembro')).toBeInTheDocument();
         expect(screen.queryByText(/2026/)).toBeNull();
+    });
+
+    // 12/11/2026 (2º ajuste): "Um momento para a Palavra" não ficou legal; o
+    // título virou a saudação do horário, no aparelho de quem abre.
+    it('o título é a saudação do horário', () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        try {
+            vi.setSystemTime(new Date(2026, 10, 12, 8, 30));
+            render(<DashboardPage />);
+            expect(screen.getByRole('heading', { level: 1, name: 'Bom dia.' })).toBeInTheDocument();
+            expect(screen.queryByText(/Um momento para a Palavra/)).toBeNull();
+            cleanup();
+            vi.setSystemTime(new Date(2026, 10, 12, 20, 0));
+            render(<DashboardPage />);
+            expect(screen.getByRole('heading', { level: 1, name: 'Boa noite.' })).toBeInTheDocument();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ferramentas em lista, sem ícone dentro de quadradinho colorido', () => {
+        const { container } = render(<DashboardPage />);
+        expect(container.querySelectorAll('[class*="bg-amber-500/10"]')).toHaveLength(0);
     });
 
     it('ferramentas de estudo num grupo próprio, cada cartão é o botão', () => {

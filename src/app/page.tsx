@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import Link from 'next/link';
 import {
   BookMarked, BookOpen, Calendar, ChevronRight, HeartHandshake, Mic, NotebookPen, Youtube,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
+import { saudacao } from '@/lib/palavra-apresentacao';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 import { PalavraManha } from '@/components/PalavraManha';
@@ -58,6 +59,9 @@ const TRANSCREVER: Atalho[] = [
   { href: '/transcrever-culto', title: 'Áudio', desc: 'Grave ao vivo ou envie do celular.', icon: Mic },
 ];
 
+// Ordem da chegada ao abrir (classe .entrada em globals.css)
+const ordem = (i: number) => ({ '--i': i }) as CSSProperties;
+
 function formatarDataCurta(dataStr: string): string {
   const texto = new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -65,11 +69,14 @@ function formatarDataCurta(dataStr: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-function GrupoDeAtalhos({ id, titulo, itens }: { id: string; titulo: string; itens: Atalho[] }) {
+// 2º ajuste (12/11/2026): os cartões iguais com ícone em quadradinho
+// colorido eram o que deixava a tela "comum". Cada grupo virou um cartão só,
+// dividido em linhas, como uma lista do celular.
+function GrupoDeAtalhos({ id, titulo, itens, posicao }: { id: string; titulo: string; itens: Atalho[]; posicao: number }) {
   return (
-    <section aria-labelledby={id}>
+    <section aria-labelledby={id} className="entrada" style={ordem(posicao)}>
       <h2 id={id} className="reading-serif mb-3 text-xl font-semibold text-text-primary">{titulo}</h2>
-      <ul className="grid grid-cols-2 gap-3">
+      <ul className="cartao divide-y divide-border-subtle overflow-hidden">
         {itens.map((item) => (
           <li key={item.href}>
             <DashboardCard href={item.href} title={item.title} desc={item.desc} icon={item.icon} />
@@ -84,6 +91,9 @@ export default function DashboardPage() {
   const [payload, setPayload] = useState<PayloadDoDia | null>(null);
   const [continuar, setContinuar] = useState<BibliaPosicao | null>(null);
   const dataHoje = getDataHoje();
+  // A tela só é desenhada no aparelho (depois de conferir o login), então a
+  // hora é a de quem abre, sem risco de divergir do servidor.
+  const cumprimento = saudacao(new Date().getHours());
 
   // ABERTURA RÁPIDA (25/09/2026): a tela aparece na hora. O payload do dia só
   // dá nome à passagem de hoje, então é buscado em segundo plano (antes a
@@ -116,11 +126,12 @@ export default function DashboardPage() {
     <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-12 pt-[max(3.5rem,calc(env(safe-area-inset-top)_+_1rem))] md:pt-12">
 
-        {/* 1. Cabeçalho: data uma vez só, título e tema */}
-        <header className="flex items-start justify-between gap-4">
+        {/* 1. Cabeçalho: a saudação do horário é o título (2º ajuste; antes
+            "Um momento para a Palavra"), a data uma vez só, e o tema */}
+        <header className="entrada flex items-start justify-between gap-4" style={ordem(0)}>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{formatarDataCurta(dataHoje)}</p>
-            <h1 className="reading-serif mt-1 text-[2rem] leading-[1.15] md:text-4xl">Um momento para a Palavra.</h1>
+            <h1 className="reading-serif text-[2rem] font-medium leading-[1.1] tracking-[-0.01em]">{cumprimento}.</h1>
+            <p className="mt-1.5 text-[15px] text-text-secondary">{formatarDataCurta(dataHoje)}</p>
           </div>
           <div className="shrink-0">
             <ThemeToggle />
@@ -128,19 +139,17 @@ export default function DashboardPage() {
         </header>
 
         {/* 2. Hoje: continuar a leitura + leitura do dia (um atalho só, 01/10) */}
-        <section aria-label="Hoje" className="cartao overflow-hidden">
-          <div className="p-5">
+        <section aria-label="Hoje" className="cartao entrada overflow-hidden" style={ordem(1)}>
+          <div className="p-4">
             {/* Com leitura em andamento, o botão leva direto de volta a ela
                 (a Bíblia reabre no capítulo e no versículo onde parou). */}
-            <Link href="/biblioteca" className="flex w-full min-h-11 items-center justify-center gap-2.5 rounded-xl bg-amber-500 px-5 text-[15px] font-semibold text-amber-950 transition hover:bg-amber-400 active:scale-[0.98]">
+            <Link href="/biblioteca" className="flex w-full min-h-11 items-center justify-center gap-2.5 rounded-full bg-amber-500 px-5 text-[15px] font-semibold text-amber-950 transition hover:bg-amber-400 active:scale-[0.97]">
               <BookOpen className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
               <span className="truncate">{continuar ? `Continuar em ${continuar.livroNome} ${continuar.capitulo}` : 'Abrir minha Bíblia'}</span>
             </Link>
           </div>
-          <Link href="/plano-de-leitura?ler=1" className="group flex min-h-16 items-center gap-3 border-t border-border-subtle px-5 py-3 transition-colors hover:bg-surface-2/60">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400" aria-hidden="true">
-              <Calendar className="h-5 w-5" />
-            </span>
+          <Link href="/plano-de-leitura?ler=1" className="group flex min-h-16 items-center gap-3.5 border-t border-border-subtle px-5 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2">
+            <Calendar className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
             <span className="min-w-0 flex-1">
               {payload?.passagem_do_dia ? (
                 <>
@@ -156,14 +165,18 @@ export default function DashboardPage() {
         </section>
 
         {/* 3. Palavra da Manhã (gerada a cada dia) */}
-        <PalavraManha />
+        <div className="entrada" style={ordem(2)}>
+          <PalavraManha />
+        </div>
 
         {/* 4. Versículo do dia */}
-        <RandomVerse />
+        <div className="entrada" style={ordem(3)}>
+          <RandomVerse />
+        </div>
 
         {/* 5. Ferramentas, em dois grupos */}
-        <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} />
-        <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} />
+        <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} posicao={4} />
+        <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} posicao={5} />
       </main>
     </CosmicBackground>
   );
