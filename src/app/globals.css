@@ -354,10 +354,17 @@ h6 {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Chegada ao abrir: cada bloco sobe um pouco, um depois do outro (--i) */
+/* Chegada ao abrir: cada bloco sobe um pouco, um depois do outro (--i).
+   "backwards": fica invisível durante o atraso e, no fim, solta tudo; com
+   "both" sobrava um transform que prenderia elementos fixos de dentro. */
 .entrada {
-  animation: subir 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: subir 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   animation-delay: calc(var(--i, 0) * 60ms);
+}
+/* A regra global de "reduzir movimento" encurta a duração, mas não o atraso:
+   sem esta linha os últimos blocos ficariam invisíveis por até 0,3 s. */
+@media (prefers-reduced-motion: reduce) {
+  .entrada { animation: none; }
 }
 /* Amém: o coração pulsa uma vez ao tocar */
 @keyframes coracao {
