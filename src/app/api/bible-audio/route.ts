@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-    prepararVersos, montarFalas, montarBlocos, ssmlDoBloco, segmentosDoBloco, textosFalados,
+    prepararVersos, comTitulosDeSecao, montarFalas, montarBlocos, ssmlDoBloco, segmentosDoBloco,
+    textosFalados, assinaturaDosTitulos,
     type Fala, type Segmento,
 } from '@/lib/narracao-biblica';
+import { getPericopes } from '@/lib/bible-pericopes';
 import { assinaturaDePronuncia } from '@/lib/pronuncia';
 import {
     escolherVozNarracao, nomeDaVoz, estiloDaVoz,
@@ -16,8 +18,8 @@ export const maxDuration = 120;
 // ============================================
 // ÁUDIO BÍBLICO — narração do capítulo (ou da parte do plano) pelo Azure.
 //
-// O texto vira SSML de leitor (anúncio do capítulo, título do salmo,
-// pausas por pontuação) em blocos que terminam no fim de uma frase.
+// O texto vira SSML de leitor (anúncio do capítulo, título da seção e do
+// salmo, pausas por pontuação) em blocos que terminam no fim de uma frase.
 // Os blocos são sintetizados em paralelo, juntados num MP3 só e guardados
 // no Storage por voz + conjunto de versículos. A marcação de cada
 // versículo é estimada pela duração de cada bloco (narracao-biblica.ts).
@@ -30,8 +32,9 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const BUCKET = 'bible-audio';
 
+// v4 = lê o título das seções e pausa só na pontuação (12/11/2026)
 // v3 = leitura com pausas e anúncio (v2 era texto corrido)
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 
 const MAX_VERSES = 250;
 const MP3_BITRATE = 48000; // audio-24khz-48kbitrate-mono-mp3
@@ -121,9 +124,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'sem_chave' }, { status: 503 });
     }
 
-    const versos = prepararVersos(
-        verses.map(v => ({ verse: Number(v.verse), text: String(v.text || ''), chapter: v.chapter ? Number(v.chapter) : undefined })),
-        capitulo,
+    // Títulos de seção: os mesmos que a tela da Bíblia mostra.
+    const versos = comTitulosDeSecao(
+        prepararVersos(
+            verses.map(v => ({ verse: Number(v.verse), text: String(v.text || ''), chapter: v.chapter ? Number(v.chapter) : undefined })),
+            capitulo,
+        ),
+        (cap, versiculo) => getPericopes(livroId, cap).find(p => p.verse === versiculo)?.title,
     );
     if (versos.length === 0) {
         return NextResponse.json({ ok: false, error: 'sem_texto' }, { status: 400 });
@@ -132,8 +139,10 @@ export async function POST(request: Request) {
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
     // Correção de pronúncia que toca este capítulo muda o endereço: o áudio
     // antigo fica para trás e o capítulo é narrado de novo, já corrigido.
+    // O mesmo vale para os títulos de seção: mudou um título, narra de novo.
     const pronuncia = assinaturaDePronuncia(textosFalados(versos));
-    const pastaCap = `${voz}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}${pronuncia ? `-p${pronuncia}` : ''}`;
+    const titulos = assinaturaDosTitulos(versos);
+    const pastaCap = `${voz}/${CACHE_VERSION}/${livroId}/${capitulo}/${hashVersos(verses)}${titulos ? `-t${titulos}` : ''}${pronuncia ? `-p${pronuncia}` : ''}`;
     const fullPath = `${pastaCap}/full.mp3`;
     const metaPath = `${pastaCap}/full.json`;
     const fonte = `Narração · ${nomeDaVoz(voz)}${vozEscolhida !== voz ? ' (reserva)' : ''}`;

@@ -5,10 +5,13 @@
 // colado no versículo 1 e cada linha poética termina em <br>. Antes, o
 // áudio apagava tudo e lia emendado (título junto do versículo, poema sem
 // respiro). Aqui o capítulo vira uma leitura com:
-//   - anúncio do capítulo ("Salmo 23.", "Gênesis, capítulo 1.");
-//   - título do salmo lido à parte, com pausa depois;
-//   - pausa no fim de cada versículo conforme a pontuação;
-//   - respiro curto nas linhas poéticas sem pontuação.
+//   - anúncio do capítulo ("Salmo 23.", "Gênesis capítulo 1.");
+//   - título da seção (o mesmo da tela) e título do salmo lidos à parte;
+//   - pausa só onde há pontuação: a frase que continua na linha ou no
+//     versículo seguinte é lida corrida, sem fechar a entonação no meio.
+// Ritmo de 12/11/2026, medido contra a leitura que Lucifran escolheu como
+// referência (Isaías 51): cerca de 12 pausas por minuto, meio segundo no
+// fim da frase, vírgula quase sem parada.
 // Também estima em que segundo do áudio cada versículo começa, para a
 // marcação na tela acompanhar a voz.
 // ============================================
@@ -21,12 +24,18 @@ export interface VersoEntrada {
     chapter?: number;
 }
 
+// Como o versículo termina: decide onde o bloco pode ser cortado.
+export type FimDoVerso = 'frase' | 'doisPontos' | 'virgula' | 'aberto';
+
 export interface VersoFalado {
     verse: number;
     chapter: number;
+    /** Título da seção que começa neste versículo (bible-pericopes.ts). */
+    secao: string;
+    /** Título que vem no próprio texto (o cabeçalho dos salmos). */
     titulo: string;
     linhas: string[];
-    pausaMs: number;
+    fim: FimDoVerso;
 }
 
 export type Fala =
@@ -40,14 +49,23 @@ export interface Segmento {
     end: number;
 }
 
+// Silêncio acrescentado pelo SSML, além do respiro que a voz já faz na
+// pontuação. Totais ouvidos (Macerio, medidos em 12/11/2026):
+//   anúncio ≈ 0,75 s · título ≈ 0,65 s · dois-pontos ≈ 0,5 s ·
+//   título no meio do capítulo ≈ 0,8 a 1,2 s antes.
+// Até 12/11/2026 eram 900/700 ms e mais 550 ms em todo fim de versículo
+// (≈ 1 s, sempre igual) e 120 ms em toda linha de poema.
 export const PAUSA = {
-    anuncio: 900,
-    titulo: 700,
-    linhaPoetica: 120,
-    fimDeFrase: 550,
+    anuncio: 250,
+    titulo: 150,
+    antesDoTitulo: 300,
     doisPontos: 350,
-    virgula: 200,
-    semPontuacao: 120,
+} as const;
+
+// Ajustes de silêncio da própria voz (mstts:silence).
+export const SILENCIO = {
+    entreFrases: 250, // fim de frase ≈ 0,5 s
+    virgula: 20,      // vírgula ≈ 0,2 s (o natural da voz era ≈ 0,4 s)
 } as const;
 
 const MAX_VERSO_CHARS = 1500;
@@ -79,7 +97,8 @@ export function anuncioDoCapitulo(livroId: number, capitulo: number): string {
     const nome = NOME_FALADO[livroId];
     if (!nome) return '';
     if (CAPITULO_UNICO.has(livroId)) return `${nome}.`;
-    return `${nome}, capítulo ${capitulo}.`;
+    // Sem vírgula: com ela a voz parava depois do nome do livro.
+    return `${nome} capítulo ${capitulo}.`;
 }
 
 const ENTIDADES: Record<string, string> = {
@@ -119,16 +138,23 @@ function terminaEm(texto: string): string {
     return limpo.slice(-1);
 }
 
-export function pausaDepois(texto: string): number {
+export function fimDoTexto(texto: string): FimDoVerso {
     const ultimo = terminaEm(texto);
-    if (/[.!?…]/.test(ultimo)) return PAUSA.fimDeFrase;
-    if (/[:;]/.test(ultimo)) return PAUSA.doisPontos;
-    if (/[,—–-]/.test(ultimo)) return PAUSA.virgula;
-    return PAUSA.semPontuacao;
+    if (/[.!?…]/.test(ultimo)) return 'frase';
+    if (/[:;]/.test(ultimo)) return 'doisPontos';
+    if (/[,—–-]/.test(ultimo)) return 'virgula';
+    return 'aberto';
 }
 
-function temPontuacaoFinal(texto: string): boolean {
-    return /[.!?…:;,—–-]/.test(terminaEm(texto));
+/** Silêncio que o SSML acrescenta depois de uma linha: só nos dois-pontos, que anunciam uma fala. */
+export function pausaDepois(texto: string): number {
+    return terminaEm(texto) === ':' ? PAUSA.doisPontos : 0;
+}
+
+/** Título lido como frase própria: ganha ponto final se vier sem pontuação. */
+export function tituloFalado(titulo: string): string {
+    const t = titulo.trim();
+    return t && !/[.!?…:]$/.test(t) ? `${t}.` : t;
 }
 
 export function prepararVersos(versos: VersoEntrada[], capituloPadrao: number): VersoFalado[] {
@@ -142,12 +168,24 @@ export function prepararVersos(versos: VersoEntrada[], capituloPadrao: number): 
         preparados.push({
             verse,
             chapter: Number(v.chapter) || capituloPadrao,
+            secao: '',
             titulo,
             linhas,
-            pausaMs: pausaDepois(ultimaLinha),
+            fim: fimDoTexto(ultimaLinha),
         });
     }
     return preparados;
+}
+
+/**
+ * Põe em cada versículo o título da seção que começa nele (o mesmo que a
+ * tela mostra). `tituloDe` devolve '' quando não há título naquele ponto.
+ */
+export function comTitulosDeSecao(
+    versos: VersoFalado[],
+    tituloDe: (capitulo: number, versiculo: number) => string | null | undefined,
+): VersoFalado[] {
+    return versos.map(v => ({ ...v, secao: tituloFalado(limparLinha(tituloDe(v.chapter, v.verse) || '')) }));
 }
 
 // Põe o anúncio antes do versículo 1 de cada capítulo da lista.
@@ -163,14 +201,18 @@ export function montarFalas(versos: VersoFalado[], livroId: number): Fala[] {
     return falas;
 }
 
+// Tudo o que a voz fala num versículo, na ordem: seção, título, linhas.
+function textosDoVerso(v: VersoFalado): string[] {
+    return [v.secao, tituloFalado(v.titulo), ...v.linhas].filter(Boolean);
+}
+
 export function letrasDaFala(f: Fala): number {
     if (f.tipo === 'anuncio') return f.texto.length;
-    return f.verso.titulo.length + f.verso.linhas.reduce((s, l) => s + l.length + 1, 0);
+    return textosDoVerso(f.verso).reduce((s, l) => s + l.length + 1, 0);
 }
 
 function textosDaFala(f: Fala): string[] {
-    if (f.tipo === 'anuncio') return [f.texto];
-    return f.verso.titulo ? [f.verso.titulo, ...f.verso.linhas] : f.verso.linhas;
+    return f.tipo === 'anuncio' ? [f.texto] : textosDoVerso(f.verso);
 }
 
 // Sílabas aproximadas: grupos de vogais. Número vira fala longa
@@ -181,44 +223,36 @@ export function silabas(texto: string): number {
     return vogais + algarismos * 2;
 }
 
-// Pausas que a própria voz faz dentro do versículo (a do fim já é do SSML).
+// Pausas que a própria voz faz na pontuação (as do SSML são somadas à parte).
 function pausasNaturais(f: Fala): number {
-    const textos = textosDaFala(f);
     let s = 0;
-    textos.forEach((t, i) => {
-        const interno = i < textos.length - 1 ? t : t.replace(/[\s"'”’»)\].!?…:;,—–-]+$/u, '');
-        s += (interno.match(/,/g)?.length ?? 0) * TEMPO_NATURAL.virgula;
-        s += (interno.match(/[:;—–]/g)?.length ?? 0) * TEMPO_NATURAL.doisPontos;
-        s += (interno.match(/[.!?…](?=\s|["'”’»)]|$)/g)?.length ?? 0) * TEMPO_NATURAL.fimDeFrase;
-    });
+    for (const t of textosDaFala(f)) {
+        s += (t.match(/,/g)?.length ?? 0) * TEMPO_NATURAL.virgula;
+        s += (t.match(/[:;—–]/g)?.length ?? 0) * TEMPO_NATURAL.doisPontos;
+        s += (t.match(/[.!?…](?=\s|["'”’»)\]]|$)/g)?.length ?? 0) * TEMPO_NATURAL.fimDeFrase;
+    }
     return s;
 }
 
-// Medido com o Azure em 03/10/2026: 3 vozes × salmo, narrativa e carta,
-// transcrevendo o áudio de volta. Erro médio 0,44 s por versículo.
+// Pesos de tempo da pontuação na estimativa (não são a pausa ouvida: somam
+// também o alongamento da voz antes dela). Ajustados em 12/11/2026 com o
+// Azure (Macerio) em Isaías 51, João 3 e Hebreus 6, comparando com o começo
+// real de cada versículo: erro médio 0,43 s (era 0,44 s no ritmo anterior).
 export const TEMPO_NATURAL = {
-    inicioDoBloco: 0.5,
-    virgula: 0.22,
-    doisPontos: 0.36,
-    fimDeFrase: 0.5,
+    inicioDoBloco: 0.1,
+    virgula: 0.5,
+    doisPontos: 0.1,
+    fimDeFrase: 1.2,
 } as const;
 
-// Frase corrida (28/10/2026): pausa forçada no meio da frase (linha do poema
-// ou versículo que continua no próximo) faz a voz fechar a entonação como se
-// a frase tivesse acabado. Com ela ligada, só a pontuação pausa.
-function continuaNaProxima(v: VersoFalado): boolean {
-    return v.pausaMs === PAUSA.semPontuacao;
-}
-
 // Silêncio que o próprio SSML acrescenta (fora as pausas naturais da voz).
-export function silencioDaFala(f: Fala, fraseCorrida = false): number {
+export function silencioDaFala(f: Fala): number {
     if (f.tipo === 'anuncio') return f.pausaMs;
     const v = f.verso;
-    let ms = (fraseCorrida && continuaNaProxima(v) ? 0 : v.pausaMs) + (v.titulo ? PAUSA.titulo : 0);
-    if (fraseCorrida) return ms;
-    for (let i = 0; i < v.linhas.length - 1; i++) {
-        if (!temPontuacaoFinal(v.linhas[i])) ms += PAUSA.linhaPoetica;
-    }
+    let ms = 0;
+    if (v.secao) ms += (v.verse === 1 ? 0 : PAUSA.antesDoTitulo) + PAUSA.titulo;
+    if (v.titulo) ms += PAUSA.titulo;
+    for (const linha of v.linhas) ms += pausaDepois(linha);
     return ms;
 }
 
@@ -232,7 +266,7 @@ export function montarBlocos(falas: Fala[], maxChars = 1400, limiteDuro = 2200):
         const letras = letrasDaFala(f);
         if (atual.length > 0) {
             const ultima = atual[atual.length - 1];
-            const fimDeFrase = ultima.tipo === 'anuncio' ? false : ultima.verso.pausaMs >= PAUSA.fimDeFrase;
+            const fimDeFrase = ultima.tipo === 'anuncio' ? false : ultima.verso.fim === 'frase';
             const passou = tamanho + letras > maxChars;
             const estourou = tamanho + letras > limiteDuro;
             const anuncioNovo = f.tipo === 'anuncio';
@@ -254,21 +288,37 @@ export { escaparXml };
 
 /** Linhas faladas dos versículos, para saber se alguma correção de pronúncia toca o capítulo. */
 export function textosFalados(versos: VersoFalado[]): string[] {
-    return versos.flatMap(v => (v.titulo ? [v.titulo, ...v.linhas] : v.linhas));
+    return versos.flatMap(textosDoVerso);
 }
 
-function ssmlDaFala(f: Fala, fraseCorrida = false): string {
-    if (f.tipo === 'anuncio') return `${escaparXml(f.texto)}<break time='${f.pausaMs}ms'/>`;
+/** Títulos de seção que entram neste áudio: mudou um título, muda o endereço do áudio guardado. */
+export function assinaturaDosTitulos(versos: VersoFalado[]): string {
+    const chave = versos.filter(v => v.secao).map(v => `${v.chapter}:${v.verse}=${v.secao}`).join('|');
+    if (!chave) return '';
+    let h = 5381;
+    for (let i = 0; i < chave.length; i++) h = ((h << 5) + h + chave.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+}
+
+const pausa = (ms: number) => (ms > 0 ? `<break time='${ms}ms'/>` : ' ');
+
+function ssmlDaFala(f: Fala): string {
+    if (f.tipo === 'anuncio') return `${escaparXml(f.texto)}${pausa(f.pausaMs)}`;
     const v = f.verso;
     let s = '';
-    if (v.titulo) s += `${ssmlComPronuncia(v.titulo)}<break time='${PAUSA.titulo}ms'/>`;
+    if (v.secao) {
+        // No versículo 1 o título vem logo depois do anúncio, que já pausou.
+        if (v.verse !== 1) s += pausa(PAUSA.antesDoTitulo);
+        s += `${ssmlComPronuncia(v.secao)}${pausa(PAUSA.titulo)}`;
+    }
+    if (v.titulo) s += `${ssmlComPronuncia(tituloFalado(v.titulo))}${pausa(PAUSA.titulo)}`;
+    // Só a pontuação pausa; depois dos dois-pontos, um respiro a mais.
     v.linhas.forEach((linha, i) => {
         s += ssmlComPronuncia(linha);
-        if (i < v.linhas.length - 1) {
-            s += temPontuacaoFinal(linha) || fraseCorrida ? ' ' : `<break time='${PAUSA.linhaPoetica}ms'/>`;
-        }
+        const ms = pausaDepois(linha);
+        if (ms > 0) s += pausa(ms);
+        else if (i < v.linhas.length - 1) s += ' ';
     });
-    if (!(fraseCorrida && continuaNaProxima(v))) s += `<break time='${v.pausaMs}ms'/>`;
     return s;
 }
 
@@ -277,20 +327,23 @@ export interface OpcoesVoz {
     estilo?: string;
     velocidade?: string;
     pausaEntreFrasesMs?: number;
-    fraseCorrida?: boolean;
+    pausaDeVirgulaMs?: number;
 }
 
 export function ssmlDoBloco(
     bloco: Fala[],
-    { voz, estilo = '', velocidade = '-5%', pausaEntreFrasesMs = 150, fraseCorrida = false }: OpcoesVoz,
+    {
+        voz, estilo = '', velocidade = '-5%',
+        pausaEntreFrasesMs = SILENCIO.entreFrases, pausaDeVirgulaMs = SILENCIO.virgula,
+    }: OpcoesVoz,
 ): string {
-    let corpo = bloco.map(f => ssmlDaFala(f, fraseCorrida)).join(' ');
+    let corpo = bloco.map(ssmlDaFala).join(' ').replace(/\s+/g, ' ').trim();
     corpo = `<prosody rate='${velocidade}'>${corpo}</prosody>`;
     if (estilo) corpo = `<mstts:express-as style='${estilo}'>${corpo}</mstts:express-as>`;
     if (/Multilingual/i.test(voz)) corpo = `<lang xml:lang='pt-BR'>${corpo}</lang>`;
-    const silencio = pausaEntreFrasesMs > 0
-        ? `<mstts:silence type='Sentenceboundary' value='${pausaEntreFrasesMs}ms'/>`
-        : '';
+    const silencio =
+        (pausaEntreFrasesMs > 0 ? `<mstts:silence type='Sentenceboundary' value='${pausaEntreFrasesMs}ms'/>` : '') +
+        (pausaDeVirgulaMs > 0 ? `<mstts:silence type='Comma-exact' value='${pausaDeVirgulaMs}ms'/>` : '');
     return (
         `<speak version='1.0' xml:lang='pt-BR' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts='https://www.w3.org/2001/mstts'>` +
         `<voice name='${voz}'>${silencio}${corpo}</voice></speak>`
@@ -300,8 +353,8 @@ export function ssmlDoBloco(
 // Estima onde cada versículo começa e termina dentro do áudio de um bloco.
 // Pausas do SSML e da pontuação são conhecidas; o resto da duração é
 // dividido pelas sílabas.
-export function segmentosDoBloco(bloco: Fala[], duracaoSeg: number, inicioSeg = 0, fraseCorrida = false): Segmento[] {
-    const pausaDe = (f: Fala) => silencioDaFala(f, fraseCorrida) / 1000 + pausasNaturais(f);
+export function segmentosDoBloco(bloco: Fala[], duracaoSeg: number, inicioSeg = 0): Segmento[] {
+    const pausaDe = (f: Fala) => silencioDaFala(f) / 1000 + pausasNaturais(f);
     const inicio = Math.min(TEMPO_NATURAL.inicioDoBloco, duracaoSeg * 0.1);
     const pausaTotal = bloco.reduce((s, f) => s + pausaDe(f), 0);
     const silabasTotal = bloco.reduce((s, f) => s + Math.max(1, silabas(textosDaFala(f).join(' '))), 0);
