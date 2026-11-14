@@ -118,6 +118,21 @@ describe('cartão da Palavra da Manhã', () => {
         expect(darAmen).toHaveBeenCalledWith(7);
     });
 
+    // 14/11/2026 ("preto, papel e ouro"): a Palavra é o texto do dia e fica
+    // direto na página, sem caixa em volta; a fileira de botões não tem mais
+    // a linha fina em cima.
+    it('a Palavra fica direto na página, sem caixa nem linha', async () => {
+        guardarHoje();
+        const { container } = render(<PalavraManha />);
+        await screen.findByRole('heading', { level: 3, name: 'O pastor que não se atrasa' });
+        const secao = container.querySelector('section[aria-labelledby="titulo-palavra-manha"]')!;
+        expect(secao.className).not.toMatch(/\bcartao\b|border/);
+        expect(secao.querySelector('[class*="border-t"]')).toBeNull();
+        // o nome do bloco é só texto, em ouro, sem ícone na frente
+        const nome = screen.getByRole('heading', { level: 2, name: 'Palavra da Manhã' });
+        expect(nome.querySelector('svg')).toBeNull();
+    });
+
     it('enquanto carrega, o título já aparece (a tela não pula)', () => {
         render(<PalavraManha />);
         expect(screen.getByRole('heading', { level: 2, name: 'Palavra da Manhã' })).toBeInTheDocument();

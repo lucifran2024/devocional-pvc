@@ -3,7 +3,7 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import Link from 'next/link';
 import {
-  BookMarked, BookOpen, Calendar, HeartHandshake, Mic, NotebookPen, Youtube,
+  ArrowRight, BookMarked, BookOpen, HeartHandshake, Mic, NotebookPen, Youtube,
   type LucideIcon,
 } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
@@ -13,18 +13,26 @@ import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { MarcaBiblia } from '@/components/ui/MarcaBiblia';
 import { RandomVerse } from '@/components/RandomVerse';
 
 // ===============================================
 // PÁGINA INICIAL
 //
-// Início premium (12/11/2026, pedido "organização da página inicial, dos
-// cards e dos botões"): uma coluna só, de cima para baixo — data e título,
-// cartão "Hoje" (continuar + leitura de hoje), Palavra da Manhã, Versículo
-// do dia e as ferramentas em dois grupos compactos. A data aparece uma vez;
-// tema fica no cabeçalho, no fluxo da página (antes flutuava sobre o texto);
-// Sair fica no menu Mais e na barra lateral. Sem foto no topo (27/09) e sem
-// degradê, brilho ou ícone gigante (03/10).
+// "Preto, papel e ouro" (14/11/2026, pedido "reformular tudo… premium…
+// cor, layout, design, botão, fonte, organização"). Os cinco ajustes de
+// 12/11 mexeram em detalhe e deixaram a mesma pilha de caixas com linha
+// fina. Agora a tela é feita de blocos de cor, não de caixas:
+//   1. topo numa faixa só: a marca do app, a saudação do horário com a
+//      data embaixo e o tema;
+//   2. Hoje: Continuar (bloco invertido, com a fita marcadora do ícone) e a
+//      leitura de hoje;
+//   3. a Palavra da Manhã direto na página, sem caixa, com manchete grande;
+//   4. o Versículo do dia como página impressa (bloco invertido);
+//   5. as ferramentas, em duas listas.
+// Continua valendo: a data aparece uma vez; Sair fica no Mais e na barra
+// lateral; sem foto no topo (27/09); sem degradê, brilho ou ícone gigante
+// (03/10); topo baixo para a Palavra aparecer logo.
 // ===============================================
 
 const PAYLOAD_LOCAL_KEY = 'payload-dia-local';
@@ -171,37 +179,38 @@ export default function DashboardPage() {
 
   return (
     <CosmicBackground className="flex flex-col min-h-screen selection:bg-amber-500/30">
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-12 pt-[max(3.5rem,calc(env(safe-area-inset-top)_+_1rem))] md:pt-12">
+      <main className="mx-auto flex w-full max-w-3xl flex-col px-5 pb-12 pt-[max(1rem,calc(env(safe-area-inset-top)_+_0.5rem))] md:pt-10">
 
-        {/* 1. Cabeçalho: a saudação do horário é o título (2º ajuste; antes
-            "Um momento para a Palavra"), a data uma vez só, e o tema */}
-        <header className="entrada flex items-start justify-between gap-4" style={ordem(0)}>
-          <div className="min-w-0">
-            <h1 className="reading-serif text-[2rem] font-medium leading-[1.1] tracking-[-0.01em]">{cumprimento}.</h1>
-            <p className="mt-1.5 text-base text-text-secondary">{formatarDataCurta(dataHoje)}</p>
+        {/* 1. Topo numa faixa só: a marca do app, a saudação do horário (o
+            título da tela) com a data embaixo, uma vez só, e o tema à
+            direita, sem caixa. Baixo de propósito: a Palavra aparece logo. */}
+        <header className="entrada flex items-center justify-between gap-3" style={ordem(0)}>
+          <div className="flex min-w-0 items-center gap-3">
+            <MarcaBiblia className="h-11 w-11 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="reading-serif text-[1.5rem] font-medium leading-[1.15] tracking-[-0.015em]">{cumprimento}.</h1>
+              <p className="text-sm leading-5 text-text-muted">{formatarDataCurta(dataHoje)}</p>
+            </div>
           </div>
-          {/* 5º ajuste: sem a caixa com borda, que pesava mais que os quadros */}
-          <div className="-mr-2 shrink-0">
+          <div className="-mr-2.5 shrink-0">
             <ThemeToggle discreto />
           </div>
         </header>
 
-        {/* 2. Hoje (3º ajuste, 12/11/2026: "o ler na Bíblia e o plano de
-            leitura, os dois de cima, dá uma melhorada"): dois quadros lado a
-            lado, o topo continua baixo no celular (25/09 e 01/10; mais baixo
-            ainda depois de "não tá muito grande os dois?"). A Bíblia
-            (âmbar, a ação principal) reabre no capítulo e no versículo onde
-            parou; a leitura de hoje mostra as passagens uma por linha. Um
-            atalho só para a leitura do dia. */}
-        <section aria-label="Hoje" className="entrada" style={ordem(1)}>
+        {/* 2. Hoje: dois quadros lado a lado, baixos (o topo continua curto).
+            Continuar é o bloco invertido, com a fita marcadora: é o gesto mais
+            comum da tela e reabre a Bíblia no capítulo e no versículo onde a
+            leitura parou. A leitura de hoje mostra as passagens, uma por
+            linha. Um atalho só para a leitura do dia. */}
+        <section aria-label="Hoje" className="entrada mt-6" style={ordem(1)}>
           <div className="grid grid-cols-2 gap-3">
             <Link
               href="/biblioteca"
               aria-label={rotuloBiblia}
-              className="flex flex-col justify-between rounded-[var(--radius-xl)] border border-transparent bg-amber-500 px-4 py-3 text-amber-950 transition-[background-color,transform] duration-200 hover:bg-amber-400 active:scale-[0.97] md:px-7"
+              className="campo relative flex flex-col justify-between px-4 py-3.5 transition-transform duration-200 active:scale-[0.97] md:px-7"
             >
-              <span className="flex items-center gap-1.5 text-sm font-semibold leading-4 text-amber-950/75">
-                <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="fita-marcadora" aria-hidden="true" />
+              <span className="text-sm font-semibold leading-5 text-campo-suave">
                 {continuar ? 'Continuar' : 'Bíblia'}
               </span>
               <span className="mt-2 block">
@@ -210,18 +219,18 @@ export default function DashboardPage() {
                 <span data-nome-livro className={`reading-serif block font-medium leading-tight ${tamanhoQuadro} ${QUEBRA_SEGURA}`}>
                   {continuar ? `${continuar.livroNome} ${continuar.capitulo}` : 'Abrir'}
                 </span>
-                <span className="mt-0.5 block text-sm leading-5 text-amber-950/70">
+                <span className="mt-0.5 block text-sm leading-5 text-campo-suave">
                   {continuar ? (versiculoGuardado ? `Versículo ${versiculoGuardado}` : 'De onde parou') : 'Comece a leitura'}
                 </span>
               </span>
             </Link>
             <Link
               href="/plano-de-leitura?ler=1"
-              className="cartao flex flex-col justify-between px-4 py-3 transition-[background-color,transform] duration-200 hover:bg-surface-2/60 active:scale-[0.97] md:px-7"
+              className="cartao flex flex-col justify-between px-4 py-3.5 transition-[background-color,transform] duration-200 hover:bg-surface-2/50 active:scale-[0.97] md:px-7"
             >
-              <span className="flex items-center gap-1.5 text-sm font-semibold leading-4 text-text-secondary">
-                <Calendar className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold leading-5 text-text-secondary">
                 {passagens.length ? 'Leitura de hoje' : 'Plano de leitura'}
+                <ArrowRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
               </span>
               <span className="mt-2 block">
                 {passagens.length ? passagens.map((p) => <Passagem key={p} texto={p} tamanho={tamanhoQuadro} />) : (
@@ -232,19 +241,21 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* 3. Palavra da Manhã (gerada a cada dia) */}
-        <div className="entrada" style={ordem(2)}>
+        {/* 3. Palavra da Manhã: o texto do dia, direto na página */}
+        <div className="entrada mt-10" style={ordem(2)}>
           <PalavraManha />
         </div>
 
-        {/* 4. Versículo do dia */}
-        <div className="entrada" style={ordem(3)}>
+        {/* 4. Versículo do dia: a página impressa */}
+        <div className="entrada mt-10" style={ordem(3)}>
           <RandomVerse />
         </div>
 
         {/* 5. Ferramentas, em dois grupos */}
-        <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} posicao={4} />
-        <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} posicao={5} />
+        <div className="mt-10 flex flex-col gap-7">
+          <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} posicao={4} />
+          <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} posicao={5} />
+        </div>
       </main>
     </CosmicBackground>
   );

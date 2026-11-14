@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { MarcaBiblia } from '@/components/ui/MarcaBiblia';
 
 // useSearchParams exige um limite de Suspense quando usado em componente do
 // layout raiz (senão o build reclama de "missing-suspense-with-csr-bailout").
@@ -112,9 +113,11 @@ function NavigationInner() {
 
     return (
         <>
-            {/* Mobile Bottom Bar */}
-            <nav ref={navInferiorRef} aria-label="Navegação principal" className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-border-subtle md:hidden shadow-[0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]">
-                <ul className="flex items-stretch justify-around px-1 pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {/* Barra de baixo (celular). 14/11/2026: fundo liso da própria
+                página (sem vidro fosco); o item aberto fica mais claro e ganha
+                um traço de ouro na borda de cima, como um marcador. */}
+            <nav ref={navInferiorRef} aria-label="Navegação principal" className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-surface-0 md:hidden">
+                <ul className="flex items-stretch justify-around px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                     {navItems.map((item) => {
                         const isActive = isItemActive(item.href);
                         return (
@@ -122,20 +125,12 @@ function NavigationInner() {
                                 <Link
                                     href={item.href}
                                     aria-current={isActive ? "page" : undefined}
-                                    className={`flex flex-col items-center justify-center w-full py-1.5 gap-1 rounded-xl transition-all duration-200
-                                        ${isActive
-                                            ? 'text-amber-600 dark:text-amber-400'
-                                            : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
+                                    className={`relative flex w-full flex-col items-center justify-center gap-1 pb-1 pt-2.5 transition-colors duration-200 active:scale-95
+                                        ${isActive ? 'text-text-primary' : 'text-text-muted hover:text-text-secondary'}`}
                                 >
-                                    <div className={`relative p-1.5 rounded-xl transition-all duration-200
-                                        ${isActive ? 'bg-amber-500/12 dark:bg-amber-500/15' : 'bg-transparent'}`}>
-                                        <item.icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
-                                        {isActive && (
-                                            <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400" />
-                                        )}
-                                    </div>
-                                    <span className={`text-[11px] transition-all duration-200 ${isActive ? 'font-bold' : 'font-medium'}`}>
+                                    {isActive && <span className="absolute -top-px left-1/2 h-[2px] w-8 -translate-x-1/2 rounded-full bg-amber-500" aria-hidden="true" />}
+                                    <item.icon className={`h-[22px] w-[22px] ${isActive ? 'stroke-[2.1]' : 'stroke-[1.7]'}`} />
+                                    <span className={`text-[11px] ${isActive ? 'font-semibold' : 'font-medium'}`}>
                                         {item.name}
                                     </span>
                                 </Link>
@@ -149,31 +144,24 @@ function NavigationInner() {
                             aria-label="Mais opções"
                             aria-haspopup="dialog"
                             aria-expanded={maisAberto}
-                            className={`flex flex-col items-center justify-center w-full py-1.5 gap-1 rounded-xl transition-all duration-200
-                                ${maisAtivo || maisAberto
-                                    ? 'text-amber-600 dark:text-amber-400'
-                                    : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
+                            className={`relative flex w-full flex-col items-center justify-center gap-1 pb-1 pt-2.5 transition-colors duration-200 active:scale-95
+                                ${maisAtivo || maisAberto ? 'text-text-primary' : 'text-text-muted hover:text-text-secondary'}`}
                         >
-                            <div className={`relative p-1.5 rounded-xl transition-all duration-200 ${maisAtivo ? 'bg-amber-500/12 dark:bg-amber-500/15' : 'bg-transparent'}`}>
-                                <LayoutGrid className={`w-5 h-5 ${maisAtivo ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
-                                {maisAtivo && (
-                                    <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400" />
-                                )}
-                            </div>
-                            <span className={`text-[11px] ${maisAtivo ? 'font-bold' : 'font-medium'}`}>Mais</span>
+                            {maisAtivo && <span className="absolute -top-px left-1/2 h-[2px] w-8 -translate-x-1/2 rounded-full bg-amber-500" aria-hidden="true" />}
+                            <LayoutGrid className={`h-[22px] w-[22px] ${maisAtivo ? 'stroke-[2.1]' : 'stroke-[1.7]'}`} />
+                            <span className={`text-[11px] ${maisAtivo ? 'font-semibold' : 'font-medium'}`}>Mais</span>
                         </button>
                     </li>
                 </ul>
             </nav>
 
-            {/* Desktop Sidebar */}
-            <nav aria-label="Navegação lateral" className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[88px] bg-white/95 dark:bg-surface-1/90 backdrop-blur-xl border-r border-slate-200/80 dark:border-border-subtle z-50 items-center py-7">
-                {/* Logo */}
-                <div className="w-11 h-11 rounded-2xl bg-amber-500 flex items-center justify-center text-amber-950 mb-10 select-none">
-                    <BookOpen className="w-5 h-5" />
+            {/* Barra lateral (computador): o mesmo fundo da página, separada
+                por uma linha; o item aberto é um degrau mais claro. */}
+            <nav aria-label="Navegação lateral" className="fixed bottom-0 left-0 top-0 z-50 hidden w-[88px] flex-col items-center border-r border-border-subtle bg-surface-0 py-7 md:flex">
+                <div className="mb-9 select-none">
+                    <MarcaBiblia className="h-9 w-9" />
                 </div>
-                <ul className="flex flex-col gap-1 w-full px-3">
+                <ul className="flex w-full flex-col gap-1 px-3">
                     {navItems.map((item) => {
                         const isActive = isItemActive(item.href);
                         return (
@@ -181,17 +169,14 @@ function NavigationInner() {
                                 <Link
                                     href={item.href}
                                     aria-current={isActive ? "page" : undefined}
-                                    className={`relative flex flex-col items-center justify-center w-full py-3.5 gap-1.5 rounded-2xl transition-all duration-200
-                                        ${isActive
-                                            ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/12'
-                                            : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                                        }`}
+                                    className={`relative flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl py-3.5 transition-colors duration-200
+                                        ${isActive ? 'bg-surface-2 text-text-primary' : 'text-text-muted hover:bg-surface-1 hover:text-text-primary'}`}
                                 >
                                     {isActive && (
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-amber-500 dark:bg-amber-400" />
+                                        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-amber-500" aria-hidden="true" />
                                     )}
-                                    <item.icon className={`w-5 h-5 transition-all duration-200 ${isActive ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
-                                    <span className={`text-[11px] transition-all duration-200 ${isActive ? 'font-bold' : 'font-medium'}`}>
+                                    <item.icon className={`h-5 w-5 ${isActive ? 'stroke-[2.1]' : 'stroke-[1.7]'}`} />
+                                    <span className={`text-[11px] ${isActive ? 'font-semibold' : 'font-medium'}`}>
                                         {item.name}
                                     </span>
                                 </Link>
@@ -205,28 +190,25 @@ function NavigationInner() {
                             aria-label="Mais opções"
                             aria-haspopup="dialog"
                             aria-expanded={maisAberto}
-                            className={`relative flex flex-col items-center justify-center w-full py-3.5 gap-1.5 rounded-2xl transition-all duration-200
-                                ${maisAtivo
-                                    ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/12'
-                                    : 'text-slate-600 dark:text-text-muted hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                                }`}
+                            className={`relative flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl py-3.5 transition-colors duration-200
+                                ${maisAtivo ? 'bg-surface-2 text-text-primary' : 'text-text-muted hover:bg-surface-1 hover:text-text-primary'}`}
                         >
                             {maisAtivo && (
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-amber-500 dark:bg-amber-400" />
+                                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-amber-500" aria-hidden="true" />
                             )}
-                            <LayoutGrid className={`w-5 h-5 ${maisAtivo ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
-                            <span className={`text-[11px] ${maisAtivo ? 'font-bold' : 'font-medium'}`}>Mais</span>
+                            <LayoutGrid className={`h-5 w-5 ${maisAtivo ? 'stroke-[2.1]' : 'stroke-[1.7]'}`} />
+                            <span className={`text-[11px] ${maisAtivo ? 'font-semibold' : 'font-medium'}`}>Mais</span>
                         </button>
                     </li>
                 </ul>
 
-                {/* Sair (desktop) */}
+                {/* Sair (computador) */}
                 <button
                     onClick={signOut}
-                    className="mt-auto flex flex-col items-center gap-1.5 py-3.5 px-3 rounded-2xl text-slate-600 dark:text-text-muted hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 w-full"
+                    className="mt-auto flex w-full flex-col items-center gap-1.5 rounded-2xl px-3 py-3.5 text-text-muted transition-colors duration-200 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                     title="Sair da conta"
                 >
-                    <LogOut className="w-5 h-5 stroke-[1.8]" />
+                    <LogOut className="h-5 w-5 stroke-[1.8]" />
                     <span className="text-[11px] font-medium">Sair</span>
                 </button>
             </nav>
@@ -234,22 +216,22 @@ function NavigationInner() {
             {/* Painel "Mais" — folha inferior no celular, janela no computador */}
             {maisAberto && (
                 <div className="fixed inset-0 z-[80] flex items-end md:items-center justify-center md:p-4">
-                    <div className="absolute inset-0 bg-black/45 backdrop-blur-sm animate-in fade-in duration-150" onClick={fecharMais} aria-hidden="true" />
+                    <div className="absolute inset-0 bg-black/60 animate-[fadeIn_0.15s_ease-out]" onClick={fecharMais} aria-hidden="true" />
                     <div
                         role="dialog"
                         aria-modal="true"
                         aria-label="Mais opções"
-                        className="relative w-full md:max-w-md bg-white dark:bg-surface-1 border-t md:border border-slate-200 dark:border-border-subtle rounded-t-3xl md:rounded-3xl shadow-2xl px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-4 duration-200"
+                        className="relative w-full md:max-w-md bg-surface-1 rounded-t-[28px] md:rounded-[28px] shadow-2xl px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] animate-[slideUp_0.22s_cubic-bezier(0.2,0.8,0.2,1)]"
                     >
-                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300 dark:bg-white/15 md:hidden" aria-hidden="true" />
+                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-strong md:hidden" aria-hidden="true" />
                         <div className="flex items-center justify-between mb-3 px-1">
-                            <p className="reading-serif text-lg font-semibold text-text-primary">Mais opções</p>
+                            <p className="reading-serif text-[1.25rem] font-medium text-text-primary">Mais opções</p>
                             <button
                                 ref={fecharRef}
                                 type="button"
                                 onClick={fecharMais}
                                 aria-label="Fechar menu"
-                                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-slate-100 dark:hover:bg-surface-2 transition-colors"
+                                className="flex h-11 w-11 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -264,16 +246,16 @@ function NavigationInner() {
                                             href={item.href}
                                             onClick={fecharMais}
                                             aria-current={ativo ? 'page' : undefined}
-                                            className={`flex h-full min-h-[76px] flex-col justify-between gap-2 rounded-2xl border p-3 transition-colors active:scale-[0.98]
+                                            className={`flex h-full min-h-[84px] flex-col justify-between gap-2 rounded-2xl p-3.5 transition-[background-color,transform] active:scale-[0.97]
                                                 ${ativo
-                                                    ? 'border-amber-500/50 bg-amber-500/10'
-                                                    : 'border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2/60 hover:border-amber-500/40'
+                                                    ? 'bg-amber-500/15'
+                                                    : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-border-strong/60'
                                                 }`}
                                         >
-                                            <item.icon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                            <item.icon className="h-[22px] w-[22px] text-amber-700 dark:text-amber-400" />
                                             <span className="flex flex-col">
                                                 <span className="text-sm font-semibold leading-tight text-text-primary">{item.name}</span>
-                                                <span className="text-xs text-text-muted">{item.desc}</span>
+                                                <span className="mt-0.5 text-xs text-text-muted">{item.desc}</span>
                                             </span>
                                         </Link>
                                     </li>
@@ -282,14 +264,14 @@ function NavigationInner() {
                         </ul>
 
                         <div className="mt-3 flex items-center gap-2.5">
-                            <div className="flex flex-1 items-center justify-between rounded-2xl border border-slate-200 dark:border-border-subtle px-3 py-1.5">
+                            <div className="flex flex-1 items-center justify-between rounded-2xl bg-surface-0 px-3.5 py-1.5 dark:bg-surface-2">
                                 <span className="text-sm font-medium text-text-secondary">Tema</span>
-                                <ThemeToggle />
+                                <ThemeToggle discreto />
                             </div>
                             <button
                                 type="button"
                                 onClick={() => { fecharMais(); signOut(); }}
-                                className="flex min-h-[52px] items-center gap-2 rounded-2xl border border-slate-200 dark:border-border-subtle px-4 text-sm font-semibold text-slate-600 dark:text-text-secondary hover:text-red-500 hover:border-red-400/50 transition-colors"
+                                className="flex min-h-[56px] items-center gap-2 rounded-2xl bg-surface-0 px-4 text-sm font-semibold text-text-secondary transition-colors hover:text-red-500 dark:bg-surface-2"
                             >
                                 <LogOut className="w-4 h-4" /> Sair da conta
                             </button>

@@ -217,3 +217,49 @@ describe('organização do início', () => {
         expect(screen.queryByRole('link', { name: /Devocional Externo/ })).toBeNull();
     });
 });
+
+// "Preto, papel e ouro" (14/11/2026): "as últimas mudanças não ficaram legais,
+// queria reformular tudo… premium… cor, layout, design, botão, fonte,
+// organização". A tela deixou de ser uma pilha de caixas com linha fina.
+describe('início: preto, papel e ouro', () => {
+    it('topo numa faixa só: marca do app, saudação e data', () => {
+        render(<DashboardPage />);
+        const topo = screen.getByRole('banner');
+        expect(topo.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+        expect(within(topo).getByRole('heading', { level: 1 })).toBeInTheDocument();
+        expect(within(topo).getByText('Quinta-feira, 12 de novembro')).toBeInTheDocument();
+        expect(within(topo).getByRole('button', { name: 'Tema' })).toBeInTheDocument();
+    });
+
+    it('Continuar é o bloco invertido, com a fita marcadora; a leitura é o cartão comum', async () => {
+        localStorage.setItem('biblia-posicao-leitura', JSON.stringify({ livro: 'jo', livroNome: 'João', capitulo: 3, versiculo: 16, atualizadoEm: 1 }));
+        localStorage.setItem('payload-dia-local', JSON.stringify({ data: '2026-11-12', passagem_do_dia: 'Isaías 51-54, Hebreus 7' }));
+        render(<DashboardPage />);
+        const hoje = screen.getByRole('region', { name: 'Hoje' });
+        const biblia = await within(hoje).findByRole('link', { name: /Continuar em João 3/ });
+        expect(biblia.className).toMatch(/\bcampo\b/);
+        expect(biblia.className).not.toMatch(/bg-amber-/);
+        const fita = biblia.querySelector('.fita-marcadora');
+        expect(fita).not.toBeNull();
+        expect(fita).toHaveAttribute('aria-hidden', 'true');
+        const leitura = within(hoje).getByRole('link', { name: /Leitura de hoje/ });
+        expect(leitura.className).toMatch(/\bcartao\b/);
+        expect(leitura.querySelector('.fita-marcadora')).toBeNull();
+    });
+
+    it('ordem da tela: Hoje, Palavra, Versículo, Estudar, Transcrever', () => {
+        render(<DashboardPage />);
+        const main = screen.getByRole('main');
+        const marcos = [
+            screen.getByRole('region', { name: 'Hoje' }),
+            screen.getByText('palavra'),
+            screen.getByText('versiculo'),
+            screen.getByRole('region', { name: 'Estudar' }),
+            screen.getByRole('region', { name: 'Transcrever' }),
+        ];
+        for (const m of marcos) expect(main.contains(m)).toBe(true);
+        for (let i = 1; i < marcos.length; i++) {
+            expect(marcos[i - 1].compareDocumentPosition(marcos[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        }
+    });
+});

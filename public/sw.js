@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pvc-v10';
+const CACHE_NAME = 'pvc-v11';
 const PAGINAS = [
     '/',
     '/login',

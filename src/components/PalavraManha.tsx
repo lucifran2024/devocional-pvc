@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Copy, Sun, Check, BookOpen, Heart, Share, WifiOff, RefreshCw } from 'lucide-react';
+import { Copy, Check, BookOpen, Heart, Share, WifiOff, RefreshCw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getDataHoje, getPalavraManha, gerarPalavraManha, darAmen, type PalavraManhaCache } from '@/lib/supabase';
 import { BotaoIcone, PilulaAcao } from '@/components/ui/BotaoIcone';
@@ -154,8 +154,10 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
         }
     };
 
-    // Cartão do início (12/11/2026): o título fica dentro do cartão e aparece
-    // já enquanto carrega, para a tela não pular quando a mensagem chega.
+    // 14/11/2026 ("preto, papel e ouro"): a Palavra saiu de dentro da caixa.
+    // É o texto do dia: fica direto na página, com manchete grande, como a
+    // leitura da Bíblia (que ele já tinha pedido sem cartão em 04/09). O nome
+    // aparece já enquanto carrega, para a tela não pular quando a mensagem chega.
     const subtitulo = data ? [data.dia_semana, nomeCategoria(data.categoria)].filter(Boolean).join(' · ') : '';
     // 2º ajuste: o nome do cartão ficou pequeno e âmbar (sem o ícone em
     // quadradinho); quem ganha tamanho é o título da mensagem do dia. A cor
@@ -164,10 +166,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const cabecalho = (
         <header className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
             <h2 id="titulo-palavra-manha" className="text-sm font-semibold">
-                <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-                    <Sun className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    Palavra da Manhã
-                </span>
+                <span className="text-amber-700 dark:text-amber-400">Palavra da Manhã</span>
             </h2>
             {subtitulo && <p className="text-sm text-text-muted">{subtitulo}</p>}
         </header>
@@ -175,7 +174,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
     if (loading && !data) {
         return (
-            <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7">
+            <section aria-labelledby="titulo-palavra-manha">
                 {cabecalho}
                 <div className="mt-5 space-y-3" aria-hidden="true">
                     <div className="h-4 w-full animate-pulse rounded-lg bg-surface-2" />
@@ -189,13 +188,13 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
 
     if (error) {
         return (
-            <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7">
+            <section aria-labelledby="titulo-palavra-manha">
                 {cabecalho}
                 <p className="mt-4 text-sm text-text-secondary">{error}</p>
                 <button
                     type="button"
                     onClick={loadData}
-                    className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-border-subtle bg-surface-2/60 px-4 text-sm font-semibold text-text-primary transition hover:border-amber-500/40"
+                    className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface-2 px-5 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50"
                 >
                     <RefreshCw className="h-4 w-4" aria-hidden="true" /> Tentar novamente
                 </button>
@@ -217,7 +216,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const comQuebras = (texto: string) => texto.replace(/\n/g, '  \n');
 
     return (
-        <section aria-labelledby="titulo-palavra-manha" className="cartao p-4 md:p-7 animate-[fadeIn_0.35s_ease-out]">
+        <section aria-labelledby="titulo-palavra-manha" className="animate-[fadeIn_0.35s_ease-out]">
             {/* Aviso: exibindo mensagem salva (sem conexão) */}
             {modoOffline && (
                 <div className="mb-4 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-sm font-semibold text-orange-700 dark:text-orange-300">
@@ -237,14 +236,14 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
             )}
 
             {titulo && (
-                <h3 className="reading-serif mt-4 text-[1.5rem] font-medium leading-[1.2] tracking-[-0.01em] text-text-primary">
+                <h3 className="reading-serif mt-3 text-[1.75rem] font-medium leading-[1.14] tracking-[-0.02em] text-text-primary md:text-[2rem]">
                     {titulo}
                 </h3>
             )}
 
             {/* Texto: à esquerda, com respiro entre parágrafos (.texto-palavra);
                 versículo em bloco próprio e fechamento destacado (globals.css) */}
-            <div className={`texto-palavra reading-serif ${capitular ? 'com-capitular' : ''} ${titulo ? 'mt-4' : 'mt-5'} text-[1.125rem] leading-[1.7] text-text-primary`}>
+            <div className={`texto-palavra reading-serif ${capitular ? 'com-capitular' : ''} ${titulo ? 'mt-5' : 'mt-5'} text-[1.125rem] leading-[1.7] text-text-primary`}>
                 {blocos.map((bloco, i) => {
                     if (bloco.tipo === 'versiculo') {
                         return (
@@ -266,8 +265,8 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
             </div>
 
             {/* Botões compactos (2º ajuste): Amém em pílula; Copiar e
-                Compartilhar só com ícone. Mesma fileira do Versículo do dia. */}
-            <div className="mt-6 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
+                Compartilhar só com ícone. Sem linha em cima: o espaço separa. */}
+            <div className="-mr-2.5 mt-6 flex items-center justify-between gap-2">
                 <PilulaAcao onClick={handleAmen} ativa={amei} pressionada={amei}>
                     <Heart
                         className={`h-[18px] w-[18px] ${amei ? 'fill-current animate-[coracao_0.5s_cubic-bezier(0.2,0.8,0.2,1)]' : ''}`}

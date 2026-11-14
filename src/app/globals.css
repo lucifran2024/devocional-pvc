@@ -22,42 +22,43 @@
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* --- LIGHT THEME (Default) --- */
-  /* Backgrounds */
-  --bg-surface-0: #f8f6f1;
-  /* Slate 50 */
+  /* --- TEMA CLARO: papel (14/11/2026, "preto, papel e ouro") ---
+     Branco de papel neutro, sem o creme amarelado; tinta quase preta. */
+  --bg-surface-0: #f5f4f1;
   --bg-surface-1: #ffffff;
-  /* White */
-  --bg-surface-2: #f0ede6;
-  /* Slate 100 */
+  --bg-surface-2: #ebe9e4;
 
-  /* Text */
-  --text-primary: #0f172a;
-  /* Slate 900 */
-  --text-secondary: #475569;
-  /* Slate 600 */
-  --text-muted: #667085;
-  /* Slate 400 */
+  --text-primary: #141412;
+  --text-secondary: #55534d;
+  --text-muted: #6b6861;
 
-  /* Borders */
-  --border-subtle: #e2e8f0;
-  /* Slate 200 */
-  --border-strong: #cbd5e1;
-  /* Slate 300 */
+  --border-subtle: #e4e2dc;
+  --border-strong: #cfccc4;
 
-  /* Accents (PVC Identity - âmbar suave, 03/10/2026) */
-  --accent-primary: #8c632b;
-  /* Amber 700 — texto e ícones no papel (contraste 4,9) */
-  --accent-light: #ca9653;
-  /* Amber 500 */
-  --accent-dark: #6f4e21;
-  /* Amber 800 */
-  --accent-text: #352209;
-  /* Amber 950 — texto escuro sobre âmbar (consistente com botões) */
+  /* Ouro: só em detalhe pequeno (marca, número, referência) */
+  --accent-primary: #86672f;
+  /* ouro 700 — texto e ícone no papel (contraste 4,8) */
+  --accent-light: #c6a15b;
+  --accent-dark: #6a5125;
+  --accent-text: #2e230f;
+
+  /* Campo invertido: o bloco que vira o contrário do fundo. No claro é
+     tinta (preto) com letra de papel; no escuro é papel com letra de tinta.
+     É a "página impressa" do Versículo e o quadro de Continuar. */
+  --campo: #161514;
+  --campo-texto: #f4f1ea;
+  --campo-suave: #b9b5ac;
+  --campo-toque: rgba(255, 255, 255, 0.12);
+  /* Fita marcadora: o vermelho do ícone do app, só na marca e no marcador.
+     --campo-marca é o mesmo vermelho para letra pequena dentro do campo
+     (mais claro sobre a tinta, mais fechado sobre o papel: contraste > 4,5) */
+  --fita: #c1272d;
+  --campo-marca: #ee7a7d;
+  --raio-painel: 24px;
 
   /* Glass Effects (Acrylic) */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.86);
+  --glass-border: #e4e2dc;
   --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 
   /* Visuals */
@@ -67,54 +68,66 @@
 }
 
 .dark {
-  /* --- DARK THEME (Warm Charcoal — premium, não "azul de IA") --- */
-  /* Backgrounds: carvão quente levemente puxado para o marrom/dourado */
-  --bg-surface-0: #14110d;
-  /* Espresso quase preto */
-  --bg-surface-1: #1c1813;
-  /* Carvão quente */
-  --bg-surface-2: #29231b;
-  /* Madeira escura */
+  /* --- TEMA ESCURO: preto de verdade (14/11/2026) ---
+     Sem marrom e sem azul: preto neutro; cada superfície é um degrau mais
+     clara que a de baixo, sem borda. */
+  --bg-surface-0: #0a0a0a;
+  --bg-surface-1: #161615;
+  --bg-surface-2: #222221;
 
-  /* Text: marfim em vez de branco puro (mais suave p/ leitura longa) */
-  --text-primary: #f5efe6;
-  --text-secondary: #cabfae;
-  --text-muted: #b2a797;
+  --text-primary: #f4f1ea;
+  --text-secondary: #b8b4ab;
+  --text-muted: #96928a;
 
-  /* Borders quentes */
-  --border-subtle: #2c261d;
-  --border-strong: #443a2c;
+  --border-subtle: #232322;
+  --border-strong: #3a3a38;
 
-  /* Accents (âmbar suave) */
-  --accent-primary: #ca9653;
-  /* Amber 500 */
-  --accent-light: #f0c591;
-  /* Amber 300 */
-  --accent-dark: #8c632b;
-  /* Amber 700 */
-  --accent-text: #352209;
+  --accent-primary: #c6a15b;
+  --accent-light: #e6cc97;
+  --accent-dark: #86672f;
+  --accent-text: #2e230f;
 
-  /* Glass Effects (Frosted quente) */
-  --glass-bg: rgba(28, 24, 19, 0.6);
-  --glass-border: rgba(245, 220, 170, 0.10);
+  --campo: #efeae0;
+  --campo-texto: #171612;
+  --campo-suave: #5c584f;
+  --campo-toque: rgba(0, 0, 0, 0.08);
+  --fita: #c1272d;
+  --campo-marca: #ad2229;
+
+  --glass-bg: rgba(22, 22, 21, 0.88);
+  --glass-border: #232322;
   --glass-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
 }
 
-/* Paleta âmbar suave (03/10/2026, pedido "revise esse amarelão"): a mesma
-   família do âmbar, menos saturada. Toda classe amber-* do app usa estes
-   tons. Para trocar a cor do app inteiro, só mudar esta escala. */
+/* Ouro velho (14/11/2026): a escala "amber" do app inteiro. Um pouco menos
+   alaranjada que o âmbar suave de 03/10, para ler como ouro sobre o preto.
+   Toda classe amber-* usa estes tons; para trocar a cor do app, é aqui. */
 @theme {
-  --color-amber-50: #fff9ef;
-  --color-amber-100: #feedda;
-  --color-amber-200: #fadcb8;
-  --color-amber-300: #f0c591;
-  --color-amber-400: #dfad6e;
-  --color-amber-500: #ca9653;
-  --color-amber-600: #ab7c3c;
-  --color-amber-700: #8c632b;
-  --color-amber-800: #6f4e21;
-  --color-amber-900: #5a3f1b;
-  --color-amber-950: #352209;
+  --color-amber-50: #fbf8f0;
+  --color-amber-100: #f6eedb;
+  --color-amber-200: #efdfb9;
+  --color-amber-300: #e6cc97;
+  --color-amber-400: #d8b873;
+  --color-amber-500: #c6a15b;
+  --color-amber-600: #a78341;
+  --color-amber-700: #86672f;
+  --color-amber-800: #6a5125;
+  --color-amber-900: #54401d;
+  --color-amber-950: #2e230f;
+
+  /* Os cinzas "slate" (azulados) das telas antigas passam a ser os cinzas
+     neutros do papel, para o app inteiro combinar com o novo fundo. */
+  --color-slate-50: #f7f6f3;
+  --color-slate-100: #efeeea;
+  --color-slate-200: #e4e2dc;
+  --color-slate-300: #cfccc4;
+  --color-slate-400: #a09c93;
+  --color-slate-500: #76726a;
+  --color-slate-600: #55534d;
+  --color-slate-700: #3d3b37;
+  --color-slate-800: #262524;
+  --color-slate-900: #171716;
+  --color-slate-950: #0d0d0c;
 }
 
 @theme inline {
@@ -132,6 +145,12 @@
 
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
+
+  --color-campo: var(--campo);
+  --color-campo-texto: var(--campo-texto);
+  --color-campo-suave: var(--campo-suave);
+  --color-campo-toque: var(--campo-toque);
+  --color-fita: var(--fita);
 
   --animate-fade-in: fadeIn 0.5s ease-out forwards;
   --animate-slide-up: slideUp 0.5s ease-out forwards;
@@ -321,8 +340,8 @@ h6 {
 }
 
 .dark .stellar-card {
-  background: rgba(28, 24, 19, 0.6);
-  border-color: var(--glass-border);
+  background: var(--bg-surface-1);
+  border-color: var(--border-subtle);
 }
 
 .stellar-card:hover {
@@ -334,17 +353,58 @@ h6 {
   border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
-/* Início premium (12/11/2026): uma superfície só para todos os cartões do
-   início — mesmo fundo, mesma borda, canto de 16 px e sombra quase invisível
-   no tema claro (no escuro, sem sombra). Fica na camada "components" para
-   que as classes do Tailwind (hover, por exemplo) ainda possam mudá-la. */
+/* Superfícies do início (14/11/2026, "preto, papel e ouro"). No lugar da
+   caixa com linha fina em volta: no escuro o cartão é só um degrau mais
+   claro que o fundo; no claro é branco com uma borda quase invisível.
+   Borda ou sombra, nunca as duas. Na camada "components" para que as
+   classes do Tailwind (hover, por exemplo) ainda possam mudá-la. */
 @layer components {
-  /* 2º ajuste: borda ou sombra, nunca as duas — fica só a borda */
   .cartao {
     background: var(--bg-surface-1);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-xl);
+    border-radius: var(--raio-painel);
   }
+  .dark .cartao {
+    border-color: transparent;
+  }
+  /* Campo invertido: papel sobre o preto, tinta sobre o papel */
+  .campo {
+    background: var(--campo);
+    color: var(--campo-texto);
+    border-radius: var(--raio-painel);
+  }
+}
+
+/* Fita marcadora (a do ícone do app): pendurada na borda de cima do quadro
+   de Continuar, marca onde a leitura parou. */
+.fita-marcadora {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  width: 13px;
+  height: 27px;
+  background: var(--fita);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+}
+
+/* Versículo do dia como pedaço de página impressa: o número do capítulo
+   grande, como nas Bíblias de papel, e o do versículo pequeno ao lado. */
+.capitulo-impresso {
+  float: left;
+  font-size: 3.05em;
+  line-height: 0.82;
+  font-weight: 500;
+  padding: 0.05em 0.14em 0 0;
+  font-feature-settings: "lnum" 1;
+}
+.versiculo-impresso {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.62em;
+  font-weight: 700;
+  vertical-align: 0.5em;
+  margin-right: 0.35em;
+  color: var(--campo-marca);
+  font-feature-settings: "tnum" 1;
 }
 
 /* Movimento do início (12/11/2026, 2º ajuste, pedido "algum movimento"):
@@ -436,8 +496,8 @@ h6 {
    regra ".texto-palavra > * + *" acima vence qualquer mt-* posto no bloco. */
 .texto-palavra .versiculo-palavra {
   margin-top: 1.4em;
-  padding: 0.15em 0 0.15em 1em;
-  border-left: 3px solid color-mix(in srgb, var(--color-amber-500) 55%, transparent);
+  padding: 0.1em 0 0.1em 1.05em;
+  border-left: 2px solid var(--color-amber-500);
 }
 .texto-palavra .versiculo-palavra:first-child {
   margin-top: 0;

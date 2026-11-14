@@ -24,7 +24,7 @@ export function DashboardCard({ href, title, desc, icon: Icon, divisoria = false
     return (
         <Link
             href={href}
-            className="group flex items-center gap-3.5 pl-4 transition-colors duration-200 hover:bg-surface-2/60 active:bg-surface-2 md:pl-7"
+            className="group flex items-center gap-3.5 pl-4 transition-colors duration-200 hover:bg-surface-2/50 active:bg-surface-2 md:pl-7"
         >
             <Icon
                 className="h-[22px] w-[22px] shrink-0 text-amber-700 transition-transform duration-200 group-active:scale-90 dark:text-amber-400"
