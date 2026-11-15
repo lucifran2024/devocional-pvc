@@ -35,25 +35,25 @@ export function LeituraPorTestamento({ opcoes, atual, onLer, onExplicar }: {
 }) {
     if (!opcoes.length) return null;
     return (
-        <div data-leitura-por-testamento className="w-full divide-y divide-border-subtle rounded-2xl border border-border-subtle bg-surface-1">
+        <div data-leitura-por-testamento className="w-full divide-y divide-border-subtle overflow-hidden rounded-[20px] border border-border-subtle bg-surface-1 dark:border-transparent">
             {opcoes.map(o => {
                 const nome = NOME_TESTAMENTO[o.testamento];
                 return (
-                    <div key={o.testamento} className="flex items-center gap-2 px-3 py-2">
+                    <div key={o.testamento} className="flex items-center gap-2 py-2 pl-4 pr-2">
                         <div className="min-w-0 flex-1">
-                            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-text-primary">
+                            <p className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
                                 <span className="truncate">{nome}</span>
                                 {atual === o.testamento && (
-                                    <span className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-400">· lendo</span>
+                                    <span className="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400">· lendo</span>
                                 )}
                             </p>
-                            <p className="truncate text-xs text-text-muted">{o.referencia}</p>
+                            <p className="truncate text-sm text-text-muted">{o.referencia}</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => onLer(o.testamento)}
                             aria-label={`Ler o ${nome}: ${o.referencia}`}
-                            className="min-h-10 shrink-0 rounded-xl border border-border-subtle px-3 text-sm font-semibold text-text-secondary transition-colors hover:border-amber-500/40 hover:text-text-primary active:scale-[0.98]"
+                            className="min-h-11 shrink-0 rounded-full bg-surface-2 px-4 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50 active:scale-[0.98]"
                         >
                             Ler
                         </button>
@@ -61,7 +61,7 @@ export function LeituraPorTestamento({ opcoes, atual, onLer, onExplicar }: {
                             type="button"
                             onClick={() => onExplicar(o.testamento)}
                             aria-label={`Explicar o ${nome} inteiro: ${o.referencia}`}
-                            className="min-h-10 shrink-0 rounded-xl bg-amber-500/15 px-3 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-500/25 active:scale-[0.98] dark:text-amber-300"
+                            className="min-h-11 shrink-0 rounded-full bg-amber-500/15 px-4 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-500/25 active:scale-[0.98] dark:text-amber-300"
                         >
                             Explicar
                         </button>

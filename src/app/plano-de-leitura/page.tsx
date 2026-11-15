@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
     Book, Calendar, ArrowLeft, Loader2,
     RotateCcw, GraduationCap, Search,
     Rocket, Zap, MessageSquare, ClipboardList, ArrowRight,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote, X,
-    ZoomIn, ZoomOut, BookOpen, ListChecks, Check, SlidersHorizontal, AlignLeft, AlignCenter, AlignRight,
+    ZoomIn, ZoomOut, BookOpen, ListChecks, Check, AlignLeft, AlignCenter, AlignRight,
     Info, ChevronDown, Sparkles
 } from 'lucide-react';
 import {
@@ -40,6 +39,10 @@ import { BibleAudioPlayer } from '@/components/BibleAudioPlayer';
 import { FimDaParte } from '@/components/leitura/FimDaParte';
 import { LeituraPorTestamento, PainelExplicacaoTestamento } from '@/components/leitura/ExplicacaoTestamento';
 import { ExplicacaoAudioPlayer } from '@/components/leitura/ExplicacaoAudioPlayer';
+import { TiraDeLeitura } from '@/components/ui/TiraDeLeitura';
+import { Interruptor } from '@/components/ui/Interruptor';
+import { PLANO_TELA_ACESA_KEY, guardarPreferencia, lerPreferencia } from '@/lib/biblia-preferencias';
+import { telaAcesaSuportada, useTelaAcesa } from '@/lib/tela-acesa';
 import { NOME_TESTAMENTO, contextoDoTestamento, montarPedidoTestamento, opcoesDeTestamento, testamentoDoCapitulo, textoDosCapitulos, type Testamento } from '@/lib/explicacao-testamento';
 import { getDiaDoPlano, getPrimeiroDiaDoPlano, concluirDiaLeitura, getMinhasInscricoes, marcarDiaConcluido } from '@/lib/plans'; // Added plans lib
 import type { InscricaoPlano, Plano } from '@/lib/types/plans';
@@ -469,7 +472,7 @@ function VersiculosInterativos({
                         onVerseChange={(verse, chapter) =>
                             setAudioVerse(verse == null ? null : { verse, chapter: chapter ?? capitulo })
                         }
-                        className="w-full max-w-md"
+                        className="flex flex-col items-start"
                     />
                 </div>
             ) : null}
@@ -499,22 +502,20 @@ function VersiculosInterativos({
                         <div key={`${cap}-${v.verse}`} id={primeiroVersiculoNovoTestamento ? NOVO_TESTAMENTO_ANCHOR_ID : undefined}>
                             {/* Separador de capítulo - só mostra quando há múltiplos capítulos */}
                             {mostrarHeaderCapitulo && new Set(versiculos.map(vv => getCapitulo(vv))).size > 1 && (
-                                <div className="flex items-center gap-3 py-4 mt-3 mb-1">
-                                    <div className="flex-1 h-px bg-amber-500/25"></div>
+                                <div className="mb-2 mt-10 border-t border-border-subtle pt-8">
                                     <span
-                                        className="reading-serif font-semibold text-amber-700 dark:text-amber-400 tracking-wide"
-                                        style={{ fontSize: `${Math.max(14, readingFontSize - 5)}px` }}
+                                        className="reading-serif block font-medium leading-tight tracking-[-0.02em] text-text-primary"
+                                        style={{ fontSize: `${Math.max(26, readingFontSize + 8)}px` }}
                                     >
                                         {livroNome} {cap}
                                     </span>
-                                    <div className="flex-1 h-px bg-amber-500/25"></div>
                                 </div>
                             )}
                             {/* Perícope - cabeçalho do acontecimento (escala com a fonte de leitura) */}
                             {pericope && (
-                                <div className="mt-5 mb-2.5 first:mt-0">
+                                <div className="mt-7 mb-2 first:mt-0">
                                     <h4
-                                        className="reading-serif font-semibold text-amber-700 dark:text-amber-300 tracking-tight border-l-[3px] border-amber-500/50 pl-3"
+                                        className="reading-serif font-semibold leading-snug tracking-tight text-text-primary"
                                         style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}
                                     >
                                         {pericope.title}
@@ -527,8 +528,8 @@ function VersiculosInterativos({
                                 className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none break-words
                                     ${getCorClasse(v)}
                                     ${tipoChave ? 'bg-amber-400/10 border-l-2 border-amber-400/70' : ''}
-                                    ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
-                                    ${selecaoCopia.has(idx) ? 'bg-amber-500/15 ring-1 ring-amber-500/50' : versiculoSelecionadoIdx === idx ? 'bg-surface-2 ring-1 ring-amber-500/30' : 'hover:bg-surface-2'}
+                                    ${audioVerse && audioVerse.chapter === cap && audioVerse.verse === v.verse ? 'bg-amber-500/15' : ''}
+                                    ${selecaoCopia.has(idx) ? 'bg-amber-500/15' : versiculoSelecionadoIdx === idx ? 'bg-surface-2' : 'hover:bg-surface-2'}
                                 `}
                                 style={{ textAlign: readingAlign }}
                             >
@@ -550,7 +551,7 @@ function VersiculosInterativos({
                                 {/* Barra de copiar vários — flutua acima do versículo que você está tocando */}
                                 {modoCopiaMultipla && ultimoTapIdx === idx && (
                                     <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                        <div className="flex items-center gap-1.5 bg-surface-2/95 border border-amber-500/50 rounded-2xl p-1.5 px-2 shadow-2xl backdrop-blur-xl">
+                                        <div className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-1 p-1.5 px-3 shadow-xl dark:border-transparent dark:bg-surface-2">
                                             <span className="text-xs text-text-secondary px-1 whitespace-nowrap">{selecaoCopia.size} marcado{selecaoCopia.size === 1 ? '' : 's'}</span>
                                             <button onClick={handleCopiarSelecao} disabled={selecaoCopia.size === 0} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs font-semibold">
                                                 <Copy className="w-3.5 h-3.5" /> Copiar
@@ -567,32 +568,32 @@ function VersiculosInterativos({
                                 {/* MINI-TOOLBAR */}
                                 {versiculoSelecionadoIdx === idx && (
                                     <div ref={toolbarRef} className="absolute -top-16 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150" onClick={e => e.stopPropagation()}>
-                                        <div className="flex items-center gap-1 bg-surface-2/95 border border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
-                                            <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Destacar">
+                                        <div className="flex items-center rounded-full bg-campo p-1 font-sans text-campo-texto shadow-xl">
+                                            <button onClick={() => setMostrarCores(!mostrarCores)} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Destacar">
                                                 <Palette className="w-5 h-5" />
                                             </button>
-                                            <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${isFavorito(v) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
-                                                <Heart className={`w-5 h-5 ${isFavorito(v) ? 'fill-red-400' : ''}`} />
+                                            <button onClick={handleFavoritar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" aria-pressed={isFavorito(v)} title="Favoritar">
+                                                <Heart className={`w-5 h-5 ${isFavorito(v) ? 'fill-[var(--campo-marca)] text-[var(--campo-marca)]' : ''}`} />
                                             </button>
-                                            <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Copiar">
+                                            <button onClick={handleCopiar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Copiar">
                                                 <Copy className="w-5 h-5" />
                                             </button>
-                                            <button onClick={entrarModoCopiaMultipla} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Selecionar vários para copiar">
+                                            <button onClick={entrarModoCopiaMultipla} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Selecionar vários para copiar">
                                                 <ListChecks className="w-5 h-5" />
                                             </button>
-                                            <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Compartilhar">
+                                            <button onClick={handleCompartilhar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Compartilhar">
                                                 <Share2 className="w-5 h-5" />
                                             </button>
-                                            <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-2 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Estudar">
+                                            <button onClick={handleEstudar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Estudar">
                                                 <Lightbulb className="w-5 h-5" />
                                             </button>
-                                            <button onClick={() => setMostrarNota(!mostrarNota)} className={`p-3 rounded-xl hover:bg-surface-2 transition-colors ${temNota(v) ? 'text-amber-500' : 'text-text-secondary hover:text-amber-600 dark:hover:text-amber-400'}`} title="Nota">
+                                            <button onClick={() => setMostrarNota(!mostrarNota)} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque ${temNota(v) ? 'bg-campo-toque' : ''}`} title="Nota">
                                                 <StickyNote className="w-5 h-5" />
                                             </button>
                                         </div>
 
                                         {mostrarCores && (
-                                            <div className="mt-1.5 flex items-center gap-1.5 bg-surface-2/95 border border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100">
+                                            <div className="mt-1.5 flex items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-surface-1 p-2 shadow-lg dark:border-transparent dark:bg-surface-2">
                                                 {CORES_DESTAQUE_PLANO.map(cor => (
                                                     <button key={cor.id} onClick={() => handleDestacar(cor.id)}
                                                         className={`w-9 h-9 rounded-full border-2 transition-all hover:border-amber-400 ${cor.bg} ${cor.border} ${capMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-amber-500 dark:ring-white scale-110' : ''}`}
@@ -618,7 +619,7 @@ function VersiculosInterativos({
 
             {/* Modal de Estudo IA */}
             {estudoAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setEstudoAberto(false)}>
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 animate-in fade-in duration-200" onClick={() => setEstudoAberto(false)}>
                     <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-border-subtle">
                         <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                             <div className="flex items-center gap-2">
@@ -653,7 +654,7 @@ function VersiculosInterativos({
                 const capNota = getCapitulo(vNota);
                 const notaExistente = getInteracoesDoVersiculo(vNota).notas[vNota.verse];
                 return (
-                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setMostrarNota(false)}>
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-surface-0/90 animate-in fade-in duration-200" onClick={() => setMostrarNota(false)}>
                         <div className="glass-panel rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden border border-border-subtle" onClick={e => e.stopPropagation()}>
                             <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-2">
                                 <div className="flex items-center gap-2 min-w-0">
@@ -725,24 +726,20 @@ function PremiumOptionCard({ option, onClick, disabled }: {
     disabled: boolean;
 }) {
     const Icon = option.icon;
+    // 14/11/2026: linha de lista (ícone solto em ouro, nome e descrição), no
+    // lugar do cartão alto com o ícone dentro de um quadradinho.
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            className="group relative w-full text-left p-6 rounded-2xl glass-card disabled:opacity-50 disabled:cursor-not-allowed flex flex-col gap-4 overflow-hidden"
+            className="group flex min-h-[72px] w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-surface-2/60 active:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50 md:px-6"
         >
-
-            <div className="flex items-center justify-between z-10">
-                <div className="p-3 rounded-xl bg-surface-2 border border-border-subtle text-amber-600 dark:text-amber-300 transition-colors duration-300">
-                    <Icon className="w-6 h-6" />
-                </div>
-                
-            </div>
-
-            <div className="z-10">
-                <h3 className="reading-serif font-semibold text-text-primary text-lg mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors">{option.label}</h3>
-                <p className="text-sm text-text-muted group-hover:text-text-secondary leading-relaxed">{option.desc}</p>
-            </div>
+            <Icon className="h-[22px] w-[22px] shrink-0 text-amber-700 dark:text-amber-400" />
+            <span className="min-w-0 flex-1">
+                <span className="block text-base font-semibold leading-snug text-text-primary">{option.label}</span>
+                <span className="mt-0.5 block text-sm leading-snug text-text-muted">{option.desc}</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
         </button>
     );
 }
@@ -767,61 +764,57 @@ function ContextoDaParte({ livroId, capitulo, livroNome }: {
         ? livroNome.charAt(0).toUpperCase() + livroNome.slice(1).toLowerCase()
         : '';
 
+    // 14/11/2026: uma linha só (livro, capítulo e tema). O que estava sempre
+    // aberto ("Neste capítulo") empurrava o texto para baixo; agora abre junto
+    // com a introdução do livro, num toque.
+    const abre = !!intro || secoes.length > 0;
     return (
-        <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] dark:bg-amber-500/[0.05] overflow-hidden">
-            {/* Cabeçalho: livro + tema (clicável abre a introdução) */}
+        <div className="mb-5 overflow-hidden rounded-[20px] border border-border-subtle bg-surface-1 dark:border-transparent">
             <button
                 type="button"
-                onClick={() => intro && setAberto((v) => !v)}
-                className={`w-full flex items-center gap-2.5 px-4 py-3 text-left ${intro ? 'hover:bg-amber-500/[0.08] transition-colors' : 'cursor-default'}`}
+                onClick={() => abre && setAberto((v) => !v)}
+                aria-expanded={aberto}
+                className={`flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left ${abre ? 'transition-colors hover:bg-surface-2/60' : 'cursor-default'}`}
             >
-                <span className="shrink-0 p-1.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                    <Info className="w-4 h-4" />
-                </span>
+                <Info className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold">
-                        Contexto da leitura
-                    </span>
-                    <span className="block text-sm font-semibold text-text-primary truncate">
+                    <span className="block text-sm font-semibold text-amber-700 dark:text-amber-400">Contexto da leitura</span>
+                    <span className="block truncate text-sm text-text-primary">
                         {nome} {capitulo}
-                        {intro && <span className="text-text-muted font-normal"> · {intro.tema}</span>}
+                        {intro && <span className="text-text-muted"> · {intro.tema}</span>}
                     </span>
                 </span>
-                {intro && (
-                    <ChevronDown className={`w-4 h-4 shrink-0 text-amber-600/60 dark:text-amber-400/60 transition-transform ${aberto ? 'rotate-180' : ''}`} />
+                {abre && (
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden="true" />
                 )}
             </button>
 
-            {/* Introdução do livro (expansível) */}
-            {intro && aberto && (
-                <div className="px-4 pb-3 -mt-0.5 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-muted">
-                        <span><span className="font-semibold text-text-secondary">Categoria:</span> {intro.categoria}</span>
-                        <span><span className="font-semibold text-text-secondary">Autor:</span> {intro.autor}</span>
-                        <span><span className="font-semibold text-text-secondary">Época:</span> {intro.epoca}</span>
-                    </div>
-                    <p className="reading-serif text-sm leading-relaxed text-text-secondary">
-                        {intro.resumo}
-                    </p>
-                </div>
-            )}
-
-            {/* Seções deste capítulo (quando houver) */}
-            {secoes.length > 0 && (
-                <div className={`px-4 py-3 border-t border-amber-500/15 ${intro ? '' : 'border-t-0'}`}>
-                    <p className="text-[11px] uppercase tracking-wider text-amber-700/70 dark:text-amber-400/60 font-semibold mb-1.5">
-                        Neste capítulo
-                    </p>
-                    <ul className="flex flex-wrap gap-1.5">
-                        {secoes.map((s, i) => (
-                            <li
-                                key={i}
-                                className="text-xs px-2.5 py-1 rounded-full bg-surface-1 dark:bg-surface-2 border border-border-subtle text-text-secondary"
-                            >
-                                {s.title}
-                            </li>
-                        ))}
-                    </ul>
+            {aberto && (
+                <div className="space-y-3 px-4 pb-4">
+                    {intro && (
+                        <>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
+                                <span><span className="font-semibold text-text-secondary">Categoria:</span> {intro.categoria}</span>
+                                <span><span className="font-semibold text-text-secondary">Autor:</span> {intro.autor}</span>
+                                <span><span className="font-semibold text-text-secondary">Época:</span> {intro.epoca}</span>
+                            </div>
+                            <p className="reading-serif text-[0.9375rem] leading-relaxed text-text-secondary">
+                                {intro.resumo}
+                            </p>
+                        </>
+                    )}
+                    {secoes.length > 0 && (
+                        <div>
+                            <p className="mb-1.5 text-xs font-semibold text-text-secondary">Neste capítulo</p>
+                            <ul className="flex flex-wrap gap-1.5">
+                                {secoes.map((s, i) => (
+                                    <li key={i} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-text-secondary">
+                                        {s.title}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -850,7 +843,14 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
                 <div className="animate-enter mb-4">
                     {/* Texto antes dos versículos */}
                     {partes[0] && (
-                        <div className="whitespace-pre-wrap leading-relaxed prose dark:prose-invert [&_hr]:border-border-subtle prose-p:my-2 prose-strong:text-amber-700 dark:prose-strong:text-amber-300 prose-headings:text-amber-800 dark:prose-headings:text-amber-200 prose-headings:font-bold max-w-none break-words mb-3" style={{ fontSize: `${Math.max(16, readingFontSize - 2)}px` }}>
+                        // Abertura da parte, como numa página: o capítulo em letra
+                        // grande com serifa e a posição na leitura embaixo. A
+                        // mensagem continua a mesma ("**Capítulo**" + "*Parte…*");
+                        // só o desenho mudou (14/11/2026).
+                        <div
+                            data-abertura-parte
+                            className="mb-4 [&_em]:hidden [&_hr]:hidden [&_p]:m-0 [&_strong]:block [&_strong]:text-[2rem] [&_strong]:font-medium [&_strong]:leading-[1.1] [&_strong]:tracking-[-0.02em] [&_strong]:text-text-primary [&_strong]:[font-family:var(--font-reading),Georgia,serif]"
+                        >
                             <ReactMarkdown>{partes[0]}</ReactMarkdown>
                         </div>
                     )}
@@ -928,7 +928,7 @@ function ChatBubble({ message, versiculosInterativos, livroInfo, readingFontSize
     // Mensagens do usuário mantêm o estilo de bolha (compactas)
     return (
         <div className="flex justify-end animate-enter mb-3">
-            <div className="max-w-[70%] rounded-2xl px-4 py-2.5 bg-amber-600 text-amber-50 rounded-br-none shadow-lg">
+            <div className="max-w-[80%] rounded-[20px] rounded-br-md bg-surface-2 px-4 py-2.5 text-text-primary">
                 <div className="text-sm md:text-base whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
@@ -991,6 +991,14 @@ function PlanoLeituraContent() {
     const [readingLineHeight, setReadingLineHeight] = useState(DEFAULT_READING_LINE_HEIGHT);
     const [readingAlign, setReadingAlign] = useState<ReadingAlign>('left');
     const [mostrarAjustesLeitura, setMostrarAjustesLeitura] = useState(false);
+    // 14/11/2026 (função nova): manter a tela acesa durante a leitura
+    const [telaAcesa, setTelaAcesa] = useState(false);
+    const [podeManterTela, setPodeManterTela] = useState(false);
+    useEffect(() => {
+        setTelaAcesa(lerPreferencia(PLANO_TELA_ACESA_KEY));
+        setPodeManterTela(telaAcesaSuportada());
+    }, []);
+    useTelaAcesa(telaAcesa);
     // Progresso anual da leitura diária (só no modo diário)
     const [progressoAnual, setProgressoAnual] = useState<ProgressoLeituraAnual | null>(null);
     const [leuHoje, setLeuHoje] = useState(false);
@@ -2422,11 +2430,18 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
         );
     }
 
+    // 14/11/2026 — leitura direta (a "Leitura de hoje" do início e da barra): sem
+    // o botão de voltar solto nem o título grande "Plano de Leitura"; o texto
+    // bíblico só aparecia a 913 px do topo. O cabeçalho da leitura já tem a seta.
+    const leituraDireta = !!activeOption && !isPlanoMode;
+    const lendoTexto = isPlanoMode || activeOption === '1';
+
     return (
         <CosmicBackground className="min-h-screen pb-20 overflow-x-hidden selection:bg-amber-500/30">
 
             {/* Navbar Placeholder (or Back Button) */}
-            <div className="w-full max-w-7xl mx-auto pt-8 px-6 mb-8 flex justify-between items-center z-10 relative">
+            {!leituraDireta && (
+            <div className="w-full max-w-7xl mx-auto pt-6 px-4 mb-6 flex justify-between items-center z-10 relative">
                 <BackButton href={planoId ? "/planos" : "/"} label={planoId ? "Planos" : "Início"} />
                 {planoId && (
                     <Link href={`/plano-detalhes?plano_id=${planoId}`} className="btn-glass px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium group">
@@ -2435,11 +2450,12 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                     </Link>
                 )}
             </div>
+            )}
 
             {/* w-full é ESSENCIAL: sem ele, mx-auto num pai flex-col vira fit-content e
                 conteúdo sem quebra (ex.: referência longa com truncate) infla a página
                 inteira além da tela no celular, cortando o fim das linhas. */}
-            <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 z-10 relative">
+            <div className={`w-full max-w-7xl mx-auto px-3 sm:px-6 z-10 relative ${leituraDireta ? 'pt-[max(0.5rem,env(safe-area-inset-top))]' : ''}`}>
 
                 {/* Header Section - compacto no modo plano */}
                 {isPlanoMode ? (
@@ -2453,23 +2469,19 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                 : "Mergulhe nas Escrituras"}
                         </p>
                     </div>
-                ) : (
-                    <div className="text-center mb-16 animate-enter">
-                        <h1 className="reading-serif text-4xl md:text-6xl font-semibold text-text-primary mb-4 tracking-tight">
-                            {inscricaoAtiva?.plano ? (
-                                inscricaoAtiva.plano.titulo
-                            ) : (
-                                <>Plano de <span className="text-amber-700 dark:text-amber-300">Leitura</span></>
-                            )}
+                ) : !leituraDireta ? (
+                    <div className="mb-7 animate-enter">
+                        <h1 className="reading-serif text-[2rem] md:text-5xl font-medium leading-[1.1] text-text-primary tracking-tight">
+                            {inscricaoAtiva?.plano ? inscricaoAtiva.plano.titulo : 'Plano de Leitura'}
                         </h1>
-                        <p className="text-text-secondary text-lg max-w-2xl mx-auto">
+                        <p className="mt-2 max-w-2xl text-base text-text-secondary">
                             {inscricaoAtiva
                                 ? `Dia ${diaExibido} de ${inscricaoAtiva.plano.duracao_dias} • ${inscricaoAtiva.plano.descricao}`
                                 : "Mergulhe nas Escrituras com profundidade, contexto e aplicação prática."
                             }
                         </p>
                     </div>
-                )}
+                ) : null}
 
                 {!activeOption && !isPlanoMode ? (
                     // -------------------------------------------
@@ -2477,58 +2489,49 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                     // -------------------------------------------
                     <div className="animate-enter" style={{ animationDelay: '0.1s' }}>
 
-                        {/* Daily Passage Card (Hero) */}
-                        <div className="glass-panel rounded-3xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 border-amber-500/20 relative overflow-hidden">
-
-                            <div className="flex-1 text-center md:text-left z-10">
-                                <h2 className="text-sm font-medium text-text-muted tracking-wide mb-2">
-                                    {inscricaoAtiva ? `Leitura do dia ${diaExibido}` : `Passagem de hoje · ${formatarDataExtenso(dataHoje)}`}
+                        {/* Passagem de hoje: o bloco invertido da tela, com a ação principal */}
+                        <div className="campo relative mb-8 flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+                            <span className="fita-marcadora" aria-hidden="true" />
+                            <div className="min-w-0 flex-1">
+                                <h2 className="mb-2 text-sm font-semibold">
+                                    <span className="text-campo-suave">{inscricaoAtiva ? `Leitura do dia ${diaExibido}` : `Passagem de hoje · ${formatarDataExtenso(dataHoje)}`}</span>
                                 </h2>
 
                                 {loading ? (
-                                    <div className="h-12 w-64 skeleton-shimmer"></div>
+                                    <div className="h-10 w-56 animate-pulse rounded-full bg-campo-toque"></div>
                                 ) : passagem ? (
-                                    <div className="space-y-2">
-                                        <h3 className="reading-serif text-4xl md:text-5xl font-semibold text-text-primary tracking-tight">{passagem.referencia}</h3>
-                                        <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3">
-                                            <span className="px-3 py-1 rounded-lg bg-surface-2 border border-border-subtle text-xs text-text-secondary">
-                                                Arquétipo: <span className="text-amber-600 dark:text-amber-400 font-bold">{passagem.arquetipo_maestro}</span>
-                                            </span>
-                                            <span className="px-3 py-1 rounded-lg bg-surface-2 border border-border-subtle text-xs text-text-secondary">
-                                                Tema: {passagem.insights_pre_minerados[0]?.tese.substring(0, 40)}...
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <h3 className="reading-serif text-[2rem] md:text-5xl font-medium leading-[1.1] tracking-tight text-balance">
+                                        <span className="text-campo-texto">{passagem.referencia}</span>
+                                    </h3>
                                 ) : (
-                                    <div className="text-red-400 bg-red-500/10 px-4 py-2 rounded-lg border border-red-500/20 inline-block">
+                                    <p className="text-[0.9375rem] leading-relaxed text-campo-texto">
                                         A leitura de hoje ainda não está disponível. Verifique sua conexão e tente novamente em instantes.
-                                    </div>
+                                    </p>
                                 )}
                             </div>
 
-                            <div className="z-10">
-                                <button
-                                    onClick={() => iniciarOpcao('1')}
-                                    disabled={loading || !passagem}
-                                    className="btn-premium px-8 py-4 rounded-xl flex items-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Book className="w-5 h-5" />
-                                    Começar Leitura
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => iniciarOpcao('1')}
+                                disabled={loading || !passagem}
+                                className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-campo-texto px-6 text-base font-semibold text-campo transition-[opacity,transform] hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 md:self-auto"
+                            >
+                                <Book className="h-5 w-5" />
+                                Começar Leitura
+                            </button>
                         </div>
 
                         {/* Options Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <ul className="cartao overflow-hidden divide-y divide-border-subtle">
                             {MENU_OPTIONS.map((option) => (
-                                <PremiumOptionCard
-                                    key={option.id}
-                                    option={option}
-                                    disabled={loading || !passagem}
-                                    onClick={() => iniciarOpcao(option.id as MenuOption)}
-                                />
+                                <li key={option.id}>
+                                    <PremiumOptionCard
+                                        option={option}
+                                        disabled={loading || !passagem}
+                                        onClick={() => iniciarOpcao(option.id as MenuOption)}
+                                    />
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     </div>
                 ) : (
                     // -------------------------------------------
@@ -2536,109 +2539,103 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                     // -------------------------------------------
                     <div className="w-full max-w-4xl mx-auto animate-enter flex flex-col min-h-[70vh]">
 
-                        {/* Chat Header - compacto e sticky */}
-                        <div ref={cabecalhoRef} className="px-4 py-3 border-b border-border-subtle/50 flex flex-col gap-3 sticky top-0 z-20 bg-surface-0/60 backdrop-blur-md rounded-t-xl">
+                        {/* Cabeçalho da leitura — 14/11/2026: liso (sem vidro fosco), com a
+                            seta, o capítulo em serifa, a posição na leitura e um botão só
+                            de ajustes (Aa): tamanho, espaçamento, alinhamento e tela acesa.
+                            Antes eram quatro ícones e um rótulo cortado. */}
+                        <div ref={cabecalhoRef} className="sticky top-0 z-20 -mx-3 flex flex-col gap-3 bg-surface-0 px-3 pb-3 sm:-mx-6 sm:px-6">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <button
+                                        onClick={() => setActiveOption(null)}
+                                        aria-label="Voltar ao menu"
+                                        className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary"
+                                    >
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                    <div className="min-w-0">
+                                        <h2 className="truncate text-base font-semibold leading-tight text-text-primary">
+                                            {lendoTexto && !isPlanoMode
+                                                ? 'Leitura de hoje'
+                                                : isPlanoMode
+                                                    ? 'Leitura do Plano'
+                                                    : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
+                                        </h2>
+                                        <p className="truncate text-sm leading-5 text-text-muted">
+                                            {lendoTexto && getTotalPartesLeitura() > 1
+                                                ? `Parte ${currentPage} de ${getTotalPartesLeitura()}`
+                                                : passagem?.referencia}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setMostrarAjustesLeitura(v => !v)}
+                                    aria-label="Ajustes de leitura"
+                                    aria-expanded={mostrarAjustesLeitura}
+                                    title="Tamanho, espaçamento e alinhamento"
+                                    className={`-mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${mostrarAjustesLeitura ? 'bg-surface-2 text-text-primary' : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'}`}
+                                >
+                                    <span aria-hidden="true" className="reading-serif text-[1.1875rem] font-semibold leading-none">A<span className="text-[0.78em]">a</span></span>
+                                </button>
+                            </div>
+
                             {/* Barra fina de progresso da leitura */}
-                            {(isPlanoMode || activeOption === '1') && getTotalPartesLeitura() > 1 && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border-subtle/60 overflow-hidden">
+                            {lendoTexto && getTotalPartesLeitura() > 1 && (
+                                <div className="h-0.5 w-full overflow-hidden rounded-full bg-border-subtle" aria-hidden="true">
                                     <div
                                         className="h-full bg-amber-500 transition-all duration-300"
                                         style={{ width: `${Math.min(100, Math.round((currentPage / getTotalPartesLeitura()) * 100))}%` }}
                                     />
                                 </div>
                             )}
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <button
-                                        onClick={() => setActiveOption(null)}
-                                        aria-label="Voltar ao menu"
-                                        className="p-2.5 -ml-1 hover:bg-surface-2 rounded-full transition-colors text-text-muted hover:text-text-primary"
-                                    >
-                                        <ArrowLeft className="w-5 h-5" />
-                                    </button>
-                                    <div className="min-w-0">
-                                        {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome && (
-                                            <p className="text-[10px] uppercase tracking-[0.18em] text-text-muted font-semibold truncate">
-                                                Você está lendo agora
-                                            </p>
-                                        )}
-                                        <h2 className="font-bold text-text-primary text-base truncate">
-                                            {(isPlanoMode || activeOption === '1') && livroInfoAtual.nome
-                                                ? `${capitalizarLivro(livroInfoAtual.nome)} ${capituloFoco ?? livroInfoAtual.capitulo}`
-                                                : isPlanoMode
-                                                    ? 'Leitura do Plano'
-                                                    : MENU_OPTIONS.find(o => o.id === activeOption)?.label}
-                                        </h2>
-                                        <p className="text-[11px] text-amber-700 dark:text-amber-400/80 truncate font-semibold">
-                                            {(isPlanoMode || activeOption === '1') && getTotalPartesLeitura() > 1
-                                                ? `Parte ${currentPage} de ${getTotalPartesLeitura()} · ${passagem?.referencia}`
-                                                : passagem?.referencia}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                        type="button"
-                                        onClick={() => alterarFonteLeitura(-2)}
-                                        className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-text-secondary hover:text-text-primary disabled:opacity-40"
-                                        title="Diminuir fonte"
-                                        disabled={readingFontSize <= MIN_READING_FONT_SIZE}
-                                    >
-                                        <ZoomOut className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={resetarFonteLeitura}
-                                        className="px-2.5 py-1.5 hover:bg-white/10 rounded-lg transition-colors text-xs font-bold text-slate-300 hover:text-white"
-                                        title="Restaurar fonte"
-                                    >
-                                        A
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => alterarFonteLeitura(2)}
-                                        className="p-2 hover:bg-surface-2 rounded-lg transition-colors text-text-secondary hover:text-text-primary disabled:opacity-40"
-                                        title="Aumentar fonte"
-                                        disabled={readingFontSize >= MAX_READING_FONT_SIZE}
-                                    >
-                                        <ZoomIn className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setMostrarAjustesLeitura(v => !v)}
-                                        className={`p-2 rounded-lg transition-colors ${mostrarAjustesLeitura ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary hover:text-text-primary'}`}
-                                        title="Espaçamento e alinhamento"
-                                    >
-                                        <SlidersHorizontal className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
 
                             {mostrarAjustesLeitura && (
-                                <div className="flex flex-col gap-2.5 pt-2 border-t border-border-subtle/40 animate-in fade-in slide-in-from-top-1 duration-150">
-                                    <div className="flex items-center justify-between gap-3">
+                                <div className="cartao flex flex-col gap-1 px-4 py-2">
+                                    <div className="flex min-h-11 items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-text-secondary">Tamanho da letra</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <button type="button" onClick={() => alterarFonteLeitura(-2)} disabled={readingFontSize <= MIN_READING_FONT_SIZE} aria-label="Diminuir a letra" title="Diminuir fonte" className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:bg-surface-2 hover:text-text-primary disabled:opacity-40">
+                                                <ZoomOut className="w-[18px] h-[18px]" />
+                                            </button>
+                                            <button type="button" onClick={resetarFonteLeitura} aria-label="Voltar ao tamanho padrão" title="Restaurar fonte" className="flex h-11 min-w-11 items-center justify-center rounded-full px-2 text-xs font-semibold tabular-nums text-text-secondary hover:bg-surface-2 hover:text-text-primary">
+                                                {readingFontSize}
+                                            </button>
+                                            <button type="button" onClick={() => alterarFonteLeitura(2)} disabled={readingFontSize >= MAX_READING_FONT_SIZE} aria-label="Aumentar a letra" title="Aumentar fonte" className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:bg-surface-2 hover:text-text-primary disabled:opacity-40">
+                                                <ZoomIn className="w-[18px] h-[18px]" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-h-11 items-center justify-between gap-3">
                                         <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
                                         <div className="flex items-center gap-1.5">
-                                            <button type="button" onClick={() => alterarEspacamento(-0.15)} disabled={readingLineHeight <= MIN_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none">−</button>
-                                            <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
-                                            <button type="button" onClick={() => alterarEspacamento(0.15)} disabled={readingLineHeight >= MAX_READING_LINE_HEIGHT} className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none">+</button>
+                                            <button type="button" onClick={() => alterarEspacamento(-0.15)} disabled={readingLineHeight <= MIN_READING_LINE_HEIGHT} aria-label="Diminuir espaçamento" className="flex h-11 w-11 items-center justify-center rounded-full text-lg font-bold leading-none text-text-secondary hover:bg-surface-2 hover:text-text-primary disabled:opacity-40">−</button>
+                                            <span className="w-9 text-center text-xs tabular-nums text-text-secondary">{readingLineHeight.toFixed(2)}</span>
+                                            <button type="button" onClick={() => alterarEspacamento(0.15)} disabled={readingLineHeight >= MAX_READING_LINE_HEIGHT} aria-label="Aumentar espaçamento" className="flex h-11 w-11 items-center justify-center rounded-full text-lg font-bold leading-none text-text-secondary hover:bg-surface-2 hover:text-text-primary disabled:opacity-40">+</button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between gap-3">
+                                    <div className="flex min-h-11 items-center justify-between gap-3">
                                         <span className="text-xs font-semibold text-text-secondary">Alinhamento</span>
                                         <div className="flex items-center gap-1.5">
-                                            <button type="button" onClick={() => definirAlinhamento('left')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'left' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Esquerda"><AlignLeft className="w-4 h-4" /></button>
-                                            <button type="button" onClick={() => definirAlinhamento('center')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'center' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Centro"><AlignCenter className="w-4 h-4" /></button>
-                                            <button type="button" onClick={() => definirAlinhamento('right')} className={`p-2 rounded-lg transition-colors ${readingAlign === 'right' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Direita"><AlignRight className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('left')} aria-label="Alinhar à esquerda" aria-pressed={readingAlign === 'left'} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${readingAlign === 'left' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Esquerda"><AlignLeft className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('center')} aria-label="Alinhar ao centro" aria-pressed={readingAlign === 'center'} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${readingAlign === 'center' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Centro"><AlignCenter className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => definirAlinhamento('right')} aria-label="Alinhar à direita" aria-pressed={readingAlign === 'right'} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${readingAlign === 'right' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'hover:bg-surface-2 text-text-secondary'}`} title="Direita"><AlignRight className="w-4 h-4" /></button>
                                         </div>
                                     </div>
+                                    {podeManterTela && (
+                                        <Interruptor
+                                            rotulo="Manter a tela acesa"
+                                            ligado={telaAcesa}
+                                            onMudar={(ligar) => { setTelaAcesa(ligar); guardarPreferencia(PLANO_TELA_ACESA_KEY, ligar); }}
+                                        />
+                                    )}
                                 </div>
                             )}
 
                             {/* Um quadro só para os dois testamentos (03/10/2026): Ler e Explicar
                                 com o mesmo estilo; antes eram 4 botões de dois jeitos diferentes */}
-                            {(isPlanoMode || activeOption === '1') && (
+                            {lendoTexto && (
                                 <LeituraPorTestamento
                                     opcoes={opcoesTestamento}
                                     atual={testamentoAtual}
@@ -2661,18 +2658,20 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                             />
                         )}
 
-                        {/* Etiqueta de capitulo via portal (escapa do transform do animate-enter); aparece ao rolar, quando o cabecalho sai da tela */}
-                        {montado && !cabecalhoVisivel && capituloFoco != null && livroInfoAtual.nome && createPortal(
-                            <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
-                                    <BookOpen className="w-3 h-3" />
-                                    {capitalizarLivro(livroInfoAtual.nome)} {capituloFoco}
-                                </span>
-                            </div>,
-                            document.body
+                        {/* Tira do capítulo (por portal: escapa do transform do animate-enter).
+                            Aparece ao rolar, quando o cabeçalho sai da tela. Era um selo
+                            transparente que cobria a primeira linha do texto. Tocar volta
+                            ao topo da leitura (testamentos e ajustes). */}
+                        {montado && !cabecalhoVisivel && capituloFoco != null && livroInfoAtual.nome && (
+                            <TiraDeLeitura
+                                titulo={`${capitalizarLivro(livroInfoAtual.nome)} ${capituloFoco}`}
+                                progresso={getTotalPartesLeitura() > 1 ? Math.min(1, currentPage / getTotalPartesLeitura()) : undefined}
+                                rotulo={`${capitalizarLivro(livroInfoAtual.nome)} ${capituloFoco}. Voltar ao topo da leitura`}
+                                onTocar={() => cabecalhoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            />
                         )}
                         {/* Messages Area - sem padding extra, direto no conteúdo */}
-                        <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-4 space-y-3">
+                        <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto overflow-y-auto overflow-x-hidden px-1 sm:px-4 pt-3 pb-4 space-y-3">
                             <div ref={chatStartRef} />
 
                             {/* Aviso: capítulos que falharam ao carregar (rede fraca) —
@@ -2698,6 +2697,9 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                 </div>
                             )}
                             {messages.map((msg, idx) => {
+                                // Na leitura do texto, a "fala" do leitor ("Quero ver: Ler
+                                // Passagem", "Continuar") é só o comando interno: não aparece.
+                                if (lendoTexto && msg.role === 'user') return null;
                                 const temPlaceholder = msg.content.includes('%%VERSICULOS_INTERATIVOS%%');
                                 const ehUltima = idx === messages.length - 1 && msg.role === 'assistant';
                                 return (
@@ -2748,7 +2750,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                                 ? todasAsPartes.filter(p => leituraDiaConcluida || p < parteUI)
                                 : todasAsPartes.filter(parteEstaLida);
                             return (
-                                <div className="px-4 pt-2 pb-6 max-w-3xl mx-auto w-full">
+                                <div className="px-1 sm:px-4 pt-2 pb-6 max-w-3xl mx-auto w-full">
                                     {isLoadingExplicacao && (
                                         <div role="status" className="mb-6 rounded-2xl border border-border-subtle bg-surface-1 px-5 py-5">
                                             <p className="text-[13px] font-medium text-text-muted">Preparando a explicação desta parte…</p>
@@ -2789,11 +2791,11 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                             );
                         })()) : (
                             /* Demais opções (estudos por IA): só o botão Continuar */
-                            <div className="sticky bottom-0 px-4 py-3 bg-surface-0/80 backdrop-blur-md border-t border-border-subtle/30">
+                            <div className="sticky bottom-0 border-t border-border-subtle bg-surface-0 px-4 py-3">
                                 <button
                                     type="button"
                                     onClick={() => submitMessage('Continuar')}
-                                    className="w-full btn-premium py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="w-full btn-premium min-h-12 flex items-center justify-center gap-2 disabled:opacity-50"
                                     disabled={isProcessing || isLoadingExplicacao}
                                 >
                                     <ArrowRight className="w-5 h-5" />

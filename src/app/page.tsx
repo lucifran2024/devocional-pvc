@@ -2,15 +2,11 @@
 
 import { useState, useEffect, type CSSProperties } from 'react';
 import Link from 'next/link';
-import {
-  ArrowRight, BookMarked, BookOpen, HeartHandshake, Mic, NotebookPen, Youtube,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { getPayloadDoDia, getDataHoje, type PayloadDoDia } from '@/lib/supabase';
 import { loadBibliaPosicao, type BibliaPosicao } from '@/lib/biblia-posicao';
 import { dividirPassagens, saudacao } from '@/lib/palavra-apresentacao';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
-import { DashboardCard } from '@/components/ui/DashboardCard';
 import { PalavraManha } from '@/components/PalavraManha';
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MarcaBiblia } from '@/components/ui/MarcaBiblia';
@@ -28,8 +24,11 @@ import { RandomVerse } from '@/components/RandomVerse';
 //   2. Hoje: Continuar (bloco invertido, com a fita marcadora do ícone) e a
 //      leitura de hoje;
 //   3. a Palavra da Manhã direto na página, sem caixa, com manchete grande;
-//   4. o Versículo do dia como página impressa (bloco invertido);
-//   5. as ferramentas, em duas listas.
+//   4. o Versículo do dia como página impressa (bloco invertido).
+// 2ª rodada do mesmo dia («melhorar essa lista de estudar/transcrever ou
+// tirar elas da página inicial e deixar só no Mais»): as duas listas de
+// ferramentas saíram. O início é só o dia; Plano, Caderno, Oração e as
+// transcrições ficam no Mais (em dois grupos) e na barra, a um toque.
 // Continua valendo: a data aparece uma vez; Sair fica no Mais e na barra
 // lateral; sem foto no topo (27/09); sem degradê, brilho ou ícone gigante
 // (03/10); topo baixo para a Palavra aparecer logo.
@@ -45,27 +44,6 @@ function lerPayloadLocal(): PayloadDoDia | null {
     return null;
   }
 }
-
-interface Atalho {
-  href: string;
-  title: string;
-  desc: string;
-  icon: LucideIcon;
-}
-
-// Cards de "Devocional Externo", "DNA Categorizado" e "Memorização" ficam fora
-// do início a pedido (16/07/2026); as páginas seguem acessíveis por URL.
-const ESTUDAR: Atalho[] = [
-  { href: '/planos', title: 'Plano de Leitura', desc: 'Estudo guiado, com explicação.', icon: BookMarked },
-  { href: '/biblioteca', title: 'Bíblia Sagrada', desc: 'Leia, busque e salve versículos.', icon: BookOpen },
-  { href: '/anotacoes', title: 'Caderno', desc: 'Anotações, versículos e vídeos.', icon: NotebookPen },
-  { href: '/oracao', title: 'Diário de Oração', desc: 'Pedidos e respostas de Deus.', icon: HeartHandshake },
-];
-
-const TRANSCREVER: Atalho[] = [
-  { href: '/transcrever-youtube', title: 'YouTube', desc: 'Cole o link de uma pregação.', icon: Youtube },
-  { href: '/transcrever-culto', title: 'Áudio', desc: 'Grave ao vivo ou envie do celular.', icon: Mic },
-];
 
 // Uma palavra só não quebra: num quadro de meia tela (122 px de texto num
 // celular de 360 px), "Tessalonicenses" (15 letras, a maior da Bíblia) vazava.
@@ -107,31 +85,6 @@ function formatarDataCurta(dataStr: string): string {
     weekday: 'long', day: 'numeric', month: 'long',
   });
   return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
-
-// 2º ajuste (12/11/2026): os cartões iguais com ícone em quadradinho
-// colorido eram o que deixava a tela "comum". Cada grupo virou um cartão só,
-// dividido em linhas, como uma lista do celular.
-// 5º ajuste ("as listas ficaram legais, mas não excelentes"): o nome do grupo
-// segue o nome dos cartões de cima (pequeno, âmbar, no mesmo recuo do texto de
-// dentro das caixas) e a divisória começa no texto, não na borda. A letra
-// com serifa fica só para o conteúdo (saudação, Palavra, passagens, versículo).
-function GrupoDeAtalhos({ id, titulo, itens, posicao }: { id: string; titulo: string; itens: Atalho[]; posicao: number }) {
-  return (
-    <section aria-labelledby={id} className="entrada" style={ordem(posicao)}>
-      {/* Cor no <span>: a regra global de h1–h6 vence classe no título */}
-      <h2 id={id} className="mb-2 px-4 text-sm font-semibold md:px-7">
-        <span className="text-amber-700 dark:text-amber-400">{titulo}</span>
-      </h2>
-      <ul className="cartao overflow-hidden">
-        {itens.map((item, i) => (
-          <li key={item.href}>
-            <DashboardCard href={item.href} title={item.title} desc={item.desc} icon={item.icon} divisoria={i > 0} />
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }
 
 export default function DashboardPage() {
@@ -249,12 +202,6 @@ export default function DashboardPage() {
         {/* 4. Versículo do dia: a página impressa */}
         <div className="entrada mt-10" style={ordem(3)}>
           <RandomVerse />
-        </div>
-
-        {/* 5. Ferramentas, em dois grupos */}
-        <div className="mt-10 flex flex-col gap-7">
-          <GrupoDeAtalhos id="titulo-estudar" titulo="Estudar" itens={ESTUDAR} posicao={4} />
-          <GrupoDeAtalhos id="titulo-transcrever" titulo="Transcrever" itens={TRANSCREVER} posicao={5} />
         </div>
       </main>
     </CosmicBackground>

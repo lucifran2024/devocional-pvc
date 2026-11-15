@@ -380,7 +380,7 @@ export function BibleAudioPlayer({
                     ))}
                 </div>
             )}
-            <div className="rounded-2xl border border-border-subtle bg-surface-1 shadow-xl overflow-hidden">
+            <div className="overflow-hidden rounded-[22px] border border-border-subtle bg-surface-1 shadow-xl dark:border-transparent dark:bg-surface-2">
                 <div className="flex items-center gap-1 px-2 pt-2 pb-1.5">
                     <button
                         type="button"
@@ -395,7 +395,7 @@ export function BibleAudioPlayer({
                         type="button"
                         onClick={alternarPlay}
                         disabled={estado === 'carregando'}
-                        className="w-11 h-11 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 text-amber-950 transition-colors disabled:opacity-70"
+                        className="w-11 h-11 flex items-center justify-center rounded-full bg-campo text-campo-texto transition-opacity hover:opacity-90 disabled:opacity-70"
                         aria-label={estado === 'tocando' ? 'Pausar' : 'Continuar'}
                     >
                         {estado === 'carregando'
@@ -469,10 +469,10 @@ export function BibleAudioPlayer({
                 type="button"
                 onClick={() => (ativo ? undefined : iniciar(0))}
                 disabled={total === 0 || ativo}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50 text-amber-700 dark:text-amber-300 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-60"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-surface-2 px-5 text-sm font-semibold text-text-primary transition-[background-color,transform] hover:bg-border-strong/50 active:scale-[0.96] disabled:opacity-50"
                 aria-label={ativo ? 'Narração em andamento' : 'Ouvir este capítulo'}
             >
-                <Headphones className="w-4 h-4" />
+                <Headphones className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                 {ativo ? 'Ouvindo…' : 'Ouvir'}
             </button>
             {barra}

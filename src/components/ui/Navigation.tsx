@@ -23,18 +23,33 @@ export function Navigation() {
 }
 
 // Menu "Mais" (25/09/2026): as áreas que antes só abriam pelos cartões da tela
-// inicial ficam a um toque de qualquer tela. Mesma lista dos cartões da home;
-// Memorização continua fora, como o dono pediu em 16/07/2026.
-const MAIS_ITENS = [
-    // 03/10/2026: "Leitura" na barra abre direto a leitura de hoje (ele quer assim);
-    // a página do Plano de Leitura (Entender, Meditar, Fixar) ganha atalho aqui.
-    { name: 'Estudar a leitura do dia', desc: 'Entender, meditar e fixar', href: '/plano-de-leitura', icon: GraduationCap },
-    { name: 'Planos de leitura', desc: 'Estudo guiado', href: '/planos', icon: BookMarked },
-    { name: 'Caderno', desc: 'Anotações, versículos e vídeos', href: '/anotacoes', icon: NotebookPen },
-    { name: 'Diário de Oração', desc: 'Pedidos e respostas', href: '/oracao', icon: HeartHandshake },
-    { name: 'Transcrever do YouTube', desc: 'Texto da pregação', href: '/transcrever-youtube', icon: Youtube },
-    { name: 'Transcrever áudio', desc: 'Gravar ou enviar do celular', href: '/transcrever-culto', icon: Mic },
+// inicial ficam a um toque de qualquer tela. Memorização continua fora, como o
+// dono pediu em 16/07/2026.
+// 14/11/2026: as listas "Estudar" e "Transcrever" saíram do início («deixar só
+// no Mais»); aqui elas viraram dois grupos com nome, na mesma ordem de antes.
+const GRUPOS_MAIS = [
+    {
+        id: 'mais-estudar',
+        titulo: 'Estudar',
+        itens: [
+            // 03/10/2026: "Leitura" na barra abre direto a leitura de hoje (ele quer assim);
+            // a página do Plano de Leitura (Entender, Meditar, Fixar) ganha atalho aqui.
+            { name: 'Estudar a leitura do dia', desc: 'Entender, meditar e fixar', href: '/plano-de-leitura', icon: GraduationCap },
+            { name: 'Planos de leitura', desc: 'Estudo guiado', href: '/planos', icon: BookMarked },
+            { name: 'Caderno', desc: 'Anotações, versículos e vídeos', href: '/anotacoes', icon: NotebookPen },
+            { name: 'Diário de Oração', desc: 'Pedidos e respostas', href: '/oracao', icon: HeartHandshake },
+        ],
+    },
+    {
+        id: 'mais-transcrever',
+        titulo: 'Transcrever',
+        itens: [
+            { name: 'Transcrever do YouTube', desc: 'Texto da pregação', href: '/transcrever-youtube', icon: Youtube },
+            { name: 'Transcrever áudio', desc: 'Gravar ou enviar do celular', href: '/transcrever-culto', icon: Mic },
+        ],
+    },
 ];
+const MAIS_ITENS = GRUPOS_MAIS.flatMap((g) => g.itens);
 
 function NavigationInner() {
     const pathname = usePathname();
@@ -237,31 +252,38 @@ function NavigationInner() {
                             </button>
                         </div>
 
-                        <ul className="grid grid-cols-2 gap-2.5">
-                            {MAIS_ITENS.map((item) => {
-                                const ativo = itemMaisAtivo(item.href);
-                                return (
-                                    <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            onClick={fecharMais}
-                                            aria-current={ativo ? 'page' : undefined}
-                                            className={`flex h-full min-h-[84px] flex-col justify-between gap-2 rounded-2xl p-3.5 transition-[background-color,transform] active:scale-[0.97]
-                                                ${ativo
-                                                    ? 'bg-amber-500/15'
-                                                    : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-border-strong/60'
-                                                }`}
-                                        >
-                                            <item.icon className="h-[22px] w-[22px] text-amber-700 dark:text-amber-400" />
-                                            <span className="flex flex-col">
-                                                <span className="text-sm font-semibold leading-tight text-text-primary">{item.name}</span>
-                                                <span className="mt-0.5 text-xs text-text-muted">{item.desc}</span>
-                                            </span>
-                                        </Link>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <div className="flex max-h-[62dvh] flex-col gap-4 overflow-y-auto">
+                            {GRUPOS_MAIS.map((grupo) => (
+                                <div key={grupo.id} role="group" aria-labelledby={grupo.id}>
+                                    <p id={grupo.id} className="mb-2 px-1 text-sm font-semibold text-amber-700 dark:text-amber-400">{grupo.titulo}</p>
+                                    <ul className="grid grid-cols-2 gap-2.5">
+                                        {grupo.itens.map((item) => {
+                                            const ativo = itemMaisAtivo(item.href);
+                                            return (
+                                                <li key={item.href}>
+                                                    <Link
+                                                        href={item.href}
+                                                        onClick={fecharMais}
+                                                        aria-current={ativo ? 'page' : undefined}
+                                                        className={`flex h-full min-h-[84px] flex-col justify-between gap-2 rounded-2xl p-3.5 transition-[background-color,transform] active:scale-[0.97]
+                                                            ${ativo
+                                                                ? 'bg-amber-500/15'
+                                                                : 'bg-surface-0 hover:bg-surface-2 dark:bg-surface-2 dark:hover:bg-border-strong/60'
+                                                            }`}
+                                                    >
+                                                        <item.icon className="h-[22px] w-[22px] text-amber-700 dark:text-amber-400" />
+                                                        <span className="flex flex-col">
+                                                            <span className="text-sm font-semibold leading-tight text-text-primary">{item.name}</span>
+                                                            <span className="mt-0.5 text-xs text-text-muted">{item.desc}</span>
+                                                        </span>
+                                                    </Link>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
 
                         <div className="mt-3 flex items-center gap-2.5">
                             <div className="flex flex-1 items-center justify-between rounded-2xl bg-surface-0 px-3.5 py-1.5 dark:bg-surface-2">

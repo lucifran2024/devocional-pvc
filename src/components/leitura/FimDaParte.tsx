@@ -54,7 +54,7 @@ function BotaoMarcar({ parte, varias, lida, carregando, onAlternar }: {
             aria-pressed={lida}
             className={`shrink-0 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium transition-colors active:scale-[0.98] disabled:opacity-60 ${lida
                 ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                : 'border border-border-strong text-text-secondary hover:border-amber-500/50 hover:text-text-primary'}`}
+                : 'bg-surface-2 text-text-secondary hover:bg-border-strong/50 hover:text-text-primary'}`}
         >
             {carregando
                 ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -160,7 +160,7 @@ export function FimDaParte({
                         type="button"
                         onClick={onContinuar}
                         disabled={ocupado}
-                        className="btn-premium flex-1 min-h-12 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                        className="btn-premium flex-1 min-h-12 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {ultima ? <Check className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                         {ultima ? 'Concluir leitura' : 'Continuar'}
@@ -171,7 +171,7 @@ export function FimDaParte({
                         type="button"
                         onClick={onExplicar}
                         disabled={ocupado}
-                        className={`${mostrarPrincipal ? 'px-5' : 'flex-1'} min-h-12 rounded-xl border border-border-subtle bg-surface-2 text-text-primary flex items-center justify-center gap-2 transition-colors hover:border-amber-500/30 active:scale-[0.98] disabled:opacity-50`}
+                        className={`${mostrarPrincipal ? 'px-5' : 'flex-1'} min-h-12 rounded-full bg-surface-2 text-text-primary font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-border-strong/50 active:scale-[0.98] disabled:opacity-50`}
                     >
                         {explicando
                             ? <Loader2 className="w-5 h-5 animate-spin text-amber-500" />

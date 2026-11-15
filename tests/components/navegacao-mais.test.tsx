@@ -56,6 +56,18 @@ describe('menu Mais da navegação', () => {
         expect(within(menu).getByRole('button', { name: /Sair da conta/ })).toBeInTheDocument();
     });
 
+    // 14/11/2026: as listas Estudar e Transcrever saíram do início («deixar só
+    // no Mais»); aqui elas ficam em dois grupos com nome.
+    it('agrupa as áreas em Estudar e Transcrever', () => {
+        renderizar();
+        fireEvent.click(screen.getAllByRole('button', { name: 'Mais opções' })[0]);
+        const menu = screen.getByRole('dialog', { name: 'Mais opções' });
+        const estudar = within(menu).getByRole('group', { name: 'Estudar' });
+        expect(within(estudar).getAllByRole('link')).toHaveLength(4);
+        const transcrever = within(menu).getByRole('group', { name: 'Transcrever' });
+        expect(within(transcrever).getAllByRole('link')).toHaveLength(2);
+    });
+
     it('informa a altura da barra inferior para os painéis de tela cheia', () => {
         renderizar();
         expect(document.documentElement.style.getPropertyValue('--altura-nav-inferior')).toMatch(/^\d+px$/);

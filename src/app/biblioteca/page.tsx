@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
     Heart, Copy, Share2, Lightbulb, Palette, StickyNote,
     Search, BookmarkIcon, Trash2, ChevronDown, Plus, Minus, Languages,
-    CheckSquare, Square, XCircle, Wifi, WifiOff, Database, Download,
-    BookmarkCheck, Columns2, History
+    CheckSquare, Square, XCircle, WifiOff, Download,
+    BookmarkCheck, Columns2, History, ArrowRight, MoreHorizontal
 } from 'lucide-react';
 import { CosmicBackground } from '@/components/ui/CosmicBackground';
 import { useToast } from '@/hooks/useToast';
@@ -45,6 +43,12 @@ import {
     type BibliaRecente,
 } from '@/lib/biblia-posicao';
 import { barraDeveAparecer, progressoLeitura } from '@/lib/leitura-rolagem';
+import { resumoDoCapitulo, textoDoCapitulo } from '@/lib/biblia-texto';
+import { BIBLIA_SEM_NUMEROS_KEY, BIBLIA_TELA_ACESA_KEY, guardarPreferencia, lerPreferencia } from '@/lib/biblia-preferencias';
+import { telaAcesaSuportada, useTelaAcesa } from '@/lib/tela-acesa';
+import { TiraDeLeitura } from '@/components/ui/TiraDeLeitura';
+import { Interruptor } from '@/components/ui/Interruptor';
+import { CompartilharVersiculo } from '@/components/biblia/CompartilharVersiculo';
 import {
     supabase,
     getAllInteracoesPorTipo,
@@ -623,7 +627,8 @@ function BibliotecaPage() {
 
     // Offline
     const [isOnline, setIsOnline] = useState(true);
-    const [cameFromCache, setCameFromCache] = useState(false);
+    // O aviso técnico "cache" saiu do topo (14/11/2026); o registro continua para diagnóstico
+    const [, setCameFromCache] = useState(false);
     const [offlineManagerAberto, setOfflineManagerAberto] = useState(false);
 
     // Bookmarks de leitura
@@ -648,6 +653,22 @@ function BibliotecaPage() {
     const [versaoBiblia, setVersaoBiblia] = useState(VERSOES_BIBLIA[0]); // NTLH padrão
     const [mostrarVersoes, setMostrarVersoes] = useState(false);
     const [mostrarFontes, setMostrarFontes] = useState(false);
+    // 14/11/2026 — barra única do topo: o que era ícone solto (versão,
+    // marcadores, salvos, ler sem internet) mora no menu "⋯", junto de
+    // "Copiar o capítulo" (função nova).
+    const [menuAberto, setMenuAberto] = useState(false);
+    // Preferências novas da leitura, guardadas no aparelho
+    const [semNumeros, setSemNumeros] = useState(false);
+    const [telaAcesa, setTelaAcesa] = useState(false);
+    const [podeManterTela, setPodeManterTela] = useState(false);
+    // Versículo que está sendo compartilhado (abre a janela com a imagem)
+    const [compartilhando, setCompartilhando] = useState<{ texto: string; referencia: string } | null>(null);
+    useEffect(() => {
+        setSemNumeros(lerPreferencia(BIBLIA_SEM_NUMEROS_KEY));
+        setTelaAcesa(lerPreferencia(BIBLIA_TELA_ACESA_KEY));
+        setPodeManterTela(telaAcesaSuportada());
+    }, []);
+    useTelaAcesa(telaAcesa);
 
     // Comparação de traduções (2ª versão exibida abaixo de cada versículo)
     const [versaoComparada, setVersaoComparada] = useState<typeof VERSOES_BIBLIA[0] | null>(null);
@@ -1348,20 +1369,38 @@ function BibliotecaPage() {
         success('Versículo copiado!');
     };
 
-    const handleCompartilhar = async () => {
+    // 14/11/2026: "Compartilhar" abre a janela com o versículo em imagem; o
+    // botão "Só o texto" dela faz o que este botão fazia antes.
+    const handleCompartilhar = () => {
         if (!versiculoSelecionado) return;
         const v = getVersiculoObj(versiculoSelecionado);
         if (!v) return;
+        setCompartilhando({ texto: v.text, referencia: `${livroAtual.nome} ${capituloAtual}:${v.verse}` });
+    };
 
-        const texto = `"${v.text}"\n— ${livroAtual.nome} ${capituloAtual}:${v.verse} (${versaoBiblia.nome})`;
+    const compartilharTexto = async (textoVersiculo: string, referencia: string) => {
+        const texto = `"${textoVersiculo}"\n— ${referencia} (${versaoBiblia.nome})`;
 
         if (navigator.share) {
             try {
-                await navigator.share({ title: `${livroAtual.nome} ${capituloAtual}:${v.verse}`, text: texto });
+                await navigator.share({ title: referencia, text: texto });
             } catch { /* cancelled */ }
         } else {
             await navigator.clipboard.writeText(texto);
             success('Copiado para compartilhar!');
+        }
+    };
+
+    // Função nova (14/11/2026): o capítulo inteiro vai para a área de
+    // transferência, com a referência e a versão no topo.
+    const handleCopiarCapitulo = async () => {
+        setMenuAberto(false);
+        if (versiculos.length === 0) return;
+        try {
+            await navigator.clipboard.writeText(textoDoCapitulo(livroAtual.nome, capituloAtual, versaoBiblia.nome, versiculos));
+            success('Capítulo copiado!');
+        } catch {
+            toastError('Não foi possível copiar neste aparelho.');
         }
     };
 
@@ -1962,67 +2001,227 @@ function BibliotecaPage() {
     })();
 
     // A barra do topo só se esconde durante a leitura (nunca com busca ou menus abertos)
-    const barraEscondida = !barraVisivel && !buscaAberta && !mostrarVersoes && !mostrarFontes && !modalAberto;
+    const barraEscondida = !barraVisivel && !buscaAberta && !mostrarVersoes && !mostrarFontes && !menuAberto && !modalAberto;
+    const resumoCapitulo = !loading && !error ? resumoDoCapitulo(versiculos) : '';
+    // Botões redondos de 44 px da barra do topo
+    const ICONE_TOPO = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary';
 
     return (
         <CosmicBackground className="min-h-screen" clipX>
-            {/* Topo fixo (cabeçalho + navegação): some ao descer lendo e volta ao
-                rolar para cima; com busca ou menus abertos fica sempre visível.
-                Antes era "sticky", mas o fundo com overflow-x-hidden anulava. */}
+            {/* Topo fixo: some ao descer lendo e volta ao rolar para cima; com
+                busca ou menus abertos fica sempre visível. Antes era "sticky"
+                com dois andares de vidro fosco; o fundo com overflow-x-hidden
+                anulava o sticky (por isso o clipX no fundo).
+                14/11/2026 — barra única, lisa, da cor da página: a pílula de
+                navegação (anterior · livro e capítulo · próximo), Buscar,
+                ajustes de leitura (Aa) e o menu "⋯" com o que era ícone solto. */}
             <div className={`sticky top-0 z-50 transition-transform duration-200 ease-out ${barraEscondida ? '-translate-y-full' : 'translate-y-0'}`}>
-            {/* Header */}
-            <header className="bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
-                <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link href="/" aria-label="Voltar ao início" className="flex items-center gap-1.5 pl-2 pr-3 py-2 -ml-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                        <span className="hidden sm:inline text-sm font-medium">Voltar</span>
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                        <Book className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                        <span className="reading-serif text-[15px] font-semibold text-text-primary">Bíblia Sagrada</span>
-                        {/* Indicador de conectividade */}
-                        {!isOnline ? (
-                            <span className="flex items-center gap-1 text-[10px] text-orange-600 dark:text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded-full">
-                                <WifiOff className="w-3 h-3" /> offline
-                            </span>
-                        ) : cameFromCache ? (
-                            // Aviso técnico: no celular apertava o título em duas linhas
-                            <span className="hidden sm:flex items-center gap-1 text-[10px] text-text-muted bg-surface-2 border border-border-subtle px-1.5 py-0.5 rounded-full">
-                                <Database className="w-3 h-3" /> cache
-                            </span>
-                        ) : null}
-                        {/* Indicador de sync pendente */}
-                        {syncing ? (
-                            <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full">
-                                <Loader2 className="w-3 h-3 animate-spin" /> sync...
-                            </span>
-                        ) : pendingCount > 0 ? (
-                            <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.5 rounded-full">
-                                {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
-                            </span>
-                        ) : null}
+            <header className="border-b border-border-subtle bg-surface-0">
+                <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 px-2">
+                    <div className="flex min-w-0 flex-1 items-center rounded-full bg-surface-2">
+                        <button onClick={irParaAnterior} disabled={!anteriorDestino} title={anteriorDestino ? `${anteriorDestino.livro.nome} ${anteriorDestino.cap}` : undefined} aria-label="Capítulo anterior" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-border-strong/40 disabled:opacity-30">
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button onClick={abrirModal} aria-label="Escolher livro e capítulo" aria-haspopup="dialog" aria-expanded={modalAberto} className="flex h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-1 transition-colors hover:bg-border-strong/40">
+                            <span className="reading-serif truncate text-[1.0625rem] font-semibold text-text-primary">{livroAtual.nome} {capituloAtual}</span>
+                            <ChevronDown className="h-4 w-4 shrink-0 text-text-muted" />
+                        </button>
+                        <button onClick={irParaProximo} disabled={!proximoDestino} title={proximoDestino ? `${proximoDestino.livro.nome} ${proximoDestino.cap}` : undefined} aria-label="Próximo capítulo" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-primary transition-colors hover:bg-border-strong/40 disabled:opacity-30">
+                            <ChevronRight className="h-5 w-5" />
+                        </button>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => setBuscaAberta(!buscaAberta)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Buscar">
-                            <Search className="w-5 h-5" />
+                    <button onClick={() => { setBuscaAberta(!buscaAberta); setMenuAberto(false); setMostrarFontes(false); setMostrarVersoes(false); }} aria-label="Buscar na Bíblia" aria-expanded={buscaAberta} title="Buscar" className={ICONE_TOPO}>
+                        <Search className="h-5 w-5" />
+                    </button>
+
+                    {/* Ajustes de leitura: tamanho, espaçamento, alinhamento, números e tela acesa */}
+                    <div className="relative">
+                        <button
+                            onClick={() => { setMostrarFontes(!mostrarFontes); setMostrarVersoes(false); setMenuAberto(false); }}
+                            aria-label="Ajustes de leitura"
+                            aria-expanded={mostrarFontes}
+                            title="Tamanho da fonte"
+                            className={ICONE_TOPO}
+                        >
+                            <span aria-hidden="true" className="reading-serif text-[1.1875rem] font-semibold leading-none">A<span className="text-[0.78em]">a</span></span>
                         </button>
-                        <button onClick={() => setBookmarksAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Bookmarks">
-                            <BookmarkCheck className="w-5 h-5" />
+
+                        {mostrarFontes && (
+                            <div className="absolute right-0 top-full z-50 mt-1.5 w-72 animate-[fadeIn_0.12s_ease-out] overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 shadow-2xl dark:border-transparent dark:bg-surface-2">
+                                <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Tamanho do texto</p>
+                                </div>
+                                <div className="flex items-end justify-between gap-1 p-3">
+                                    {FONT_SIZES.map((f, idx) => (
+                                        <button
+                                            key={f.label}
+                                            onClick={() => {
+                                                setFontSizeIndex(idx);
+                                                localStorage.setItem('biblia-font-size', String(idx));
+                                            }}
+                                            className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border transition-all active:scale-95 ${fontSizeIndex === idx
+                                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 dark:text-amber-400'
+                                                : 'border-transparent hover:bg-surface-1 text-text-secondary'
+                                                }`}
+                                            title={`Fonte ${f.label}`}
+                                        >
+                                            <span className="font-bold leading-none" style={{ fontSize: `${14 + idx * 4}px` }}>A</span>
+                                            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">{f.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-border-subtle space-y-2.5">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
+                                        <div className="flex items-center gap-1.5" role="group" aria-label="Espaçamento da leitura" data-storage-key={BIBLIA_READING_LINE_HEIGHT_KEY}>
+                                            <button
+                                                type="button"
+                                                onClick={() => alterarEspacamento(-BIBLIA_READING_LINE_HEIGHT_STEP)}
+                                                disabled={readingLineHeight <= MIN_BIBLIA_READING_LINE_HEIGHT}
+                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
+                                                title="Diminuir espaçamento"
+                                                aria-label="Diminuir espaçamento"
+                                            >−</button>
+                                            <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => alterarEspacamento(BIBLIA_READING_LINE_HEIGHT_STEP)}
+                                                disabled={readingLineHeight >= MAX_BIBLIA_READING_LINE_HEIGHT}
+                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
+                                                title="Aumentar espaçamento"
+                                                aria-label="Aumentar espaçamento"
+                                            >+</button>
+                                        </div>
+                                    </div>
+                                    <BibliaReadingAlignControls value={readingAlign} onChange={definirAlinhamento} />
+                                    {/* 14/11/2026: leitura corrida (sem os números) e tela acesa */}
+                                    <Interruptor
+                                        rotulo="Números dos versículos"
+                                        ligado={!semNumeros}
+                                        onMudar={(mostrar) => { setSemNumeros(!mostrar); guardarPreferencia(BIBLIA_SEM_NUMEROS_KEY, !mostrar); }}
+                                    />
+                                    {podeManterTela && (
+                                        <Interruptor
+                                            rotulo="Manter a tela acesa"
+                                            ligado={telaAcesa}
+                                            onMudar={(ligar) => { setTelaAcesa(ligar); guardarPreferencia(BIBLIA_TELA_ACESA_KEY, ligar); }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Menu "⋯": versão, marcadores, salvos, ler sem internet e copiar o capítulo */}
+                    <div className="relative">
+                        <button
+                            onClick={() => { setMenuAberto(!menuAberto); setMostrarFontes(false); setMostrarVersoes(false); }}
+                            aria-label="Mais opções da Bíblia"
+                            aria-haspopup="menu"
+                            aria-expanded={menuAberto}
+                            className={`${ICONE_TOPO} relative`}
+                        >
+                            <MoreHorizontal className="h-5 w-5" />
+                            {(!isOnline || syncing || pendingCount > 0) && (
+                                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
+                            )}
                         </button>
-                        <button onClick={() => setOfflineManagerAberto(true)} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Offline">
-                            <Download className="w-5 h-5" />
-                        </button>
-                        <button onClick={mostrarSalvos} className="p-2 rounded-lg hover:bg-surface-2 text-text-muted hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Salvos">
-                            <BookmarkIcon className="w-5 h-5" />
-                        </button>
+
+                        {menuAberto && (
+                            <div role="menu" aria-label="Mais opções da Bíblia" className="absolute right-0 top-full z-50 mt-1.5 w-72 animate-[fadeIn_0.12s_ease-out] overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 p-1.5 shadow-2xl dark:border-transparent dark:bg-surface-2">
+                                {[
+                                    { nome: 'Versão da Bíblia', detalhe: `${versaoBiblia.nome}${versaoComparada ? ` + ${versaoComparada.nome}` : ''}`, Icone: Languages, acao: () => { setMenuAberto(false); setMostrarVersoes(true); } },
+                                    { nome: 'Marcadores', detalhe: '', Icone: BookmarkCheck, acao: () => { setMenuAberto(false); setBookmarksAberto(true); } },
+                                    { nome: 'Salvos', detalhe: 'Favoritos e destaques', Icone: BookmarkIcon, acao: () => { setMenuAberto(false); mostrarSalvos(); } },
+                                    { nome: 'Ler sem internet', detalhe: 'Baixar a Bíblia', Icone: Download, acao: () => { setMenuAberto(false); setOfflineManagerAberto(true); } },
+                                    { nome: 'Copiar o capítulo', detalhe: '', Icone: Copy, acao: handleCopiarCapitulo },
+                                ].map(({ nome, detalhe, Icone, acao }) => (
+                                    <button key={nome} type="button" role="menuitem" onClick={acao} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left transition-colors hover:bg-surface-2 dark:hover:bg-border-strong/50">
+                                        <Icone className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" />
+                                        <span className="min-w-0 flex-1 text-[0.9375rem] font-medium text-text-primary">{nome}</span>
+                                        {detalhe && <span className="shrink-0 text-xs text-text-muted">{detalhe}</span>}
+                                    </button>
+                                ))}
+                                {(!isOnline || syncing || pendingCount > 0) && (
+                                    <p className="mt-1 flex items-center gap-2 border-t border-border-subtle px-3 pb-1.5 pt-2.5 text-xs text-text-muted">
+                                        {!isOnline ? <WifiOff className="h-3.5 w-3.5 shrink-0" /> : <Loader2 className={`h-3.5 w-3.5 shrink-0 ${syncing ? 'animate-spin' : ''}`} />}
+                                        {!isOnline
+                                            ? 'Sem internet: lendo o que está no aparelho.'
+                                            : syncing
+                                                ? 'Sincronizando o que você marcou…'
+                                                : `${pendingCount} ${pendingCount > 1 ? 'marcações esperando' : 'marcação esperando'} a internet.`}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {mostrarVersoes && (
+                            <div className="absolute right-0 top-full z-50 mt-1.5 w-72 animate-[fadeIn_0.12s_ease-out] overflow-hidden rounded-2xl border border-border-subtle bg-surface-1 shadow-2xl dark:border-transparent dark:bg-surface-2">
+                                <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
+                                </div>
+                                <div className="max-h-52 overflow-y-auto p-1.5">
+                                    {VERSOES_BIBLIA.map(v => (
+                                        <button
+                                            key={v.codigo}
+                                            onClick={() => trocarVersao(v)}
+                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${versaoBiblia.codigo === v.codigo
+                                                ? 'bg-amber-500/20 border border-amber-500/30'
+                                                : 'hover:bg-surface-1 border border-transparent'
+                                                }`}
+                                        >
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
+                                                {v.nome}
+                                            </span>
+                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Comparar com uma 2ª versão */}
+                                <div className="p-2 border-t border-slate-200 dark:border-border-subtle">
+                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1 flex items-center gap-1">
+                                        <Columns2 className="w-3 h-3" /> Comparar com (2ª versão)
+                                    </p>
+                                </div>
+                                <div className="max-h-40 overflow-y-auto p-1.5">
+                                    <button
+                                        onClick={() => trocarVersaoComparada(null)}
+                                        className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${!versaoComparada
+                                            ? 'bg-amber-500/20 border border-amber-500/30'
+                                            : 'hover:bg-surface-1 border border-transparent'
+                                            }`}
+                                    >
+                                        <span className={`text-sm font-bold ${!versaoComparada ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
+                                            Desativada
+                                        </span>
+                                        <span className="text-xs text-text-muted truncate">Mostrar só uma versão</span>
+                                    </button>
+                                    {VERSOES_BIBLIA.filter(v => v.codigo !== versaoBiblia.codigo).map(v => (
+                                        <button
+                                            key={v.codigo}
+                                            onClick={() => trocarVersaoComparada(v)}
+                                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${versaoComparada?.codigo === v.codigo
+                                                ? 'bg-amber-500/20 border border-amber-500/30'
+                                                : 'hover:bg-surface-1 border border-transparent'
+                                                }`}
+                                        >
+                                            <span className={`text-sm font-bold min-w-[40px] ${versaoComparada?.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
+                                                {v.nome}
+                                            </span>
+                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Barra de busca expansível */}
                 {buscaAberta && (
-                    <div className="px-4 pb-3 animate-in slide-in-from-top duration-200">
+                    <div className="mx-auto max-w-4xl px-3 pb-3">
                         <div className="flex gap-2">
                             <div className="flex-1 relative">
                                 <input
@@ -2031,7 +2230,7 @@ function BibliotecaPage() {
                                     onChange={e => setTermoBusca(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && handleBuscar()}
                                     placeholder="Buscar texto ou referência (ex: João 3:16)..."
-                                    className="w-full bg-surface-2 border border-border-subtle rounded-xl px-4 py-2.5 pr-8 text-text-primary placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
+                                    className="h-11 w-full rounded-full border border-transparent bg-surface-2 px-4 pr-9 text-sm text-text-primary placeholder-slate-500 focus:border-amber-500/60 focus:outline-none"
                                     autoFocus
                                 />
                                 {termoBusca && (
@@ -2040,7 +2239,7 @@ function BibliotecaPage() {
                                     </button>
                                 )}
                             </div>
-                            <button onClick={handleBuscar} disabled={buscaLoading} className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
+                            <button onClick={handleBuscar} disabled={buscaLoading} className="h-11 rounded-full bg-campo px-5 text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90 disabled:opacity-50">
                                 {buscaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
                             </button>
                         </div>
@@ -2125,185 +2324,21 @@ function BibliotecaPage() {
                         )}
                     </div>
                 )}
-            </header>
-
-            {/* Barra de Navegação (dentro do topo fixo) */}
-            <div className="bg-white/80 dark:bg-surface-0/80 backdrop-blur-xl border-b border-slate-200 dark:border-border-subtle">
-                <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-                    <button onClick={abrirModal} aria-label="Escolher livro e capítulo" aria-haspopup="dialog" aria-expanded={modalAberto} className="flex-1 min-w-0 glass-panel px-3 py-2.5 rounded-xl flex items-center justify-between hover:bg-surface-2 transition-colors group">
-                        <div className="text-left min-w-0">
-                            <div className="text-[11px] text-text-muted font-medium">Livros e capítulos</div>
-                            <div className="text-text-primary font-bold text-sm flex items-center gap-1 truncate">
-                                {livroAtual.nome} {capituloAtual}
-                                <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-                            </div>
-                        </div>
-                    </button>
-
-                    {/* Seletor de Versão */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setMostrarVersoes(!mostrarVersoes)}
-                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-surface-2 transition-colors flex items-center gap-1.5"
-                            title="Versão da Bíblia"
-                        >
-                            <Languages className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                {versaoBiblia.nome}{versaoComparada ? ` + ${versaoComparada.nome}` : ''}
-                            </span>
-                            <ChevronDown className="w-3 h-3 text-text-muted" />
-                        </button>
-
-                        {mostrarVersoes && (
-                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-white/98 dark:bg-surface-2/98 border border-slate-200 dark:border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                                <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
-                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Versão da Bíblia</p>
-                                </div>
-                                <div className="max-h-52 overflow-y-auto p-1.5">
-                                    {VERSOES_BIBLIA.map(v => (
-                                        <button
-                                            key={v.codigo}
-                                            onClick={() => trocarVersao(v)}
-                                            className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${versaoBiblia.codigo === v.codigo
-                                                ? 'bg-amber-500/20 border border-amber-500/30'
-                                                : 'hover:bg-surface-1 border border-transparent'
-                                                }`}
-                                        >
-                                            <span className={`text-sm font-bold min-w-[40px] ${versaoBiblia.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
-                                                {v.nome}
-                                            </span>
-                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Comparar com uma 2ª versão */}
-                                <div className="p-2 border-t border-slate-200 dark:border-border-subtle">
-                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1 flex items-center gap-1">
-                                        <Columns2 className="w-3 h-3" /> Comparar com (2ª versão)
-                                    </p>
-                                </div>
-                                <div className="max-h-40 overflow-y-auto p-1.5">
-                                    <button
-                                        onClick={() => trocarVersaoComparada(null)}
-                                        className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${!versaoComparada
-                                            ? 'bg-amber-500/20 border border-amber-500/30'
-                                            : 'hover:bg-surface-1 border border-transparent'
-                                            }`}
-                                    >
-                                        <span className={`text-sm font-bold ${!versaoComparada ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
-                                            Desativada
-                                        </span>
-                                        <span className="text-xs text-text-muted truncate">Mostrar só uma versão</span>
-                                    </button>
-                                    {VERSOES_BIBLIA.filter(v => v.codigo !== versaoBiblia.codigo).map(v => (
-                                        <button
-                                            key={v.codigo}
-                                            onClick={() => trocarVersaoComparada(v)}
-                                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center gap-3 ${versaoComparada?.codigo === v.codigo
-                                                ? 'bg-amber-500/20 border border-amber-500/30'
-                                                : 'hover:bg-surface-1 border border-transparent'
-                                                }`}
-                                        >
-                                            <span className={`text-sm font-bold min-w-[40px] ${versaoComparada?.codigo === v.codigo ? 'text-amber-600 dark:text-amber-400' : 'text-text-primary'}`}>
-                                                {v.nome}
-                                            </span>
-                                            <span className="text-xs text-text-muted truncate">{v.nomeCompleto}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Controle de Fonte */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setMostrarFontes(!mostrarFontes)}
-                            className="glass-panel px-3 py-2.5 rounded-xl hover:bg-surface-2 transition-colors flex items-center gap-1"
-                            title="Tamanho da fonte"
-                        >
-                            <span className="text-[11px] font-bold text-text-primary leading-none">A</span>
-                            <span className="text-[15px] font-bold text-amber-600 dark:text-amber-400 leading-none">A</span>
-                        </button>
-
-                        {mostrarFontes && (
-                            <div className="absolute top-full right-0 mt-1.5 w-72 bg-white/98 dark:bg-surface-2/98 border border-slate-200 dark:border-border-subtle rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-                                <div className="p-2 border-b border-slate-200 dark:border-border-subtle">
-                                    <p className="text-[10px] text-text-muted uppercase tracking-wider px-2 py-1">Tamanho do texto</p>
-                                </div>
-                                <div className="flex items-end justify-between gap-1 p-3">
-                                    {FONT_SIZES.map((f, idx) => (
-                                        <button
-                                            key={f.label}
-                                            onClick={() => {
-                                                setFontSizeIndex(idx);
-                                                localStorage.setItem('biblia-font-size', String(idx));
-                                            }}
-                                            className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border transition-all active:scale-95 ${fontSizeIndex === idx
-                                                ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 dark:text-amber-400'
-                                                : 'border-transparent hover:bg-surface-1 text-text-secondary'
-                                                }`}
-                                            title={`Fonte ${f.label}`}
-                                        >
-                                            <span className="font-bold leading-none" style={{ fontSize: `${14 + idx * 4}px` }}>A</span>
-                                            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">{f.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="px-3 pb-3 pt-1 border-t border-slate-200 dark:border-border-subtle space-y-2.5">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-xs font-semibold text-text-secondary">Espaçamento</span>
-                                        <div className="flex items-center gap-1.5" role="group" aria-label="Espaçamento da leitura" data-storage-key={BIBLIA_READING_LINE_HEIGHT_KEY}>
-                                            <button
-                                                type="button"
-                                                onClick={() => alterarEspacamento(-BIBLIA_READING_LINE_HEIGHT_STEP)}
-                                                disabled={readingLineHeight <= MIN_BIBLIA_READING_LINE_HEIGHT}
-                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
-                                                title="Diminuir espaçamento"
-                                                aria-label="Diminuir espaçamento"
-                                            >−</button>
-                                            <span className="text-xs text-text-secondary w-9 text-center tabular-nums">{readingLineHeight.toFixed(2)}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => alterarEspacamento(BIBLIA_READING_LINE_HEIGHT_STEP)}
-                                                disabled={readingLineHeight >= MAX_BIBLIA_READING_LINE_HEIGHT}
-                                                className="w-8 h-8 rounded-lg hover:bg-surface-2 text-text-secondary hover:text-text-primary disabled:opacity-40 text-lg font-bold leading-none"
-                                                title="Aumentar espaçamento"
-                                                aria-label="Aumentar espaçamento"
-                                            >+</button>
-                                        </div>
-                                    </div>
-                                    <BibliaReadingAlignControls value={readingAlign} onChange={definirAlinhamento} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                        <button onClick={irParaAnterior} disabled={!anteriorDestino} title={anteriorDestino ? `${anteriorDestino.livro.nome} ${anteriorDestino.cap}` : undefined} aria-label="Capítulo anterior" className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
-                            <ChevronLeft className="w-5 h-5 text-text-primary" />
-                        </button>
-                        <button onClick={irParaProximo} disabled={!proximoDestino} title={proximoDestino ? `${proximoDestino.livro.nome} ${proximoDestino.cap}` : undefined} aria-label="Próximo capítulo" className="p-2.5 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors">
-                            <ChevronRight className="w-5 h-5 text-text-primary" />
-                        </button>
-                    </div>
-                </div>
                 {/* Progresso do capítulo */}
                 <div className="h-0.5 w-full" aria-hidden="true">
                     <div className="h-full origin-left bg-amber-500/80 transition-transform duration-150" style={{ transform: `scaleX(${progresso})` }} />
                 </div>
-            </div>
+            </header>
             </div>
 
             {/* Backdrop para fechar dropdowns (versões / fontes) */}
-            {(mostrarVersoes || mostrarFontes) && (
-                <div className="fixed inset-0 z-30" onClick={() => { setMostrarVersoes(false); setMostrarFontes(false); }} />
+            {(mostrarVersoes || mostrarFontes || menuAberto) && (
+                <div className="fixed inset-0 z-30" onClick={() => { setMostrarVersoes(false); setMostrarFontes(false); setMenuAberto(false); }} />
             )}
 
             {/* --- MODAL DE SELEÇÃO --- */}
             {modalAberto && (
-                <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center sm:p-4 bg-black/50 dark:bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center sm:p-4 bg-black/50 dark:bg-background/90 animate-in fade-in duration-200">
                     <div
                         className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden sm:border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -2441,7 +2476,7 @@ function BibliotecaPage() {
                                                 >
                                                     {/* Divisor AT / NT */}
                                                     {(ehInicioAT || ehInicioNT) && (
-                                                        <div className="sticky top-[64px] z-20 bg-white/95 dark:bg-surface-1/95 backdrop-blur-md -mx-4 px-4 py-3 mb-3 border-b border-slate-200 dark:border-border-subtle">
+                                                        <div className="sticky top-[64px] z-20 bg-white/95 dark:bg-surface-1/95 -mx-4 px-4 py-3 mb-3 border-b border-slate-200 dark:border-border-subtle">
                                                             <div className="flex items-baseline gap-2.5">
                                                                 <span className="text-sm font-black uppercase tracking-[0.15em] text-slate-900 dark:text-text-primary">
                                                                     {ehInicioAT ? 'Antigo Testamento' : 'Novo Testamento'}
@@ -2516,7 +2551,7 @@ function BibliotecaPage() {
                                         return (
                                             <button key={cap} onClick={() => selecionarCapituloTemp(cap)}
                                                 className={`aspect-square flex items-center justify-center rounded-xl text-lg font-bold tabular-nums transition-all border active:scale-[0.95] ${isAtual
-                                                    ? 'bg-amber-500 text-amber-950 border-amber-400 shadow-md'
+                                                    ? 'bg-campo text-campo-texto border-transparent'
                                                     : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 text-slate-800 dark:text-text-primary hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 dark:hover:border-amber-500/40'
                                                     }`}>
                                                 {cap}
@@ -2528,7 +2563,7 @@ function BibliotecaPage() {
                             {faseSelecao === 'versiculos' && (
                                 <div className="p-4">
                                     {/* Botão abrir capítulo inteiro */}
-                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-xl bg-amber-500 text-amber-950 font-bold text-sm hover:bg-amber-400 transition-colors shadow-md active:scale-[0.98]">
+                                    <button onClick={() => confirmarSelecao()} className="w-full mb-4 py-3.5 px-4 rounded-full bg-campo text-campo-texto font-semibold text-sm hover:opacity-90 transition-colors shadow-md active:scale-[0.98]">
                                         Abrir capítulo inteiro
                                     </button>
 
@@ -2557,7 +2592,7 @@ function BibliotecaPage() {
 
             {/* --- MODAL DE ESTUDO IA --- */}
             {estudoAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-background/80 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface-1 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-slate-50 dark:bg-surface-2/50">
                             <div className="flex items-center gap-2">
@@ -2592,7 +2627,7 @@ function BibliotecaPage() {
             {painelAberto && (
                 // Salvos é uma aba: o painel termina acima da barra inferior,
                 // que continua visível (altura informada pela navegação).
-                <div className="fixed inset-x-0 top-0 bottom-[var(--altura-nav-inferior,0px)] z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-x-0 top-0 bottom-[var(--altura-nav-inferior,0px)] z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 animate-in fade-in duration-200">
                     <div
                         className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-2xl h-full sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl"
                         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -2823,7 +2858,7 @@ function BibliotecaPage() {
                                                         <button
                                                             onClick={() => salvarNotaPainel(item)}
                                                             disabled={!painelNotaTexto.trim()}
-                                                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 disabled:opacity-40 transition-colors"
+                                                            className="px-3 py-1.5 text-xs rounded-lg bg-campo text-campo-texto font-semibold hover:opacity-90 disabled:opacity-40 transition-colors"
                                                         >
                                                             Salvar
                                                         </button>
@@ -2845,7 +2880,7 @@ function BibliotecaPage() {
 
             {/* --- NOTA FULLSCREEN --- */}
             {notaFullscreen && notaFullscreenVerso && (
-                <div className="fixed inset-0 z-[120] flex flex-col bg-white dark:bg-surface-0/95 backdrop-blur-xl animate-in fade-in duration-200" style={{ height: '100dvh' }}>
+                <div className="fixed inset-0 z-[120] flex flex-col bg-white dark:bg-surface-0/95 animate-in fade-in duration-200" style={{ height: '100dvh' }}>
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2 shrink-0">
                         <button onClick={() => { setNotaFullscreen(false); setNotaFullscreenVerso(null); }} className="flex items-center gap-1.5 text-text-muted hover:text-text-primary text-sm font-medium">
@@ -2862,7 +2897,7 @@ function BibliotecaPage() {
                             <button
                                 onClick={salvarNotaFullscreen}
                                 disabled={!textoNota.trim()}
-                                className="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-amber-950 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="px-3 py-2 rounded-full bg-campo text-campo-texto hover:opacity-90 text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                 title="Salvar anotação"
                             >
                                 Salvar
@@ -2901,11 +2936,11 @@ function BibliotecaPage() {
                     </div>
 
                     {/* Barra fixa inferior com botão SALVAR sempre visível */}
-                    <div className="hidden sm:block shrink-0 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95 backdrop-blur-xl">
+                    <div className="hidden sm:block shrink-0 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] border-t border-slate-200 dark:border-border-subtle bg-white/95 dark:bg-surface-1/95">
                         <button
                             onClick={salvarNotaFullscreen}
                             disabled={!textoNota.trim()}
-                            className="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-extrabold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
+                            className="w-full py-4 rounded-full bg-campo text-campo-texto hover:opacity-90 font-semibold text-base transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
                         >
                             {textoNota.trim() ? 'Salvar Anotação' : 'Digite sua anotação para salvar'}
                         </button>
@@ -2916,7 +2951,7 @@ function BibliotecaPage() {
             {/* --- BARRA FLUTUANTE MULTI-SELEÇÃO --- */}
             {modoMultiSelecao && (
                 <div className="fixed left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] md:left-1/2 md:right-auto md:bottom-4 md:-translate-x-1/2 z-[80] animate-in slide-in-from-bottom-4 duration-200">
-                    <div className="bg-white/98 dark:bg-surface-1/98 border border-amber-400/40 dark:border-amber-500/30 rounded-2xl p-2 shadow-2xl backdrop-blur-xl overflow-x-auto">
+                    <div className="bg-white/98 dark:bg-surface-1/98 border border-amber-400/40 dark:border-amber-500/30 rounded-2xl p-2 shadow-2xl overflow-x-auto">
                         <div className="flex items-center gap-1.5 min-w-max">
                             {/* Contador */}
                             <div className="px-3 py-2 text-amber-600 dark:text-amber-400 font-bold text-sm min-w-[60px] text-center">
@@ -2987,26 +3022,35 @@ function BibliotecaPage() {
 
             {/* Conteúdo Principal */}
             <main className="w-full max-w-4xl mx-auto px-4 py-6">
-                {/* Etiqueta de capítulo via portal — aparece ao rolar (quando o cabeçalho sai da tela) */}
-                {montado && !cabecalhoVisivel && barraEscondida && versiculos.length > 0 && createPortal(
-                    <div className="fixed top-[max(0.5rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[60] pointer-events-none animate-in fade-in slide-in-from-top-1 duration-200">
-                        <span className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full overflow-hidden bg-surface-1/90 backdrop-blur-md border border-amber-500/30 text-[11px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 shadow-lg">
-                            <Book className="w-3 h-3" />
-                            {livroAtual.nome} {capituloAtual}
-                            <span className="absolute left-0 bottom-0 h-[2px] w-full origin-left bg-amber-500/70" style={{ transform: `scaleX(${progresso})` }} aria-hidden="true" />
-                        </span>
-                    </div>,
-                    document.body
+                {/* Tira do capítulo — aparece ao rolar, quando a barra e o título saem
+                    da tela. Era um selo flutuante transparente que cobria a primeira
+                    linha do texto; agora é uma tira lisa por cima da qual nada vaza. */}
+                {montado && !cabecalhoVisivel && barraEscondida && versiculos.length > 0 && (
+                    <TiraDeLeitura titulo={`${livroAtual.nome} ${capituloAtual}`} progresso={progresso} onTocar={() => setBarraVisivel(true)} />
                 )}
-                <h1 ref={cabecalhoRef} className="reading-serif text-3xl md:text-4xl font-semibold text-text-primary mb-3 text-center tracking-tight">
-                    {livroAtual.nome} <span className="text-amber-600 dark:text-amber-400">{capituloAtual}</span>
-                    <span className="ml-2 font-sans text-xs font-medium text-text-muted bg-surface-2 px-2 py-0.5 rounded-full align-middle">
-                        {versaoBiblia.nome}{versaoComparada ? ` + ${versaoComparada.nome}` : ''}
-                    </span>
-                </h1>
 
-                {/* Narração do capítulo (Azure; voz do aparelho sem internet) */}
-                <div className="flex flex-col items-center mb-6">
+                {/* Abertura do capítulo, como numa Bíblia impressa: o nome grande e
+                    centralizado, a versão (toque para trocar), o tamanho do
+                    capítulo e o botão de ouvir. */}
+                <div className="mb-8 mt-3">
+                    <h1 ref={cabecalhoRef} className="reading-serif text-[2.25rem] md:text-[2.75rem] font-medium leading-[1.08] text-text-primary text-center tracking-tight">
+                        {livroAtual.nome} {capituloAtual}
+                    </h1>
+                    <p className="flex flex-wrap items-center justify-center gap-x-1 text-sm text-text-muted">
+                        <button
+                            type="button"
+                            onClick={() => { setBarraVisivel(true); setMenuAberto(false); setMostrarFontes(false); setMostrarVersoes(true); }}
+                            aria-label={`Versão ${versaoBiblia.nomeCompleto}. Trocar a versão`}
+                            className="inline-flex h-11 items-center gap-0.5 rounded-full px-2 font-semibold transition-colors hover:bg-surface-2"
+                        >
+                            <span className="text-amber-700 dark:text-amber-400">{versaoBiblia.nome}{versaoComparada ? ` + ${versaoComparada.nome}` : ''}</span>
+                            <ChevronDown className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
+                        </button>
+                        {resumoCapitulo && <span data-resumo-capitulo>· {resumoCapitulo}</span>}
+                        {!isOnline && <span className="ml-1 inline-flex items-center gap-1"><WifiOff className="h-3.5 w-3.5" aria-hidden="true" /> sem internet</span>}
+                    </p>
+
+                    {/* Narração do capítulo (Azure; voz do aparelho sem internet) */}
                     <BibleAudioPlayer
                         key={`${livroAtual.abrev}-${capituloAtual}`}
                         versiculos={versiculos}
@@ -3014,7 +3058,7 @@ function BibliotecaPage() {
                         livroId={LIVRO_PARA_ID[livroAtual.abrev] || 1}
                         livroNome={livroAtual.nome}
                         onVerseChange={(verse) => setAudioVerse(verse)}
-                        className="w-full max-w-md"
+                        className="mt-1 flex flex-col items-center"
                     />
                 </div>
 
@@ -3035,7 +3079,7 @@ function BibliotecaPage() {
                 )}
 
                 {error && !loading && (
-                    <div className="glass-panel rounded-xl p-8 text-center max-w-md mx-auto border border-orange-500/30 bg-orange-500/10">
+                    <div className="cartao mx-auto max-w-md p-8 text-center">
                         <WifiOff className="w-12 h-12 text-orange-400 mx-auto mb-4" />
                         <p className="text-orange-700 dark:text-orange-200 font-bold text-lg mb-2">
                             {!isOnline ? 'Este capítulo não está baixado' : 'Sem conexão'}
@@ -3046,11 +3090,11 @@ function BibliotecaPage() {
                                 : error}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                            <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold">
+                            <button onClick={() => buscarCapitulo(livroAtual.abrev, capituloAtual)} className="h-12 rounded-full bg-campo px-6 font-semibold text-campo-texto transition-opacity hover:opacity-90">
                                 Tentar Novamente
                             </button>
                             {!isOnline && (
-                                <button onClick={() => setOfflineManagerAberto(true)} className="px-6 py-3 rounded-xl bg-surface-2 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold flex items-center justify-center gap-2">
+                                <button onClick={() => setOfflineManagerAberto(true)} className="flex h-12 items-center justify-center gap-2 rounded-full bg-surface-2 px-6 font-semibold text-text-primary">
                                     <Download className="w-4 h-4" /> Baixar Bíblia
                                 </button>
                             )}
@@ -3060,13 +3104,13 @@ function BibliotecaPage() {
 
                 {!loading && !error && versiculos.length > 0 && (
                     <div className="relative overflow-visible" ref={versiculosRef}>
-                        <div className={`space-y-1 ${fontConfig.value} text-text-primary reading-serif relative`} style={bibliaReadingBodyStyle(readingAlign, readingLineHeight)}>
+                        <div className={`space-y-1 ${fontConfig.value} text-text-primary reading-serif relative ${semNumeros ? 'sem-numeros' : ''}`} style={bibliaReadingBodyStyle(readingAlign, readingLineHeight)}>
                             {versiculos.map(v => (
                                 <div key={v.verse}>
                                     {/* Título de seção */}
                                     {getTituloSecao(v.verse) && (
-                                        <div className="pt-6 pb-3 first:pt-0">
-                                            <h2 className={`${fontConfig.titulo} font-semibold text-amber-700 dark:text-amber-400/90 tracking-tight border-b border-amber-300/60 dark:border-amber-500/20 pb-2`}>
+                                        <div className="pt-7 pb-2 first:pt-0">
+                                            <h2 className={`${fontConfig.titulo} font-semibold leading-snug tracking-tight text-text-primary`}>
                                                 {getTituloSecao(v.verse)}
                                             </h2>
                                         </div>
@@ -3076,9 +3120,9 @@ function BibliotecaPage() {
                                         onClick={(e) => handleVersiculoClick(v.verse, e)}
                                         className={`relative pl-3 rounded-lg p-2 -ml-3 transition-all cursor-pointer select-none
                                             ${getCorClasse(v.verse)}
-                                            ${audioVerse === v.verse ? 'bg-amber-500/15 ring-1 ring-amber-400/60' : ''}
-                                            ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-amber-500/15 ring-1 ring-amber-500/40' : ''}
-                                            ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-surface-2 ring-1 ring-amber-500/30' : ''}
+                                            ${audioVerse === v.verse ? 'bg-amber-500/15' : ''}
+                                            ${modoMultiSelecao && versiculosSelecionados.has(v.verse) ? 'bg-amber-500/15' : ''}
+                                            ${!modoMultiSelecao && versiculoSelecionado === v.verse ? 'bg-surface-2' : ''}
                                             ${!modoMultiSelecao && versiculoSelecionado !== v.verse ? 'hover:bg-surface-1' : ''}
                                             ${modoMultiSelecao && !versiculosSelecionados.has(v.verse) ? 'hover:bg-surface-1' : ''}
                                         `}
@@ -3112,43 +3156,45 @@ function BibliotecaPage() {
                                             </p>
                                         )}
 
-                                        {/* MINI-TOOLBAR */}
+                                        {/* MINI-TOOLBAR — 14/11/2026: pílula invertida (papel sobre o
+                                            preto, tinta sobre o papel), lisa, com 7 botões de 44 px.
+                                            Compartilhar abre a janela com o versículo em imagem. */}
                                         {versiculoSelecionado === v.verse && (
-                                            <div ref={toolbarRef} className={`absolute ${toolbarAbaixo ? 'top-full mt-2' : '-top-16'} left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150`} onClick={e => e.stopPropagation()}>
-                                                <div className="flex items-center gap-1 bg-white/95 dark:bg-surface-2/95 border border-slate-200 dark:border-border-subtle rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                                            <div ref={toolbarRef} className={`absolute ${toolbarAbaixo ? 'top-full mt-2' : '-top-16'} left-1/2 -translate-x-1/2 z-30 animate-[fadeIn_0.12s_ease-out]`} onClick={e => e.stopPropagation()}>
+                                                <div className="flex items-center rounded-full bg-campo p-1 font-sans text-campo-texto shadow-xl">
                                                     {/* Cores */}
-                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Destacar">
+                                                    <button onClick={() => setMostrarCores(!mostrarCores)} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Destacar" aria-label="Destacar com cor">
                                                         <Palette className="w-5 h-5" />
                                                     </button>
                                                     {/* Favoritar */}
-                                                    <button onClick={handleFavoritar} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${isFavorito(v.verse) ? 'text-red-400' : 'text-text-secondary hover:text-red-400'}`} title="Favoritar">
-                                                        <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-red-400' : ''}`} />
+                                                    <button onClick={handleFavoritar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Favoritar" aria-label={isFavorito(v.verse) ? 'Tirar dos favoritos' : 'Favoritar'} aria-pressed={isFavorito(v.verse)}>
+                                                        <Heart className={`w-5 h-5 ${isFavorito(v.verse) ? 'fill-[var(--campo-marca)] text-[var(--campo-marca)]' : ''}`} />
                                                     </button>
                                                     {/* Copiar */}
-                                                    <button onClick={handleCopiar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Copiar">
+                                                    <button onClick={handleCopiar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Copiar" aria-label="Copiar o versículo">
                                                         <Copy className="w-5 h-5" />
                                                     </button>
-                                                    {/* Compartilhar */}
-                                                    <button onClick={handleCompartilhar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Compartilhar">
+                                                    {/* Compartilhar (imagem ou texto) */}
+                                                    <button onClick={handleCompartilhar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Compartilhar" aria-label="Compartilhar o versículo">
                                                         <Share2 className="w-5 h-5" />
                                                     </button>
                                                     {/* Estudar */}
-                                                    <button onClick={handleEstudar} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Estudar">
+                                                    <button onClick={handleEstudar} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Estudar" aria-label="Estudar o versículo">
                                                         <Lightbulb className="w-5 h-5" />
                                                     </button>
                                                     {/* Nota (abre fullscreen) */}
-                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`p-3 rounded-xl hover:bg-surface-1 transition-colors ${temNota(v.verse) ? 'text-amber-500' : 'text-text-secondary hover:text-amber-600 dark:hover:text-amber-400'}`} title="Nota">
+                                                    <button onClick={() => abrirNotaFullscreen(v.verse)} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque ${temNota(v.verse) ? 'bg-campo-toque' : ''}`} title="Nota" aria-label={temNota(v.verse) ? 'Abrir a nota' : 'Escrever uma nota'}>
                                                         <StickyNote className="w-5 h-5" />
                                                     </button>
                                                     {/* Multi-seleção */}
-                                                    <button onClick={toggleMultiSelecao} className="p-3 rounded-xl hover:bg-surface-1 text-text-secondary hover:text-amber-600 dark:hover:text-amber-400 transition-colors" title="Selecionar vários">
+                                                    <button onClick={toggleMultiSelecao} className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-campo-toque" title="Selecionar vários" aria-label="Selecionar vários versículos">
                                                         <CheckSquare className="w-5 h-5" />
                                                     </button>
                                                 </div>
 
                                                 {/* Seletor de cores expandido */}
                                                 {mostrarCores && (
-                                                    <div className="mt-1.5 flex items-center gap-1.5 bg-white/95 dark:bg-surface-2/95 border border-slate-200 dark:border-border-subtle rounded-2xl p-2 justify-center animate-in fade-in duration-100 shadow-lg dark:shadow-none">
+                                                    <div className="mt-1.5 flex items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-surface-1 p-2 shadow-lg dark:border-transparent dark:bg-surface-2">
                                                         {CORES_DESTAQUE.map(cor => (
                                                             <button key={cor.id} onClick={() => handleDestacar(cor.id)}
                                                                 className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${cor.bg} ${cor.border} ${interacoesMap.destaques[v.verse]?.cor === cor.id ? 'ring-2 ring-slate-700 dark:ring-white scale-110' : ''}`}
@@ -3172,26 +3218,31 @@ function BibliotecaPage() {
                     </div>
                 )}
 
-                {/* Navegação Inferior — leitura contínua entre livros */}
-                <div className="flex justify-between items-center mt-8 gap-4">
-                    <button onClick={irParaAnterior} disabled={!anteriorDestino} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group max-w-[48%]">
-                        <ChevronLeft className="w-5 h-5 shrink-0 group-hover:-translate-x-1 transition-transform text-text-primary" />
-                        <span className="font-medium text-sm text-text-primary truncate">
-                            {anteriorDestino ? `${anteriorDestino.livro.nome} ${anteriorDestino.cap}` : 'Anterior'}
-                        </span>
-                    </button>
-                    <button onClick={irParaProximo} disabled={!proximoDestino} className="flex items-center gap-2 px-5 py-3 glass-panel rounded-xl disabled:opacity-30 hover:bg-surface-2 transition-colors group max-w-[48%]">
-                        <span className="font-medium text-sm text-text-primary truncate">
-                            {proximoDestino ? `${proximoDestino.livro.nome} ${proximoDestino.cap}` : 'Próximo'}
-                        </span>
-                        <ChevronRight className="w-5 h-5 shrink-0 group-hover:translate-x-1 transition-transform text-text-primary" />
-                    </button>
-                </div>
+                {/* Fim do capítulo — leitura contínua entre livros. 14/11/2026: o
+                    próximo capítulo é o bloco de destaque (o gesto natural de quem
+                    terminou de ler); o anterior fica discreto, embaixo. */}
+                <nav aria-label="Capítulos vizinhos" className="mt-12 flex flex-col items-start gap-2">
+                    {proximoDestino && (
+                        <button onClick={irParaProximo} className="campo flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-transform duration-200 active:scale-[0.98]">
+                            <span className="min-w-0">
+                                <span className="block text-sm font-semibold leading-5 text-campo-suave">A seguir</span>
+                                <span className="reading-serif block truncate text-[1.375rem] font-medium leading-tight">{proximoDestino.livro.nome} {proximoDestino.cap}</span>
+                            </span>
+                            <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        </button>
+                    )}
+                    {anteriorDestino && (
+                        <button onClick={irParaAnterior} className="-ml-2 inline-flex h-11 max-w-full items-center gap-1 rounded-full pl-2 pr-4 text-sm font-semibold text-text-secondary transition-colors hover:bg-surface-2 hover:text-text-primary">
+                            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="truncate">{anteriorDestino.livro.nome} {anteriorDestino.cap}</span>
+                        </button>
+                    )}
+                </nav>
             </main>
 
             {/* --- PAINEL DE BOOKMARKS --- */}
             {bookmarksAberto && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 dark:bg-black/80 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-surface-1 sm:rounded-2xl w-full sm:max-w-lg h-[70dvh] sm:h-auto sm:max-h-[75vh] flex flex-col overflow-hidden border border-slate-200 dark:border-border-subtle shadow-2xl">
                         {/* Header */}
                         <div className="p-4 border-b border-slate-200 dark:border-border-subtle flex items-center justify-between bg-amber-50/50 dark:bg-surface-2">
@@ -3230,7 +3281,7 @@ function BibliotecaPage() {
                                     />
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => { setCriandoBookmark(false); setNovoBookmarkNome(''); }} className="px-3 py-1.5 text-xs rounded-lg text-slate-500 dark:text-text-muted hover:bg-slate-100 dark:hover:bg-surface-2 font-medium">Cancelar</button>
-                                        <button onClick={salvarBookmark} className="px-3 py-1.5 text-xs rounded-lg bg-amber-500 text-amber-950 font-bold hover:bg-amber-400 transition-colors">Salvar</button>
+                                        <button onClick={salvarBookmark} className="px-3 py-1.5 text-xs rounded-lg bg-campo text-campo-texto font-semibold hover:opacity-90 transition-colors">Salvar</button>
                                     </div>
                                 </div>
                             ) : (
@@ -3285,6 +3336,18 @@ function BibliotecaPage() {
                 <OfflineManager
                     versoes={VERSOES_BIBLIA}
                     onClose={() => setOfflineManagerAberto(false)}
+                />
+            )}
+
+            {/* --- COMPARTILHAR VERSÍCULO (imagem ou texto) --- */}
+            {compartilhando && (
+                <CompartilharVersiculo
+                    texto={compartilhando.texto}
+                    referencia={compartilhando.referencia}
+                    versao={versaoBiblia.nome}
+                    onFechar={() => setCompartilhando(null)}
+                    onCompartilharTexto={() => compartilharTexto(compartilhando.texto, compartilhando.referencia)}
+                    onAviso={success}
                 />
             )}
 

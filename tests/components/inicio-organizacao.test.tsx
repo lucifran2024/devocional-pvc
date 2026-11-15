@@ -145,61 +145,21 @@ describe('organização do início', () => {
         expect(biblia).toHaveAttribute('href', '/biblioteca');
     });
 
-    it('ferramentas em lista, sem ícone dentro de quadradinho colorido', () => {
+    // 14/11/2026 (2ª rodada, antes de publicar): «melhorar essa lista de estudar
+    // e transcrever ou tirar elas da página inicial e deixar só no Mais». As
+    // listas saíram: o início é só o dia (Hoje, Palavra, Versículo). As
+    // ferramentas ficam no Mais e na barra, a um toque de qualquer tela
+    // (tests/components/navegacao-mais.test.tsx confere que estão todas lá).
+    it('sem listas de ferramentas no início: Estudar e Transcrever ficam no Mais', () => {
         const { container } = render(<DashboardPage />);
-        expect(container.querySelectorAll('[class*="bg-amber-500/10"]')).toHaveLength(0);
-    });
-
-    it('ferramentas de estudo num grupo próprio, cada cartão é o botão', () => {
-        render(<DashboardPage />);
-        const estudar = screen.getByRole('region', { name: 'Estudar' });
-        const esperado: Array<[RegExp, string]> = [
-            [/Plano de Leitura/, '/planos'],
-            [/Bíblia Sagrada/, '/biblioteca'],
-            [/Caderno/, '/anotacoes'],
-            [/Diário de Oração/, '/oracao'],
-        ];
-        for (const [nome, href] of esperado) {
-            expect(within(estudar).getByRole('link', { name: nome })).toHaveAttribute('href', href);
+        expect(screen.queryByRole('region', { name: 'Estudar' })).toBeNull();
+        expect(screen.queryByRole('region', { name: 'Transcrever' })).toBeNull();
+        expect(container.querySelectorAll('main ul')).toHaveLength(0);
+        for (const nome of [/Plano de Leitura/, /Caderno/, /Diário de Oração/, /YouTube/, /Áudio/]) {
+            expect(screen.queryByRole('link', { name: nome })).toBeNull();
         }
-        expect(within(estudar).getAllByRole('link')).toHaveLength(4);
-    });
-
-    // 5º ajuste (12/11/2026): "as listas ficaram legais, mas não excelentes".
-    // O nome de cada grupo segue o nome dos cartões (pequeno, âmbar, alinhado
-    // com o texto de dentro das caixas); a divisória começa no texto, não na
-    // borda; o ícone é âmbar (cinza parecia desligado).
-    it('listas: nome do grupo igual ao dos cartões e divisória a partir do texto', () => {
-        render(<DashboardPage />);
-        const estudar = screen.getByRole('region', { name: 'Estudar' });
-        const titulo = within(estudar).getByRole('heading', { level: 2, name: 'Estudar' });
-        expect(titulo.className).toContain('text-sm');
-        expect(titulo.className).not.toMatch(/reading-serif|text-xl/);
-        const lista = estudar.querySelector('ul');
-        expect(lista?.className).not.toMatch(/divide-y/);
-        const linhas = [...estudar.querySelectorAll('li')];
-        expect(linhas).toHaveLength(4);
-        const divisorias = linhas.map((li) => li.querySelector('[data-divisoria]')?.className ?? '');
-        expect(divisorias[0]).not.toMatch(/border-t/);
-        for (const d of divisorias.slice(1)) expect(d).toMatch(/border-t/);
-        for (const li of linhas) expect(li.querySelector('svg')?.getAttribute('class')).toMatch(/text-amber-700/);
-    });
-
-    it('transcrição num grupo próprio', () => {
-        render(<DashboardPage />);
-        const transcrever = screen.getByRole('region', { name: 'Transcrever' });
-        expect(within(transcrever).getByRole('link', { name: /YouTube/ })).toHaveAttribute('href', '/transcrever-youtube');
-        expect(within(transcrever).getByRole('link', { name: /Áudio/ })).toHaveAttribute('href', '/transcrever-culto');
-        expect(within(transcrever).getAllByRole('link')).toHaveLength(2);
-    });
-
-    it('cartões sem "Acessar" e sem etiqueta que repete o título', () => {
-        render(<DashboardPage />);
         expect(screen.queryByText(/Acessar/i)).toBeNull();
-        for (const etiqueta of ['Diário', '66 livros', 'Vídeo']) {
-            expect(screen.queryByText(etiqueta)).toBeNull();
-        }
-        expect(screen.getAllByText('Caderno')).toHaveLength(1);
+        expect(container.querySelectorAll('[class*="bg-amber-500/10"]')).toHaveLength(0);
     });
 
     it('sem botão de sair no início (fica no Mais e na barra lateral) e sem rodapé', () => {
@@ -247,19 +207,19 @@ describe('início: preto, papel e ouro', () => {
         expect(leitura.querySelector('.fita-marcadora')).toBeNull();
     });
 
-    it('ordem da tela: Hoje, Palavra, Versículo, Estudar, Transcrever', () => {
+    it('ordem da tela: Hoje, Palavra, Versículo — e a tela termina no Versículo', () => {
         render(<DashboardPage />);
         const main = screen.getByRole('main');
         const marcos = [
             screen.getByRole('region', { name: 'Hoje' }),
             screen.getByText('palavra'),
             screen.getByText('versiculo'),
-            screen.getByRole('region', { name: 'Estudar' }),
-            screen.getByRole('region', { name: 'Transcrever' }),
         ];
         for (const m of marcos) expect(main.contains(m)).toBe(true);
         for (let i = 1; i < marcos.length; i++) {
             expect(marcos[i - 1].compareDocumentPosition(marcos[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         }
+        // nada depois do Versículo: o último bloco do <main> é o dele
+        expect(main.lastElementChild?.contains(screen.getByText('versiculo'))).toBe(true);
     });
 });

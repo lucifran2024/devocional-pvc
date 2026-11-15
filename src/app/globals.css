@@ -226,16 +226,22 @@ body {
   color: var(--accent-light);
 }
 
-/* Palavra-chave destacada ao carregar a passagem */
+/* Palavra-chave destacada ao carregar a passagem: um traço de marca-texto
+   por baixo da palavra, em cor cheia (sem degradê, 14/11/2026) */
 .keyword-highlight {
-  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--color-amber-500) 30%, transparent) 62%);
+  box-shadow: inset 0 -0.38em 0 color-mix(in srgb, var(--color-amber-500) 30%, transparent);
   border-radius: 2px;
   padding: 0 1px;
   font-weight: 600;
 }
 .dark .keyword-highlight {
-  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--color-amber-500) 34%, transparent) 62%);
+  box-shadow: inset 0 -0.38em 0 color-mix(in srgb, var(--color-amber-500) 34%, transparent);
   color: var(--color-amber-100);
+}
+
+/* "Sem números" (14/11/2026): leitura corrida, sem o número dos versículos */
+.sem-numeros .verse-num {
+  display: none;
 }
 
 /* Premium Typography */
@@ -251,14 +257,18 @@ h6 {
 
 /* --- COMPONENT CLASSES --- */
 
-/* Glass Panel - Adaptive */
+/* Painel (era "vidro fosco"). 14/11/2026: as telas vizinhas do início falavam
+   outra língua (parecer independente). Agora é a mesma superfície do .cartao:
+   um degrau de tom, sem desfoque nem sombra; no escuro, sem borda. O nome da
+   classe ficou para não mexer em 23 lugares. */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
+}
+
+.dark .glass-panel {
+  border-color: transparent;
 }
 
 /* Glass Card - Adaptive */
@@ -287,48 +297,42 @@ h6 {
   background: var(--bg-surface-2);
 }
 
-/* Botão principal: cor sólida, sem degradê nem brilho (03/10/2026) */
+/* Botão principal (14/11/2026): o contrário da página, tinta sobre o papel
+   ou papel sobre o preto, em pílula. Era ouro cheio; o ouro agora é detalhe. */
 .btn-premium {
-  background: var(--color-amber-500);
-  color: var(--color-amber-950);
+  background: var(--campo);
+  color: var(--campo-texto);
   font-weight: 600;
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  border-radius: 999px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   padding: var(--space-3) var(--space-4);
 }
 
 .btn-premium:hover {
-  background: var(--color-amber-400);
+  opacity: 0.9;
 }
 
 .btn-premium:active {
-  transform: translateY(1px);
+  transform: scale(0.98);
 }
 
-/* Glass Button - Adaptive */
+/* Botão secundário: um degrau de tom, sem borda, em pílula */
 .btn-glass {
-  background: rgba(125, 125, 125, 0.1);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-2);
+  border: 1px solid transparent;
   color: var(--text-primary);
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   padding: var(--space-2) var(--space-4);
 }
 
-.dark .btn-glass {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--glass-border);
-}
-
 .btn-glass:hover {
-  background: rgba(125, 125, 125, 0.2);
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--border-strong) 50%, var(--bg-surface-2));
 }
 
-.dark .btn-glass:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+.btn-glass:active {
+  transform: scale(0.98);
 }
 
 /* Stellar Card - Adaptive */

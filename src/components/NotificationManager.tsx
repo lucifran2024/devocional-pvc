@@ -130,37 +130,38 @@ export function NotificationManager({ onPermissionChange }: NotificationManagerP
     if (!showBanner) return null;
 
     return (
-        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[60] animate-slide-up">
-            <div className="bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+        // 14/11/2026: cartão liso nas cores do app (era cinza-azulado translúcido,
+        // que deixava o texto de trás aparecer e, no tema claro, o título escuro
+        // sobre fundo escuro). Botões com 44 px de toque.
+        <div className="fixed bottom-[calc(var(--altura-nav-inferior,5.5rem)+0.75rem)] md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[60] animate-slide-up">
+            <div className="relative rounded-[22px] border border-border-subtle bg-surface-1 p-4 pr-12 shadow-xl dark:border-transparent dark:bg-surface-2">
                 <button
                     onClick={dismissBanner}
-                    className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded-full transition-colors"
+                    className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-2 hover:text-text-primary"
                     aria-label="Fechar"
                 >
-                    <X className="w-4 h-4 text-slate-400" />
+                    <X className="h-4 w-4" />
                 </button>
 
-                <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-amber-500/20">
-                        <Bell className="w-6 h-6 text-amber-400" />
-                    </div>
+                <div className="flex items-start gap-3">
+                    <Bell className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
 
-                    <div className="flex-1">
-                        <h3 className="text-white font-bold mb-1">Devocional Diário</h3>
-                        <p className="text-slate-400 text-sm mb-3">
-                            Receba lembretes para sua leitura bíblica diária.
+                    <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-semibold leading-snug text-text-primary">Lembrete da leitura</h3>
+                        <p className="mb-3 mt-0.5 text-sm leading-snug text-text-secondary">
+                            Receba um aviso por dia para a sua leitura bíblica.
                         </p>
 
                         <div className="flex gap-2">
                             <button
                                 onClick={requestPermission}
-                                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg transition-colors text-sm"
+                                className="inline-flex h-11 items-center rounded-full bg-campo px-5 text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90"
                             >
                                 Ativar
                             </button>
                             <button
                                 onClick={dismissBanner}
-                                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm"
+                                className="inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50 dark:bg-surface-0"
                             >
                                 Agora não
                             </button>
