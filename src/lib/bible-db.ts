@@ -1,6 +1,6 @@
 'use client';
 
-import { agruparPorCapitulo, enderecoDoPacote } from './biblia-pacote';
+import { agruparPorCapitulo, defeitoDoPacote, enderecoDoPacote } from './biblia-pacote';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 // ============================================
@@ -313,8 +313,11 @@ export async function baixarVersaoInteira(
 ): Promise<number> {
     const resp = await fetch(enderecoDoPacote(versao), { signal });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const capitulos = agruparPorCapitulo(await resp.json());
-    if (capitulos.length === 0) throw new Error('Pacote vazio');
+    const todos = agruparPorCapitulo(await resp.json());
+    // Só grava pacote completo: pedaço não substitui capítulo bom já guardado.
+    const defeito = defeitoDoPacote(todos, CAPITULOS_POR_LIVRO);
+    if (defeito) throw new Error(`Pacote incompleto: ${defeito}`);
+    const capitulos = todos.filter((c) => c.capitulo >= 1 && c.capitulo <= (CAPITULOS_POR_LIVRO[c.livroId] ?? 0));
 
     const db = await getDB();
     const total = capitulos.length;

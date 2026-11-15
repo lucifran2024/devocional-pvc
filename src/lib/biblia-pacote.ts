@@ -30,9 +30,31 @@ export function agruparPorCapitulo(linhas: unknown): CapituloDoPacote[] {
         const chave = `${l.book}:${l.chapter}`;
         let cap = mapa.get(chave);
         if (!cap) { cap = { livroId: l.book, capitulo: l.chapter, versiculos: [] }; mapa.set(chave, cap); }
-        cap.versiculos.push({ verse: l.verse, text: limpar(l.text) });
+        // Versículo repetido no arquivo: fica o primeiro.
+        if (cap.versiculos.some((v) => v.verse === l.verse)) continue;
+        cap.versiculos.push({ verse: l.verse as number, text: limpar(l.text) });
     }
     const caps = [...mapa.values()];
     for (const c of caps) c.versiculos.sort((a, b) => a.verse - b.verse);
     return caps.sort((a, b) => a.livroId - b.livroId || a.capitulo - b.capitulo);
+}
+
+/**
+ * Confere se o pacote veio inteiro antes de guardar no aparelho: todo capítulo
+ * esperado presente e com texto. (Não exige começar no versículo 1: A Mensagem
+ * junta versículos e há capítulo que começa em outro número.) Devolve o
+ * motivo da recusa, ou null quando está completo. Pacote recusado não é gravado
+ * (não troca capítulo bom por pedaço) e o download cai na rota por capítulo.
+ */
+export function defeitoDoPacote(capitulos: CapituloDoPacote[], capitulosPorLivro: Record<number, number>): string | null {
+    const porChave = new Map(capitulos.map((c) => [`${c.livroId}:${c.capitulo}`, c]));
+    for (const [livroTexto, total] of Object.entries(capitulosPorLivro)) {
+        const livroId = Number(livroTexto);
+        for (let cap = 1; cap <= total; cap++) {
+            const c = porChave.get(`${livroId}:${cap}`);
+            if (!c || c.versiculos.length === 0) return `falta o capítulo ${livroId}:${cap}`;
+            if (c.versiculos.every((v) => !v.text)) return `capítulo ${livroId}:${cap} veio sem texto`;
+        }
+    }
+    return null;
 }

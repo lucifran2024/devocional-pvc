@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Headphones, Play, Pause, X, Loader2, SkipBack, SkipForward, Check, ChevronUp } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 import { VOZES_NARRACAO, lerVozSalva, salvarVozNarracao, nomeDaVoz, VOZ_PADRAO } from '@/lib/vozes-narracao';
 
 interface VersiculoFala {
@@ -47,6 +48,8 @@ export function BibleAudioPlayer({
     onVerseChange?: (verse: number | null, chapter?: number) => void;
     className?: string;
 }) {
+    // 15/11/2026: o app abre sem conta, mas a voz é paga por uso; ouvir pede conta.
+    const { exigirConta } = useAuth();
     const [estado, setEstado] = useState<Estado>('fechado');
     const [posicao, setPosicao] = useState(0);
     const [velocidadeIdx, setVelocidadeIdx] = useState(0);
@@ -185,6 +188,7 @@ export function BibleAudioPlayer({
     const iniciar = async (desde = 0, vozEscolhida = voz) => {
         const lista = versiculosRef.current;
         if (lista.length === 0) return;
+        if (!exigirConta()) return;
         pararTudo();
         pararRef.current = false;
         rateRef.current = VELOCIDADES[velocidadeIdx];
