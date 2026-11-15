@@ -1,4 +1,7 @@
-const CACHE_NAME = 'pvc-v11';
+// O nome muda a cada publicação (o app registra /sw.js?v=<versão>), então o
+// celular instala o service worker de novo e guarda as telas da versão nova.
+const VERSAO = new URL(self.location.href).searchParams.get('v') || 'v12';
+const CACHE_NAME = 'pvc-' + VERSAO;
 const PAGINAS = [
     '/',
     '/login',
@@ -55,6 +58,20 @@ async function precache() {
         } catch { /* página fora do cache — segue */ }
     }
     await Promise.allSettled([...assets].map((url) => cache.add(url)));
+
+    // Só troca a versão guardada quando a nova está completa: com sinal fraco,
+    // a instalação falha e a versão antiga (que abre sem internet) continua.
+    const essenciais = ['/', '/biblioteca', '/plano-de-leitura', '/offline.html'];
+    for (const url of essenciais) {
+        if (!(await cache.match(url))) {
+            await caches.delete(CACHE_NAME);
+            throw new Error('precache incompleto: ' + url);
+        }
+    }
+    if (assets.size === 0) {
+        await caches.delete(CACHE_NAME);
+        throw new Error('precache sem os arquivos do app');
+    }
 }
 
 self.addEventListener('install', (event) => {
@@ -67,7 +84,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+                keys.filter((key) => key.startsWith('pvc-') && key !== CACHE_NAME).map((key) => caches.delete(key))
             );
         })
     );

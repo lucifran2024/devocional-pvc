@@ -16,7 +16,7 @@ export function ServiceWorkerRegistration() {
             });
 
             navigator.serviceWorker
-                .register('/sw.js')
+                .register(`/sw.js?v=${encodeURIComponent(process.env.NEXT_PUBLIC_VERSAO_DO_APP || 'local')}`)
                 .then((registration) => {
                     console.log('SW registered:', registration.scope);
                     // Busca atualização do SW a cada carga (garante que correções
