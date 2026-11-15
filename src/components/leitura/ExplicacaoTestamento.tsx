@@ -34,37 +34,48 @@ export function LeituraPorTestamento({ opcoes, atual, onLer, onExplicar }: {
     onExplicar: (testamento: Testamento) => void;
 }) {
     if (!opcoes.length) return null;
+    // 15/11/2026 (Lucifran: "não tem como melhorar esses dois… algo diferente"):
+    // dois cartões lado a lado, cada um com o livro em letra grande. Tocar no
+    // cartão lê aquele testamento; o que está sendo lido fica invertido (papel
+    // sobre o preto, tinta sobre o papel) com a fita. Antes eram duas linhas
+    // iguais com quatro botões enfileirados.
     return (
-        <div data-leitura-por-testamento className="w-full divide-y divide-border-subtle overflow-hidden rounded-[20px] border border-border-subtle bg-surface-1 dark:border-transparent">
+        <div data-leitura-por-testamento className={`grid w-full gap-2 ${opcoes.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {opcoes.map(o => {
                 const nome = NOME_TESTAMENTO[o.testamento];
+                const ativo = atual === o.testamento;
                 return (
-                    <div key={o.testamento} className="flex items-center gap-2 py-2 pl-4 pr-2">
-                        <div className="min-w-0 flex-1">
-                            <p className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
-                                <span className="truncate">{nome}</span>
-                                {atual === o.testamento && (
-                                    <span className="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400">· lendo</span>
-                                )}
-                            </p>
-                            <p className="truncate text-sm text-text-muted">{o.referencia}</p>
-                        </div>
+                    <div
+                        key={o.testamento}
+                        data-ativo={ativo}
+                        className="group relative flex min-w-0 flex-col overflow-hidden rounded-[20px] border border-border-subtle bg-surface-1 data-[ativo=true]:border-transparent data-[ativo=true]:bg-campo dark:border-transparent"
+                    >
+                        {ativo && <span className="fita-marcadora" aria-hidden="true" />}
                         <button
                             type="button"
                             onClick={() => onLer(o.testamento)}
                             aria-label={`Ler o ${nome}: ${o.referencia}`}
-                            className="min-h-11 shrink-0 rounded-full bg-surface-2 px-4 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50 active:scale-[0.98]"
+                            className="flex min-h-[76px] w-full flex-col justify-center px-4 pb-2 pt-3 text-left transition-opacity active:opacity-70"
                         >
-                            Ler
+                            <span className="flex items-center gap-1 text-xs font-semibold text-text-muted group-data-[ativo=true]:text-campo-suave">
+                                <span className="truncate">{nome}</span>
+                                {/* a fita e o cartão invertido já mostram; o texto fica para o leitor de tela */}
+                                {ativo && <span className="sr-only">· lendo</span>}
+                            </span>
+                            <span className="reading-serif mt-0.5 block text-[1.1875rem] font-medium leading-tight tracking-[-0.01em] text-text-primary group-data-[ativo=true]:text-campo-texto">
+                                {o.referencia}
+                            </span>
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => onExplicar(o.testamento)}
-                            aria-label={`Explicar o ${nome} inteiro: ${o.referencia}`}
-                            className="min-h-11 shrink-0 rounded-full bg-amber-500/15 px-4 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-500/25 active:scale-[0.98] dark:text-amber-300"
-                        >
-                            Explicar
-                        </button>
+                        <div className="px-2 pb-2">
+                            <button
+                                type="button"
+                                onClick={() => onExplicar(o.testamento)}
+                                aria-label={`Explicar o ${nome} inteiro: ${o.referencia}`}
+                                className="flex min-h-11 w-full items-center justify-center rounded-full bg-amber-500/15 px-3 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-500/25 active:scale-[0.98] group-data-[ativo=true]:bg-campo-toque group-data-[ativo=true]:text-campo-texto dark:text-amber-300"
+                            >
+                                Explicar
+                            </button>
+                        </div>
                     </div>
                 );
             })}

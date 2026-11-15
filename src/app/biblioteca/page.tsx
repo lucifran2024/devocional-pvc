@@ -2413,13 +2413,13 @@ function BibliotecaPage() {
                                         <div className="px-4 pt-3 space-y-3">
                                             <button
                                                 onClick={() => { setLivroSelecionadoTemp(livroAtual); setFaseSelecao('capitulos'); }}
-                                                className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-left hover:bg-amber-500/15 transition-colors active:scale-[0.99]"
+                                                className="flex min-h-12 w-full items-center justify-between gap-3 rounded-full bg-campo px-5 text-left text-campo-texto transition-opacity hover:opacity-90 active:scale-[0.99]"
                                             >
                                                 <span className="flex items-center gap-2.5 min-w-0">
-                                                    <Book className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                                                    <span className="text-sm font-semibold text-slate-900 dark:text-text-primary truncate">Capítulos de {livroAtual.nome}</span>
+                                                    <Book className="w-4 h-4 shrink-0" />
+                                                    <span className="text-sm font-semibold truncate">Capítulos de {livroAtual.nome}</span>
                                                 </span>
-                                                <ChevronRight className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                <ChevronRight className="w-4 h-4 shrink-0" />
                                             </button>
 
                                             {recentes.length > 0 && (
@@ -2432,7 +2432,7 @@ function BibliotecaPage() {
                                                             <button
                                                                 key={`${r.livro}-${r.capitulo}`}
                                                                 onClick={() => abrirRecente(r)}
-                                                                className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-border-subtle bg-slate-50 dark:bg-surface-2/60 text-sm font-medium text-slate-800 dark:text-text-primary hover:border-amber-400 dark:hover:border-amber-500/50 transition-colors active:scale-[0.97]"
+                                                                className="min-h-11 rounded-full bg-slate-100 px-4 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200 dark:bg-surface-2 dark:text-text-primary dark:hover:bg-border-strong/50"
                                                             >
                                                                 {r.livroNome} {r.capitulo}
                                                             </button>
@@ -2446,7 +2446,7 @@ function BibliotecaPage() {
                                                     <button
                                                         key={qual}
                                                         onClick={() => pularParaTestamento(qual)}
-                                                        className="py-2 rounded-xl border border-slate-200 dark:border-border-subtle text-sm font-semibold text-slate-700 dark:text-text-secondary hover:border-amber-400 dark:hover:border-amber-500/50 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                                                        className="min-h-11 rounded-full bg-slate-100 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-200 active:scale-[0.98] dark:bg-surface-2 dark:text-text-primary dark:hover:bg-border-strong/50"
                                                     >
                                                         {qual === 'at' ? 'Antigo Testamento' : 'Novo Testamento'}
                                                     </button>
@@ -2476,68 +2476,56 @@ function BibliotecaPage() {
                                                 >
                                                     {/* Divisor AT / NT */}
                                                     {(ehInicioAT || ehInicioNT) && (
-                                                        <div className="sticky top-[64px] z-20 bg-white/95 dark:bg-surface-1/95 -mx-4 px-4 py-3 mb-3 border-b border-slate-200 dark:border-border-subtle">
-                                                            <div className="flex items-baseline gap-2.5">
-                                                                <span className="text-sm font-black uppercase tracking-[0.15em] text-slate-900 dark:text-text-primary">
+                                                        <div className="sticky top-[64px] z-20 -mx-4 mb-2 bg-white px-4 pb-2 pt-4 dark:bg-surface-1">
+                                                            <div className="flex items-baseline justify-between gap-3">
+                                                                <span className="reading-serif text-[1.375rem] font-medium leading-tight text-slate-900 dark:text-text-primary">
                                                                     {ehInicioAT ? 'Antigo Testamento' : 'Novo Testamento'}
                                                                 </span>
-                                                                <span className="text-[11px] text-slate-400 dark:text-text-muted font-semibold tabular-nums">
+                                                                <span className="text-sm text-text-muted tabular-nums">
                                                                     {ehInicioAT ? '39 livros' : '27 livros'}
                                                                 </span>
-                                                                <div className="flex-1 h-px bg-gradient-to-r from-slate-200 dark:from-border-subtle to-transparent" />
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Cabeçalho de categoria (span p/ evitar reset global de h4) */}
-                                                    <div className="flex items-center gap-2.5 pb-2.5">
-                                                        <span className={`h-4 w-1 rounded-full ${categoria.corBarra}`} />
-                                                        <span role="heading" aria-level={4} className={`text-[13px] font-bold tracking-tight ${categoria.cor}`}>
+                                                    {/* Nome da categoria (span p/ evitar reset global de h4) */}
+                                                    <div className="flex items-baseline gap-2 px-1 pb-2 pt-1">
+                                                        <span role="heading" aria-level={4} className="text-sm font-semibold text-amber-700 dark:text-amber-400">
                                                             {categoria.nome}
                                                         </span>
-                                                        <span className="text-[11px] text-slate-400 dark:text-text-muted font-medium tabular-nums">
-                                                            · {categoria.livros.length} {categoria.livros.length === 1 ? 'livro' : 'livros'}
+                                                        <span className="text-xs text-text-muted tabular-nums">
+                                                            {categoria.livros.length} {categoria.livros.length === 1 ? 'livro' : 'livros'}
                                                         </span>
                                                     </div>
 
-                                                    {/* Livros da categoria — 1 coluna no celular: card largo, alto e
-                                                        com nome inteiro (dono pediu cards maiores, 16/07/2026) */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                    {/* Livros da categoria — 15/11/2026: uma lista só por categoria, uma
+                                                        linha por livro (nome inteiro, em serifa grande, como ele pediu em
+                                                        16/07/2026), sem caixa com borda nem quadradinho de sigla. O livro
+                                                        aberto fica invertido, com a fita. */}
+                                                    <ul className="overflow-hidden rounded-[20px] bg-slate-50 dark:bg-surface-2/50 sm:grid sm:grid-cols-2">
                                                         {categoria.livros.map(livro => {
                                                             const isAtual = livro.abrev === livroAtual.abrev;
                                                             return (
-                                                                <button key={livro.abrev} onClick={() => selecionarLivroTemp(livro)}
-                                                                    className={`relative group overflow-hidden w-full flex items-center gap-3 pl-3 pr-3 py-2.5 min-h-[72px] rounded-2xl text-left transition-all duration-200 border active:scale-[0.97]
-                                                                        ${isAtual
-                                                                            ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 shadow-sm'
-                                                                            : 'bg-white dark:bg-surface-1/80 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-surface-2 hover:border-slate-300 dark:hover:border-white/15 hover:shadow-sm'
+                                                                <li key={livro.abrev} className="border-b border-slate-200/70 last:border-b-0 dark:border-white/[0.06]">
+                                                                    <button onClick={() => selecionarLivroTemp(livro)}
+                                                                        aria-current={isAtual ? 'true' : undefined}
+                                                                        className={`relative flex min-h-[60px] w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors active:scale-[0.99] ${isAtual
+                                                                            ? 'bg-campo text-campo-texto'
+                                                                            : 'text-slate-900 hover:bg-slate-100 dark:text-text-primary dark:hover:bg-surface-2'
                                                                         }`}
-                                                                >
-                                                                    {/* Barra lateral fina da categoria */}
-                                                                    <span className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${categoria.corBarra} ${isAtual ? 'opacity-100' : 'opacity-80 dark:opacity-50 group-hover:opacity-100 dark:group-hover:opacity-90'} transition-opacity`} />
-
-                                                                    {/* Monograma com abreviação do livro */}
-                                                                    <span className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-xl text-[15px] font-black uppercase tracking-tight transition-colors
-                                                                        ${isAtual
-                                                                            ? 'bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/40 text-amber-600 dark:text-amber-300'
-                                                                            : `bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20 ${categoria.cor}`
-                                                                        }`}>
-                                                                        {livro.abrev.toUpperCase()}
-                                                                    </span>
-
-                                                                    {/* Nome + capítulos */}
-                                                                    <span className="flex flex-col min-w-0 flex-1">
-                                                                        <span className={`font-semibold text-[16px] leading-snug tracking-tight break-words ${isAtual ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-text-primary'}`}>
+                                                                    >
+                                                                        {isAtual && <span className="fita-marcadora" aria-hidden="true" />}
+                                                                        <span className="reading-serif min-w-0 break-words text-[1.25rem] font-medium leading-snug tracking-[-0.01em]">
                                                                             {livro.nome}
                                                                         </span>
-                                                                        <span className={`text-[12px] font-medium tabular-nums truncate ${isAtual ? 'text-amber-600/80 dark:text-amber-300/70' : 'text-slate-400 dark:text-text-muted'}`}>
-                                                                            {livro.capitulos} {livro.capitulos === 1 ? 'capítulo' : 'capítulos'}
+                                                                        <span className={`shrink-0 text-sm tabular-nums ${isAtual ? 'mr-7 text-campo-suave' : 'text-slate-400 dark:text-text-muted'}`}>
+                                                                            {livro.capitulos} cap.
                                                                         </span>
-                                                                    </span>
-                                                                </button>
+                                                                    </button>
+                                                                </li>
                                                             );
                                                         })}
-                                                    </div>
+                                                    </ul>
                                                 </div>
                                             );
                                         })}

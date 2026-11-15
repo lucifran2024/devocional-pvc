@@ -2674,25 +2674,55 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
                         <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto overflow-y-auto overflow-x-hidden px-1 sm:px-4 pt-3 pb-4 space-y-3">
                             <div ref={chatStartRef} />
 
+                            {/* 15/11/2026: sem a passagem do dia a tela ficava vazia, sem
+                                explicação (acontecia sem internet). Agora diz o que houve. */}
+                            {!loading && !passagem && (
+                                <div data-leitura-indisponivel className="cartao px-5 py-6">
+                                    <p className="reading-serif text-[1.375rem] font-medium leading-snug text-text-primary">
+                                        A leitura de hoje não abriu
+                                    </p>
+                                    <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-secondary">
+                                        O app não conseguiu saber qual é a leitura de hoje. Isso acontece sem internet, quando o calendário de leitura ainda não foi guardado neste aparelho. Abra esta tela uma vez com internet e ela passa a funcionar sem rede.
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => window.location.reload()}
+                                            className="inline-flex h-11 items-center rounded-full bg-campo px-5 text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90"
+                                        >
+                                            Tentar de novo
+                                        </button>
+                                        <Link
+                                            href="/biblioteca"
+                                            className="inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50"
+                                        >
+                                            Abrir a Bíblia
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Aviso: capítulos que falharam ao carregar (rede fraca) —
                                 sem isso a leitura encolhia em silêncio e o dia "completava" cedo */}
                             {bibleData && bibleData.capitulosFaltantes && bibleData.capitulosFaltantes.length > 0 && (
-                                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-sm">
-                                    <Info className="w-4 h-4 shrink-0 mt-0.5 text-orange-500" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-orange-700 dark:text-orange-300 font-semibold">
-                                            Faltou carregar: {bibleData.capitulosFaltantes.join(', ')}
-                                        </p>
-                                        <p className="text-orange-600/80 dark:text-orange-300/70 text-xs mt-0.5">
-                                            A leitura de hoje está incompleta — verifique a conexão e recarregue.
-                                        </p>
+                                <div data-capitulos-faltando className="cartao flex flex-col gap-3 px-4 py-4">
+                                    <div className="flex items-start gap-3">
+                                        <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[0.9375rem] font-semibold leading-snug text-text-primary">
+                                                Faltou carregar: {bibleData.capitulosFaltantes.join(', ')}
+                                            </p>
+                                            <p className="mt-1 text-sm leading-snug text-text-secondary">
+                                                A leitura de hoje está incompleta. Sem internet, só abrem os capítulos já guardados no aparelho (menu da Bíblia, «Ler sem internet»).
+                                            </p>
+                                        </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setReloadTextoTick(t => t + 1)}
-                                        className="shrink-0 px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-700 dark:text-orange-300 text-xs font-bold transition-colors"
+                                        className="inline-flex h-11 items-center self-start rounded-full bg-campo px-5 text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90"
                                     >
-                                        Recarregar
+                                        Tentar de novo
                                     </button>
                                 </div>
                             )}

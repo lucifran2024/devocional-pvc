@@ -810,6 +810,31 @@ export async function saveDnaGeracoes(
 
 
 import { PassagemSecao6, InsightPreMinerado } from './secao6';
+import { guardarCalendario, referenciaGuardada } from './calendario-leitura-local';
+
+/** Passagem montada só com a referência (formato "data | referência"). */
+function passagemSimples(data: string, referencia: string): PassagemSecao6 {
+    return {
+        data,
+        referencia,
+        arquetipo_maestro: 'Leitura do Dia',
+        lexico_do_dia: [],
+        estrutura_dinamica: [],
+        insights_pre_minerados: [{
+            tese: 'Estudo bíblico guiado.',
+            familia: 'Teologia',
+            verso_suporte: referencia,
+            voz_performance: 'Profeta'
+        }]
+    };
+}
+
+/** A leitura do dia que está guardada no aparelho (funciona sem internet). */
+function passagemGuardadaNoAparelho(data: string): PassagemSecao6 | null {
+    if (typeof window === 'undefined') return null;
+    const referencia = referenciaGuardada(data);
+    return referencia ? passagemSimples(data, referencia) : null;
+}
 
 /**
  * Busca a passagem do dia diretamente do arquivo SECAO6.TXT no Storage
@@ -845,6 +870,9 @@ export async function getPassagemFromStorage(dataPreferida: string): Promise<Pas
         }
 
         console.log(`📦 [STORAGE] Arquivo baixado: ${text.length} caracteres`);
+
+        // Guarda o calendário no aparelho: a leitura de hoje abre sem internet
+        if (typeof window !== 'undefined') guardarCalendario(text);
 
         // 2.5 PRIMEIRO: Tentar formato de texto puro (data | referência)
         const linhas = text.split(/\r?\n/);
@@ -1076,6 +1104,14 @@ export async function getPassagemFromDB(dataPreferida: string): Promise<Passagem
 import { getPassagemDoDia } from './secao6';
 
 export async function getPassagemUnificada(dataPreferida: string): Promise<PassagemSecao6 | null> {
+    // 0. Sem internet: o calendário guardado no aparelho responde na hora
+    //    (antes o app esperava a rede falhar duas vezes e ficava sem leitura).
+    const semRede = typeof navigator !== 'undefined' && navigator.onLine === false;
+    if (semRede) {
+        const guardada = passagemGuardadaNoAparelho(dataPreferida);
+        if (guardada) return guardada;
+    }
+
     // 1. Storage (SSOT)
     const fromStorage = await getPassagemFromStorage(dataPreferida);
     if (fromStorage) return fromStorage;
@@ -1083,6 +1119,10 @@ export async function getPassagemUnificada(dataPreferida: string): Promise<Passa
     // 2. Banco de Dados (Fallback robusto)
     const fromDB = await getPassagemFromDB(dataPreferida);
     if (fromDB) return fromDB;
+
+    // 2.5 Rede falhou (sinal fraco, servidor fora): calendário do aparelho
+    const guardada = passagemGuardadaNoAparelho(dataPreferida);
+    if (guardada) return guardada;
 
     // 3. Local (Último recurso, dados offline)
     console.log('⚠️ [UNIFICADO] Fallback para dados locais');
