@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Book, ChevronLeft, ChevronRight, ArrowLeft, Loader2, X,
@@ -46,6 +46,7 @@ import { barraDeveAparecer, progressoLeitura } from '@/lib/leitura-rolagem';
 import { resumoDoCapitulo, textoDoCapitulo } from '@/lib/biblia-texto';
 import { BIBLIA_SEM_NUMEROS_KEY, BIBLIA_TELA_ACESA_KEY, guardarPreferencia, lerPreferencia } from '@/lib/biblia-preferencias';
 import { telaAcesaSuportada, useTelaAcesa } from '@/lib/tela-acesa';
+import { encaixarComparacao } from '@/lib/versao-comparada';
 import { TiraDeLeitura } from '@/components/ui/TiraDeLeitura';
 import { Interruptor } from '@/components/ui/Interruptor';
 import { CompartilharVersiculo } from '@/components/biblia/CompartilharVersiculo';
@@ -991,9 +992,15 @@ function BibliotecaPage() {
         return () => { cancelado = true; };
     }, [livroAtual, capituloAtual, inicializado, versaoComparada]);
 
+    // 15/11/2026: bloco de vários versículos ("1-4 …", comum n'A Mensagem) entra
+    // depois do ÚLTIMO versículo da faixa, não depois do primeiro.
+    const comparacaoPorVersiculo = useMemo(
+        () => encaixarComparacao(versiculosComparados, versiculos.length ? versiculos[versiculos.length - 1].verse : 0),
+        [versiculosComparados, versiculos],
+    );
     const textoComparado = (verse: number): string | null => {
         if (!versaoComparada) return null;
-        return versiculosComparados.find(x => x.verse === verse)?.text || null;
+        return comparacaoPorVersiculo.get(verse) || null;
     };
 
     // Scroll para versículo específico quando carregado

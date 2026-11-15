@@ -6,6 +6,7 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { NotificationManager } from "@/components/NotificationManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/ui/Navigation";
+import { GuardaDaTela } from "@/components/ui/GuardaDaTela";
 import { AuthProvider } from "@/components/AuthProvider";
 
 // Fontes guardadas no próprio app (03/10/2026): o next/font/google baixava
@@ -90,6 +91,7 @@ export default function RootLayout({
               enquanto a sessão é conferida, sem somar 700 ms a cada abertura. */}
           <AuthProvider>
             <Navigation />
+            <GuardaDaTela />
             <div className="md:pl-24 pb-20 md:pb-0 min-h-screen">
               <ErrorBoundary>
                 {children}
