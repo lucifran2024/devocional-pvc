@@ -7,8 +7,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 // qualquer coisa. Estes testes travam a abertura sem essas esperas.
 
 const replace = vi.fn();
+let caminho = '/';
 vi.mock('next/navigation', () => ({
-    usePathname: () => '/',
+    usePathname: () => caminho,
     useRouter: () => ({ replace }),
     useSearchParams: () => new URLSearchParams(),
 }));
@@ -44,6 +45,7 @@ const pendurada = () => new Promise(() => {});
 
 beforeEach(() => {
     localStorage.clear();
+    caminho = '/';
     replace.mockReset();
     getSession.mockReset();
     getPalavraManha.mockReset();
@@ -59,21 +61,35 @@ describe('sessão guardada abre o app sem esperar a rede', () => {
         expect(await screen.findByText('conteudo protegido')).toBeInTheDocument();
     });
 
-    it('volta para o login se a validação derrubar a sessão guardada', async () => {
+    // 15/11/2026 (Lucifran: "a pessoa esbarra no login e desiste"): início,
+    // Bíblia e leitura abrem sem conta; login só nas áreas que guardam dados.
+    it('sessão derrubada numa tela livre: continua no app, sem ir para o login', async () => {
         localStorage.setItem('sb-teste-auth-token', JSON.stringify({ user: { id: 'u1', email: 'a@b.c' }, expires_at: 1 }));
         let responder: (v: unknown) => void = () => {};
         getSession.mockReturnValue(new Promise((r) => { responder = r; }));
-        render(<AuthProvider><p>conteudo protegido</p></AuthProvider>);
-        await screen.findByText('conteudo protegido');
+        render(<AuthProvider><p>conteudo livre</p></AuthProvider>);
+        await screen.findByText('conteudo livre');
         await act(async () => { responder({ data: { session: null } }); });
-        await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
+        expect(screen.getByText('conteudo livre')).toBeInTheDocument();
+        expect(replace).not.toHaveBeenCalled();
     });
 
-    it('sem sessão guardada mostra a abertura da marca até validar', async () => {
+    it('visitante sem conta vê o início, a Bíblia e a leitura', async () => {
+        getSession.mockResolvedValue({ data: { session: null } });
+        for (const livre of ['/', '/biblioteca', '/plano-de-leitura']) {
+            caminho = livre;
+            render(<AuthProvider><p>conteudo livre</p></AuthProvider>);
+            expect(await screen.findByText('conteudo livre')).toBeInTheDocument();
+            cleanup();
+        }
+        expect(replace).not.toHaveBeenCalled();
+    });
+
+    it('área que guarda dados (Caderno) pede login e lembra para onde voltar', async () => {
+        caminho = '/anotacoes';
         getSession.mockResolvedValue({ data: { session: null } });
         render(<AuthProvider><p>conteudo protegido</p></AuthProvider>);
-        expect(screen.getByRole('status', { name: 'Abrindo a Bíblia' })).toBeInTheDocument();
-        await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'));
+        await waitFor(() => expect(replace).toHaveBeenCalledWith('/login?voltar=%2Fanotacoes'));
         expect(screen.queryByText('conteudo protegido')).toBeNull();
     });
 });

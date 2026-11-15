@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Mail, Lock, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -36,6 +37,12 @@ export default function LoginPage() {
     const [enviando, setEnviando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
     const [aviso, setAviso] = useState<string | null>(null);
+    // 15/11/2026: o login virou opção. Quem chega aqui vindo de uma área que
+    // guarda dados (Caderno, Oração…) vê por que a conta é pedida.
+    const [veioDeArea, setVeioDeArea] = useState(false);
+    useEffect(() => {
+        setVeioDeArea(new URLSearchParams(window.location.search).has('voltar'));
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,7 +84,11 @@ export default function LoginPage() {
                         <BookOpen className="w-8 h-8 text-amber-950" />
                     </div>
                     <h1 className="reading-serif text-[1.7rem] font-semibold text-text-primary tracking-tight">Bíblia</h1>
-                    <p className="text-xs text-text-muted mt-1 tracking-widest uppercase">Sua jornada espiritual diária</p>
+                    <p className="mt-2 max-w-[18rem] text-center text-sm leading-snug text-text-secondary">
+                        {veioDeArea
+                            ? 'Esta parte guarda coisas suas (anotações, pedidos, estudos). Entre ou crie uma conta para usar.'
+                            : 'Com uma conta, suas marcações, anotações e o progresso da leitura ficam guardados e vão com você para outro aparelho.'}
+                    </p>
                 </div>
 
                 {/* Card */}
@@ -148,7 +159,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={enviando || !email || senha.length < 6}
-                            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-campo text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             {enviando && <Loader2 className="w-4 h-4 animate-spin" />}
                             {modo === 'entrar' ? 'Entrar' : 'Criar minha conta'}
@@ -156,8 +167,14 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <p className="text-center text-[11px] text-text-muted mt-6 leading-relaxed">
-                    Palavra do dia, versículo, Bíblia completa<br />e planos de leitura — todos os dias.
+                <Link
+                    href="/"
+                    className="mt-4 flex min-h-12 w-full items-center justify-center rounded-full bg-surface-2 text-sm font-semibold text-text-primary transition-colors hover:bg-border-strong/50"
+                >
+                    Continuar sem conta
+                </Link>
+                <p className="text-center text-xs text-text-muted mt-4 leading-relaxed">
+                    A Bíblia, a leitura do dia e a Palavra da Manhã abrem sem conta.
                 </p>
             </div>
         </CosmicBackground>

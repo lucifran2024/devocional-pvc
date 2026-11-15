@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-    Home, BookOpen, Bookmark, Calendar, LogOut, LayoutGrid, X,
+    Home, BookOpen, Bookmark, Calendar, LogOut, LogIn, LayoutGrid, X,
     BookMarked, NotebookPen, HeartHandshake, Youtube, Mic,
     GraduationCap,
 } from 'lucide-react';
@@ -58,7 +58,8 @@ function NavigationInner() {
     const [maisAberto, setMaisAberto] = useState(false);
     const fecharRef = useRef<HTMLButtonElement>(null);
     const navInferiorRef = useRef<HTMLElement>(null);
-    const navVisivel = !!user && !pathname?.startsWith('/login');
+    // 15/11/2026: a barra aparece também para o visitante (sem conta)
+    const navVisivel = !pathname?.startsWith('/login');
 
     // Informa a altura real da barra inferior (--altura-nav-inferior) para que
     // painéis de tela cheia, como o de Salvos, terminem logo acima dela.
@@ -217,6 +218,7 @@ function NavigationInner() {
                     </li>
                 </ul>
 
+{user ? (<>
                 {/* Sair (computador) */}
                 <button
                     onClick={signOut}
@@ -226,6 +228,12 @@ function NavigationInner() {
                     <LogOut className="h-5 w-5 stroke-[1.8]" />
                     <span className="text-[11px] font-medium">Sair</span>
                 </button>
+                </>) : (
+                    <Link href="/login" title="Entrar ou criar conta" className="mt-auto flex w-full flex-col items-center gap-1.5 rounded-2xl px-3 py-3.5 text-text-muted transition-colors duration-200 hover:bg-surface-2 hover:text-text-primary">
+                        <LogIn className="h-5 w-5 stroke-[1.8]" />
+                        <span className="text-[11px] font-medium">Entrar</span>
+                    </Link>
+                )}
             </nav>
 
             {/* Painel "Mais" — folha inferior no celular, janela no computador */}
@@ -290,6 +298,7 @@ function NavigationInner() {
                                 <span className="text-sm font-medium text-text-secondary">Tema</span>
                                 <ThemeToggle discreto />
                             </div>
+{user ? (
                             <button
                                 type="button"
                                 onClick={() => { fecharMais(); signOut(); }}
@@ -297,6 +306,15 @@ function NavigationInner() {
                             >
                                 <LogOut className="w-4 h-4" /> Sair da conta
                             </button>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    onClick={fecharMais}
+                                    className="flex min-h-[56px] items-center gap-2 rounded-2xl bg-campo px-5 text-sm font-semibold text-campo-texto transition-opacity hover:opacity-90"
+                                >
+                                    <LogIn className="w-4 h-4" /> Entrar ou criar conta
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

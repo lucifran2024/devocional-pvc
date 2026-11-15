@@ -38,3 +38,14 @@ export function referenciaGuardada(data: string): string | null {
         return null;
     }
 }
+
+/** Guarda um dia só (quando a leitura veio do banco, não do arquivo inteiro). */
+export function guardarDia(data: string, referencia: string): void {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !referencia.trim()) return;
+    try {
+        let dias: Record<string, string> = {};
+        try { dias = JSON.parse(localStorage.getItem(CALENDARIO_LOCAL_KEY) || '{}') || {}; } catch { dias = {}; }
+        dias[data] = referencia.trim();
+        localStorage.setItem(CALENDARIO_LOCAL_KEY, JSON.stringify(dias));
+    } catch { /* sem espaço ou modo privado */ }
+}

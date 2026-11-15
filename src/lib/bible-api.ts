@@ -191,7 +191,7 @@ const ID_PARA_NOME_PT: Record<number, string> = {
  */
 async function buscarCapituloBolls(livroId: number, capitulo: number): Promise<Versiculo[]> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 9000);
 
     try {
         const response = await fetch(
@@ -277,7 +277,10 @@ export async function buscarCapitulo(livroId: number, capitulo: number): Promise
 
     // 1. API primária com 2 tentativas (rede móvel oscila; 1 timeout não pode derrubar o capítulo)
     let resultado: Versiculo[] = [];
-    for (let tentativa = 1; tentativa <= 2 && resultado.length === 0; tentativa++) {
+    // 15/11/2026: 3 tentativas com uma pausa crescente (antes 2, coladas, com 5 s
+    // de limite): a fonte oscila e a leitura ficava com "Faltou carregar".
+    for (let tentativa = 1; tentativa <= 3 && resultado.length === 0; tentativa++) {
+        if (tentativa > 1) await new Promise((ok) => setTimeout(ok, 600 * (tentativa - 1)));
         resultado = await buscarCapituloBolls(livroId, capitulo);
     }
 

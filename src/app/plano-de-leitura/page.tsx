@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 import {
     Book, Calendar, ArrowLeft, Loader2,
     RotateCcw, GraduationCap, Search,
@@ -400,7 +401,10 @@ function VersiculosInterativos({
         }
     };
 
+    // Visitante lê sem conta; o que usa IA pede login (15/11/2026)
+    const { exigirConta: exigirContaVersiculo } = useAuth();
     const handleEstudar = async () => {
+        if (!exigirContaVersiculo()) return;
         if (versiculoSelecionadoIdx == null) return;
         const v = versiculos[versiculoSelecionadoIdx];
         if (!v) return;
@@ -961,6 +965,7 @@ function PlanoLeituraContent() {
     const searchParams = useSearchParams();
     const planoId = searchParams.get('plano_id');
     const diaQuery = searchParams.get('dia');
+    const { exigirConta } = useAuth();
     const lerDirect = searchParams.get('ler') === '1'; // ?ler=1 -> abre direto "Ler Passagem"
     const isPlanoMode = Boolean(planoId);
 
@@ -2078,6 +2083,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     };
 
     const handleExplicar = async () => {
+        if (!exigirConta()) return;
         if (isLoadingExplicacao) return;
         // Parte já explicada: não chama a IA de novo, só volta até a explicação
         const ultimaParte = [...messages].reverse().find(m => m.role === 'assistant' && m.content.includes('%%VERSICULOS_INTERATIVOS%%'));
@@ -2165,6 +2171,7 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     };
 
     const handleExplicarTestamento = async (testamento: Testamento) => {
+        if (!exigirConta()) return;
         const busca = buscarExplicacaoTestamento(testamento);
         if (!busca) return;
         const { referencia: chave, pendente } = busca;
@@ -2205,6 +2212,8 @@ Você completou a leitura de **${passagem.referencia}**. Medite sobre o que leu 
     // Inicia uma opção do menu (usada pelo CTA do hero e pelos cards)
     const iniciarOpcao = (optionId: MenuOption) => {
         if (!passagem || isProcessing) return;
+        // Ler é livre; os estudos (que usam IA) pedem conta
+        if (optionId !== '1' && !exigirConta()) return;
         const option = MENU_OPTIONS.find(o => o.id === optionId);
         if (!option) return;
         setActiveOption(optionId);

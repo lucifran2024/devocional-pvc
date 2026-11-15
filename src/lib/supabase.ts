@@ -810,7 +810,7 @@ export async function saveDnaGeracoes(
 
 
 import { PassagemSecao6, InsightPreMinerado } from './secao6';
-import { guardarCalendario, referenciaGuardada } from './calendario-leitura-local';
+import { guardarCalendario, guardarDia, referenciaGuardada } from './calendario-leitura-local';
 
 /** Passagem montada só com a referência (formato "data | referência"). */
 function passagemSimples(data: string, referencia: string): PassagemSecao6 {
@@ -1118,7 +1118,10 @@ export async function getPassagemUnificada(dataPreferida: string): Promise<Passa
 
     // 2. Banco de Dados (Fallback robusto)
     const fromDB = await getPassagemFromDB(dataPreferida);
-    if (fromDB) return fromDB;
+    if (fromDB) {
+        if (typeof window !== 'undefined' && fromDB.referencia) guardarDia(dataPreferida, fromDB.referencia);
+        return fromDB;
+    }
 
     // 2.5 Rede falhou (sinal fraco, servidor fora): calendário do aparelho
     const guardada = passagemGuardadaNoAparelho(dataPreferida);

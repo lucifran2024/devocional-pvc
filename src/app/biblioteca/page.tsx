@@ -47,6 +47,7 @@ import { resumoDoCapitulo, textoDoCapitulo } from '@/lib/biblia-texto';
 import { BIBLIA_SEM_NUMEROS_KEY, BIBLIA_TELA_ACESA_KEY, guardarPreferencia, lerPreferencia } from '@/lib/biblia-preferencias';
 import { telaAcesaSuportada, useTelaAcesa } from '@/lib/tela-acesa';
 import { encaixarComparacao } from '@/lib/versao-comparada';
+import { useAuth } from '@/components/AuthProvider';
 import { TiraDeLeitura } from '@/components/ui/TiraDeLeitura';
 import { Interruptor } from '@/components/ui/Interruptor';
 import { CompartilharVersiculo } from '@/components/biblia/CompartilharVersiculo';
@@ -533,6 +534,7 @@ export default function BibliotecaPageWrapper() {
 
 function BibliotecaPage() {
     const router = useRouter();
+    const { exigirConta } = useAuth();
     const searchParams = useSearchParams();
     const abrirSalvos = searchParams.get('salvos') === '1';
 
@@ -1556,6 +1558,7 @@ function BibliotecaPage() {
     // ESTUDO IA
     // ==========================================
     const handleEstudar = async () => {
+        if (!exigirConta()) return;
         if (!versiculoSelecionado) return;
         const v = getVersiculoObj(versiculoSelecionado);
         if (!v) return;

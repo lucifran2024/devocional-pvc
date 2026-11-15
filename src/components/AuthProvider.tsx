@@ -7,7 +7,13 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 // ===============================================
-// AUTH PROVIDER — login obrigatório + perfil admin
+// AUTH PROVIDER — conta opcional + perfil admin
+//
+// 15/11/2026 (Lucifran: "a pessoa esbarra no login e desiste de usar o app…
+// que ele fique no Mais como opção"): o início, a Bíblia e a leitura do dia
+// abrem SEM conta. O login só é pedido nas áreas que guardam dados da pessoa
+// (Caderno, Oração, planos, transcrições) e no que gasta IA. Antes o login
+// era obrigatório para tudo.
 //
 // Admin (dono): vê o app completo, exatamente como sempre foi.
 // Usuário comum (público): Palavra do Dia, Versículo, Bíblia e
@@ -31,6 +37,8 @@ interface AuthContextValue {
     isAdmin: boolean;
     loading: boolean;
     signOut: () => Promise<void>;
+    /** true se há conta; sem conta, leva ao login (voltando para a tela atual) e devolve false */
+    exigirConta: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -38,14 +46,30 @@ const AuthContext = createContext<AuthContextValue>({
     isAdmin: false,
     loading: true,
     signOut: async () => { },
+    exigirConta: () => false,
 });
 
 export function useAuth() {
     return useContext(AuthContext);
 }
 
-// Rotas acessíveis sem login
-const ROTAS_PUBLICAS = ['/login'];
+// Rotas acessíveis sem login: a entrada e a leitura (visitante)
+const ROTAS_LIVRES = ['/biblioteca', '/plano-de-leitura', '/login'];
+
+/** Tela que abre sem conta. */
+export function rotaLivre(pathname: string | null | undefined): boolean {
+    if (!pathname || pathname === '/') return true;
+    return ROTAS_LIVRES.some(r => pathname === r || pathname.startsWith(`${r}/`));
+}
+
+/** Para onde voltar depois de entrar (só caminho interno do app). */
+function destinoDepoisDoLogin(): string {
+    try {
+        const voltar = new URLSearchParams(window.location.search).get('voltar');
+        if (voltar && voltar.startsWith('/') && !voltar.startsWith('//') && !voltar.startsWith('/login')) return voltar;
+    } catch { /* sem window */ }
+    return '/';
+}
 
 // Rotas exclusivas do admin (versão completa)
 const ROTAS_ADMIN = ['/dna-categorizado', '/devocional-externo', '/favoritos'];
@@ -121,15 +145,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (loading) return;
 
-        const rotaPublica = ROTAS_PUBLICAS.some(r => pathname.startsWith(r));
-
-        if (!user && !rotaPublica) {
+        if (!user && !rotaLivre(pathname)) {
             // Offline não redireciona para o login (que não funciona sem rede)
-            if (!estaOffline()) router.replace('/login');
+            if (!estaOffline()) router.replace(`/login?voltar=${encodeURIComponent(pathname)}`);
             return;
         }
         if (user && pathname.startsWith('/login')) {
-            router.replace('/');
+            router.replace(destinoDepoisDoLogin());
             return;
         }
         // Usuário comum tentando rota de admin → volta para a home
@@ -140,17 +162,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signOut = useCallback(async () => {
         await supabase.auth.signOut();
-        router.replace('/login');
+        // Sair não tranca o app: a pessoa continua como visitante
+        router.replace('/');
     }, [router]);
+
+    const exigirConta = useCallback(() => {
+        if (user) return true;
+        const aqui = `${window.location.pathname}${window.location.search}`;
+        router.push(`/login?voltar=${encodeURIComponent(aqui)}`);
+        return false;
+    }, [user, router]);
 
     // Evita flash de conteúdo protegido antes do redirect
     // (offline nunca bloqueia: melhor mostrar o app com dados em cache
     // do que uma tela de carregamento eterna)
-    const rotaPublica = ROTAS_PUBLICAS.some(r => pathname.startsWith(r));
-    const bloqueado = !loading && !user && !rotaPublica && !estaOffline();
+    const livre = rotaLivre(pathname);
+    const bloqueado = !loading && !user && !livre && !estaOffline();
 
     return (
-        <AuthContext.Provider value={{ user, isAdmin, loading, signOut }}>
+        <AuthContext.Provider value={{ user, isAdmin, loading, signOut, exigirConta }}>
             {loading || bloqueado ? (
                 // Abertura da marca: é a primeira pintura (vem pronta no HTML) e
                 // só fica na tela enquanto a sessão é conferida.

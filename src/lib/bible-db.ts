@@ -1,5 +1,6 @@
 'use client';
 
+import { agruparPorCapitulo, enderecoDoPacote } from './biblia-pacote';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 // ============================================
@@ -302,6 +303,43 @@ const CAPITULOS_POR_LIVRO: Record<number, number> = {
 const TOTAL_CHAPTERS = 1189;
 
 /**
+ * Baixa a tradução inteira num arquivo só e guarda todos os capítulos.
+ * Devolve quantos capítulos ficaram guardados.
+ */
+export async function baixarVersaoInteira(
+    versao: string,
+    onProgress: (done: number, total: number) => void,
+    signal?: AbortSignal
+): Promise<number> {
+    const resp = await fetch(enderecoDoPacote(versao), { signal });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const capitulos = agruparPorCapitulo(await resp.json());
+    if (capitulos.length === 0) throw new Error('Pacote vazio');
+
+    const db = await getDB();
+    const total = capitulos.length;
+    const agora = Date.now();
+    const LOTE = 150;
+    for (let i = 0; i < total; i += LOTE) {
+        if (signal?.aborted) return i;
+        const tx = db.transaction('chapters', 'readwrite');
+        for (const c of capitulos.slice(i, i + LOTE)) {
+            tx.store.put({
+                key: makeChapterKey(versao, c.livroId, c.capitulo),
+                versao,
+                livroId: c.livroId,
+                capitulo: c.capitulo,
+                versiculos: c.versiculos,
+                cachedAt: agora,
+            });
+        }
+        await tx.done;
+        onProgress(Math.min(i + LOTE, total), total);
+    }
+    return total;
+}
+
+/**
  * Baixa toda uma versão da Bíblia em batch.
  * Retorna o número de capítulos baixados com sucesso.
  */
@@ -310,6 +348,17 @@ export async function downloadBibleVersion(
     onProgress: (done: number, total: number) => void,
     signal?: AbortSignal
 ): Promise<number> {
+    // 15/11/2026: primeiro tenta a tradução inteira num arquivo só (um pedido,
+    // poucos segundos). Só se isso falhar cai no jeito antigo, capítulo por
+    // capítulo, que continua abaixo como reserva.
+    try {
+        const total = await baixarVersaoInteira(versao, onProgress, signal);
+        if (total > 0) return total;
+    } catch (err) {
+        if (signal?.aborted) return 0;
+        console.warn('[BIBLE-DB] Pacote inteiro falhou, baixando por capítulo:', err);
+    }
+
     let downloaded = 0;
     const failed: { livroId: number; cap: number }[] = [];
 
