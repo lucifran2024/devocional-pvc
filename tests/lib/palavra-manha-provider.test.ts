@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { gerarPalavraComReserva } from '../../supabase/functions/execute/palavra-manha-provider';
+import {
+    ESFORCO_TUNEL_PALAVRA_MANHA,
+    TEMPO_TUNEL_PALAVRA_MANHA_MS,
+    gerarPalavraComReserva,
+} from '../../supabase/functions/execute/palavra-manha-provider';
 
 describe('Palavra da Manhã — seleção de infraestrutura', () => {
     const prompt = 'PROMPT EDITORIAL INALTERADO';
@@ -95,5 +99,60 @@ describe('Palavra da Manhã — seleção de infraestrutura', () => {
             baseUrl: undefined,
             apiKey: undefined,
         }));
+    });
+
+    it('tunnelTimeoutMs e tunnelReasoningEffort valem só no túnel, sem contaminar a reserva OpenRouter', async () => {
+        const gerarTexto = vi.fn()
+            .mockResolvedValueOnce({ ok: false, error: 'app-pvc: The signal has been aborted' })
+            .mockResolvedValueOnce({ ok: true, text: 'PALAVRA PELA RESERVA' });
+
+        const resultado = await gerarPalavraComReserva({
+            prompt,
+            temperature: 0.85,
+            maxTokens: 500,
+            useTunnel: true,
+            tunnelUrl: 'https://tunel.example/v1/chat/completions',
+            tunnelApiKey: 'tunnel-key',
+            modelosTunel,
+            modelosReserva,
+            gerarTexto,
+            tunnelTimeoutMs: TEMPO_TUNEL_PALAVRA_MANHA_MS,
+            tunnelReasoningEffort: ESFORCO_TUNEL_PALAVRA_MANHA,
+        });
+
+        expect(resultado).toEqual({ ok: true, text: 'PALAVRA PELA RESERVA' });
+        expect(gerarTexto).toHaveBeenCalledTimes(2);
+        expect(gerarTexto.mock.calls[0][1]).toEqual(expect.objectContaining({
+            models: modelosTunel,
+            timeoutMs: TEMPO_TUNEL_PALAVRA_MANHA_MS,
+            reasoningEffort: 'low',
+        }));
+        expect(gerarTexto.mock.calls[1][1]).not.toHaveProperty('timeoutMs');
+        expect(gerarTexto.mock.calls[1][1]).not.toHaveProperty('reasoningEffort');
+        expect(TEMPO_TUNEL_PALAVRA_MANHA_MS).toBeGreaterThan(40_000);
+        expect(TEMPO_TUNEL_PALAVRA_MANHA_MS).toBeLessThanOrEqual(75_000);
+        expect(ESFORCO_TUNEL_PALAVRA_MANHA).toBe('low');
+    });
+
+    it('sem túnel ativo, não envia tunnelTimeoutMs nem tunnelReasoningEffort ao OpenRouter', async () => {
+        const gerarTexto = vi.fn().mockResolvedValue({ ok: true, text: 'OK' });
+
+        await gerarPalavraComReserva({
+            prompt,
+            temperature: 0.85,
+            maxTokens: 500,
+            useTunnel: false,
+            tunnelUrl: '',
+            tunnelApiKey: '',
+            modelosTunel,
+            modelosReserva,
+            gerarTexto,
+            tunnelTimeoutMs: TEMPO_TUNEL_PALAVRA_MANHA_MS,
+            tunnelReasoningEffort: ESFORCO_TUNEL_PALAVRA_MANHA,
+        });
+
+        expect(gerarTexto).toHaveBeenCalledTimes(1);
+        expect(gerarTexto.mock.calls[0][1]).not.toHaveProperty('timeoutMs');
+        expect(gerarTexto.mock.calls[0][1]).not.toHaveProperty('reasoningEffort');
     });
 });

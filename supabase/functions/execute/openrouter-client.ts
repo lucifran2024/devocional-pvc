@@ -102,6 +102,8 @@ function limparRaciocinio(texto: string): string {
         .trim();
 }
 
+export type EsforcoRaciocinio = 'minimal' | 'low' | 'medium' | 'high';
+
 interface ChamadaOpts {
     models?: string[];
     temperature?: number;
@@ -110,6 +112,7 @@ interface ChamadaOpts {
     timeoutMs?: number;
     baseUrl?: string;           // endpoint alternativo (ex.: 9Router) — default OpenRouter
     apiKey?: string;            // chave do endpoint alternativo
+    reasoningEffort?: EsforcoRaciocinio; // override explícito (ex.: vencer providerThinking global no 9Router)
 }
 
 interface RespostaLLM {
@@ -139,11 +142,6 @@ export async function chamarOpenRouter(
 
     for (const model of cadeia) {
         try {
-            const controller = new AbortController();
-            // 40s por modelo: se travar, o fallback assume rápido em vez de
-            // deixar o usuário esperando um modelo pendurado.
-            const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 40_000);
-
             const body: Record<string, unknown> = {
                 model,
                 messages,
@@ -156,20 +154,30 @@ export async function chamarOpenRouter(
             if (opts.maxTokens !== undefined) body.max_tokens = opts.maxTokens;
             // Só no OpenRouter: no túnel, quem decide o raciocínio é o combo do 9Router
             if (!opts.baseUrl && MODELOS_SEM_RACIOCINIO.has(model)) body.reasoning = { enabled: false };
+            if (opts.reasoningEffort) body.reasoning_effort = opts.reasoningEffort;
             if (opts.tools && opts.tools.length > 0) body.tools = opts.tools;
+            const payloadJson = JSON.stringify(body);
 
-            const resp = await fetch(endpointUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': 'https://devocional-pvc.vercel.app',
-                    'X-Title': 'Devocional PVC',
-                },
-                body: JSON.stringify(body),
-                signal: controller.signal,
-            });
-            clearTimeout(timer);
+            const controller = new AbortController();
+            // 40s por modelo: se travar, o fallback assume rápido em vez de
+            // deixar o usuário esperando um modelo pendurado.
+            const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 40_000);
+            let resp: Response;
+            try {
+                resp = await fetch(endpointUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'HTTP-Referer': 'https://devocional-pvc.vercel.app',
+                        'X-Title': 'Devocional PVC',
+                    },
+                    body: payloadJson,
+                    signal: controller.signal,
+                });
+            } finally {
+                clearTimeout(timer);
+            }
 
             if (!resp.ok) {
                 const errText = (await resp.text()).slice(0, 300);
@@ -215,7 +223,7 @@ export async function chamarOpenRouter(
  */
 export async function gerarTexto(
     prompt: string,
-    opts: { temperature?: number; maxTokens?: number; models?: string[]; baseUrl?: string; apiKey?: string; timeoutMs?: number } = {}
+    opts: { temperature?: number; maxTokens?: number; models?: string[]; baseUrl?: string; apiKey?: string; timeoutMs?: number; reasoningEffort?: EsforcoRaciocinio } = {}
 ): Promise<RespostaLLM> {
     return chamarOpenRouter(
         [{ role: 'user', content: prompt }],

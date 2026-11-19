@@ -51,7 +51,35 @@ describe('cadeias de reserva do OpenRouter', () => {
         expect(corpoEnviado(0).reasoning).toBeUndefined();
         await chamarOpenRouter([{ role: 'user', content: 'oi' }], { models: ['deepseek/deepseek-v4-flash'], apiKey: 'k', baseUrl: 'https://tunel.example/v1/chat/completions' });
         expect(corpoEnviado(1).reasoning).toBeUndefined();
+        expect(corpoEnviado(1).reasoning_effort).toBeUndefined();
         expect(corpoEnviado(1).stream).toBe(false);
+    });
+
+    it('reasoningEffort explícito é enviado como reasoning_effort na raiz do corpo e ausente quando não informado', async () => {
+        vi.mocked(global.fetch).mockResolvedValue(respostaOk());
+        await chamarOpenRouter([{ role: 'user', content: 'oi' }], {
+            models: ['app-pvc'],
+            apiKey: 'k',
+            baseUrl: 'https://tunel.example/v1/chat/completions',
+            reasoningEffort: 'low',
+        });
+        expect(corpoEnviado(0).reasoning_effort).toBe('low');
+        expect(corpoEnviado(0).reasoning).toBeUndefined();
+    });
+
+    it('rejeição de fetch limpa o timeout e passa ao próximo modelo', async () => {
+        const clearSpy = vi.spyOn(globalThis, 'clearTimeout');
+        vi.mocked(global.fetch)
+            .mockRejectedValueOnce(new Error('The signal has been aborted'))
+            .mockResolvedValueOnce(respostaOk('recuperado'));
+        const r = await chamarOpenRouter([{ role: 'user', content: 'oi' }], {
+            models: ['google/gemma-4-31b-it:free', 'deepseek/deepseek-v4-flash'],
+            apiKey: 'k',
+            timeoutMs: 1000,
+        });
+        expect(r).toMatchObject({ ok: true, text: 'recuperado', modelUsed: 'deepseek/deepseek-v4-flash' });
+        expect(clearSpy).toHaveBeenCalledTimes(2);
+        clearSpy.mockRestore();
     });
 
     it('resposta vazia passa para o próximo modelo', async () => {
@@ -79,6 +107,14 @@ describe('combo do app no 9Router (túnel)', () => {
         expect(bloco).toContain('get9RouterEndpoint()');
         expect(bloco.match(/gerarExplicacao\(/g)?.length).toBeGreaterThanOrEqual(2);
         expect(bloco).not.toMatch(/await gerarTexto\(prompt(Explicar|RevisaoExplicar)/);
+    });
+
+    it('Palavra da Manhã passa esforço low e timeout ampliado só no túnel (sem sobrescrever prompt nem reserva)', () => {
+        const inicio = index.indexOf("if (modo_id === 'modo_palavra_manha')");
+        const fim = index.indexOf('const llmPalavra =', inicio);
+        const bloco = index.slice(inicio, fim);
+        expect(bloco).toContain('tunnelTimeoutMs: TEMPO_TUNEL_PALAVRA_MANHA_MS');
+        expect(bloco).toContain('tunnelReasoningEffort: ESFORCO_TUNEL_PALAVRA_MANHA');
     });
 
     it('rótulo do aviso de queda identifica a função', async () => {

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { BIBLE_TOOLS_DEFINITION, consultarVersiculo } from './bible-tools.ts';
 import { RSS_TOOLS_DEFINITION, consultarRSS } from './rss-tools.ts';
 import { gerarTexto, chamarCompatGemini, get9RouterEndpoint, APP_TUNNEL_MODELS } from './openrouter-client.ts';
-import { gerarPalavraComReserva } from './palavra-manha-provider.ts';
+import { ESFORCO_TUNEL_PALAVRA_MANHA, TEMPO_TUNEL_PALAVRA_MANHA_MS, gerarPalavraComReserva } from './palavra-manha-provider.ts';
 import {
   CACHE_EXPLICAR, MODELOS_EXPLICAR_TUNEL, MODELOS_REVISAO_TUNEL, limitesExplicacao, montarPromptExplicar, montarPromptRevisaoExplicar,
   CACHE_EXPLICAR_TESTAMENTO, TEMPO_ESCRITA_TESTAMENTO_MS, TEMPO_REVISAO_TESTAMENTO_MS, limitesTestamento, montarPromptExplicarTestamento, montarPromptRevisaoTestamento,
@@ -2899,6 +2899,8 @@ NUNCA escreva rótulos como "Título:", "Corpo:", "Title:", "Body:" ou "Fechamen
         modelosTunel: APP_TUNNEL_MODELS,
         modelosReserva: MODELOS_PALAVRA_OR,
         gerarTexto,
+        tunnelTimeoutMs: TEMPO_TUNEL_PALAVRA_MANHA_MS,
+        tunnelReasoningEffort: ESFORCO_TUNEL_PALAVRA_MANHA,
       });
 
       const llmPalavra = await gerarPalavra(prompt, 0.85);
