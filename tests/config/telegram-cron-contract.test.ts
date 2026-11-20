@@ -35,7 +35,9 @@ describe('contrato dos envios automáticos do PVC ao Telegram', () => {
     it('limita daily-push à Palavra da Manhã', () => {
         const route = readProjectFile('src/app/api/cron/daily-push/route.ts');
 
-        expect(route).toContain("mensagensEnviadas.push('Palavra da Manha')");
+        expect(route).toContain("mensagens_enviadas: ['Palavra da Manha']");
+        expect(route).toContain("'sendPhoto'");
+        expect(route).not.toContain("'sendMessage'");
         expect(route).not.toContain('const msgVersiculo =');
         expect(route).not.toContain('Versiculo do Dia');
     });

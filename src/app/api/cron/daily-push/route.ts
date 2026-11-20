@@ -1,137 +1,121 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { capturarPalavra } from '@/lib/palavra-captura';
+import { caminhoPrintPalavra, pngValido } from '@/lib/palavra-artefato';
+import type { PalavraManhaCache } from '@/lib/supabase';
 
-// ============================================
-// CONFIG
-// ============================================
-// A geracao da Palavra pode passar de 60s; sem isso a Vercel mata a funcao no meio.
+export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// ============================================
-// HELPERS
-// ============================================
-
-function getDataHoje(): string {
-    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-}
-
-async function enviarTelegram(texto: string): Promise<{ ok: boolean; message_id?: number }> {
+async function enviarTelegram(png: Uint8Array<ArrayBuffer>, palavra: PalavraManhaCache): Promise<number | null> {
+    const metodo = 'sendPhoto';
+    const body = new FormData();
+    body.set('chat_id', TELEGRAM_CHAT_ID!);
+    body.set('photo', new Blob([png], { type: 'image/png' }), 'palavra-da-manha.png');
     try {
-        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: texto,
-            }),
+        const resp = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${metodo}`, {
+            method: 'POST', body, signal: AbortSignal.timeout(15_000),
         });
-        const data = await resp.json();
-        if (!data.ok) {
-            console.error('Telegram error:', data.description);
-            return { ok: false };
+        const dados = await resp.json();
+        const id = dados.result?.message_id;
+        if (resp.ok && dados.ok === true && Number.isSafeInteger(id) && id > 0) {
+            console.log(`Telegram ${metodo} enviado: data=${palavra.data}, message_id=${id}`);
+            return id;
         }
-        console.log(`Telegram enviado: message_id=${data.result?.message_id}`);
-        return { ok: true, message_id: data.result?.message_id };
-    } catch (e) {
-        console.error('Erro ao enviar Telegram:', e);
-        return { ok: false };
+        console.error(`Telegram ${metodo} sem confirmação: HTTP ${resp.status}`);
+    } catch {
+        console.error(`Telegram ${metodo} sem confirmação de transporte`);
     }
+    return null;
 }
 
-// ============================================
-// CRON HANDLER
-// ============================================
 export async function GET(request: Request) {
-    const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || request.headers.get('authorization') !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID não configurados' }, { status: 500 });
+    const previa = new URL(request.url).searchParams.get('verificar') === 'imagem';
+    if (!previa && (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID)) {
+        return NextResponse.json({ error: 'Telegram não configurado' }, { status: 500 });
     }
-
+    const data = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     try {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        const dataHoje = getDataHoje();
-        const mensagensEnviadas: string[] = [];
+        const buscar = async (): Promise<PalavraManhaCache | null> => {
+            const resultado = await supabase.from('palavra_manha_diaria').select('*').eq('data', data).maybeSingle();
+            if (resultado.error) throw new Error('Falha ao consultar a Palavra do dia');
+            return resultado.data;
+        };
+        let palavra = await buscar();
+        if (!palavra && !previa) {
+            const gerarResp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${supabaseAnonKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ modo_id: 'modo_palavra_manha', data }),
+                signal: AbortSignal.timeout(170_000),
+            });
+            if (gerarResp.ok && (await gerarResp.json()).ok) palavra = await buscar();
+            else console.error(`Geração da Palavra não confirmada: HTTP ${gerarResp.status}`);
+        }
+        if (palavra?.data !== data || !palavra.mensagem?.trim()) {
+            return NextResponse.json({ ok: false, data, mensagens_enviadas: [], total: 0 }, { status: previa ? 404 : 502 });
+        }
 
-        // =============================================
-        // 1. PALAVRA DA MANHA (mesma do app; versao curta — max 400-600 chars)
-        // =============================================
-        let palavraManha = (await supabase
-            .from('palavra_manha_diaria')
-            .select('*')
-            .eq('data', dataHoje)
-            .maybeSingle()).data;
+        const formato = 'foto';
+        const falha = (error: string, status: number) => NextResponse.json(
+            { ok: false, data, formato, error, mensagens_enviadas: [], total: 0 }, { status },
+        );
+        const capturar = async () => {
+            try { return await capturarPalavra(palavra); }
+            catch { return null; }
+        };
+        if (previa) {
+            const png = await capturar();
+            return png && pngValido(png) ? new Response(png, { headers: { 'content-type': 'image/png', 'cache-control': 'private, no-store' } })
+                : falha('Captura indisponível', 503);
+        }
 
-        // Se ainda nao existe (cron roda antes do app), gera via Edge Function
-        if (!palavraManha) {
-            console.log('Palavra da Manha nao existe ainda, gerando via Edge Function...');
-            try {
-                const gerarResp = await fetch(`${supabaseUrl}/functions/v1/execute`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${supabaseAnonKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        modo_id: 'modo_palavra_manha',
-                        data: dataHoje
-                    })
-                });
-                if (gerarResp.ok) {
-                    const gerarJson = await gerarResp.json();
-                    // Busca de novo do banco (a Edge Function salva automaticamente)
-                    if (gerarJson.ok) {
-                        const { data: novaPalavra } = await supabase
-                            .from('palavra_manha_diaria')
-                            .select('*')
-                            .eq('data', dataHoje)
-                            .maybeSingle();
-                        palavraManha = novaPalavra;
-                        console.log('Palavra da Manha gerada com sucesso!');
-                    }
-                }
-            } catch (e) {
-                console.error('Erro ao gerar Palavra da Manha:', e);
+        const caminho = caminhoPrintPalavra(palavra);
+        const bucket = supabase.storage.from('pvc');
+        const salvo = await bucket.download(caminho);
+        let png = salvo.data ? new Uint8Array(await salvo.data.arrayBuffer()) : null;
+        if (!png) {
+            if (!salvo.error || !['404', 'NoSuchKey', 'not_found'].some(c => c === String(salvo.error && 'statusCode' in salvo.error ? salvo.error.statusCode : '')) &&
+                !/^object not found$/i.test(salvo.error.message)) return falha('Falha ao consultar o print', 502);
+            png = await capturar();
+            if (!png || !pngValido(png)) return falha('Captura indisponível', 503);
+            const gravacao = await bucket.upload(caminho, png, { contentType: 'image/png', cacheControl: '3600', upsert: false });
+            if (gravacao.error) {
+                // Outra execução pode ter gravado primeiro, ou a resposta do upload pode ter falhado.
+                const vencedor = await bucket.download(caminho);
+                if (!vencedor.data) return falha('Print não gravado', 502);
+                png = new Uint8Array(await vencedor.data.arrayBuffer());
             }
         }
-
-        if (palavraManha && palavraManha.mensagem) {
-            // Limpa markdown para texto puro
-            const textoLimpo = palavraManha.mensagem
-                .replace(/\*\*/g, '')
-                .replace(/\*/g, '')
-                .replace(/#{1,6}\s/g, '')
-                .replace(/>\s?/g, '')
-                .trim();
-
-            const dataFormatada = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-            const msgPalavra = `Palavra da Manha\n${dataFormatada}\n\n${textoLimpo}`;
-            const enviou = await enviarTelegram(msgPalavra);
-            if (enviou.ok) mensagensEnviadas.push('Palavra da Manha');
-        } else {
-            console.log('Palavra da Manha nao encontrada para hoje:', dataHoje);
-        }
-
-        return NextResponse.json({
-            ok: true,
-            data: dataHoje,
-            mensagens_enviadas: mensagensEnviadas,
-            total: mensagensEnviadas.length,
+        if (!png || !pngValido(png)) return falha('Print inválido', 502);
+        // A imagem é compartilhada; a tentativa de envio é uma trava separada, por dia.
+        // Timeout não prova que o Telegram não recebeu: não repetir automaticamente.
+        const lock = await bucket.upload(`palavra-da-manha/${data}/telegram.json`, '{}', {
+            contentType: 'application/json', upsert: false,
         });
-
-    } catch (e) {
-        console.error('Erro no cron daily-push:', e);
-        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+        if (lock.error) {
+            const code = 'statusCode' in lock.error ? String(lock.error.statusCode) : '';
+            const existente = code === '409' || /^the resource already exists$/i.test(lock.error.message);
+            return falha(existente ? 'Tentativa Telegram já registrada; conferir recibo antes de repetir' : 'Falha ao reservar o envio Telegram', existente ? 409 : 502);
+        }
+        const message_id = await enviarTelegram(png, palavra);
+        if (message_id === null) {
+            return NextResponse.json({ ok: false, data, formato, mensagens_enviadas: [], total: 0 }, { status: 502 });
+        }
+        return NextResponse.json({ ok: true, data, formato, message_id, mensagens_enviadas: ['Palavra da Manha'], total: 1 });
+    } catch {
+        console.error('daily-push: erro ao consultar ou gerar a Palavra');
+        return NextResponse.json({ ok: false, data, mensagens_enviadas: [], total: 0 }, { status: 502 });
     }
 }

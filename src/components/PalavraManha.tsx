@@ -216,7 +216,7 @@ export function PalavraManha({ passagemDia }: PalavraManhaProps) {
     const comQuebras = (texto: string) => texto.replace(/\n/g, '  \n');
 
     return (
-        <section aria-labelledby="titulo-palavra-manha" className="animate-[fadeIn_0.35s_ease-out]">
+        <section aria-labelledby="titulo-palavra-manha" data-palavra-id={data.id} data-palavra-data={data.data} className="animate-[fadeIn_0.35s_ease-out]">
             {/* Aviso: exibindo mensagem salva (sem conexão) */}
             {modoOffline && (
                 <div className="mb-4 flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-sm font-semibold text-orange-700 dark:text-orange-300">
