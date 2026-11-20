@@ -101,8 +101,9 @@ export async function GET(request: Request) {
         if (!png || !pngValido(png)) return falha('Print inválido', 502);
         // A imagem é compartilhada; a tentativa de envio é uma trava separada, por dia.
         // Timeout não prova que o Telegram não recebeu: não repetir automaticamente.
-        const lock = await bucket.upload(`palavra-da-manha/${data}/telegram.json`, '{}', {
-            contentType: 'application/json', upsert: false,
+        const trava = `palavra-da-manha/${data}/telegram.json`;
+        const lock = await bucket.upload(trava, '{}', {
+            contentType: 'application/json', cacheControl: '0', upsert: false,
         });
         if (lock.error) {
             const code = 'statusCode' in lock.error ? String(lock.error.statusCode) : '';
@@ -112,6 +113,12 @@ export async function GET(request: Request) {
         const message_id = await enviarTelegram(png, palavra);
         if (message_id === null) {
             return NextResponse.json({ ok: false, data, formato, mensagens_enviadas: [], total: 0 }, { status: 502 });
+        }
+        const gravacao = await bucket.upload(trava, JSON.stringify({ data, formato, message_id }), {
+            contentType: 'application/json', cacheControl: '0', upsert: true,
+        });
+        if (gravacao.error) {
+            console.error(`Telegram enviado (message_id=${message_id}), mas falha ao gravar trava: ${trava}`);
         }
         return NextResponse.json({ ok: true, data, formato, message_id, mensagens_enviadas: ['Palavra da Manha'], total: 1 });
     } catch {

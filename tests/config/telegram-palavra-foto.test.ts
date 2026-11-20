@@ -43,6 +43,16 @@ describe('Telegram da Palavra da Manhã', () => {
         expect(new Uint8Array(await opts.body.get('photo').arrayBuffer())).toEqual(png);
         expect(renderizar).toHaveBeenCalledWith(registro);
         expect(upload).toHaveBeenCalledWith(expect.stringMatching(/^palavra-da-manha\/2026-11-20\/269-[a-f0-9]{64}\.png$/), png, expect.objectContaining({ upsert: false }));
+        expect(upload).toHaveBeenCalledWith(
+            'palavra-da-manha/2026-11-20/telegram.json',
+            '{}',
+            expect.objectContaining({ contentType: 'application/json', cacheControl: '0', upsert: false }),
+        );
+        expect(upload).toHaveBeenCalledWith(
+            'palavra-da-manha/2026-11-20/telegram.json',
+            JSON.stringify({ data: '2026-11-20', formato: 'foto', message_id: 71 }),
+            expect.objectContaining({ contentType: 'application/json', cacheControl: '0', upsert: true }),
+        );
         expect(await resposta.json()).toMatchObject({ ok: true, formato: 'foto', message_id: 71, total: 1 });
     });
 
@@ -85,6 +95,11 @@ describe('Telegram da Palavra da Manhã', () => {
         const resposta = await get(requisicao());
         expect(resposta.status).toBe(502);
         expect(fetchFake).toHaveBeenCalledTimes(1);
+        expect(upload).not.toHaveBeenCalledWith(
+            'palavra-da-manha/2026-11-20/telegram.json',
+            expect.anything(),
+            expect.objectContaining({ upsert: true }),
+        );
         expect(await resposta.json()).toMatchObject({ ok: false, formato: 'foto', total: 0 });
     });
 
@@ -92,7 +107,22 @@ describe('Telegram da Palavra da Manhã', () => {
         fetchFake.mockResolvedValueOnce(Response.json({ ok: true, result: {} }));
         const resposta = await get(requisicao());
         expect(resposta.status).toBe(502);
+        expect(upload).not.toHaveBeenCalledWith(
+            'palavra-da-manha/2026-11-20/telegram.json',
+            expect.anything(),
+            expect.objectContaining({ upsert: true }),
+        );
         expect(await resposta.json()).toMatchObject({ ok: false, total: 0 });
+    });
+
+    it('mantém 200 com message_id se a atualização final da trava falhar após envio confirmado', async () => {
+        upload.mockImplementation(async (_caminho: string, _conteudo: unknown, opts?: { upsert?: boolean }) => (
+            opts?.upsert ? { error: { message: 'falha transiente' } } : { error: null }
+        ));
+        const resposta = await get(requisicao());
+        expect(resposta.status).toBe(200);
+        expect(fetchFake).toHaveBeenCalledTimes(1);
+        expect(await resposta.json()).toMatchObject({ ok: true, formato: 'foto', message_id: 71, total: 1 });
     });
 
     it('nega a prévia sem a credencial existente do cron', async () => {
