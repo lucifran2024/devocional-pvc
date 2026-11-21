@@ -86,8 +86,21 @@ export async function GET(request: Request) {
         const salvo = await bucket.download(caminho);
         let png = salvo.data ? new Uint8Array(await salvo.data.arrayBuffer()) : null;
         if (!png) {
-            if (!salvo.error || !['404', 'NoSuchKey', 'not_found'].some(c => c === String(salvo.error && 'statusCode' in salvo.error ? salvo.error.statusCode : '')) &&
-                !/^object not found$/i.test(salvo.error.message)) return falha('Falha ao consultar o print', 502);
+            const erro = salvo.error;
+            let ausente = !!erro && (['404', 'NoSuchKey', 'not_found'].includes(String(erro.statusCode ?? '')) ||
+                /^object not found$/i.test(erro.message));
+            // storage-js pode encapsular um HTTP 400/NoSuchKey em StorageUnknownError
+            // sem statusCode nem mensagem útil. Conferir o corpo, não liberar qualquer HTTP 400.
+            const original = erro && 'originalError' in erro ? erro.originalError : null;
+            if (!ausente && original instanceof Response && original.status === 400) {
+                try {
+                    const detalhe: unknown = await original.clone().json();
+                    ausente = !!detalhe && typeof detalhe === 'object' && 'code' in detalhe &&
+                        detalhe.code === 'NoSuchKey' && 'statusCode' in detalhe &&
+                        String(detalhe.statusCode) === '404';
+                } catch { /* Resposta ilegível continua falha fechada. */ }
+            }
+            if (!ausente) return falha('Falha ao consultar o print', 502);
             png = await capturar();
             if (!png || !pngValido(png)) return falha('Captura indisponível', 503);
             const gravacao = await bucket.upload(caminho, png, { contentType: 'image/png', cacheControl: '3600', upsert: false });

@@ -32,6 +32,34 @@ beforeEach(async () => {
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('Telegram da Palavra da Manhã', () => {
+    it('reconhece NoSuchKey no corpo do erro HTTP 400 de download e cria o print sem repetir a Palavra', async () => {
+        download.mockResolvedValueOnce({
+            data: null,
+            error: {
+                name: 'StorageUnknownError', message: '{}',
+                originalError: Response.json({ statusCode: '404', code: 'NoSuchKey', message: 'Object not found' }, { status: 400 }),
+            },
+        });
+        const resposta = await get(requisicao());
+        expect(resposta.status).toBe(200);
+        expect(renderizar).toHaveBeenCalledWith(registro);
+        expect(upload).toHaveBeenCalledWith(expect.stringMatching(/\.png$/), png, expect.objectContaining({ upsert: false }));
+        expect(fetchFake).toHaveBeenCalledTimes(1);
+    });
+
+    it('não trata todo HTTP 400 do Storage como objeto ausente', async () => {
+        download.mockResolvedValueOnce({
+            data: null,
+            error: {
+                name: 'StorageUnknownError', message: '{}',
+                originalError: Response.json({ statusCode: '400', code: 'InvalidRequest', message: 'Invalid request' }, { status: 400 }),
+            },
+        });
+        expect((await get(requisicao())).status).toBe(502);
+        expect(renderizar).not.toHaveBeenCalled();
+        expect(fetchFake).not.toHaveBeenCalled();
+    });
+
     it('manda um PNG pelo bot e destinatário existentes e confirma o recibo da foto', async () => {
         const resposta = await get(requisicao());
         expect(resposta.status).toBe(200);
